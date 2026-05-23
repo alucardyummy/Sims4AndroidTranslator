@@ -1,48 +1,48 @@
-# -*- coding: utf-8 -*-
+import threading
+from kivy.app import App
+from kivy.uix.widget import Widget
+from kivy.clock import Clock
+from android.runnable import run_on_ui_thread
+from jnius import autoclass
 
-import os
-import sys
-import glob
-from PySide6.QtWidgets import QApplication
-from PySide6.QtGui import QFontDatabase
+WebView        = autoclass('android.webkit.WebView')
+WebViewClient  = autoclass('android.webkit.WebViewClient')
+LayoutParams   = autoclass('android.view.ViewGroup$LayoutParams')
+PythonActivity = autoclass('org.kivy.android.PythonActivity')
 
-from windows.main_window import MainWindow
+URL = "http://127.0.0.1:5000"
 
-from singletons.state import app_state
+def start_flask():
+    from app import app
+    app.run(host="127.0.0.1", port=5000, debug=False, use_reloader=False)
 
-from storages.packages import PackagesStorage
-from storages.dictionaries import DictionariesStorage
+class WebViewWidget(Widget):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        t = threading.Thread(target=start_flask, daemon=True)
+        t.start()
+        Clock.schedule_once(self._open_webview, 1.5)
 
-from themes.stylesheet import stylesheet
+    @run_on_ui_thread
+    def _open_webview(self, dt):
+        activity = PythonActivity.mActivity
+        wv = WebView(activity)
+        settings = wv.getSettings()
+        settings.setJavaScriptEnabled(True)
+        settings.setDomStorageEnabled(True)
+        settings.setAllowFileAccess(True)
+        settings.setMixedContentMode(0)
+        wv.setWebViewClient(WebViewClient())
+        wv.loadUrl(URL)
+        layout = activity.getWindow().getDecorView()
+        layout.addView(wv, LayoutParams(
+            LayoutParams.MATCH_PARENT,
+            LayoutParams.MATCH_PARENT
+        ))
 
-import resource_rc
-
-
-def main():
-    sys.argv += ['-style', 'windows']
-
-    app = QApplication(sys.argv)
-
-    packages_storage = PackagesStorage()
-    dictionaries_storage = DictionariesStorage()
-
-    app_state.set_packages_storage(packages_storage)
-    app_state.set_dictionaries_storage(dictionaries_storage)
-
-    for path in glob.glob('fonts/*.ttf'):
-        QFontDatabase.addApplicationFont(os.path.abspath(path))
-
-    app.setStyleSheet(stylesheet())
-
-    window = MainWindow()
-    window.show()
-
-    exit_status = app.exec()
-
-    app.setStyleSheet('')
-
-    sys.exit(exit_status)
-
+class Sims4TranslatorApp(App):
+    def build(self):
+        return WebViewWidget()
 
 if __name__ == '__main__':
-    main()
+    Sims4TranslatorApp().run()
