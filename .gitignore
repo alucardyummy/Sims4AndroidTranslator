@@ -1,0 +1,25 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+.env
+.venv
+env/
+venv/
+
+# IDE
+.vscode/
+.idea/
+
+build/
+dist/
+dictionary/
+prefs/config.xml
+prefs/interface/sync.py
+setup.py
+
+*.bat
+*.dct
+*.svg

@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0f0f0f">
+<title>Sims 4 Translator · Editor</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0f0f0f; --surface: #1a1a1a; --surface2: #222;
+    --border: #2a2a2a; --border2: #333;
+    --accent: #c8a96e; --accent-dim: #8a6f42;
+    --text: #f0ece4; --text-muted: #7a7570; --text-dim: #4a4540;
+    --radius: 16px; --radius-sm: 10px;
+  }
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; overscroll-behavior: none; }
+  .page { display: flex; flex-direction: column; height: 100dvh; }
+  .topbar { display: flex; align-items: center; gap: 10px; padding: 1rem 1rem 0.75rem; border-bottom: 1px solid var(--border); flex-shrink: 0; background: var(--bg); }
+  .back-btn {
+    width: 34px; height: 34px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 9px; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: var(--text-muted); text-decoration: none; flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .back-btn svg { width: 17px; height: 17px; }
+  .topbar-info { flex: 1; overflow: hidden; }
+  .topbar-title { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .topbar-sub { font-size: 10px; color: var(--text-muted); font-family: 'DM Mono', monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .count-badge { font-size: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 3px 8px; color: var(--text-muted); font-family: 'DM Mono', monospace; flex-shrink: 0; }
+  .col-headers { display: grid; grid-template-columns: 86px 1fr 1fr; gap: 6px; padding: 7px 1rem; border-bottom: 1px solid var(--border); flex-shrink: 0; background: var(--bg); }
+  .col-header { font-size: 9px; color: var(--text-dim); letter-spacing: 0.08em; text-transform: uppercase; }
+  .strings-list { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .string-row { display: grid; grid-template-columns: 86px 1fr 1fr; gap: 6px; padding: 8px 1rem; border-bottom: 1px solid var(--border); align-items: start; }
+  .key-hex { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text-muted); padding-top: 8px; word-break: break-all; line-height: 1.5; }
+  .original-text { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 7px 9px; font-size: 12px; color: var(--text-muted); line-height: 1.5; word-break: break-word; font-style: italic; min-height: 36px; }
+  .edit-textarea { background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; padding: 7px 9px; font-size: 12px; color: var(--text); line-height: 1.5; width: 100%; resize: none; font-family: 'DM Sans', sans-serif; min-height: 36px; overflow: hidden; }
+  .edit-textarea:focus { outline: none; border-color: var(--accent-dim); }
+  .bottom-bar { border-top: 1px solid var(--border); padding: 1rem; background: var(--bg); flex-shrink: 0; }
+  .filename-row { display: flex; align-items: center; gap: 8px; margin-bottom: 0.75rem; }
+  .filename-label { font-size: 11px; color: var(--text-muted); flex-shrink: 0; }
+  .filename-input { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; font-size: 13px; color: var(--text); font-family: 'DM Mono', monospace; min-width: 0; }
+  .filename-input:focus { outline: none; border-color: var(--accent-dim); }
+  .ext-label { font-size: 12px; color: var(--text-muted); font-family: 'DM Mono', monospace; flex-shrink: 0; }
+  .save-btn { width: 100%; padding: 16px; background: var(--accent-dim); border: none; border-radius: var(--radius); color: var(--bg); font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; letter-spacing: 0.08em; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .save-btn:active { transform: scale(0.97); background: var(--accent); }
+  .save-btn:disabled { opacity: 0.4; pointer-events: none; }
+  .loading-overlay { display: none; position: fixed; inset: 0; background: rgba(15,15,15,0.92); z-index: 100; align-items: center; justify-content: center; flex-direction: column; gap: 1rem; }
+  .loading-overlay.active { display: flex; }
+  .spinner { width: 36px; height: 36px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { font-size: 13px; color: var(--text-muted); letter-spacing: 0.04em; text-align: center; }
+
+  /* Success sheet — sem botão "Salvar arquivo" */
+  .success-sheet { display: none; position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,0.8); align-items: flex-end; }
+  .success-sheet.open { display: flex; }
+  .success-inner { width: 100%; background: var(--surface); border-top: 1px solid var(--border); border-radius: 20px 20px 0 0; padding: 1.5rem 1rem 2.5rem; animation: slideUp 0.25s ease; }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .success-icon { font-size: 40px; text-align: center; margin-bottom: 0.75rem; }
+  .success-title { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; color: var(--accent); text-align: center; margin-bottom: 0.25rem; }
+  .success-sub { font-size: 13px; color: var(--text-muted); text-align: center; margin-bottom: 0.75rem; }
+  .success-downloads-note { font-size: 12px; color: var(--accent); text-align: center; padding: 10px 0 1.25rem; font-weight: 500; }
+  .success-new { display: block; width: 100%; padding: 15px; background: var(--accent-dim); border: none; border-radius: var(--radius-sm); color: var(--bg); font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 0.06em; cursor: pointer; text-align: center; margin-bottom: 10px; -webkit-tap-highlight-color: transparent; }
+  .success-new:active { background: var(--accent); }
+  .success-back { display: block; width: 100%; padding: 13px; background: transparent; border: 1px solid var(--border2); border-radius: var(--radius-sm); color: var(--text-muted); font-size: 13px; cursor: pointer; text-align: center; -webkit-tap-highlight-color: transparent; }
+
+  .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 3rem 2rem; gap: 0.75rem; }
+  .empty-icon { font-size: 32px; opacity: 0.3; }
+  .empty-text { font-size: 13px; color: var(--text-muted); text-align: center; }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="topbar">
+    <a href="/info" class="back-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M19 12H5M12 5l-7 7 7 7"/>
+      </svg>
+    </a>
+    <div class="topbar-info">
+      <div class="topbar-title" id="top-title">Editor</div>
+      <div class="topbar-sub" id="top-sub">—</div>
+    </div>
+    <div class="count-badge" id="count-badge">—</div>
+  </div>
+  <div class="col-headers">
+    <div class="col-header">Key</div>
+    <div class="col-header">Original</div>
+    <div class="col-header">Tradução</div>
+  </div>
+  <div class="strings-list" id="strings-list">
+    <div class="empty-state">
+      <div class="empty-icon">◌</div>
+      <div class="empty-text">Carregando strings...</div>
+    </div>
+  </div>
+  <div class="bottom-bar">
+    <div class="filename-row">
+      <span class="filename-label">Nome:</span>
+      <input type="text" class="filename-input" id="filename-input" placeholder="output" maxlength="100">
+      <span class="ext-label">.package</span>
+    </div>
+    <button class="save-btn" id="save-btn" onclick="save()" disabled>SALVAR PACKAGE</button>
+  </div>
+</div>
+
+<div class="loading-overlay" id="loading">
+  <div class="spinner"></div>
+  <div class="loading-text" id="loading-text">Carregando...</div>
+</div>
+
+<!-- Success sheet: só mostra nome do arquivo + nota do Downloads + botões de ação -->
+<div class="success-sheet" id="success-sheet">
+  <div class="success-inner">
+    <div class="success-icon">✦</div>
+    <div class="success-title">Package salvo!</div>
+    <div class="success-sub" id="success-sub">—</div>
+    <div class="success-downloads-note" id="downloads-note"></div>
+    <button class="success-new" onclick="window.location.href='/'">Traduzir outro arquivo</button>
+    <button class="success-back" onclick="document.getElementById('success-sheet').classList.remove('open')">Continuar editando</button>
+  </div>
+</div>
+
+<script>
+let stringsData = [];
+let instanceStr = sessionStorage.getItem('selected_instance_str') || '';
+let targetLang = sessionStorage.getItem('target_lang') || 'POR_BR';
+let originalLang = sessionStorage.getItem('original_lang') || '?';
+let instanceHex = sessionStorage.getItem('selected_instance_hex') || '—';
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
+}
+
+async function load() {
+  if (!instanceStr) { window.location.href = '/'; return; }
+
+  document.getElementById('top-sub').textContent = originalLang + ' → ' + targetLang;
+  document.getElementById('loading-text').textContent = 'Carregando strings...';
+  document.getElementById('loading').classList.add('active');
+
+  try {
+    const res = await fetch('/api/strings?instance=' + encodeURIComponent(instanceStr));
+    const data = await res.json();
+    stringsData = data.strings || [];
+
+    document.getElementById('count-badge').textContent = stringsData.length + ' strings';
+    document.getElementById('loading').classList.remove('active');
+
+    renderStrings();
+    document.getElementById('save-btn').disabled = stringsData.length === 0;
+  } catch(e) {
+    document.getElementById('loading').classList.remove('active');
+    alert('Erro ao carregar strings: ' + e.message);
+  }
+}
+
+function renderStrings() {
+  const list = document.getElementById('strings-list');
+  if (stringsData.length === 0) {
+    list.innerHTML = '<div class="empty-state"><div class="empty-icon">◌</div><div class="empty-text">Nenhuma string encontrada nesta instância.</div></div>';
+    return;
+  }
+  list.innerHTML = '';
+  stringsData.forEach((item, idx) => {
+    const row = document.createElement('div');
+    row.className = 'string-row';
+    const safe = (item.value || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    row.innerHTML =
+      '<div class="key-hex">' + item.key_hex + '</div>' +
+      '<div class="original-text">' + (safe || '<em style="opacity:0.4">vazio</em>') + '</div>' +
+      '<textarea class="edit-textarea" data-idx="' + idx + '" rows="1">' + (item.value || '') + '</textarea>';
+    list.appendChild(row);
+    const ta = row.querySelector('textarea');
+    autoResize(ta);
+    ta.addEventListener('input', function() {
+      autoResize(this);
+      stringsData[parseInt(this.dataset.idx)].value = this.value;
+    });
+  });
+}
+
+async function save() {
+  const filenameRaw = document.getElementById('filename-input').value.trim();
+  const outputName = filenameRaw || 'output';
+
+  document.getElementById('loading-text').textContent = 'Salvando arquivo...';
+  document.getElementById('loading').classList.add('active');
+
+  const payload = {
+    instance: instanceStr,
+    strings: stringsData.map(s => ({ key: s.key, value: s.value })),
+    target_language: targetLang,
+    output_name: outputName
+  };
+
+  try {
+    const res = await fetch('/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    document.getElementById('loading').classList.remove('active');
+
+    if (data.success) {
+      document.getElementById('success-sub').textContent = data.output_name;
+      document.getElementById('downloads-note').textContent =
+        data.saved_to_downloads
+          ? '✓ Salvo automaticamente em Downloads'
+          : 'Arquivo salvo no servidor';
+      document.getElementById('success-sheet').classList.add('open');
+    } else {
+      alert('Erro ao salvar: ' + (data.error || 'desconhecido'));
+    }
+  } catch(e) {
+    document.getElementById('loading').classList.remove('active');
+    alert('Erro de conexão ao salvar.');
+  }
+}
+
+load();
+</script>
+</body>
+</html>

@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0f0f0f">
+<title>Sims 4 Translator</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f0f0f;
+    --surface: #1a1a1a;
+    --border: #2a2a2a;
+    --accent: #c8a96e;
+    --accent-dim: #8a6f42;
+    --text: #f0ece4;
+    --text-muted: #7a7570;
+    --radius: 16px;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    overflow: hidden;
+  }
+
+  .screen {
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    position: relative;
+  }
+
+  .bg-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(200,169,110,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(200,169,110,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+  }
+
+  .logo-area {
+    text-align: center;
+    margin-bottom: 3.5rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .diamond {
+    width: 64px;
+    height: 64px;
+    background: var(--surface);
+    border: 1px solid var(--accent-dim);
+    transform: rotate(45deg);
+    margin: 0 auto 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  .diamond::after {
+    content: '';
+    position: absolute;
+    inset: 8px;
+    border: 1px solid rgba(200,169,110,0.3);
+    transform: rotate(0deg);
+  }
+
+  .diamond-inner {
+    transform: rotate(-45deg);
+    font-size: 24px;
+    line-height: 1;
+  }
+
+  .title {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+  }
+
+  .subtitle {
+    font-size: 13px;
+    color: var(--text-muted);
+    letter-spacing: 0.02em;
+  }
+
+  .import-area {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 320px;
+  }
+
+  .btn-import {
+    width: 100%;
+    padding: 18px;
+    background: var(--surface);
+    border: 1px solid var(--accent-dim);
+    border-radius: var(--radius);
+    color: var(--accent);
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    transition: background 0.2s, border-color 0.2s, transform 0.1s;
+    -webkit-tap-highlight-color: transparent;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-import::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(200,169,110,0.08) 0%, transparent 60%);
+  }
+
+  .btn-import:active {
+    transform: scale(0.97);
+    background: #222;
+  }
+
+  .btn-import svg {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+  }
+
+  .hint {
+    text-align: center;
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 1rem;
+    letter-spacing: 0.02em;
+  }
+
+  #file-input {
+    display: none;
+  }
+
+  .loading-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15,15,15,0.9);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .loading-overlay.active {
+    display: flex;
+  }
+
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .loading-text {
+    font-size: 13px;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+  }
+
+  .error-msg {
+    display: none;
+    background: rgba(200,60,60,0.1);
+    border: 1px solid rgba(200,60,60,0.3);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 13px;
+    color: #e07070;
+    margin-top: 1rem;
+    text-align: center;
+  }
+
+  .error-msg.active {
+    display: block;
+  }
+
+  .version {
+    position: absolute;
+    bottom: 1.5rem;
+    font-size: 11px;
+    color: var(--text-muted);
+    opacity: 0.5;
+    letter-spacing: 0.05em;
+  }
+</style>
+</head>
+<body>
+
+<div class="screen">
+  <div class="bg-grid"></div>
+
+  <div class="logo-area">
+    <div class="diamond">
+      <span class="diamond-inner">◈</span>
+    </div>
+    <div class="title">SIMS 4 TRANSLATOR</div>
+    <div class="subtitle">Tradução de mods .package</div>
+  </div>
+
+  <div class="import-area">
+    <input type="file" id="file-input" accept=".package">
+    <button class="btn-import" onclick="document.getElementById('file-input').click()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+        <polyline points="17 8 12 3 7 8"/>
+        <line x1="12" y1="3" x2="12" y2="15"/>
+      </svg>
+      IMPORTAR
+    </button>
+    <p class="hint">Selecione um arquivo .package do seu celular</p>
+    <div class="error-msg" id="error-msg"></div>
+  </div>
+
+  <div class="version">v1.0 · MIT · Voky1 • Remake by AlucardYummy</div>
+</div>
+
+<div class="loading-overlay" id="loading">
+  <div class="spinner"></div>
+  <div class="loading-text">Lendo arquivo...</div>
+</div>
+
+<form id="upload-form" action="/upload" method="POST" enctype="multipart/form-data" style="display:none">
+  <input type="file" name="package" id="form-file">
+</form>
+
+<script>
+  const fileInput = document.getElementById('file-input');
+  const formFile = document.getElementById('form-file');
+  const uploadForm = document.getElementById('upload-form');
+  const loading = document.getElementById('loading');
+  const errorMsg = document.getElementById('error-msg');
+
+  fileInput.addEventListener('change', function () {
+    const file = this.files[0];
+    if (!file) return;
+
+    if (!file.name.endsWith('.package')) {
+      showError('Arquivo inválido. Selecione um arquivo .package');
+      return;
+    }
+
+    loading.classList.add('active');
+    errorMsg.classList.remove('active');
+
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    formFile.files = dt.files;
+
+    uploadForm.submit();
+  });
+
+  function showError(msg) {
+    errorMsg.textContent = msg;
+    errorMsg.classList.add('active');
+  }
+</script>
+
+</body>
+</html>
