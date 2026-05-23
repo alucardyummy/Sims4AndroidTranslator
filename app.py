@@ -4,7 +4,11 @@ from packer.stbl import Stbl
 import os
 import tempfile
 
-app = Flask(__name__)
+# Caminho base: funciona tanto no Termux quanto dentro do APK
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+TEMPLATE_DIR = os.path.join(BASE_DIR, 'templates')
+
+app = Flask(__name__, template_folder=TEMPLATE_DIR)
 app.secret_key = "sims4translator_secret"
 
 UPLOAD_FOLDER = tempfile.gettempdir()
@@ -23,7 +27,7 @@ def load_stbl(pkg, rid):
 @app.route("/")
 def home():
     session.clear()
-    return send_file("templates/index.html")
+    return send_file(os.path.join(TEMPLATE_DIR, "index.html"))
 
 
 @app.route("/upload", methods=["POST"])
@@ -62,7 +66,7 @@ def upload():
 def info():
     if not session.get("all_instances"):
         return redirect("/")
-    return send_file("templates/info.html")
+    return send_file(os.path.join(TEMPLATE_DIR, "info.html"))
 
 
 @app.route("/api/instances")
@@ -115,7 +119,7 @@ def api_instances():
 def editor():
     if not session.get("package_path"):
         return redirect("/")
-    return send_file("templates/editor.html")
+    return send_file(os.path.join(TEMPLATE_DIR, "editor.html"))
 
 
 @app.route("/api/strings")
