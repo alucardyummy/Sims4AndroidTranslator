@@ -1,7 +1,5 @@
 import threading
-import time
 import os
-import sys
 
 
 def is_android():
@@ -13,21 +11,8 @@ def is_android():
         return False
 
 
-def start_flask():
-    try:
-        base = os.path.dirname(os.path.abspath(__file__))
-        template_dir = os.path.join(base, 'templates')
-        import app as flask_app
-        flask_app.app.template_folder = template_dir
-        flask_app.TEMPLATE_DIR = template_dir
-        flask_app.app.run(host="127.0.0.1", port=5000, debug=False, use_reloader=False)
-    except Exception:
-        import traceback
-        _write_log('flask_error', traceback.format_exc())
-
-
 def _write_log(name, text):
-    for path in ['/sdcard/', '/storage/emulated/0/', '/data/data/com.alucardyummy.sims4translator/files/']:
+    for path in ['/sdcard/', '/storage/emulated/0/']:
         try:
             with open(path + 'sims4_' + name + '.txt', 'w') as f:
                 f.write(text)
@@ -37,15 +22,25 @@ def _write_log(name, text):
 
 
 def run_termux():
+    import time
     print("\n=== Sims 4 Translator ===")
-    t = threading.Thread(target=start_flask, daemon=True)
-    t.start()
+
+    def start():
+        try:
+            base = os.path.dirname(os.path.abspath(__file__))
+            import app as flask_app
+            flask_app.TEMPLATE_DIR = os.path.join(base, 'templates')
+            flask_app.app.template_folder = flask_app.TEMPLATE_DIR
+            flask_app.app.run(host="127.0.0.1", port=5000, debug=False, use_reloader=False)
+        except Exception:
+            import traceback; print(traceback.format_exc())
+
+    threading.Thread(target=start, daemon=True).start()
     time.sleep(1.5)
     print("Servidor rodando em: http://localhost:5000")
     print("Pressione Ctrl+C para parar.\n")
     try:
-        while True:
-            time.sleep(1)
+        while True: time.sleep(1)
     except KeyboardInterrupt:
         print("\nServidor encerrado.")
 
@@ -61,9 +56,7 @@ def run_android():
         text='Iniciando servidor...',
         font_size='14sp',
         color=(0.8, 0.7, 0.4, 1),
-        halign='center',
-        valign='middle',
-        text_size=(Window.width * 0.9, None),
+        halign='center', valign='middle',
     )
 
     flask_ready = threading.Event()
@@ -72,10 +65,9 @@ def run_android():
     def flask_thread():
         try:
             base = os.path.dirname(os.path.abspath(__file__))
-            template_dir = os.path.join(base, 'templates')
             import app as flask_app
-            flask_app.app.template_folder = template_dir
-            flask_app.TEMPLATE_DIR = template_dir
+            flask_app.TEMPLATE_DIR = os.path.join(base, 'templates')
+            flask_app.app.template_folder = flask_app.TEMPLATE_DIR
             flask_ready.set()
             flask_app.app.run(host="127.0.0.1", port=5000, debug=False, use_reloader=False)
         except Exception:
@@ -85,20 +77,29 @@ def run_android():
             flask_ready.set()
             _write_log('flask_error', err)
 
-    def open_webview_safe(dt):
+    def open_webview(dt):
         try:
             from android.runnable import run_on_ui_thread
             from jnius import autoclass
 
             WebView        = autoclass('android.webkit.WebView')
             WebViewClient  = autoclass('android.webkit.WebViewClient')
-            LayoutParams   = autoclass('android.view.ViewGroup$LayoutParams')
+            FrameLayout    = autoclass('android.widget.FrameLayout')
+            LayoutParams   = autoclass('android.widget.FrameLayout$LayoutParams')
             PythonActivity = autoclass('org.kivy.android.PythonActivity')
 
             @run_on_ui_thread
             def _do():
                 try:
                     activity = PythonActivity.mActivity
+
+                    # Cria um FrameLayout que ocupa a tela toda
+                    frame = FrameLayout(activity)
+                    lp_fill = LayoutParams(
+                        LayoutParams.MATCH_PARENT,
+                        LayoutParams.MATCH_PARENT
+                    )
+
                     wv = WebView(activity)
                     s = wv.getSettings()
                     s.setJavaScriptEnabled(True)
@@ -108,17 +109,18 @@ def run_android():
                     s.setMixedContentMode(0)
                     wv.setWebViewClient(WebViewClient())
                     wv.loadUrl("http://127.0.0.1:5000")
-                    lp = LayoutParams(
-                        LayoutParams.MATCH_PARENT,
-                        LayoutParams.MATCH_PARENT
-                    )
-                    activity.getWindow().getDecorView().addView(wv, lp)
+
+                    frame.addView(wv, lp_fill)
+
+                    # Adiciona o frame na janela via setContentView
+                    activity.setContentView(frame)
+
                 except Exception:
                     import traceback
                     err = traceback.format_exc()
                     _write_log('webview_error', err)
                     Clock.schedule_once(
-                        lambda dt: setattr(status_label, 'text', '[ERRO WebView]\n' + err[:600]), 0
+                        lambda dt: setattr(status_label, 'text', '[ERRO WebView]\n' + err[:700]), 0
                     )
             _do()
 
@@ -127,7 +129,7 @@ def run_android():
             err = traceback.format_exc()
             _write_log('webview_import_error', err)
             Clock.schedule_once(
-                lambda dt: setattr(status_label, 'text', '[ERRO import WebView]\n' + err[:600]), 0
+                lambda dt: setattr(status_label, 'text', '[ERRO import]\n' + err[:700]), 0
             )
 
     def check_ready(dt):
@@ -135,16 +137,15 @@ def run_android():
             if flask_error['msg']:
                 status_label.text = '[ERRO Flask]\n' + flask_error['msg'][:600]
             else:
-                status_label.text = 'Servidor pronto! Abrindo WebView...'
-                Clock.schedule_once(open_webview_safe, 0.3)
+                status_label.text = 'Servidor pronto! Abrindo...'
+                Clock.schedule_once(open_webview, 0.3)
             return False
 
     class MainWidget(BoxLayout):
         def __init__(self, **kwargs):
             super().__init__(orientation='vertical', **kwargs)
             self.add_widget(status_label)
-            t = threading.Thread(target=flask_thread, daemon=True)
-            t.start()
+            threading.Thread(target=flask_thread, daemon=True).start()
             Clock.schedule_interval(check_ready, 0.5)
 
     class Sims4App(App):
