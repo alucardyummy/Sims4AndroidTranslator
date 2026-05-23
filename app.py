@@ -11,7 +11,7 @@ UPLOAD_FOLDER = tempfile.gettempdir()
 
 
 def load_stbl(pkg, rid):
-    """Carrega um STBL e já popula _strings corretamente."""
+    """Carrega um STBL e popula _strings corretamente."""
     resource = pkg[rid]
     content = pkg.content(resource)
     stbl = Stbl(rid, content)
@@ -30,7 +30,6 @@ def home():
 def upload():
     if "package" not in request.files:
         return "Nenhum arquivo enviado", 400
-
     f = request.files["package"]
     if not f.filename.endswith(".package"):
         return "Arquivo inválido. Envie um .package", 400
@@ -43,12 +42,12 @@ def upload():
     all_instances = []
     with DbpfPackage.read(save_path) as pkg:
         for rid in pkg.search_stbl():
-            lang = rid.language or "ENG_US"
+            lang = rid.language or "UNKNOWN"
             all_instances.append({
-                "instance": rid.instance,
-                "instance_hex": rid.hex_instance,
-                "group_hex": rid.str_group,
-                "language": lang,
+                "instance":      rid.instance,
+                "instance_hex":  rid.hex_instance,
+                "group_hex":     rid.str_group,
+                "language":      lang,
                 "language_code": rid.language_code or "0x0017",
             })
 
@@ -69,40 +68,44 @@ def info():
 @app.route("/api/instances")
 def api_instances():
     import json
-
     all_instances = session.get("all_instances", [])
     original_name = session.get("original_name", "output.package")
 
-    # Deduplica por base_instance (ignora os 2 bytes de idioma no início do hex).
-    # Assim mostra UM bloco por conteúdo único, independente do idioma em que está salvo.
-    seen_bases = set()
-    unique_instances = []
+    # Agrupa por base (últimos 14 hex chars da instance = conteúdo sem o código de idioma).
+    # Cada base é um "bloco de strings" único — mostra o primeiro idioma encontrado
+    # (geralmente ENG_US se existir, senão o que vier primeiro).
+    seen_bases = {}
     for inst in all_instances:
-        # instance_hex ex: "0x11BBBBBBBBBBBBBB"
-        # "0x" = 2 chars, código idioma = 2 chars → base começa no índice 4
+        # hex_instance = "0xAABBBBBBBBBBBBBB"
+        # índice 4 em diante = parte base (sem prefixo de idioma)
         base = inst["instance_hex"][4:]
         if base not in seen_bases:
-            seen_bases.add(base)
-            unique_instances.append(inst)
+            seen_bases[base] = inst
+        else:
+            # Prefere ENG_US se ainda não tinha
+            if seen_bases[base]["language"] != "ENG_US" and inst["language"] == "ENG_US":
+                seen_bases[base] = inst
 
-    langs_present = sorted(set(i["language"] for i in all_instances))
+    unique_instances = list(seen_bases.values())
 
     safe = [
         {
             "instance_str": str(i["instance"]),
             "instance_hex": i["instance_hex"],
-            "group_hex": i["group_hex"],
-            "language": i["language"],
+            "group_hex":    i["group_hex"],
+            "language":     i["language"],
         }
         for i in unique_instances
     ]
 
+    langs_present = sorted(set(i["language"] for i in all_instances))
+
     return app.response_class(
         response=json.dumps({
-            "instances": safe,
+            "instances":    safe,
             "original_name": original_name,
             "langs_present": langs_present,
-            "total_stbl": len(all_instances),
+            "total_stbl":   len(all_instances),
         }),
         mimetype="application/json"
     )
@@ -118,7 +121,6 @@ def editor():
 @app.route("/api/strings")
 def api_strings():
     import json
-
     instance_str = request.args.get("instance")
     if not instance_str:
         return "Instância não informada", 400
@@ -133,9 +135,9 @@ def api_strings():
                 stbl = load_stbl(pkg, rid)
                 for key, value in stbl._strings.items():
                     strings.append({
-                        "key": key,
+                        "key":     key,
                         "key_hex": hex(key),
-                        "value": value,
+                        "value":   value,
                     })
                 break
 
@@ -151,11 +153,11 @@ def save():
     import shutil
 
     data = request.get_json()
-    instance_str = str(data["instance"])
-    instance_int = int(instance_str)
+    instance_str   = str(data["instance"])
+    instance_int   = int(instance_str)
     strings_edited = data["strings"]
-    target_lang = data.get("target_language", "POR_BR")
-    output_name = data.get("output_name", "output").strip()
+    target_lang    = data.get("target_language", "POR_BR")
+    output_name    = data.get("output_name", "output").strip()
 
     if not output_name:
         output_name = "output"
@@ -164,20 +166,20 @@ def save():
 
     pkg_path = session.get("package_path")
 
-    target_rid = None
+    target_rid  = None
     target_stbl = None
 
     with DbpfPackage.read(pkg_path) as pkg:
         for rid in pkg.search_stbl():
             if rid.instance == instance_int:
-                target_rid = rid
+                target_rid  = rid
                 target_stbl = load_stbl(pkg, rid)
                 break
 
     if target_stbl is None:
         return json.dumps({"error": "STBL não encontrada"}), 400
 
-    # Sobrescreve _strings com os valores editados pelo usuário
+    # Aplica edições do usuário
     for item in strings_edited:
         target_stbl.add(int(item["key"]), item["value"])
 
@@ -193,21 +195,17 @@ def save():
         with DbpfPackage.read(pkg_path) as original:
             for rid in original.search():
                 resource = original[rid]
-                content = original.content(resource)
-
+                content  = original.content(resource)
                 if rid == target_rid:
-                    # Substitui pelo bloco traduzido com novo idioma
                     outpkg.put(new_rid, target_stbl.binary)
                 elif rid == new_rid:
-                    # Pula para não duplicar caso já existisse bloco no idioma destino
-                    pass
+                    pass  # pula duplicata se idioma destino já existia
                 else:
                     outpkg.put(rid, content)
 
     session["output_path"] = output_path
     session["output_name"] = output_name
 
-    # Tenta copiar para Downloads automaticamente
     saved_to_downloads = False
     downloads_dir = os.path.expanduser("~/storage/downloads")
     if os.path.exists(downloads_dir):
@@ -218,8 +216,8 @@ def save():
             pass
 
     return json.dumps({
-        "success": True,
-        "output_name": output_name,
+        "success":            True,
+        "output_name":        output_name,
         "saved_to_downloads": saved_to_downloads,
     })
 
@@ -235,4 +233,4 @@ def download():
 
 if __name__ == "__main__":
     os.makedirs("templates", exist_ok=True)
-    app.run(host="0.0.0.0", port=5000, debug=False)
+    app.run(host="0.0.0.0", port=5000, debug=False, use_reloader=False)
