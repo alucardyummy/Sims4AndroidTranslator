@@ -21,43 +21,18 @@ def _write_log(name, text):
             pass
 
 
-def get_cert_dir():
-    if is_android():
-        from android.storage import app_storage_path
-        d = os.path.join(app_storage_path(), 'certs')
-    else:
-        d = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'certs')
-    os.makedirs(d, exist_ok=True)
-    return d
-
-
-def generate_cert():
-    cert_dir = get_cert_dir()
-    cert_path = os.path.join(cert_dir, 'cert.pem')
-    key_path  = os.path.join(cert_dir, 'key.pem')
-    if os.path.exists(cert_path) and os.path.exists(key_path):
-        return cert_path, key_path
-    from OpenSSL import crypto
-    key = crypto.PKey()
-    key.generate_key(crypto.TYPE_RSA, 2048)
-    cert = crypto.X509()
-    cert.get_subject().CN = "localhost"
-    cert.set_serial_number(1)
-    cert.gmtime_adj_notBefore(0)
-    cert.gmtime_adj_notAfter(10 * 365 * 24 * 60 * 60)
-    cert.set_issuer(cert.get_subject())
-    cert.set_pubkey(key)
-    cert.sign(key, 'sha256')
-    with open(cert_path, 'wb') as f:
-        f.write(crypto.dump_certificate(crypto.FILETYPE_PEM, cert))
-    with open(key_path, 'wb') as f:
-        f.write(crypto.dump_privatekey(crypto.FILETYPE_PEM, key))
-    return cert_path, key_path
+def get_cert_paths():
+    base = os.path.dirname(os.path.abspath(__file__))
+    return (
+        os.path.join(base, 'certs', 'cert.pem'),
+        os.path.join(base, 'certs', 'key.pem')
+    )
 
 
 def run_termux():
     import time
     print("\n=== Sims 4 Translator ===")
+
     def start():
         try:
             base = os.path.dirname(os.path.abspath(__file__))
@@ -67,6 +42,7 @@ def run_termux():
             flask_app.app.run(host="127.0.0.1", port=5000, debug=False, use_reloader=False)
         except Exception:
             import traceback; print(traceback.format_exc())
+
     threading.Thread(target=start, daemon=True).start()
     time.sleep(1.5)
     print("Servidor rodando em: http://localhost:5000")
@@ -102,7 +78,7 @@ def run_android():
             import app as flask_app
             flask_app.TEMPLATE_DIR = os.path.join(base, 'templates')
             flask_app.app.template_folder = flask_app.TEMPLATE_DIR
-            cert_path, key_path = generate_cert()
+            cert_path, key_path = get_cert_paths()
             flask_ready.set()
             flask_app.app.run(
                 host="127.0.0.1", port=5000,
@@ -120,6 +96,7 @@ def run_android():
         try:
             from android.runnable import run_on_ui_thread
             from jnius import autoclass, PythonJavaClass, java_method
+
             WebView        = autoclass('android.webkit.WebView')
             LayoutParams   = autoclass('android.widget.FrameLayout$LayoutParams')
             FrameLayout    = autoclass('android.widget.FrameLayout')
@@ -128,6 +105,7 @@ def run_android():
             class TrustingWebViewClient(PythonJavaClass):
                 __javainterfaces__ = ['android/webkit/WebViewClient']
                 __javacontext__ = 'app'
+
                 @java_method('(Landroid/webkit/WebView;Landroid/webkit/SslErrorHandler;Landroid/net/http/SslError;)V')
                 def onReceivedSslError(self, view, handler, error):
                     handler.proceed()
@@ -152,13 +130,18 @@ def run_android():
                     import traceback
                     err = traceback.format_exc()
                     _write_log('webview_error', err)
-                    Clock.schedule_once(lambda dt: setattr(status_label, 'text', '[ERRO WebView]\n' + err), 0)
+                    Clock.schedule_once(
+                        lambda dt: setattr(status_label, 'text', '[ERRO WebView]\n' + err), 0
+                    )
             _do()
+
         except Exception:
             import traceback
             err = traceback.format_exc()
             _write_log('webview_import_error', err)
-            Clock.schedule_once(lambda dt: setattr(status_label, 'text', '[ERRO]\n' + err), 0)
+            Clock.schedule_once(
+                lambda dt: setattr(status_label, 'text', '[ERRO]\n' + err), 0
+            )
 
     def check_ready(dt):
         if flask_ready.is_set():
