@@ -82,46 +82,16 @@ def run_android():
             from android.runnable import run_on_ui_thread
             from jnius import autoclass
 
-            WebView        = autoclass('android.webkit.WebView')
-            WebViewClient  = autoclass('android.webkit.WebViewClient')
-            FrameLayout    = autoclass('android.widget.FrameLayout')
-            LayoutParams   = autoclass('android.widget.FrameLayout$LayoutParams')
+            Intent = autoclass('android.content.Intent')
+            Uri    = autoclass('android.net.Uri')
             PythonActivity = autoclass('org.kivy.android.PythonActivity')
 
             @run_on_ui_thread
             def _do():
-                try:
-                    activity = PythonActivity.mActivity
+                activity = PythonActivity.mActivity
+                intent = Intent(Intent.ACTION_VIEW, Uri.parse("http://127.0.0.1:5000"))
+                activity.startActivity(intent)
 
-                    # Cria um FrameLayout que ocupa a tela toda
-                    frame = FrameLayout(activity)
-                    lp_fill = LayoutParams(
-                        LayoutParams.MATCH_PARENT,
-                        LayoutParams.MATCH_PARENT
-                    )
-
-                    wv = WebView(activity)
-                    s = wv.getSettings()
-                    s.setJavaScriptEnabled(True)
-                    s.setDomStorageEnabled(True)
-                    s.setAllowFileAccess(True)
-                    s.setAllowContentAccess(True)
-                    s.setMixedContentMode(0)
-                    wv.setWebViewClient(WebViewClient())
-                    wv.loadUrl("http://localhost:5000")
-
-                    frame.addView(wv, lp_fill)
-
-                    # Adiciona o frame na janela via setContentView
-                    activity.setContentView(frame)
-
-                except Exception:
-                    import traceback
-                    err = traceback.format_exc()
-                    _write_log('webview_error', err)
-                    Clock.schedule_once(
-                        lambda dt: setattr(status_label, 'text', '[ERRO WebView]\n' + err[:700]), 0
-                    )
             _do()
 
         except Exception:
@@ -129,7 +99,7 @@ def run_android():
             err = traceback.format_exc()
             _write_log('webview_import_error', err)
             Clock.schedule_once(
-                lambda dt: setattr(status_label, 'text', '[ERRO import]\n' + err[:700]), 0
+                lambda dt: setattr(status_label, 'text', '[ERRO]\n' + err[:700]), 0
             )
 
     def check_ready(dt):
