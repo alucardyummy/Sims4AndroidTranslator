@@ -18,6 +18,7 @@ android.archs = arm64-v8a
 android.logcat_filters = *:S python:D
 android.res = res/
 android.manifest.application_attributes = android:usesCleartextTraffic="true" android:networkSecurityConfig="@xml/network_security_config"
+p4a.hook = hook.py
 
 [buildozer]
 log_level = 2
