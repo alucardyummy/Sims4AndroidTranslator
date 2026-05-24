@@ -9,6 +9,7 @@ version = 1.3
 requirements = python3,kivy,flask,requests
 orientation = portrait
 fullscreen = 0
+android.add_src = java/
 android.permissions = INTERNET,WRITE_EXTERNAL_STORAGE,READ_EXTERNAL_STORAGE
 android.api = 33
 android.minapi = 21
