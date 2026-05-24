@@ -101,20 +101,13 @@ def run_android():
     def open_webview(dt):
         try:
             from android.runnable import run_on_ui_thread
-            from jnius import autoclass, PythonJavaClass, java_method
+            from jnius import autoclass
 
             WebView        = autoclass('android.webkit.WebView')
+            WebViewClient  = autoclass('android.webkit.WebViewClient')
             LayoutParams   = autoclass('android.widget.FrameLayout$LayoutParams')
             FrameLayout    = autoclass('android.widget.FrameLayout')
             PythonActivity = autoclass('org.kivy.android.PythonActivity')
-
-            class TrustingWebViewClient(PythonJavaClass):
-                __javainterfaces__ = ['android/webkit/WebViewClient']
-                __javacontext__ = 'app'
-
-                @java_method('(Landroid/webkit/WebView;Landroid/webkit/SslErrorHandler;Landroid/net/http/SslError;)V')
-                def onReceivedSslError(self, view, handler, error):
-                    handler.proceed()
 
             @run_on_ui_thread
             def _do():
@@ -128,7 +121,7 @@ def run_android():
                     s.setDomStorageEnabled(True)
                     s.setAllowFileAccess(True)
                     s.setAllowContentAccess(True)
-                    wv.setWebViewClient(TrustingWebViewClient())
+                    wv.setWebViewClient(WebViewClient())
                     wv.loadUrl("https://127.0.0.1:5000")
                     frame.addView(wv, lp)
                     activity.setContentView(frame)
