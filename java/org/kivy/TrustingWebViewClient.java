@@ -13,13 +13,13 @@ import android.net.http.SslError;
 
 public class TrustingWebViewClient extends WebViewClient {
 
-    @Override
+    @Override
 
-    public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
+    public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
 
-        handler.proceed();
+        handler.proceed();
 
-    }
+    }
 
 }
 
