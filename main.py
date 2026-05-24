@@ -22,11 +22,17 @@ def _write_log(name, text):
 
 
 def get_cert_paths():
-    base = os.path.dirname(os.path.abspath(__file__))
-    return (
-        os.path.join(base, 'certs', 'cert.pem'),
-        os.path.join(base, 'certs', 'key.pem')
-    )
+    candidates = [
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), 'certs'),
+        '/data/data/com.alucardyummy.sims4translator/files/app/certs',
+        '/data/data/com.alucardyummy.sims4translator/files/certs',
+    ]
+    for d in candidates:
+        cert = os.path.join(d, 'cert.pem')
+        key  = os.path.join(d, 'key.pem')
+        if os.path.exists(cert) and os.path.exists(key):
+            return cert, key
+    raise FileNotFoundError('Certs nao encontrados. Tentados: ' + str(candidates))
 
 
 def run_termux():
