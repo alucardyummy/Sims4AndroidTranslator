@@ -39,8 +39,8 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.0
-          name: "Sims 4 Translator v1.0"
+          tag_name: v1.1
+          name: "Sims 4 Translator v1.1"
           body: |
             ## Sims 4 Translator — App para Android
 

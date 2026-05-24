@@ -31,7 +31,7 @@ def run_termux():
             import app as flask_app
             flask_app.TEMPLATE_DIR = os.path.join(base, 'templates')
             flask_app.app.template_folder = flask_app.TEMPLATE_DIR
-            flask_app.app.run(host="127.0.0.1", port=5000, debug=False, use_reloader=False)
+            flask_app.app.run(host="localhost", port=5000, debug=False, use_reloader=False)
         except Exception:
             import traceback; print(traceback.format_exc())
 
@@ -69,7 +69,7 @@ def run_android():
             flask_app.TEMPLATE_DIR = os.path.join(base, 'templates')
             flask_app.app.template_folder = flask_app.TEMPLATE_DIR
             flask_ready.set()
-            flask_app.app.run(host="127.0.0.1", port=5000, debug=False, use_reloader=False)
+            flask_app.app.run(host="localhost", port=5000, debug=False, use_reloader=False)
         except Exception:
             import traceback
             err = traceback.format_exc()
@@ -108,7 +108,7 @@ def run_android():
                     s.setAllowContentAccess(True)
                     s.setMixedContentMode(0)
                     wv.setWebViewClient(WebViewClient())
-                    wv.loadUrl("http://127.0.0.1:5000")
+                    wv.loadUrl("http://localhost:5000")
 
                     frame.addView(wv, lp_fill)
 
