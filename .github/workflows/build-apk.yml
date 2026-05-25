@@ -5,60 +5,27 @@ on:
     branches: [ main, master ]
   workflow_dispatch:
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   build:
     runs-on: ubuntu-22.04
-    timeout-minutes: 90
+    timeout-minutes: 120
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
-
-      - name: Set up Python 3.10
-        uses: actions/setup-python@v6
-        with:
-          python-version: '3.10'
-
-      - name: Cache Buildozer global
-        uses: actions/cache@v5
-        with:
-          path: ~/.buildozer
-          key: buildozer-${{ runner.os }}-${{ hashFiles('buildozer.spec') }}
-          restore-keys: buildozer-${{ runner.os }}-
-
-      - name: Cache Buildozer local
-        uses: actions/cache@v5
-        with:
-          path: .buildozer
-          key: buildozer-local-${{ runner.os }}-${{ hashFiles('buildozer.spec') }}
-          restore-keys: buildozer-local-${{ runner.os }}-
-
-      - name: Instalar dependencias do sistema
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends \
-            git zip unzip wget \
-            openjdk-17-jdk \
-            libffi-dev libssl-dev python3-dev \
-            build-essential ccache \
-            autoconf libtool pkg-config
-
-      - name: Instalar Buildozer e Cython
-        run: |
-          pip install --upgrade pip
-          pip install buildozer==1.5.0 cython==0.29.36
+        uses: actions/checkout@v4
 
       - name: Build APK
-        run: "buildozer -v android debug 2>&1"
+        uses: ArtemSBulgakov/buildozer-action@v1
+        id: buildozer
+        with:
+          command: android debug
+          buildozer_version: stable
 
       - name: Upload APK
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v4
         with:
           name: sims4translator-apk
-          path: bin/*.apk
+          path: ${{ steps.buildozer.outputs.filename }}
           retention-days: 30
 
       - name: Criar Release
@@ -68,16 +35,15 @@ jobs:
           name: "Sims 4 Translator v1.4.${{ github.run_number }}"
           body: |
             ## Sims 4 Translator — App Android
-
             Traducao de mods .package do The Sims 4 direto pelo celular.
 
             ### Como instalar
             1. Baixe o `.apk` abaixo
             2. Android: Configuracoes > Seguranca > Fontes desconhecidas
-            3. Abra o `.apk` e instale
+            3. Abra e instale
 
             Baseado em voky1/sims4-translator (MIT)
             Interface mobile por AlucardYummy
-          files: bin/*.apk
+          files: ${{ steps.buildozer.outputs.filename }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
