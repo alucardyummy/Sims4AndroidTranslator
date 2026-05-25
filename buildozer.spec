@@ -7,9 +7,7 @@ source.include_exts = py,png,jpg,kv,atlas,html,json,xml,pem
 source.include_patterns = templates/*.html,packer/*.py,singletons/*.py,prefs/languages.xml,img/*.png
 source.exclude_dirs = .github,__pycache__,.buildozer,bin,certs,java
 version = 1.4
-requirements = python3==3.10,kivy==2.2.1,flask,werkzeug,click,itsdangerous,jinja2,markupsafe,requests
-p4a.url = https://github.com/kivy/python-for-android.git
-p4a.branch = 2024.01.21
+requirements = python3==3,kivy==2.2.1,flask,werkzeug,click,itsdangerous,jinja2,markupsafe,requests
 orientation = portrait
 fullscreen = 0
 icon.filename = %(source.dir)s/img/icon-inicio.png
