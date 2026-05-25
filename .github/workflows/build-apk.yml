@@ -5,6 +5,9 @@ on:
     branches: [ main, master ]
   workflow_dispatch:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   build:
     runs-on: ubuntu-22.04
@@ -12,30 +15,28 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Python 3.10
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.10'
 
-      - name: Cache Buildozer (global)
-        uses: actions/cache@v4
+      - name: Cache Buildozer global
+        uses: actions/cache@v5
         with:
           path: ~/.buildozer
           key: buildozer-${{ runner.os }}-${{ hashFiles('buildozer.spec') }}
-          restore-keys: |
-            buildozer-${{ runner.os }}-
+          restore-keys: buildozer-${{ runner.os }}-
 
-      - name: Cache Buildozer (local)
-        uses: actions/cache@v4
+      - name: Cache Buildozer local
+        uses: actions/cache@v5
         with:
           path: .buildozer
           key: buildozer-local-${{ runner.os }}-${{ hashFiles('buildozer.spec') }}
-          restore-keys: |
-            buildozer-local-${{ runner.os }}-
+          restore-keys: buildozer-local-${{ runner.os }}-
 
-      - name: Instalar dependências do sistema
+      - name: Instalar dependencias do sistema
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends \
@@ -54,7 +55,7 @@ jobs:
         run: "buildozer -v android debug 2>&1"
 
       - name: Upload APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: sims4translator-apk
           path: bin/*.apk
@@ -68,15 +69,14 @@ jobs:
           body: |
             ## Sims 4 Translator — App Android
 
-            Tradução de mods .package do The Sims 4 direto pelo celular.
+            Traducao de mods .package do The Sims 4 direto pelo celular.
 
             ### Como instalar
             1. Baixe o `.apk` abaixo
-            2. Android: **Configurações → Segurança → Fontes desconhecidas**
+            2. Android: Configuracoes > Seguranca > Fontes desconhecidas
             3. Abra o `.apk` e instale
 
-            ---
-            Baseado em [voky1/sims4-translator](https://github.com/voky1/sims4-translator) · MIT
+            Baseado em voky1/sims4-translator (MIT)
             Interface mobile por AlucardYummy
           files: bin/*.apk
         env:
