@@ -9,9 +9,6 @@ jobs:
   build:
     runs-on: ubuntu-22.04
     timeout-minutes: 90
-    
-    permissions:
-      contents: write
 
     steps:
       - name: Checkout
@@ -48,14 +45,13 @@ jobs:
             build-essential ccache \
             autoconf libtool pkg-config
 
-            - name: Instalar Buildozer e Cython
+      - name: Instalar Buildozer e Cython
         run: |
           pip install --upgrade pip
-          pip install buildozer==1.5.0 "cython<3.1.0"
-
+          pip install buildozer==1.5.0 cython==0.29.36
 
       - name: Build APK
-        run: yes | buildozer -v android debug 2>&1
+        run: "buildozer -v android debug 2>&1"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
