@@ -108,7 +108,7 @@
 <div class="success-sheet" id="success-sheet">
   <div class="success-inner">
     <div class="success-icon">✦</div>
-    <div class="success-title">Package salvo!</div>
+    <div class="success-title">Clique abaixo para salvar sua tradução!</div>
     <div class="success-sub" id="success-sub">—</div>
     <div class="success-downloads-note" id="downloads-note"></div>
     <div class="success-downloads-note" id="downloads-note"></div>
@@ -193,10 +193,7 @@ async function save() {
     document.getElementById('loading').classList.remove('active');
     if (data.success) {
       document.getElementById('success-sub').textContent = data.output_name;
-      document.getElementById('downloads-note').textContent =
-        data.saved_to_downloads
-          ? '✓ Salvo automaticamente em Downloads'
-          : '⚠ Não foi possível salvar em Downloads';
+      document.getElementById('downloads-note').textContent = '';
       document.getElementById('success-sheet').classList.add('open');
     } else {
       alert('Erro ao salvar: ' + (data.error || 'desconhecido'));
