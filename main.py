@@ -61,32 +61,22 @@ def run_termux():
 
 def run_android():
     from kivy.app import App
-    from kivy.uix.image import Image
-    from kivy.uix.floatlayout import FloatLayout
     from kivy.clock import Clock
     from kivy.core.window import Window
 
+    _write_log('startup', 'Iniciando app...')
     base_path = os.path.dirname(os.path.abspath(__file__))
-    
-    splash = Image(
-        source=os.path.join(base_path, 'img', 'icon-inicio.png'),
-        size_hint=(None, None),
-        size=(180, 180),
-        pos_hint={'center_x': 0.5, 'center_y': 0.5}
-    )
-    
-    layout = FloatLayout()
-    layout.add_widget(splash)
-
     flask_ready = threading.Event()
     flask_error = {'msg': None}
 
     def flask_thread():
         try:
+            _write_log('flask', 'Flask thread iniciado')
             import app as flask_app
             flask_app.TEMPLATE_DIR = os.path.join(base_path, 'templates')
             flask_app.app.template_folder = flask_app.TEMPLATE_DIR
             cert_path, key_path = get_cert_paths()
+            _write_log('flask', 'Certs encontrados: ' + cert_path)
             flask_ready.set()
             flask_app.app.run(
                 host="127.0.0.1", port=5000,
@@ -101,6 +91,7 @@ def run_android():
             _write_log('flask_error', err)
 
     def open_webview(dt):
+        _write_log('webview', 'open_webview chamado')
         if flask_error['msg']:
             _write_log('startup_error', flask_error['msg'])
             return
@@ -109,6 +100,7 @@ def run_android():
             from android.runnable import run_on_ui_thread
             from jnius import autoclass, PythonJavaClass, java_method
 
+            _write_log('webview', 'Importando classes Android')
             WebView = autoclass('android.webkit.WebView')
             LayoutParams = autoclass('android.widget.FrameLayout$LayoutParams')
             FrameLayout = autoclass('android.widget.FrameLayout')
@@ -129,6 +121,7 @@ def run_android():
             @run_on_ui_thread
             def _do():
                 try:
+                    _write_log('webview', 'Criando WebView na UI thread')
                     activity = PythonActivity.mActivity
                     frame = FrameLayout(activity)
                     lp = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
@@ -143,10 +136,13 @@ def run_android():
                     TrustingClient = autoclass('org.kivy.TrustingWebViewClient')
                     wv.setWebViewClient(TrustingClient())
                     wv.setWebChromeClient(FileChooserClient())
+                    
+                    _write_log('webview', 'Carregando URL')
                     wv.loadUrl("https://127.0.0.1:5000")
                     
                     frame.addView(wv, lp)
                     activity.setContentView(frame)
+                    _write_log('webview', 'WebView adicionado com sucesso')
                 except Exception:
                     import traceback
                     err = traceback.format_exc()
@@ -160,6 +156,7 @@ def run_android():
 
     def check_ready(dt):
         if flask_ready.is_set():
+            _write_log('startup', 'Flask pronto, abrindo WebView')
             Clock.schedule_once(open_webview, 0.5)
             return False
 
@@ -168,7 +165,8 @@ def run_android():
             Window.clearcolor = (0.06, 0.06, 0.06, 1)
             threading.Thread(target=flask_thread, daemon=True).start()
             Clock.schedule_interval(check_ready, 0.5)
-            return layout
+            from kivy.uix.label import Label
+            return Label(text='')
 
     Sims4App().run()
 
