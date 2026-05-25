@@ -1,3 +1,9 @@
+- name: Clean caches
+  run: |
+    rm -rf .buildozer
+    rm -rf ~/.buildozer
+    rm -rf ~/.gradle/caches
+
 name: Build APK
 
 on:
@@ -7,7 +13,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     timeout-minutes: 120
 
     steps:
@@ -23,21 +29,19 @@ jobs:
           distribution: temurin
           java-version: '11'
 
-      - name: Cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.buildozer
-            ~/.gradle
-          key: build-${{ hashFiles('buildozer.spec') }}
+      - name: Clean caches
+       run: |
+    rm -rf .buildozer
+    rm -rf ~/.buildozer
 
       - name: Dependencias
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y git zip unzip \
-            libffi-dev libssl-dev python3-dev \
-            build-essential ccache
-          pip install buildozer==1.5.0 cython==0.29.36
+       run: |
+    sudo apt-get update -qq
+    sudo apt-get install -y git zip unzip \
+      libffi-dev libssl-dev python3-dev \
+      build-essential ccache
+
+    pip install cython==0.29.33 buildozer
 
       - name: Build
         run: "buildozer android debug 2>&1"
