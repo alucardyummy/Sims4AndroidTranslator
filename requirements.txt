@@ -1,7 +1,2 @@
 flask
-werkzeug
-click
-itsdangerous
-jinja2
-markupsafe
 requests
