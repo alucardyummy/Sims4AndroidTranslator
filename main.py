@@ -1,22 +1,3 @@
-from jnius import PythonJavaClass, java_method
-
-class FileChooserClient(PythonJavaClass):
-    __javainterfaces__ = ['android/webkit/WebChromeClient']
-    __javacontext__ = 'app'
-    
-    @java_method('(Landroid/webkit/WebView;Landroid/webkit/ValueCallback;Landroid/webkit/WebChromeClient$FileChooserParams;)Z')
-    def onShowFileChooser(self, webView, filePathCallback, fileChooserParams):
-        from jnius import autoclass
-        Intent = autoclass('android.content.Intent')
-        intent = Intent(Intent.ACTION_GET_CONTENT)
-        intent.setType("*/*")
-        activity.startActivityForResult(intent, 1)
-        return True
-
-wv.setWebChromeClient(FileChooserClient())
-
-
-main.py atual:
 import threading
 import os
 
@@ -80,30 +61,22 @@ def run_termux():
 
 def run_android():
     from kivy.app import App
-    from kivy.uix.boxlayout import BoxLayout
-    from kivy.uix.label import Label
     from kivy.clock import Clock
     from kivy.core.window import Window
 
-    status_label = Label(
-        text='Iniciando...',
-        font_size='10sp',
-        color=(0.8, 0.7, 0.4, 1),
-        halign='left', valign='top',
-        size_hint=(1, 1),
-    )
-    status_label.bind(size=lambda s, w: setattr(s, 'text_size', w))
-
+    _write_log('startup', 'Iniciando app...')
+    base_path = os.path.dirname(os.path.abspath(__file__))
     flask_ready = threading.Event()
     flask_error = {'msg': None}
 
     def flask_thread():
         try:
-            base = os.path.dirname(os.path.abspath(__file__))
+            _write_log('flask', 'Flask thread iniciado')
             import app as flask_app
-            flask_app.TEMPLATE_DIR = os.path.join(base, 'templates')
+            flask_app.TEMPLATE_DIR = os.path.join(base_path, 'templates')
             flask_app.app.template_folder = flask_app.TEMPLATE_DIR
             cert_path, key_path = get_cert_paths()
+            _write_log('flask', 'Certs encontrados: ' + cert_path)
             flask_ready.set()
             flask_app.app.run(
                 host="127.0.0.1", port=5000,
@@ -118,70 +91,82 @@ def run_android():
             _write_log('flask_error', err)
 
     def open_webview(dt):
+        _write_log('webview', 'open_webview chamado')
+        if flask_error['msg']:
+            _write_log('startup_error', flask_error['msg'])
+            return
+
         try:
             from android.runnable import run_on_ui_thread
-            from jnius import autoclass
+            from jnius import autoclass, PythonJavaClass, java_method
 
-            WebView        = autoclass('android.webkit.WebView')
-            WebViewClient  = autoclass('android.webkit.WebViewClient')
-            LayoutParams   = autoclass('android.widget.FrameLayout$LayoutParams')
-            FrameLayout    = autoclass('android.widget.FrameLayout')
+            _write_log('webview', 'Importando classes Android')
+            WebView = autoclass('android.webkit.WebView')
+            LayoutParams = autoclass('android.widget.FrameLayout$LayoutParams')
+            FrameLayout = autoclass('android.widget.FrameLayout')
             PythonActivity = autoclass('org.kivy.android.PythonActivity')
+
+            class FileChooserClient(PythonJavaClass):
+                __javainterfaces__ = ['android/webkit/WebChromeClient']
+                __javacontext__ = 'app'
+                
+                @java_method('(Landroid/webkit/WebView;Landroid/webkit/ValueCallback;Landroid/webkit/WebChromeClient$FileChooserParams;)Z')
+                def onShowFileChooser(self, webView, filePathCallback, fileChooserParams):
+                    Intent = autoclass('android.content.Intent')
+                    intent = Intent(Intent.ACTION_GET_CONTENT)
+                    intent.setType("*/*")
+                    PythonActivity.mActivity.startActivityForResult(intent, 1)
+                    return True
 
             @run_on_ui_thread
             def _do():
                 try:
+                    _write_log('webview', 'Criando WebView na UI thread')
                     activity = PythonActivity.mActivity
                     frame = FrameLayout(activity)
                     lp = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
                     wv = WebView(activity)
+                    
                     s = wv.getSettings()
                     s.setJavaScriptEnabled(True)
                     s.setDomStorageEnabled(True)
                     s.setAllowFileAccess(True)
                     s.setAllowContentAccess(True)
+                    
                     TrustingClient = autoclass('org.kivy.TrustingWebViewClient')
                     wv.setWebViewClient(TrustingClient())
+                    wv.setWebChromeClient(FileChooserClient())
+                    
+                    _write_log('webview', 'Carregando URL')
                     wv.loadUrl("https://127.0.0.1:5000")
+                    
                     frame.addView(wv, lp)
                     activity.setContentView(frame)
+                    _write_log('webview', 'WebView adicionado com sucesso')
                 except Exception:
                     import traceback
                     err = traceback.format_exc()
                     _write_log('webview_error', err)
-                    Clock.schedule_once(
-                        lambda dt: setattr(status_label, 'text', '[ERRO WebView]\n' + err), 0
-                    )
             _do()
 
         except Exception:
             import traceback
             err = traceback.format_exc()
             _write_log('webview_import_error', err)
-            Clock.schedule_once(
-                lambda dt: setattr(status_label, 'text', '[ERRO]\n' + err), 0
-            )
 
     def check_ready(dt):
         if flask_ready.is_set():
-            if flask_error['msg']:
-                status_label.text = '[ERRO Flask]\n' + flask_error['msg']
-            else:
-                status_label.text = 'Servidor pronto! Abrindo...'
-                Clock.schedule_once(open_webview, 0.3)
+            _write_log('startup', 'Flask pronto, abrindo WebView')
+            Clock.schedule_once(open_webview, 0.5)
             return False
-
-    class MainWidget(BoxLayout):
-        def __init__(self, **kwargs):
-            super().__init__(orientation='vertical', **kwargs)
-            self.add_widget(status_label)
-            threading.Thread(target=flask_thread, daemon=True).start()
-            Clock.schedule_interval(check_ready, 0.5)
 
     class Sims4App(App):
         def build(self):
             Window.clearcolor = (0.06, 0.06, 0.06, 1)
-            return MainWidget()
+            threading.Thread(target=flask_thread, daemon=True).start()
+            Clock.schedule_interval(check_ready, 0.5)
+            from kivy.uix.label import Label
+            return Label(text='')
 
     Sims4App().run()
 
