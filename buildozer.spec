@@ -2,26 +2,18 @@
 title = Sims 4 Translator
 package.name = sims4translator
 package.domain = com.alucardyummy
-
 source.dir = .
 source.include_exts = py,png,jpg,kv,atlas,html,json,xml,pem
 source.include_patterns = templates/*.html,packer/*.py,singletons/*.py,prefs/languages.xml,img/*.png
 source.exclude_dirs = .github,__pycache__,.buildozer,bin,certs,java
-
 version = 1.4
-
-# Todas as dependências do Flask listadas explicitamente
-requirements = python3,kivy==2.3.0,flask,werkzeug,click,itsdangerous,jinja2,markupsafe,requests
-
+requirements = python3,kivy,flask,werkzeug,click,itsdangerous,jinja2,markupsafe,requests
 orientation = portrait
 fullscreen = 0
-
 icon.filename = %(source.dir)s/img/icon-inicio.png
 presplash.filename = %(source.dir)s/img/icon-inicio.png
 presplash.color = #0f0f0f
-
 android.permissions = INTERNET,WRITE_EXTERNAL_STORAGE,READ_EXTERNAL_STORAGE
-
 android.api = 33
 android.minapi = 24
 android.ndk = 25b
