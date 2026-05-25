@@ -7,7 +7,7 @@ source.include_exts = py,png,jpg,kv,atlas,html,json,xml
 source.include_patterns = templates/*.html,packer/*.py,singletons/*.py,prefs/languages.xml,img/*.png
 source.exclude_dirs = .github,__pycache__,.buildozer,bin,certs,java
 version = 1.4
-requirements = python3,kivy==2.3.0,flask,werkzeug,click,itsdangerous,jinja2,markupsafe,requests
+requirements = python3,kivy==2.2.1,flask,werkzeug,click,itsdangerous,jinja2,markupsafe,requests
 orientation = portrait
 fullscreen = 0
 icon.filename = %(source.dir)s/img/icon-inicio.png
