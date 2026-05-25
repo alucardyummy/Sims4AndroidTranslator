@@ -235,6 +235,4 @@ def download():
     return send_file(output_path, as_attachment=True, download_name=output_name)
 
 
-if __name__ == "__main__":
-    os.makedirs("templates", exist_ok=True)
-    app.run(host="0.0.0.0", port=5000, debug=False, use_reloader=False)
+sed -i 's/app.run(host="0.0.0.0", port=5000, debug=False, use_reloader=False)/port = int(os.environ.get("PORT", 5000))\n    app.run(host="0.0.0.0", port=port, debug=False, use_reloader=False)/' app.py
