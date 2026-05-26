@@ -6,16 +6,25 @@ from packer.dbpf import DbpfPackage
 from packer.stbl import Stbl
 import os
 import tempfile
+import uuid
+from werkzeug.security import generate_password_hash, check_password_hash
+import db
 
-# Caminho base: funciona tanto no Termux quanto dentro do APK
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMPLATE_DIR = os.path.join(BASE_DIR, 'templates')
 
-app = Flask(__name__, template_folder=TEMPLATE_DIR)
+app = Flask(__name__, 
+            template_folder=TEMPLATE_DIR, 
+            static_folder=os.path.join(BASE_DIR, 'img'), 
+            static_url_path='/img')
 app.secret_key = "sims4translator_secret"
 
 UPLOAD_FOLDER = tempfile.gettempdir()
 
+@app.before_request
+def ensure_guest_session():
+    if 'user_id' not in session and 'guest_session_id' not in session:
+        session['guest_session_id'] = str(uuid.uuid4())
 
 def load_stbl(pkg, rid):
     """Carrega um STBL e popula _strings corretamente."""
