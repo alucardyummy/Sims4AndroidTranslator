@@ -29,7 +29,7 @@
   .count-badge { font-size: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 3px 8px; color: var(--text-muted); font-family: 'DM Mono', monospace; flex-shrink: 0; }
   .col-headers { display: grid; grid-template-columns: 86px 1fr 1fr 40px; gap: 6px; padding: 7px 1rem; border-bottom: 1px solid var(--border); flex-shrink: 0; background: var(--bg); }
   .col-header { font-size: 9px; color: var(--text-dim); letter-spacing: 0.08em; text-transform: uppercase; }
-  .strings-list { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .strings-list { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: 80px; }
   .string-row { display: grid; grid-template-columns: 86px 1fr 1fr 40px; gap: 6px; padding: 8px 1rem; border-bottom: 1px solid var(--border); align-items: start; }
   .key-hex { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text-muted); padding-top: 8px; word-break: break-all; line-height: 1.5; }
   .original-text { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 7px 9px; font-size: 12px; color: var(--text-muted); line-height: 1.5; word-break: break-word; font-style: italic; min-height: 36px; }
@@ -69,9 +69,35 @@
   .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 3rem 2rem; gap: 0.75rem; }
   .empty-icon { font-size: 32px; opacity: 0.3; }
   .empty-text { font-size: 13px; color: var(--text-muted); text-align: center; }
-  .engine-menu { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--surface); border: 1px solid var(--accent-dim); border-radius: 12px; z-index: 500; box-shadow: 0 10px 30px rgba(0,0,0,0.8); min-width: 180px; overflow: hidden; }
-.engine-menu button { display: block; width: 100%; padding: 10px 12px; background: none; border: none; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 12px; cursor: pointer; text-align: left; border-bottom: 1px solid var(--border); }
-.engine-menu button:hover { background: var(--surface2); color: var(--accent); }
+
+  /* NOVO CSS PARA O MENU DE TRADUÇÃO */
+  .engine-menu {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--surface);
+    border: 1px solid var(--accent-dim);
+    border-radius: 12px;
+    z-index: 500;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+    min-width: 180px;
+    overflow: hidden;
+  }
+  .engine-option {
+    padding: 12px 16px;
+    color: var(--text);
+    font-size: 13px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border);
+  }
+  .engine-option:last-child {
+    border-bottom: none;
+  }
+  .engine-option:hover, .engine-option:active {
+    background: var(--surface2);
+  }
 </style>
 </head>
 <body>
@@ -127,17 +153,17 @@
   </div>
 </div>
 
-<div id="engine-menu" class="engine-menu">
-  <button onclick="translateString(currentIdx, 'google')">Google</button>
-  <button onclick="translateString(currentIdx, 'gpt')">GPT-4o Mini</button>
-  <button onclick="translateString(currentIdx, 'groq')">Groq (Llama)</button>
+<div class="engine-menu" id="engine-menu">
+  <div class="engine-option" onclick="processTranslation('google')">Google</div>
+  <div class="engine-option" onclick="processTranslation('gpt-4o mini')">GPT-4o Mini</div>
+  <div class="engine-option" onclick="processTranslation('groq (llama)')">Groq (Llama)</div>
 </div>
 
 <script>
 let stringsData = [];
 let instanceStr  = sessionStorage.getItem('selected_instance_str') || '';
 let targetLang   = sessionStorage.getItem('target_lang') || 'POR_BR';
-let originalLang = sessionStorage.getItem('original_lang') || '?';
+let originalLang = sessionStorage.getItem('original_lang') || 'ENG_US';
 let currentIdx = null;
 
 function autoResize(el) {
@@ -146,13 +172,12 @@ function autoResize(el) {
 }
 
 function showEngineMenu(idx, event) {
-  if (event) event.stopPropagation(); // IMPEDE o menu de fechar sozinho no mesmo milissegundo
+  if (event) event.stopPropagation(); 
   
   currentIdx = idx;
   const menu = document.getElementById('engine-menu');
   menu.style.display = 'block';
   
-  // Fecha o menu se clicar em qualquer lugar fora dele
   setTimeout(() => {
     document.addEventListener('click', function closeMenu(e) {
       if (!menu.contains(e.target)) {
@@ -163,10 +188,11 @@ function showEngineMenu(idx, event) {
   }, 50);
 }
 
-
-async function translateString(idx, engine) {
+async function processTranslation(engine) {
   document.getElementById('engine-menu').style.display = 'none';
+  if (currentIdx === null) return;
   
+  const idx = currentIdx;
   const btn = document.querySelector(`[data-translate-idx="${idx}"]`);
   const textarea = document.querySelector(`[data-idx="${idx}"]`);
   const originalText = stringsData[idx].value;
@@ -177,16 +203,17 @@ async function translateString(idx, engine) {
   btn.innerHTML = '◌';
   
   try {
-      const res = await fetch('/api/translate', {
+    const res = await fetch('/api/translate', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
         text: originalText,
         engine: engine,
-        source_lang: originalLang, // Envia o idioma original (ex: ENG_US)
-        target_lang: targetLang    // Envia o idioma que o usuário escolheu traduzir (ex: GER_DE)
+        source_lang: originalLang,
+        target_lang: targetLang
       })
     });
+    
     const data = await res.json();
     
     if (data.success && data.translated) {
@@ -296,3 +323,4 @@ load();
 </script>
 </body>
 </html>
+
