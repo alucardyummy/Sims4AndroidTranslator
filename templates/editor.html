@@ -146,6 +146,8 @@ function autoResize(el) {
 }
 
 function showEngineMenu(idx, event) {
+  event.stopPropagation(); 
+  
   currentIdx = idx;
   const menu = document.getElementById('engine-menu');
   menu.style.left = (event.clientX + 10) + 'px';
@@ -159,6 +161,7 @@ function showEngineMenu(idx, event) {
     }
   }, { once: true });
 }
+
 
 async function translateString(idx, engine) {
   document.getElementById('engine-menu').style.display = 'none';
