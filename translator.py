@@ -1,4 +1,4 @@
-import os
+Import os
 import requests
 from openai import OpenAI
 from dotenv import load_dotenv
@@ -109,9 +109,8 @@ class Translator:
             )
             translated_text = response.choices[0].message.content.strip()
             return {'status_code': 200, 'text': translated_text}
-                except Exception as e:
-            print(f"\n🚨 MOTIVO DO ERRO ({model_name}): {str(e)}\n")
+        except Exception as e:
+            print(f"\n🚨 MOTIVO DO ERRO ({model_name}): {str(e)}\n") 
             return {'status_code': 500, 'text': f"LLM ({model_name}) Error: {str(e)}"}
 
 translator = Translator()
-
