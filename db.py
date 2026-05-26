@@ -18,7 +18,7 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT UNIQUE NOT NULL,
             password_hash TEXT NOT NULL,
-            profile_pic TEXT DEFAULT 'icon-pf.webp'
+            profile_pic TEXT DEFAULT 'img/icon-pf.webp'
         )
     ''')
     
