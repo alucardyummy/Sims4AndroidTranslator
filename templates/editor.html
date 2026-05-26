@@ -69,7 +69,7 @@
   .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 3rem 2rem; gap: 0.75rem; }
   .empty-icon { font-size: 32px; opacity: 0.3; }
   .empty-text { font-size: 13px; color: var(--text-muted); text-align: center; }
-  .engine-menu { display: none; position: fixed; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; z-index: 500; box-shadow: 0 4px 12px rgba(0,0,0,0.5); min-width: 120px; overflow: hidden; }
+  .engine-menu { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--surface); border: 1px solid var(--accent-dim); border-radius: 12px; z-index: 500; box-shadow: 0 10px 30px rgba(0,0,0,0.8); min-width: 180px; overflow: hidden; }
 .engine-menu button { display: block; width: 100%; padding: 10px 12px; background: none; border: none; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 12px; cursor: pointer; text-align: left; border-bottom: 1px solid var(--border); }
 .engine-menu button:hover { background: var(--surface2); color: var(--accent); }
 </style>
@@ -146,20 +146,21 @@ function autoResize(el) {
 }
 
 function showEngineMenu(idx, event) {
-  event.stopPropagation(); 
+  if (event) event.stopPropagation(); // IMPEDE o menu de fechar sozinho no mesmo milissegundo
   
   currentIdx = idx;
   const menu = document.getElementById('engine-menu');
-  menu.style.left = (event.clientX + 10) + 'px';
-  menu.style.top = (event.clientY + 10) + 'px';
   menu.style.display = 'block';
   
-  document.addEventListener('click', function closeMenu(e) {
-    if (!menu.contains(e.target)) {
-      menu.style.display = 'none';
-      document.removeEventListener('click', closeMenu);
-    }
-  }, { once: true });
+  // Fecha o menu se clicar em qualquer lugar fora dele
+  setTimeout(() => {
+    document.addEventListener('click', function closeMenu(e) {
+      if (!menu.contains(e.target)) {
+        menu.style.display = 'none';
+        document.removeEventListener('click', closeMenu);
+      }
+    }, { once: true });
+  }, 50);
 }
 
 
@@ -176,12 +177,14 @@ async function translateString(idx, engine) {
   btn.innerHTML = '◌';
   
   try {
-    const res = await fetch('/api/translate', {
+      const res = await fetch('/api/translate', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
         text: originalText,
-        engine: engine // Usa a engine escolhida no menu
+        engine: engine,
+        source_lang: originalLang, // Envia o idioma original (ex: ENG_US)
+        target_lang: targetLang    // Envia o idioma que o usuário escolheu traduzir (ex: GER_DE)
       })
     });
     const data = await res.json();

@@ -244,10 +244,13 @@ def api_translate():
     text = data.get("text", "")
     engine = data.get("engine", "google")
     
+    source_lang = data.get("source_lang", "ENG_US")
+    target_lang = data.get("target_lang", "POR_BR")
+    
     if not text:
         return json.dumps({"error": "No text provided"}), 400
     
-    result = translator.translate(engine, text, source_lang='en', target_lang='pt')
+    result = translator.translate(engine, text, source_lang=source_lang, target_lang=target_lang)
     
     return json.dumps({
         "success": result['status_code'] == 200,
