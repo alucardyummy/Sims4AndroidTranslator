@@ -235,6 +235,27 @@ def download():
     return send_file(output_path, as_attachment=True, download_name=output_name)
 
 
+@app.route("/api/translate", methods=["POST"])
+def api_translate():
+    import json
+    from translator import translator
+    
+    data = request.get_json()
+    text = data.get("text", "")
+    engine = data.get("engine", "google")
+    
+    if not text:
+        return json.dumps({"error": "No text provided"}), 400
+    
+    result = translator.translate(engine, text, source_lang='en', target_lang='pt')
+    
+    return json.dumps({
+        "success": result['status_code'] == 200,
+        "translated": result['text'] if result['status_code'] == 200 else None,
+        "error": result['text'] if result['status_code'] != 200 else None
+    })
+
+
 
 if __name__ == "__main__":
     os.makedirs("templates", exist_ok=True)
