@@ -69,6 +69,9 @@
   .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 3rem 2rem; gap: 0.75rem; }
   .empty-icon { font-size: 32px; opacity: 0.3; }
   .empty-text { font-size: 13px; color: var(--text-muted); text-align: center; }
+  .engine-menu { display: none; position: fixed; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; z-index: 500; box-shadow: 0 4px 12px rgba(0,0,0,0.5); min-width: 120px; overflow: hidden; }
+.engine-menu button { display: block; width: 100%; padding: 10px 12px; background: none; border: none; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 12px; cursor: pointer; text-align: left; border-bottom: 1px solid var(--border); }
+.engine-menu button:hover { background: var(--surface2); color: var(--accent); }
 </style>
 </head>
 <body>
@@ -124,18 +127,42 @@
   </div>
 </div>
 
+<div id="engine-menu" class="engine-menu">
+  <button onclick="translateString(currentIdx, 'google')">Google</button>
+  <button onclick="translateString(currentIdx, 'gpt')">GPT-4o Mini</button>
+  <button onclick="translateString(currentIdx, 'groq')">Groq (Llama)</button>
+</div>
+
 <script>
 let stringsData = [];
 let instanceStr  = sessionStorage.getItem('selected_instance_str') || '';
 let targetLang   = sessionStorage.getItem('target_lang') || 'POR_BR';
 let originalLang = sessionStorage.getItem('original_lang') || '?';
+let currentIdx = null;
 
 function autoResize(el) {
   el.style.height = 'auto';
   el.style.height = el.scrollHeight + 'px';
 }
 
-async function translateString(idx) {
+function showEngineMenu(idx, event) {
+  currentIdx = idx;
+  const menu = document.getElementById('engine-menu');
+  menu.style.left = (event.clientX + 10) + 'px';
+  menu.style.top = (event.clientY + 10) + 'px';
+  menu.style.display = 'block';
+  
+  document.addEventListener('click', function closeMenu(e) {
+    if (!menu.contains(e.target)) {
+      menu.style.display = 'none';
+      document.removeEventListener('click', closeMenu);
+    }
+  }, { once: true });
+}
+
+async function translateString(idx, engine) {
+  document.getElementById('engine-menu').style.display = 'none';
+  
   const btn = document.querySelector(`[data-translate-idx="${idx}"]`);
   const textarea = document.querySelector(`[data-idx="${idx}"]`);
   const originalText = stringsData[idx].value;
@@ -151,7 +178,7 @@ async function translateString(idx) {
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
         text: originalText,
-        engine: 'google'
+        engine: engine // Usa a engine escolhida no menu
       })
     });
     const data = await res.json();
@@ -217,7 +244,7 @@ function renderStrings() {
       '<div class="edit-container">' +
         '<textarea class="edit-textarea" data-idx="' + idx + '" rows="1">' + (item.value || '') + '</textarea>' +
       '</div>' +
-      '<div class="translate-btn" data-translate-idx="' + idx + '" onclick="translateString(' + idx + ')">◈</div>';
+      '<div class="translate-btn" data-translate-idx="' + idx + '" onclick="showEngineMenu(' + idx + ', event)">◈</div>';
     list.appendChild(row);
     const ta = row.querySelector('textarea');
     autoResize(ta);
