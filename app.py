@@ -1,6 +1,3 @@
-from dotenv import load_dotenv
-load_dotenv()
-
 from flask import Flask, request, redirect, send_file, session
 from packer.dbpf import DbpfPackage
 from packer.stbl import Stbl
