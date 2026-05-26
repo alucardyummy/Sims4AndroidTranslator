@@ -11,9 +11,6 @@ class Translator:
             'google': 'https://translate.googleapis.com/translate_a/single'
         }
         
-        self.openai_key = os.getenv("OPENAI_API_KEY")
-        self.openai_client = OpenAI(api_key=self.openai_key) if self.openai_key else None
-        
         self.groq_key = os.getenv("GROQ_API_KEY")
         if self.groq_key:
             self.groq_client = OpenAI(
@@ -54,11 +51,6 @@ class Translator:
         # Mapeamento flexível das engines para aceitar o que vier do HTML
         if 'google' in engine_clean:
             return self._translate_google(text, s_lang, t_lang)
-            
-        elif 'gpt' in engine_clean or 'mini' in engine_clean:
-            if not self.openai_client:
-                return {'status_code': 401, 'text': 'Chave API da OpenAI não configurada no .env'}
-            return self._translate_llm(self.openai_client, "gpt-4o-mini", text, t_lang_clean)
             
         elif 'groq' in engine_clean or 'llama' in engine_clean:
             if not self.groq_client:
