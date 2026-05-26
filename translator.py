@@ -27,8 +27,9 @@ class Translator:
         if not text or not text.strip():
             return {'status_code': 400, 'text': 'Texto vazio'}
 
-        # Dicionário inteligente para converter os códigos do The Sims 4
-        # para os códigos que o Google e as IAs entendem
+        # TRATAMENTO CRÍTICO: Deixa o nome da engine em minúsculo e remove espaços
+        engine_clean = str(engine).lower().strip()
+
         lang_map = {
             'ENG_US': 'en', 'ENG_UK': 'en',
             'FRE_FR': 'fr', 'GER_DE': 'de',
@@ -43,23 +44,29 @@ class Translator:
             'THA_TH': 'th'
         }
 
-        # Garante que os códigos fiquem em maiúsculo para bater com o dicionário
         s_lang_clean = str(source_lang).upper().strip()
         t_lang_clean = str(target_lang).upper().strip()
 
-        # Pega a conversão correta. Se não achar, usa 'en' para origem e 'pt' para destino como segurança
+        # Evita falhas se o front-end mandar algo inválido ou 'undefined'
         s_lang = lang_map.get(s_lang_clean, 'en')
         t_lang = lang_map.get(t_lang_clean, 'pt')
 
-        if engine == 'google':
+        # Mapeamento flexível das engines para aceitar o que vier do HTML
+        if 'google' in engine_clean:
             return self._translate_google(text, s_lang, t_lang)
-        elif engine == 'gpt' and self.openai_client:
-            # Passamos o idioma final no prompt para a IA saber para onde traduzir
+            
+        elif 'gpt' in engine_clean or 'mini' in engine_clean:
+            if not self.openai_client:
+                return {'status_code': 401, 'text': 'Chave API da OpenAI não configurada no .env'}
             return self._translate_llm(self.openai_client, "gpt-4o-mini", text, t_lang_clean)
-        elif engine == 'groq' and self.groq_client:
+            
+        elif 'groq' in engine_clean or 'llama' in engine_clean:
+            if not self.groq_client:
+                return {'status_code': 401, 'text': 'Chave API da Groq não configurada no .env'}
             return self._translate_llm(self.groq_client, "llama3-8b-8192", text, t_lang_clean)
+            
         else:
-            return {'status_code': 400, 'text': f'Engine "{engine}" não suportada ou chave faltando'}
+            return {'status_code': 400, 'text': f'Engine "{engine}" não reconhecida pelo sistema'}
 
     def _translate_google(self, text, source_lang, target_lang):
         try:
