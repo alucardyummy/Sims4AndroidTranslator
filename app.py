@@ -41,8 +41,17 @@ def ensure_guest_session():
 
 # --- CONFIGURAÇÃO DO BANCO DE DADOS EM NUVEM (POSTGRESQL) ---
 def get_db():
+
     db_url = os.environ.get("DATABASE_URL")
-    conn = psycopg2.connect(db_url)
+
+    if db_url and "sslmode" not in db_url:
+
+        separator = "&" if "?" in db_url else "?"
+
+        db_url += f"{separator}sslmode=require"
+
+    conn = psycopg2.connect(db_url, connect_timeout=5)
+
     return conn
 
 def init_db():
