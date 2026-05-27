@@ -8,9 +8,9 @@ import os
 import tempfile
 import uuid
 import json
-import sqlite3
+import psycopg2
+import psycopg2.extras
 from werkzeug.security import generate_password_hash, check_password_hash
-import db
 from datetime import timedelta
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -32,10 +32,46 @@ def ensure_guest_session():
         session['guest_session_id'] = str(uuid.uuid4())
 
 
+# --- CONFIGURAÇÃO DO BANCO DE DADOS EM NUVEM (POSTGRESQL) ---
 def get_db():
-    conn = sqlite3.connect(db.DB_PATH)
-    conn.row_factory = sqlite3.Row
+    # Pega a URL do banco de dados (no Neon.tech ou Supabase) configurada na Vercel
+    db_url = os.environ.get("DATABASE_URL")
+    conn = psycopg2.connect(db_url)
     return conn
+
+def init_db():
+    """Cria as tabelas no banco em nuvem caso elas ainda não existam."""
+    try:
+        conn = get_db()
+        c = conn.cursor()
+        c.execute('''
+            CREATE TABLE IF NOT EXISTS users (
+                id SERIAL PRIMARY KEY,
+                username VARCHAR(255) UNIQUE NOT NULL,
+                password_hash VARCHAR(255) NOT NULL,
+                profile_pic TEXT
+            );
+        ''')
+        c.execute('''
+            CREATE TABLE IF NOT EXISTS saves (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER REFERENCES users(id),
+                guest_session_id VARCHAR(255),
+                project_name VARCHAR(255),
+                source_lang VARCHAR(50),
+                target_lang VARCHAR(50),
+                translation_data TEXT,
+                last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        ''')
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print("Aviso ao iniciar DB:", e)
+
+# Roda a verificação de tabelas ao iniciar o app
+init_db()
+# ------------------------------------------------------------
 
 
 def load_stbl(pkg, rid):
@@ -49,7 +85,6 @@ def load_stbl(pkg, rid):
 
 @app.route("/")
 def home():
-    # Preserva login do usuário ao voltar para home
     user_id = session.get('user_id')
     guest_id = session.get('guest_session_id')
     session.clear()
@@ -153,7 +188,6 @@ def api_strings():
 
     pkg_path = session.get("package_path")
 
-    # Carregando de um save do banco de dados
     if pkg_path == "DATABASE_SAVE":
         db_strings = session.get("db_save_strings", [])
         return app.response_class(
@@ -200,7 +234,6 @@ def save():
 
     pkg_path = session.get("package_path")
 
-    # Save do banco: não tem arquivo original, só salva o progresso
     if pkg_path == "DATABASE_SAVE":
         return json.dumps({
             "success": True,
@@ -246,19 +279,10 @@ def save():
     session["output_path"] = output_path
     session["output_name"] = output_name
 
-    saved_to_downloads = False
-    downloads_dir = os.path.expanduser("~/storage/downloads")
-    if os.path.exists(downloads_dir):
-        try:
-            shutil.copy(output_path, os.path.join(downloads_dir, output_name))
-            saved_to_downloads = True
-        except Exception:
-            pass
-
     return json.dumps({
         "success":            True,
         "output_name":        output_name,
-        "saved_to_downloads": saved_to_downloads,
+        "saved_to_downloads": False,
     })
 
 
@@ -305,23 +329,23 @@ def save_progress():
     guest_id = session.get('guest_session_id')
 
     conn = get_db()
-    c = conn.cursor()
+    c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
     if user_id:
-        c.execute("SELECT id FROM saves WHERE user_id = ? AND project_name = ?", (user_id, project_name))
+        c.execute("SELECT id FROM saves WHERE user_id = %s AND project_name = %s", (user_id, project_name))
     else:
-        c.execute("SELECT id FROM saves WHERE guest_session_id = ? AND project_name = ?", (guest_id, project_name))
+        c.execute("SELECT id FROM saves WHERE guest_session_id = %s AND project_name = %s", (guest_id, project_name))
 
     existing_save = c.fetchone()
 
     if existing_save:
         c.execute(
-            "UPDATE saves SET translation_data = ?, last_updated = CURRENT_TIMESTAMP WHERE id = ?",
+            "UPDATE saves SET translation_data = %s, last_updated = CURRENT_TIMESTAMP WHERE id = %s",
             (translation_data, existing_save['id'])
         )
     else:
         c.execute(
-            "INSERT INTO saves (user_id, guest_session_id, project_name, source_lang, target_lang, translation_data) VALUES (?, ?, ?, ?, ?, ?)",
+            "INSERT INTO saves (user_id, guest_session_id, project_name, source_lang, target_lang, translation_data) VALUES (%s, %s, %s, %s, %s, %s)",
             (user_id, guest_id, project_name, source_lang, target_lang, translation_data)
         )
 
@@ -336,17 +360,22 @@ def get_saves():
     guest_id = session.get('guest_session_id')
 
     conn = get_db()
-    c = conn.cursor()
+    c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
     if user_id:
-        c.execute("SELECT id, project_name, source_lang, target_lang, last_updated FROM saves WHERE user_id = ? ORDER BY last_updated DESC", (user_id,))
+        c.execute("SELECT id, project_name, source_lang, target_lang, last_updated FROM saves WHERE user_id = %s ORDER BY last_updated DESC", (user_id,))
     else:
-        c.execute("SELECT id, project_name, source_lang, target_lang, last_updated FROM saves WHERE guest_session_id = ? ORDER BY last_updated DESC", (guest_id,))
+        c.execute("SELECT id, project_name, source_lang, target_lang, last_updated FROM saves WHERE guest_session_id = %s ORDER BY last_updated DESC", (guest_id,))
 
     rows = c.fetchall()
     conn.close()
 
     saves = [dict(row) for row in rows]
+    # Converte timestamp para string para serializar o JSON corretamente
+    for save in saves:
+        if 'last_updated' in save and save['last_updated']:
+            save['last_updated'] = str(save['last_updated'])
+
     return json.dumps({"saves": saves})
 
 
@@ -361,9 +390,9 @@ def delete_save():
     c = conn.cursor()
 
     if user_id:
-        c.execute("DELETE FROM saves WHERE id = ? AND user_id = ?", (save_id, user_id))
+        c.execute("DELETE FROM saves WHERE id = %s AND user_id = %s", (save_id, user_id))
     else:
-        c.execute("DELETE FROM saves WHERE id = ? AND guest_session_id = ?", (save_id, guest_id))
+        c.execute("DELETE FROM saves WHERE id = %s AND guest_session_id = %s", (save_id, guest_id))
 
     conn.commit()
     conn.close()
@@ -376,12 +405,12 @@ def load_save(save_id):
     guest_id = session.get('guest_session_id')
 
     conn = get_db()
-    c = conn.cursor()
+    c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
     if user_id:
-        c.execute("SELECT * FROM saves WHERE id = ? AND user_id = ?", (save_id, user_id))
+        c.execute("SELECT * FROM saves WHERE id = %s AND user_id = %s", (save_id, user_id))
     else:
-        c.execute("SELECT * FROM saves WHERE id = ? AND guest_session_id = ?", (save_id, guest_id))
+        c.execute("SELECT * FROM saves WHERE id = %s AND guest_session_id = %s", (save_id, guest_id))
 
     save = c.fetchone()
     conn.close()
@@ -391,7 +420,6 @@ def load_save(save_id):
 
     strings = json.loads(save["translation_data"])
 
-    # Armazena na sessão para o /api/strings conseguir servir
     session["package_path"]    = "DATABASE_SAVE"
     session["original_name"]   = save["project_name"].split(" (")[0]
     session["db_save_strings"] = strings
@@ -415,20 +443,21 @@ def register():
         return json.dumps({"success": False, "error": "Usuário inválido ou senha muito curta (mínimo 6)."}), 400
 
     conn = get_db()
-    c = conn.cursor()
+    c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-    c.execute("SELECT id FROM users WHERE username = ?", (username,))
+    c.execute("SELECT id FROM users WHERE username = %s", (username,))
     if c.fetchone():
         conn.close()
         return json.dumps({"success": False, "error": "Nome de usuário já existe."}), 400
 
-    pass_hash   = generate_password_hash(password)
-    c.execute("INSERT INTO users (username, password_hash) VALUES (?, ?)", (username, pass_hash))
-    new_user_id = c.lastrowid
+    pass_hash = generate_password_hash(password)
+    # No Postgres, usamos RETURNING para pegar o ID da linha recém-criada
+    c.execute("INSERT INTO users (username, password_hash) VALUES (%s, %s) RETURNING id", (username, pass_hash))
+    new_user_id = c.fetchone()['id']
 
     guest_id = session.get('guest_session_id')
     if guest_id:
-        c.execute("UPDATE saves SET user_id = ? WHERE guest_session_id = ?", (new_user_id, guest_id))
+        c.execute("UPDATE saves SET user_id = %s WHERE guest_session_id = %s", (new_user_id, guest_id))
 
     conn.commit()
     conn.close()
@@ -444,8 +473,8 @@ def login():
     password = data.get("password", "").strip()
 
     conn = get_db()
-    c = conn.cursor()
-    c.execute("SELECT id, password_hash FROM users WHERE username = ?", (username,))
+    c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    c.execute("SELECT id, password_hash FROM users WHERE username = %s", (username,))
     user = c.fetchone()
 
     if user and check_password_hash(user['password_hash'], password):
@@ -454,7 +483,7 @@ def login():
 
         guest_id = session.get('guest_session_id')
         if guest_id:
-            c.execute("UPDATE saves SET user_id = ? WHERE guest_session_id = ? AND user_id IS NULL", (user['id'], guest_id))
+            c.execute("UPDATE saves SET user_id = %s WHERE guest_session_id = %s AND user_id IS NULL", (user['id'], guest_id))
 
         conn.commit()
         conn.close()
@@ -474,13 +503,13 @@ def forgot_password():
         return json.dumps({"success": False, "error": "Dados inválidos. A senha deve ter no mínimo 6 caracteres."}), 400
 
     conn = get_db()
-    c = conn.cursor()
-    c.execute("SELECT id FROM users WHERE username = ?", (username,))
+    c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    c.execute("SELECT id FROM users WHERE username = %s", (username,))
     user = c.fetchone()
 
     if user:
         pass_hash = generate_password_hash(new_password)
-        c.execute("UPDATE users SET password_hash = ? WHERE id = ?", (pass_hash, user['id']))
+        c.execute("UPDATE users SET password_hash = %s WHERE id = %s", (pass_hash, user['id']))
         conn.commit()
         conn.close()
         return json.dumps({"success": True})
@@ -496,8 +525,8 @@ def me():
         return json.dumps({"logged_in": False})
 
     conn = get_db()
-    c = conn.cursor()
-    c.execute("SELECT username, profile_pic FROM users WHERE id = ?", (user_id,))
+    c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    c.execute("SELECT username, profile_pic FROM users WHERE id = %s", (user_id,))
     user = c.fetchone()
     conn.close()
 
@@ -521,15 +550,15 @@ def update_profile():
     new_pic      = data.get("profile_pic", "").strip()
 
     conn = get_db()
-    c = conn.cursor()
+    c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
     if new_username:
-        c.execute("SELECT id FROM users WHERE username = ? AND id != ?", (new_username, user_id))
+        c.execute("SELECT id FROM users WHERE username = %s AND id != %s", (new_username, user_id))
         if c.fetchone():
             conn.close()
             return json.dumps({"success": False, "error": "Nome de usuário já está em uso."}), 400
 
-    c.execute("UPDATE users SET username = ?, profile_pic = ? WHERE id = ?", (new_username, new_pic, user_id))
+    c.execute("UPDATE users SET username = %s, profile_pic = %s WHERE id = %s", (new_username, new_pic, user_id))
     conn.commit()
     conn.close()
     return json.dumps({"success": True})
@@ -545,3 +574,4 @@ if __name__ == "__main__":
     os.makedirs("templates", exist_ok=True)
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False, use_reloader=False)
+
