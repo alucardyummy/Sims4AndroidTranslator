@@ -284,7 +284,6 @@ let selectMode = false;
 let selectedIds = new Set();
 let hasSaves = false;
 
-// Verifica se já tem saves (pelo localStorage como flag rápida)
 function checkHasSaves() {
   return localStorage.getItem('has_saves') === '1';
 }
@@ -300,7 +299,6 @@ function updateImportUI() {
   }
 }
 
-// Upload handlers
 function setupFileInput(inputId) {
   document.getElementById(inputId).addEventListener('change', function() {
     const file = this.files[0];
@@ -321,7 +319,6 @@ function setupFileInput(inputId) {
 setupFileInput('file-input');
 setupFileInput('file-input-new');
 
-// SELECT MODE (estilo BlackNote)
 function enterSelectMode() {
   selectMode = true;
   selectedIds.clear();
@@ -368,7 +365,6 @@ async function deleteSelected() {
   await loadSaves();
 }
 
-// SAVES
 let savesData = [];
 
 async function loadSaves() {
@@ -487,11 +483,15 @@ async function checkLogin() {
 
 document.getElementById('profile-btn').addEventListener('click', () => {
   if (currentUser) {
-    newProfilePicBase64 = null;
-    document.getElementById('edit-profile-pic').value = '';
+    document.getElementById('profile-modal').classList.add('active');
+    
     document.getElementById('edit-username').value = currentUser.username || '';
     document.getElementById('modal-profile-img').src = currentUser.profile_pic || '/img/icon-pf.webp';
-    document.getElementById('profile-modal').classList.add('active');
+    newProfilePicBase64 = null;
+    
+    try {
+      document.getElementById('edit-profile-pic').value = '';
+    } catch(e) {}
   } else {
     document.getElementById('auth-modal').classList.add('active');
   }
