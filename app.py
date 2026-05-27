@@ -627,6 +627,8 @@ def logout():
     session.clear()
     return json.dumps({"success": True})
 
+with app.app_context():
+    init_db()
 
 if __name__ == "__main__":
     os.makedirs("templates", exist_ok=True)
