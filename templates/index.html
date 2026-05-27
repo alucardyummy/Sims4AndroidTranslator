@@ -215,19 +215,42 @@
       <h3 class="modal-title">Criar Conta</h3>
       <div class="form-group"><label>Nome de Usuário</label><input type="text" class="form-input" id="reg-username" placeholder="Ex: Alucard"></div>
       <div class="form-group"><label>Senha</label><input type="password" class="form-input" id="reg-password" placeholder="Mínimo 6 caracteres"></div>
+      
+      <div class="form-group">
+        <label>Pergunta de Segurança</label>
+        <select class="form-input" id="reg-question" style="color: var(--text); background-color: var(--bg);">
+          <option value="Qual o nome do seu primeiro animal de estimação?">Qual o nome do seu primeiro animal de estimação?</option>
+          <option value="Qual o nome da sua cidade natal?">Qual o nome da sua cidade natal?</option>
+          <option value="Qual era o seu desenho favorito na infância?">Qual era o seu desenho favorito na infância?</option>
+          <option value="Qual o nome da sua primeira escola?">Qual o nome da sua primeira escola?</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Resposta Secreta</label><input type="text" class="form-input" id="reg-answer" placeholder="Sua resposta secreta"></div>
+      
       <button class="modal-btn" onclick="handleRegister()">CRIAR CONTA</button>
       <p class="modal-switch" onclick="switchTab('login')">Já tem uma conta? <span>Entrar</span></p>
     </div>
+
     <div class="auth-tab" id="tab-forgot">
       <h3 class="modal-title">Recuperar Senha</h3>
-      <p style="font-size:12px;color:var(--text-muted);margin-bottom:1rem;line-height:1.4">Digite seu usuário para redefinir a senha.</p>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:1rem;line-height:1.4">Confirme seus dados e responda sua pergunta para redefinir a senha.</p>
       <div class="form-group"><label>Usuário</label><input type="text" class="form-input" id="forgot-username" placeholder="Seu usuário"></div>
+      
+      <div class="form-group">
+        <label>Selecione a sua Pergunta</label>
+        <select class="form-input" id="forgot-question" style="color: var(--text); background-color: var(--bg);">
+          <option value="Qual o nome do seu primeiro animal de estimação?">Qual o nome do seu primeiro animal de estimação?</option>
+          <option value="Qual o nome da sua cidade natal?">Qual o nome da sua cidade natal?</option>
+          <option value="Qual era o seu desenho favorito na infância?">Qual era o seu desenho favorito na infância?</option>
+          <option value="Qual o nome da sua primeira escola?">Qual o nome da sua primeira escola?</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Resposta Secreta</label><input type="text" class="form-input" id="forgot-answer" placeholder="Digite a resposta cadastrada"></div>
       <div class="form-group"><label>Nova Senha</label><input type="password" class="form-input" id="forgot-new-password" placeholder="Nova senha"></div>
+      
       <button class="modal-btn" onclick="handleForgotPassword()">ALTERAR SENHA</button>
       <p class="modal-switch" onclick="switchTab('login')">Voltar para o <span>Login</span></p>
     </div>
-  </div>
-</div>
 
 <!-- PROFILE MODAL -->
 <div class="modal-overlay" id="profile-modal">
@@ -445,7 +468,6 @@ async function editSave(id) {
   } catch(e) { alert('Erro ao carregar save.'); }
 }
 
-// AUTH
 async function checkLogin() {
   try {
     const res = await fetch('/api/me');
@@ -474,10 +496,39 @@ document.getElementById('profile-btn').addEventListener('click', () => {
 document.getElementById('edit-profile-pic').addEventListener('change', function(e) {
   const file = e.target.files[0];
   if (!file) return;
+
   const reader = new FileReader();
   reader.onload = ev => {
-    newProfilePicBase64 = ev.target.result;
-    document.getElementById('modal-profile-img').src = newProfilePicBase64;
+    const img = new Image();
+    img.onload = () => {
+      // Cria o canvas para redimensionar a imagem
+      const canvas = document.createElement('canvas');
+      const MAX_SIZE = 256; // Tamanho máximo em pixels
+      let width = img.width;
+      let height = img.height;
+
+      // Mantém a proporção da imagem
+      if (width > height) {
+        if (width > MAX_SIZE) {
+          height *= MAX_SIZE / width;
+          width = MAX_SIZE;
+        }
+      } else {
+        if (height > MAX_SIZE) {
+          width *= MAX_SIZE / height;
+          height = MAX_SIZE;
+        }
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+
+      newProfilePicBase64 = canvas.toDataURL('image/jpeg', 0.7);
+      document.getElementById('modal-profile-img').src = newProfilePicBase64;
+    };
+    img.src = ev.target.result;
   };
   reader.readAsDataURL(file);
 });
@@ -523,11 +574,15 @@ async function handleLogin() {
 async function handleRegister() {
   const username = document.getElementById('reg-username').value.trim();
   const password = document.getElementById('reg-password').value.trim();
-  if (!username || !password) { alert('Preencha todos os campos.'); return; }
+  const question = document.getElementById('reg-question').value;
+  const answer = document.getElementById('reg-answer').value.trim();
+
+  if (!username || !password || !answer) { alert('Preencha todos os campos.'); return; }
+  
   try {
     const res = await fetch('/api/register', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password })
+      body: JSON.stringify({ username, password, security_question: question, security_answer: answer })
     });
     const data = await res.json();
     if (data.success) window.location.reload();
@@ -537,16 +592,20 @@ async function handleRegister() {
 
 async function handleForgotPassword() {
   const username = document.getElementById('forgot-username').value.trim();
+  const question = document.getElementById('forgot-question').value;
+  const answer = document.getElementById('forgot-answer').value.trim();
   const new_password = document.getElementById('forgot-new-password').value.trim();
-  if (!username || !new_password) { alert('Preencha todos os campos.'); return; }
+
+  if (!username || !answer || !new_password) { alert('Preencha todos os campos.'); return; }
+  
   try {
     const res = await fetch('/api/forgot_password', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, new_password })
+      body: JSON.stringify({ username, security_question: question, security_answer: answer, new_password })
     });
     const data = await res.json();
-    if (data.success) { alert('Senha alterada!'); switchTab('login'); }
-    else alert(data.error || 'Erro.');
+    if (data.success) { alert('Senha alterada com sucesso!'); switchTab('login'); }
+    else alert(data.error || 'Erro ao redefinir.');
   } catch(e) { alert('Erro de conexão.'); }
 }
 

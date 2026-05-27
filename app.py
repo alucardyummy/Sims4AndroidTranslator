@@ -12,6 +12,13 @@ import psycopg2
 import psycopg2.extras
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import timedelta
+from supabase import create_client, Client
+
+SUPABASE_URL = os.environ.get("SUPABASE_URL")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+BUCKET_NAME = "packages"
+
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMPLATE_DIR = os.path.join(BASE_DIR, 'templates')
@@ -34,13 +41,12 @@ def ensure_guest_session():
 
 # --- CONFIGURAÇÃO DO BANCO DE DADOS EM NUVEM (POSTGRESQL) ---
 def get_db():
-    # Pega a URL do banco de dados (no Neon.tech ou Supabase) configurada na Vercel
     db_url = os.environ.get("DATABASE_URL")
     conn = psycopg2.connect(db_url)
     return conn
 
 def init_db():
-    """Cria as tabelas no banco em nuvem caso elas ainda não existam."""
+    """Cria ou atualiza as tabelas no banco em nuvem caso elas ainda não existam."""
     try:
         conn = get_db()
         c = conn.cursor()
@@ -52,6 +58,14 @@ def init_db():
                 profile_pic TEXT
             );
         ''')
+        
+        # --- ATUALIZAÇÃO SEGURA: Adiciona os campos de segurança se não existirem ---
+        try:
+            c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS security_question TEXT;")
+            c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS security_answer_hash VARCHAR(255);")
+        except Exception as e:
+            print("Colunas de segurança já existem ou houve um aviso:", e)
+            
         c.execute('''
             CREATE TABLE IF NOT EXISTS saves (
                 id SERIAL PRIMARY KEY,
@@ -68,10 +82,6 @@ def init_db():
         conn.close()
     except Exception as e:
         print("Aviso ao iniciar DB:", e)
-
-# Roda a verificação de tabelas ao iniciar o app
-init_db()
-# ------------------------------------------------------------
 
 
 def load_stbl(pkg, rid):
@@ -103,26 +113,35 @@ def upload():
     if not f.filename.endswith(".package"):
         return "Arquivo inválido. Envie um .package", 400
 
-    save_path = os.path.join(UPLOAD_FOLDER, "upload_" + f.filename)
-    f.save(save_path)
-    session["package_path"] = save_path
-    session["original_name"] = f.filename
+    file_id = f"{uuid.uuid4().hex}.package"
+    file_bytes = f.read()
+
+    supabase.storage.from_(BUCKET_NAME).upload(file_id, file_bytes)
 
     all_instances = []
-    with DbpfPackage.read(save_path) as pkg:
-        for rid in pkg.search_stbl():
-            lang = rid.language or "UNKNOWN"
-            all_instances.append({
-                "instance":      rid.instance,
-                "instance_hex":  rid.hex_instance,
-                "group_hex":     rid.str_group,
-                "language":      lang,
-                "language_code": rid.language_code or "0x0017",
-            })
+    with tempfile.NamedTemporaryFile(delete=False) as tmp:
+        tmp.write(file_bytes)
+        tmp_path = tmp.name
+
+    try:
+        with DbpfPackage.read(tmp_path) as pkg:
+            for rid in pkg.search_stbl():
+                lang = rid.language or "UNKNOWN"
+                all_instances.append({
+                    "instance":      rid.instance,
+                    "instance_hex":  rid.hex_instance,
+                    "group_hex":     rid.str_group,
+                    "language":      lang,
+                    "language_code": rid.language_code or "0x0017",
+                })
+    finally:
+        os.remove(tmp_path) # Apaga do disco efêmero
 
     if not all_instances:
         return "Nenhuma STBL encontrada no arquivo", 400
 
+    session["package_id"] = file_id 
+    session["original_name"] = f.filename
     session["all_instances"] = all_instances
     return redirect("/info")
 
@@ -186,9 +205,9 @@ def api_strings():
     if not instance_str:
         return "Instância não informada", 400
 
-    pkg_path = session.get("package_path")
+    pkg_id = session.get("package_id")
 
-    if pkg_path == "DATABASE_SAVE":
+    if session.get("package_id") == "DATABASE_SAVE":
         db_strings = session.get("db_save_strings", [])
         return app.response_class(
             response=json.dumps({"strings": db_strings}),
@@ -198,17 +217,25 @@ def api_strings():
     instance_int = int(instance_str)
     strings = []
 
-    with DbpfPackage.read(pkg_path) as pkg:
-        for rid in pkg.search_stbl():
-            if rid.instance == instance_int:
-                stbl = load_stbl(pkg, rid)
-                for key, value in stbl._strings.items():
-                    strings.append({
-                        "key":     key,
-                        "key_hex": hex(key),
-                        "value":   value,
-                    })
-                break
+    file_bytes = supabase.storage.from_(BUCKET_NAME).download(pkg_id)
+    with tempfile.NamedTemporaryFile(delete=False) as tmp:
+        tmp.write(file_bytes)
+        tmp_path = tmp.name
+
+    try:
+        with DbpfPackage.read(tmp_path) as pkg:
+            for rid in pkg.search_stbl():
+                if rid.instance == instance_int:
+                    stbl = load_stbl(pkg, rid)
+                    for key, value in stbl._strings.items():
+                        strings.append({
+                            "key":     key,
+                            "key_hex": hex(key),
+                            "value":   value,
+                        })
+                    break
+    finally:
+        os.remove(tmp_path)
 
     return app.response_class(
         response=json.dumps({"strings": strings}),
@@ -218,8 +245,6 @@ def api_strings():
 
 @app.route("/save", methods=["POST"])
 def save():
-    import shutil
-
     data = request.get_json()
     instance_str   = str(data["instance"])
     instance_int   = int(instance_str)
@@ -232,52 +257,68 @@ def save():
     if not output_name.endswith(".package"):
         output_name += ".package"
 
-    pkg_path = session.get("package_path")
-
-    if pkg_path == "DATABASE_SAVE":
+    if session.get("package_id") == "DATABASE_SAVE":
         return json.dumps({
             "success": True,
             "output_name": output_name,
             "saved_to_downloads": False,
         })
 
+    pkg_id = session.get("package_id")
     target_rid  = None
     target_stbl = None
 
-    with DbpfPackage.read(pkg_path) as pkg:
-        for rid in pkg.search_stbl():
-            if rid.instance == instance_int:
-                target_rid  = rid
-                target_stbl = load_stbl(pkg, rid)
-                break
-
-    if target_stbl is None:
-        return json.dumps({"error": "STBL não encontrada"}), 400
-
-    for item in strings_edited:
-        target_stbl.add(int(item["key"]), item["value"])
+    # Baixa o original do Supabase para ler
+    original_bytes = supabase.storage.from_(BUCKET_NAME).download(pkg_id)
+    
+    with tempfile.NamedTemporaryFile(delete=False) as tmp_in, tempfile.NamedTemporaryFile(delete=False) as tmp_out:
+        tmp_in.write(original_bytes)
+        tmp_in_path = tmp_in.name
+        tmp_out_path = tmp_out.name
 
     try:
-        new_rid = target_rid.convert_instance(locale=target_lang)
-    except Exception:
-        new_rid = target_rid
+        with DbpfPackage.read(tmp_in_path) as pkg:
+            for rid in pkg.search_stbl():
+                if rid.instance == instance_int:
+                    target_rid  = rid
+                    target_stbl = load_stbl(pkg, rid)
+                    break
 
-    output_path = os.path.join(UPLOAD_FOLDER, output_name)
+        if target_stbl is None:
+            return json.dumps({"error": "STBL não encontrada"}), 400
 
-    with DbpfPackage.write(output_path) as outpkg:
-        with DbpfPackage.read(pkg_path) as original:
-            for rid in original.search():
-                resource = original[rid]
-                content  = original.content(resource)
-                if rid == target_rid:
-                    outpkg.put(new_rid, target_stbl.binary)
-                elif rid == new_rid:
-                    pass
-                else:
-                    outpkg.put(rid, content)
+        for item in strings_edited:
+            target_stbl.add(int(item["key"]), item["value"])
 
-    session["output_path"] = output_path
-    session["output_name"] = output_name
+        try:
+            new_rid = target_rid.convert_instance(locale=target_lang)
+        except Exception:
+            new_rid = target_rid
+
+        # Escreve o pacote final no arquivo temporário de saída
+        with DbpfPackage.write(tmp_out_path) as outpkg:
+            with DbpfPackage.read(tmp_in_path) as original:
+                for rid in original.search():
+                    resource = original[rid]
+                    content  = original.content(resource)
+                    if rid == target_rid:
+                        outpkg.put(new_rid, target_stbl.binary)
+                    elif rid == new_rid:
+                        pass
+                    else:
+                        outpkg.put(rid, content)
+        
+        # Sobe o arquivo editado para o Supabase
+        output_id = f"out_{uuid.uuid4().hex}.package"
+        with open(tmp_out_path, "rb") as f_out:
+            supabase.storage.from_(BUCKET_NAME).upload(output_id, f_out.read())
+
+        session["output_id"] = output_id
+        session["output_name"] = output_name
+
+    finally:
+        os.remove(tmp_in_path)
+        os.remove(tmp_out_path)
 
     return json.dumps({
         "success":            True,
@@ -288,11 +329,15 @@ def save():
 
 @app.route("/download")
 def download():
-    output_path = session.get("output_path")
+    output_id = session.get("output_id")
     output_name = session.get("output_name", "output.package")
-    if not output_path or not os.path.exists(output_path):
+    
+    if not output_id:
         return "Arquivo não encontrado", 404
-    return send_file(output_path, as_attachment=True, download_name=output_name)
+        
+    url_res = supabase.storage.from_(BUCKET_NAME).create_signed_url(output_id, 60, {"download": output_name})
+    
+    return redirect(url_res['signedURL'])
 
 
 @app.route("/api/translate", methods=["POST"])
@@ -420,7 +465,7 @@ def load_save(save_id):
 
     strings = json.loads(save["translation_data"])
 
-    session["package_path"]    = "DATABASE_SAVE"
+    session["package_id"]    = "DATABASE_SAVE"
     session["original_name"]   = save["project_name"].split(" (")[0]
     session["db_save_strings"] = strings
 
@@ -438,9 +483,11 @@ def register():
     data     = request.get_json()
     username = data.get("username", "").strip()
     password = data.get("password", "").strip()
+    question = data.get("security_question", "").strip()
+    answer   = data.get("security_answer", "").strip()
 
-    if not username or len(password) < 6:
-        return json.dumps({"success": False, "error": "Usuário inválido ou senha muito curta (mínimo 6)."}), 400
+    if not username or len(password) < 6 or not question or not answer:
+        return json.dumps({"success": False, "error": "Preencha todos os campos. A senha deve ter no mínimo 6 caracteres."}), 400
 
     conn = get_db()
     c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -451,8 +498,13 @@ def register():
         return json.dumps({"success": False, "error": "Nome de usuário já existe."}), 400
 
     pass_hash = generate_password_hash(password)
-    # No Postgres, usamos RETURNING para pegar o ID da linha recém-criada
-    c.execute("INSERT INTO users (username, password_hash) VALUES (%s, %s) RETURNING id", (username, pass_hash))
+    # Criptografa a resposta também para segurança máxima
+    answer_hash = generate_password_hash(answer.lower()) 
+
+    c.execute(
+        "INSERT INTO users (username, password_hash, security_question, security_answer_hash) VALUES (%s, %s, %s, %s) RETURNING id", 
+        (username, pass_hash, question, answer_hash)
+    )
     new_user_id = c.fetchone()['id']
 
     guest_id = session.get('guest_session_id')
@@ -497,22 +549,28 @@ def login():
 def forgot_password():
     data         = request.get_json()
     username     = data.get("username", "").strip()
+    question     = data.get("security_question", "").strip()
+    answer       = data.get("security_answer", "").strip()
     new_password = data.get("new_password", "").strip()
 
-    if not username or len(new_password) < 6:
-        return json.dumps({"success": False, "error": "Dados inválidos. A senha deve ter no mínimo 6 caracteres."}), 400
+    if not username or not question or not answer or len(new_password) < 6:
+        return json.dumps({"success": False, "error": "Dados inválidos. Preencha todos os campos corretamente."}), 400
 
     conn = get_db()
     c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    c.execute("SELECT id FROM users WHERE username = %s", (username,))
+    c.execute("SELECT id, security_question, security_answer_hash FROM users WHERE username = %s", (username,))
     user = c.fetchone()
 
     if user:
-        pass_hash = generate_password_hash(new_password)
-        c.execute("UPDATE users SET password_hash = %s WHERE id = %s", (pass_hash, user['id']))
-        conn.commit()
-        conn.close()
-        return json.dumps({"success": True})
+        if user['security_question'] == question and check_password_hash(user['security_answer_hash'], answer.lower()):
+            pass_hash = generate_password_hash(new_password)
+            c.execute("UPDATE users SET password_hash = %s WHERE id = %s", (pass_hash, user['id']))
+            conn.commit()
+            conn.close()
+            return json.dumps({"success": True})
+        else:
+            conn.close()
+            return json.dumps({"success": False, "error": "Pergunta ou resposta de segurança incorreta."}), 401
 
     conn.close()
     return json.dumps({"success": False, "error": "Usuário não encontrado."}), 404
@@ -574,4 +632,3 @@ if __name__ == "__main__":
     os.makedirs("templates", exist_ok=True)
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False, use_reloader=False)
-
