@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 load_dotenv()
 
-from flask import Flask, request, redirect, send_file, session
+from flask import Flask, request, redirect, send_file, session, send_from_directory
 from packer.dbpf import DbpfPackage
 from packer.stbl import Stbl
 import os
@@ -31,6 +31,11 @@ app.secret_key = "sims4translator_secret"
 app.permanent_session_lifetime = timedelta(days=30)
 
 UPLOAD_FOLDER = tempfile.gettempdir()
+
+
+@app.route('/manifest.json')
+def manifest():
+    return send_from_directory('.', 'manifest.json')
 
 
 @app.before_request
