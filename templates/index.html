@@ -203,6 +203,8 @@
 <div class="modal-overlay" id="auth-modal">
   <div class="modal-box">
     <button class="modal-close" onclick="closeAuthModal()">✕</button>
+
+    <!-- Tab: Login -->
     <div class="auth-tab active" id="tab-login">
       <h3 class="modal-title">Entrar na Conta</h3>
       <div class="form-group"><label>Nome de Usuário</label><input type="text" class="form-input" id="login-username" placeholder="Seu usuário"></div>
@@ -211,11 +213,12 @@
       <p class="modal-switch" onclick="switchTab('forgot')"><span>Esqueceu a senha?</span></p>
       <p class="modal-switch" onclick="switchTab('register')">Não tem conta? <span>Cadastre-se</span></p>
     </div>
+
+    <!-- Tab: Register -->
     <div class="auth-tab" id="tab-register">
       <h3 class="modal-title">Criar Conta</h3>
       <div class="form-group"><label>Nome de Usuário</label><input type="text" class="form-input" id="reg-username" placeholder="Ex: Alucard"></div>
       <div class="form-group"><label>Senha</label><input type="password" class="form-input" id="reg-password" placeholder="Mínimo 6 caracteres"></div>
-      
       <div class="form-group">
         <label>Pergunta de Segurança</label>
         <select class="form-input" id="reg-question" style="color: var(--text); background-color: var(--bg);">
@@ -226,16 +229,15 @@
         </select>
       </div>
       <div class="form-group"><label>Resposta Secreta</label><input type="text" class="form-input" id="reg-answer" placeholder="Sua resposta secreta"></div>
-      
       <button class="modal-btn" onclick="handleRegister()">CRIAR CONTA</button>
       <p class="modal-switch" onclick="switchTab('login')">Já tem uma conta? <span>Entrar</span></p>
     </div>
 
+    <!-- Tab: Forgot Password -->
     <div class="auth-tab" id="tab-forgot">
       <h3 class="modal-title">Recuperar Senha</h3>
       <p style="font-size:12px;color:var(--text-muted);margin-bottom:1rem;line-height:1.4">Confirme seus dados e responda sua pergunta para redefinir a senha.</p>
       <div class="form-group"><label>Usuário</label><input type="text" class="form-input" id="forgot-username" placeholder="Seu usuário"></div>
-      
       <div class="form-group">
         <label>Selecione a sua Pergunta</label>
         <select class="form-input" id="forgot-question" style="color: var(--text); background-color: var(--bg);">
@@ -247,10 +249,12 @@
       </div>
       <div class="form-group"><label>Resposta Secreta</label><input type="text" class="form-input" id="forgot-answer" placeholder="Digite a resposta cadastrada"></div>
       <div class="form-group"><label>Nova Senha</label><input type="password" class="form-input" id="forgot-new-password" placeholder="Nova senha"></div>
-      
       <button class="modal-btn" onclick="handleForgotPassword()">ALTERAR SENHA</button>
       <p class="modal-switch" onclick="switchTab('login')">Voltar para o <span>Login</span></p>
     </div>
+
+  </div><!-- fecha modal-box -->
+</div><!-- fecha auth-modal -->
 
 <!-- PROFILE MODAL -->
 <div class="modal-overlay" id="profile-modal">
@@ -270,8 +274,8 @@
     </div>
     <button class="modal-btn" onclick="saveProfile()">SALVAR ALTERAÇÕES</button>
     <button class="modal-btn" style="background:transparent;border:1px solid #e07070;color:#e07070;margin-top:10px" onclick="handleLogout()">SAIR DA CONTA</button>
-  </div>
-</div>
+  </div><!-- fecha modal-box -->
+</div><!-- fecha profile-modal -->
 
 <script>
 let currentUser = null;
@@ -501,23 +505,15 @@ document.getElementById('edit-profile-pic').addEventListener('change', function(
   reader.onload = ev => {
     const img = new Image();
     img.onload = () => {
-      // Cria o canvas para redimensionar a imagem
       const canvas = document.createElement('canvas');
-      const MAX_SIZE = 256; // Tamanho máximo em pixels
+      const MAX_SIZE = 256;
       let width = img.width;
       let height = img.height;
 
-      // Mantém a proporção da imagem
       if (width > height) {
-        if (width > MAX_SIZE) {
-          height *= MAX_SIZE / width;
-          width = MAX_SIZE;
-        }
+        if (width > MAX_SIZE) { height *= MAX_SIZE / width; width = MAX_SIZE; }
       } else {
-        if (height > MAX_SIZE) {
-          width *= MAX_SIZE / height;
-          height = MAX_SIZE;
-        }
+        if (height > MAX_SIZE) { width *= MAX_SIZE / height; height = MAX_SIZE; }
       }
 
       canvas.width = width;
