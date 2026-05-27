@@ -116,7 +116,11 @@ def home():
         session['user_id'] = user_id
     if guest_id:
         session['guest_session_id'] = guest_id
-    return send_file(os.path.join(TEMPLATE_DIR, "index.html"))
+    response = send_file(os.path.join(TEMPLATE_DIR, "index.html"))
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    return response
 
 
 @app.route("/upload", methods=["POST"])
