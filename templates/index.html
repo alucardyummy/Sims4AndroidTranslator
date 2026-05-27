@@ -262,9 +262,19 @@
     <button class="modal-close" onclick="closeProfileModal()">✕</button>
     <h3 class="modal-title">Meu Perfil</h3>
     <div style="text-align:center;margin-bottom:1rem">
-      <div style="width:64px;height:64px;border-radius:50%;overflow:hidden;margin:0 auto 10px;border:1px solid var(--border);cursor:pointer;" onclick="document.getElementById('edit-profile-pic').click()" title="Trocar foto">
-      <img src="/img/icon-pf.webp" id="modal-profile-img" draggable="false" oncontextmenu="return false;" style="width:100%;height:100%;object-fit:cover; pointer-events:none; -webkit-touch-callout:none; user-select:none;">
-      </div>
+      
+      <label for="edit-profile-pic" style="position:relative; display:inline-block; margin:0 auto 10px; cursor:pointer;" title="Trocar foto">
+        
+        <div style="width:64px;height:64px;border-radius:50%;overflow:hidden;border:1px solid var(--border);">
+          <img src="/img/icon-pf.webp" id="modal-profile-img" draggable="false" oncontextmenu="return false;" style="width:100%;height:100%;object-fit:cover; pointer-events:none; -webkit-touch-callout:none; user-select:none;">
+        </div>
+
+        <div style="position:absolute; bottom:0; right:-4px; background:var(--surface); border:1px solid var(--border); width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px;">
+          ⤷ ⍨⃝📸ˊ˗
+        </div>
+
+      </label>
+      
     </div>
     <div class="form-group"><label>Nome de Usuário</label><input type="text" class="form-input" id="edit-username"></div>
     <div class="form-group">
