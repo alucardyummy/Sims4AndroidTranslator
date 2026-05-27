@@ -7,27 +7,38 @@ from packer.stbl import Stbl
 import os
 import tempfile
 import uuid
+import json
+import sqlite3
 from werkzeug.security import generate_password_hash, check_password_hash
 import db
+from datetime import timedelta
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMPLATE_DIR = os.path.join(BASE_DIR, 'templates')
 
-app = Flask(__name__, 
-            template_folder=TEMPLATE_DIR, 
-            static_folder=os.path.join(BASE_DIR, 'img'), 
+app = Flask(__name__,
+            template_folder=TEMPLATE_DIR,
+            static_folder=os.path.join(BASE_DIR, 'img'),
             static_url_path='/img')
 app.secret_key = "sims4translator_secret"
+app.permanent_session_lifetime = timedelta(days=30)
 
 UPLOAD_FOLDER = tempfile.gettempdir()
+
 
 @app.before_request
 def ensure_guest_session():
     if 'user_id' not in session and 'guest_session_id' not in session:
         session['guest_session_id'] = str(uuid.uuid4())
 
+
+def get_db():
+    conn = sqlite3.connect(db.DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
 def load_stbl(pkg, rid):
-    """Carrega um STBL e popula _strings corretamente."""
     resource = pkg[rid]
     content = pkg.content(resource)
     stbl = Stbl(rid, content)
@@ -38,7 +49,14 @@ def load_stbl(pkg, rid):
 
 @app.route("/")
 def home():
+    # Preserva login do usuário ao voltar para home
+    user_id = session.get('user_id')
+    guest_id = session.get('guest_session_id')
     session.clear()
+    if user_id:
+        session['user_id'] = user_id
+    if guest_id:
+        session['guest_session_id'] = guest_id
     return send_file(os.path.join(TEMPLATE_DIR, "index.html"))
 
 
@@ -83,22 +101,15 @@ def info():
 
 @app.route("/api/instances")
 def api_instances():
-    import json
     all_instances = session.get("all_instances", [])
     original_name = session.get("original_name", "output.package")
 
-    # Agrupa por base (últimos 14 hex chars da instance = conteúdo sem o código de idioma).
-    # Cada base é um "bloco de strings" único — mostra o primeiro idioma encontrado
-    # (geralmente ENG_US se existir, senão o que vier primeiro).
     seen_bases = {}
     for inst in all_instances:
-        # hex_instance = "0xAABBBBBBBBBBBBBB"
-        # índice 4 em diante = parte base (sem prefixo de idioma)
         base = inst["instance_hex"][4:]
         if base not in seen_bases:
             seen_bases[base] = inst
         else:
-            # Prefere ENG_US se ainda não tinha
             if seen_bases[base]["language"] != "ENG_US" and inst["language"] == "ENG_US":
                 seen_bases[base] = inst
 
@@ -118,10 +129,10 @@ def api_instances():
 
     return app.response_class(
         response=json.dumps({
-            "instances":    safe,
+            "instances":     safe,
             "original_name": original_name,
             "langs_present": langs_present,
-            "total_stbl":   len(all_instances),
+            "total_stbl":    len(all_instances),
         }),
         mimetype="application/json"
     )
@@ -136,13 +147,21 @@ def editor():
 
 @app.route("/api/strings")
 def api_strings():
-    import json
     instance_str = request.args.get("instance")
     if not instance_str:
         return "Instância não informada", 400
 
-    instance_int = int(instance_str)
     pkg_path = session.get("package_path")
+
+    # Carregando de um save do banco de dados
+    if pkg_path == "DATABASE_SAVE":
+        db_strings = session.get("db_save_strings", [])
+        return app.response_class(
+            response=json.dumps({"strings": db_strings}),
+            mimetype="application/json"
+        )
+
+    instance_int = int(instance_str)
     strings = []
 
     with DbpfPackage.read(pkg_path) as pkg:
@@ -165,7 +184,6 @@ def api_strings():
 
 @app.route("/save", methods=["POST"])
 def save():
-    import json
     import shutil
 
     data = request.get_json()
@@ -182,6 +200,14 @@ def save():
 
     pkg_path = session.get("package_path")
 
+    # Save do banco: não tem arquivo original, só salva o progresso
+    if pkg_path == "DATABASE_SAVE":
+        return json.dumps({
+            "success": True,
+            "output_name": output_name,
+            "saved_to_downloads": False,
+        })
+
     target_rid  = None
     target_stbl = None
 
@@ -195,11 +221,9 @@ def save():
     if target_stbl is None:
         return json.dumps({"error": "STBL não encontrada"}), 400
 
-    # Aplica edições do usuário
     for item in strings_edited:
         target_stbl.add(int(item["key"]), item["value"])
 
-    # Gera novo rid com o idioma destino
     try:
         new_rid = target_rid.convert_instance(locale=target_lang)
     except Exception:
@@ -215,7 +239,7 @@ def save():
                 if rid == target_rid:
                     outpkg.put(new_rid, target_stbl.binary)
                 elif rid == new_rid:
-                    pass  # pula duplicata se idioma destino já existia
+                    pass
                 else:
                     outpkg.put(rid, content)
 
@@ -249,27 +273,272 @@ def download():
 
 @app.route("/api/translate", methods=["POST"])
 def api_translate():
-    import json
     from translator import translator
-    
+
     data = request.get_json()
     text = data.get("text", "")
     engine = data.get("engine", "google")
-    
     source_lang = data.get("source_lang", "ENG_US")
     target_lang = data.get("target_lang", "POR_BR")
-    
+
     if not text:
         return json.dumps({"error": "No text provided"}), 400
-    
+
     result = translator.translate(engine, text, source_lang=source_lang, target_lang=target_lang)
-    
+
     return json.dumps({
-        "success": result['status_code'] == 200,
+        "success":    result['status_code'] == 200,
         "translated": result['text'] if result['status_code'] == 200 else None,
-        "error": result['text'] if result['status_code'] != 200 else None
+        "error":      result['text'] if result['status_code'] != 200 else None
     })
 
+
+@app.route("/api/save_progress", methods=["POST"])
+def save_progress():
+    data = request.get_json()
+    project_name     = data.get("project_name", "Projeto sem nome")
+    source_lang      = data.get("source_lang", "ENG_US")
+    target_lang      = data.get("target_lang", "POR_BR")
+    translation_data = json.dumps(data.get("strings", []))
+
+    user_id  = session.get('user_id')
+    guest_id = session.get('guest_session_id')
+
+    conn = get_db()
+    c = conn.cursor()
+
+    if user_id:
+        c.execute("SELECT id FROM saves WHERE user_id = ? AND project_name = ?", (user_id, project_name))
+    else:
+        c.execute("SELECT id FROM saves WHERE guest_session_id = ? AND project_name = ?", (guest_id, project_name))
+
+    existing_save = c.fetchone()
+
+    if existing_save:
+        c.execute(
+            "UPDATE saves SET translation_data = ?, last_updated = CURRENT_TIMESTAMP WHERE id = ?",
+            (translation_data, existing_save['id'])
+        )
+    else:
+        c.execute(
+            "INSERT INTO saves (user_id, guest_session_id, project_name, source_lang, target_lang, translation_data) VALUES (?, ?, ?, ?, ?, ?)",
+            (user_id, guest_id, project_name, source_lang, target_lang, translation_data)
+        )
+
+    conn.commit()
+    conn.close()
+    return json.dumps({"success": True})
+
+
+@app.route("/api/get_saves")
+def get_saves():
+    user_id  = session.get('user_id')
+    guest_id = session.get('guest_session_id')
+
+    conn = get_db()
+    c = conn.cursor()
+
+    if user_id:
+        c.execute("SELECT id, project_name, source_lang, target_lang, last_updated FROM saves WHERE user_id = ? ORDER BY last_updated DESC", (user_id,))
+    else:
+        c.execute("SELECT id, project_name, source_lang, target_lang, last_updated FROM saves WHERE guest_session_id = ? ORDER BY last_updated DESC", (guest_id,))
+
+    rows = c.fetchall()
+    conn.close()
+
+    saves = [dict(row) for row in rows]
+    return json.dumps({"saves": saves})
+
+
+@app.route("/api/delete_save", methods=["POST"])
+def delete_save():
+    data     = request.get_json()
+    save_id  = data.get("id")
+    user_id  = session.get('user_id')
+    guest_id = session.get('guest_session_id')
+
+    conn = get_db()
+    c = conn.cursor()
+
+    if user_id:
+        c.execute("DELETE FROM saves WHERE id = ? AND user_id = ?", (save_id, user_id))
+    else:
+        c.execute("DELETE FROM saves WHERE id = ? AND guest_session_id = ?", (save_id, guest_id))
+
+    conn.commit()
+    conn.close()
+    return json.dumps({"success": True})
+
+
+@app.route("/api/load_save/<int:save_id>")
+def load_save(save_id):
+    user_id  = session.get('user_id')
+    guest_id = session.get('guest_session_id')
+
+    conn = get_db()
+    c = conn.cursor()
+
+    if user_id:
+        c.execute("SELECT * FROM saves WHERE id = ? AND user_id = ?", (save_id, user_id))
+    else:
+        c.execute("SELECT * FROM saves WHERE id = ? AND guest_session_id = ?", (save_id, guest_id))
+
+    save = c.fetchone()
+    conn.close()
+
+    if not save:
+        return "Save não encontrado ou acesso negado", 404
+
+    strings = json.loads(save["translation_data"])
+
+    # Armazena na sessão para o /api/strings conseguir servir
+    session["package_path"]    = "DATABASE_SAVE"
+    session["original_name"]   = save["project_name"].split(" (")[0]
+    session["db_save_strings"] = strings
+
+    return json.dumps({
+        "success":          True,
+        "project_name":     save["project_name"],
+        "source_lang":      save["source_lang"],
+        "target_lang":      save["target_lang"],
+        "translation_data": strings
+    })
+
+
+@app.route("/api/register", methods=["POST"])
+def register():
+    data     = request.get_json()
+    username = data.get("username", "").strip()
+    password = data.get("password", "").strip()
+
+    if not username or len(password) < 6:
+        return json.dumps({"success": False, "error": "Usuário inválido ou senha muito curta (mínimo 6)."}), 400
+
+    conn = get_db()
+    c = conn.cursor()
+
+    c.execute("SELECT id FROM users WHERE username = ?", (username,))
+    if c.fetchone():
+        conn.close()
+        return json.dumps({"success": False, "error": "Nome de usuário já existe."}), 400
+
+    pass_hash   = generate_password_hash(password)
+    c.execute("INSERT INTO users (username, password_hash) VALUES (?, ?)", (username, pass_hash))
+    new_user_id = c.lastrowid
+
+    guest_id = session.get('guest_session_id')
+    if guest_id:
+        c.execute("UPDATE saves SET user_id = ? WHERE guest_session_id = ?", (new_user_id, guest_id))
+
+    conn.commit()
+    conn.close()
+
+    session['user_id'] = new_user_id
+    return json.dumps({"success": True})
+
+
+@app.route("/api/login", methods=["POST"])
+def login():
+    data     = request.get_json()
+    username = data.get("username", "").strip()
+    password = data.get("password", "").strip()
+
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT id, password_hash FROM users WHERE username = ?", (username,))
+    user = c.fetchone()
+
+    if user and check_password_hash(user['password_hash'], password):
+        session['user_id'] = user['id']
+        session.permanent  = True
+
+        guest_id = session.get('guest_session_id')
+        if guest_id:
+            c.execute("UPDATE saves SET user_id = ? WHERE guest_session_id = ? AND user_id IS NULL", (user['id'], guest_id))
+
+        conn.commit()
+        conn.close()
+        return json.dumps({"success": True})
+
+    conn.close()
+    return json.dumps({"success": False, "error": "Usuário ou senha incorretos."}), 401
+
+
+@app.route("/api/forgot_password", methods=["POST"])
+def forgot_password():
+    data         = request.get_json()
+    username     = data.get("username", "").strip()
+    new_password = data.get("new_password", "").strip()
+
+    if not username or len(new_password) < 6:
+        return json.dumps({"success": False, "error": "Dados inválidos. A senha deve ter no mínimo 6 caracteres."}), 400
+
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT id FROM users WHERE username = ?", (username,))
+    user = c.fetchone()
+
+    if user:
+        pass_hash = generate_password_hash(new_password)
+        c.execute("UPDATE users SET password_hash = ? WHERE id = ?", (pass_hash, user['id']))
+        conn.commit()
+        conn.close()
+        return json.dumps({"success": True})
+
+    conn.close()
+    return json.dumps({"success": False, "error": "Usuário não encontrado."}), 404
+
+
+@app.route("/api/me")
+def me():
+    user_id = session.get('user_id')
+    if not user_id:
+        return json.dumps({"logged_in": False})
+
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT username, profile_pic FROM users WHERE id = ?", (user_id,))
+    user = c.fetchone()
+    conn.close()
+
+    if user:
+        return json.dumps({
+            "logged_in":   True,
+            "username":    user["username"],
+            "profile_pic": user["profile_pic"]
+        })
+    return json.dumps({"logged_in": False})
+
+
+@app.route("/api/update_profile", methods=["POST"])
+def update_profile():
+    user_id = session.get('user_id')
+    if not user_id:
+        return json.dumps({"success": False, "error": "Não logado"}), 401
+
+    data         = request.get_json()
+    new_username = data.get("username", "").strip()
+    new_pic      = data.get("profile_pic", "").strip()
+
+    conn = get_db()
+    c = conn.cursor()
+
+    if new_username:
+        c.execute("SELECT id FROM users WHERE username = ? AND id != ?", (new_username, user_id))
+        if c.fetchone():
+            conn.close()
+            return json.dumps({"success": False, "error": "Nome de usuário já está em uso."}), 400
+
+    c.execute("UPDATE users SET username = ?, profile_pic = ? WHERE id = ?", (new_username, new_pic, user_id))
+    conn.commit()
+    conn.close()
+    return json.dumps({"success": True})
+
+
+@app.route("/api/logout", methods=["POST"])
+def logout():
+    session.clear()
+    return json.dumps({"success": True})
 
 
 if __name__ == "__main__":

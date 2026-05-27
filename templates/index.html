@@ -11,262 +11,180 @@
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
   :root {
-    --bg: #0f0f0f;
-    --surface: #1a1a1a;
-    --border: #2a2a2a;
-    --accent: #c8a96e;
-    --accent-dim: #8a6f42;
-    --text: #f0ece4;
-    --text-muted: #7a7570;
-    --radius: 16px;
+    --bg: #0f0f0f; --surface: #1a1a1a; --border: #2a2a2a; --border2: #333;
+    --accent: #c8a96e; --accent-dim: #8a6f42;
+    --text: #f0ece4; --text-muted: #7a7570; --radius: 16px; --radius-sm: 10px;
   }
+  html, body { min-height: 100%; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; }
+  .screen { min-height: 100dvh; display: flex; flex-direction: column; align-items: center; padding: 0 1rem 2rem; position: relative; }
+  .bg-grid { position: fixed; inset: 0; background-image: linear-gradient(rgba(200,169,110,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(200,169,110,0.04) 1px, transparent 1px); background-size: 40px 40px; pointer-events: none; z-index: 0; }
 
-  html, body {
-    height: 100%;
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    overflow: hidden;
-  }
+  /* TOPBAR */
+  .topbar { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 0 0; position: relative; z-index: 10; }
+  .profile-circle { width: 36px; height: 36px; border-radius: 50%; overflow: hidden; cursor: pointer; border: 1px solid var(--border); background: var(--surface); -webkit-tap-highlight-color: transparent; flex-shrink: 0; }
+  .profile-circle img { width: 100%; height: 100%; object-fit: cover; }
+  .select-topbar { display: none; width: 100%; align-items: center; justify-content: space-between; padding: 1.25rem 0 0; position: relative; z-index: 10; }
+  .select-topbar.active { display: flex; }
+  .select-cancel { background: none; border: none; color: var(--text-muted); font-size: 13px; cursor: pointer; padding: 4px 8px; -webkit-tap-highlight-color: transparent; }
+  .select-count { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 600; color: var(--text); }
+  .select-delete { background: none; border: none; color: #e07070; font-size: 13px; cursor: pointer; padding: 4px 8px; -webkit-tap-highlight-color: transparent; display: flex; align-items: center; gap: 6px; }
 
-  .screen {
-    height: 100dvh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 2rem;
+  /* LOGO */
+  .logo-area { text-align: center; margin: 1.5rem 0 1.25rem; position: relative; z-index: 1; }
+  .diamond { width: 56px; height: 56px; background: var(--surface); border: 1px solid var(--accent-dim); transform: rotate(45deg); margin: 0 auto 1.25rem; display: flex; align-items: center; justify-content: center; position: relative; }
+  .diamond::after { content: ''; position: absolute; inset: 7px; border: 1px solid rgba(200,169,110,0.3); }
+  .diamond-inner { transform: rotate(-45deg); font-size: 22px; line-height: 1; }
+  .title { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; letter-spacing: 0.05em; color: var(--text); margin-bottom: 0.35rem; }
+  .subtitle { font-size: 12px; color: var(--text-muted); }
+
+  /* IMPORT AREA */
+  .import-area { position: relative; z-index: 1; width: 100%; max-width: 340px; }
+
+  /* Botão IMPORTAR — aparece só na primeira vez */
+  .btn-import { width: 100%; padding: 16px; background: var(--surface); border: 1px solid var(--accent-dim); border-radius: var(--radius); color: var(--accent); font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 600; letter-spacing: 0.08em; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; -webkit-tap-highlight-color: transparent; position: relative; overflow: hidden; }
+  .btn-import::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(200,169,110,0.08) 0%, transparent 60%); }
+  .btn-import:active { transform: scale(0.97); }
+  .btn-import svg { width: 18px; height: 18px; flex-shrink: 0; }
+  .hint { text-align: center; font-size: 11px; color: var(--text-muted); margin-top: 0.75rem; }
+  #file-input { display: none; }
+
+  /* Botão + — aparece após primeiro save */
+  .btn-new { width: 100%; padding: 16px; background: var(--surface); border: 1px solid var(--accent-dim); border-radius: var(--radius); color: var(--accent); font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 300; cursor: pointer; display: flex; align-items: center; justify-content: center; -webkit-tap-highlight-color: transparent; }
+  .btn-new:active { transform: scale(0.97); background: #222; }
+
+  /* MASCOTE DIVISOR */
+  .mascot-divider { display: flex; justify-content: center; margin: 1rem 0 0.75rem; }
+  .mascot-divider img { width: 73px; height: 73px; object-fit: contain; opacity: 0.85; }
+
+  /* SAVES LIST */
+  .saves-label { font-size: 9px; color: var(--text-muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px; padding-left: 2px; width: 100%; }
+  .saves-list { width: 100%; display: flex; flex-direction: column; gap: 8px; }
+
+  .save-item {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 14px 14px;
+    display: flex; align-items: center; gap: 10px;
+    cursor: pointer; -webkit-tap-highlight-color: transparent;
+    transition: border-color 0.15s;
     position: relative;
   }
+  .save-item:active { background: #1f1f1f; }
 
-  .bg-grid {
-    position: absolute;
-    inset: 0;
-    background-image:
-      linear-gradient(rgba(200,169,110,0.04) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(200,169,110,0.04) 1px, transparent 1px);
-    background-size: 40px 40px;
-    pointer-events: none;
+  /* Círculo de seleção (estilo BlackNote) */
+  .sel-circle {
+    width: 20px; height: 20px; border-radius: 50%;
+    border: 1.5px solid var(--border2);
+    flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
   }
+  .sel-circle.checked { background: var(--accent-dim); border-color: var(--accent-dim); }
+  .sel-circle.checked::after { content: '✓'; font-size: 11px; color: #000; }
 
-.profile-circle {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  overflow: hidden;
-  cursor: pointer;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  flex-shrink: 0;
-  -webkit-tap-highlight-color: transparent;
-}
+  .save-info { flex: 1; overflow: hidden; }
+  .save-title { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .save-meta { font-size: 10px; color: var(--accent); margin-top: 3px; }
+  .save-actions { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
+  .btn-icon { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 12px; padding: 4px 6px; -webkit-tap-highlight-color: transparent; }
+  .btn-icon.delete { color: var(--text-muted); }
 
-.profile-circle img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
+  /* Estado seleção ativa */
+  .select-mode .save-item { cursor: default; }
+  .save-item.selected { border-color: var(--accent-dim); background: rgba(200,169,110,0.04); }
 
-  .logo-area {
-    text-align: center;
-    margin-bottom: 3.5rem;
-    position: relative;
-    z-index: 1;
-  }
+  /* Error */
+  .error-msg { display: none; background: rgba(200,60,60,0.1); border: 1px solid rgba(200,60,60,0.3); border-radius: 10px; padding: 12px 16px; font-size: 13px; color: #e07070; margin-top: 1rem; text-align: center; width: 100%; }
+  .error-msg.active { display: block; }
 
-  .diamond {
-    width: 64px;
-    height: 64px;
-    background: var(--surface);
-    border: 1px solid var(--accent-dim);
-    transform: rotate(45deg);
-    margin: 0 auto 1.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-  }
+  /* Loading */
+  .loading-overlay { display: none; position: fixed; inset: 0; background: rgba(15,15,15,0.9); z-index: 100; align-items: center; justify-content: center; flex-direction: column; gap: 1rem; }
+  .loading-overlay.active { display: flex; }
+  .spinner { width: 40px; height: 40px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { font-size: 13px; color: var(--text-muted); letter-spacing: 0.05em; }
 
-  .diamond::after {
-    content: '';
-    position: absolute;
-    inset: 8px;
-    border: 1px solid rgba(200,169,110,0.3);
-    transform: rotate(0deg);
-  }
+  /* Version */
+  .version { font-size: 11px; color: var(--text-muted); opacity: 0.4; letter-spacing: 0.05em; margin-top: 2rem; position: relative; z-index: 1; }
 
-  .diamond-inner {
-    transform: rotate(-45deg);
-    font-size: 24px;
-    line-height: 1;
-  }
-
-  .title {
-    font-family: 'Syne', sans-serif;
-    font-size: 22px;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    color: var(--text);
-    margin-bottom: 0.5rem;
-  }
-
-  .subtitle {
-    font-size: 13px;
-    color: var(--text-muted);
-    letter-spacing: 0.02em;
-  }
-
-  .import-area {
-    position: relative;
-    z-index: 1;
-    width: 100%;
-    max-width: 320px;
-  }
-
-  .btn-import {
-    width: 100%;
-    padding: 18px;
-    background: var(--surface);
-    border: 1px solid var(--accent-dim);
-    border-radius: var(--radius);
-    color: var(--accent);
-    font-family: 'Syne', sans-serif;
-    font-size: 16px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    transition: background 0.2s, border-color 0.2s, transform 0.1s;
-    -webkit-tap-highlight-color: transparent;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .btn-import::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, rgba(200,169,110,0.08) 0%, transparent 60%);
-  }
-
-  .btn-import:active {
-    transform: scale(0.97);
-    background: #222;
-  }
-
-  .btn-import svg {
-    width: 20px;
-    height: 20px;
-    flex-shrink: 0;
-  }
-
-  .hint {
-    text-align: center;
-    font-size: 11px;
-    color: var(--text-muted);
-    margin-top: 1rem;
-    letter-spacing: 0.02em;
-  }
-
-  #file-input {
-    display: none;
-  }
-
-  .loading-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(15,15,15,0.9);
-    z-index: 100;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .loading-overlay.active {
-    display: flex;
-  }
-
-  .spinner {
-    width: 40px;
-    height: 40px;
-    border: 2px solid var(--border);
-    border-top-color: var(--accent);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-  }
-
-  @keyframes spin {
-    to { transform: rotate(360deg); }
-  }
-
-  .loading-text {
-    font-size: 13px;
-    color: var(--text-muted);
-    letter-spacing: 0.05em;
-  }
-
-  .error-msg {
-    display: none;
-    background: rgba(200,60,60,0.1);
-    border: 1px solid rgba(200,60,60,0.3);
-    border-radius: 10px;
-    padding: 12px 16px;
-    font-size: 13px;
-    color: #e07070;
-    margin-top: 1rem;
-    text-align: center;
-  }
-
-  .error-msg.active {
-    display: block;
-  }
-
-  .version {
-    position: absolute;
-    bottom: 1.5rem;
-    font-size: 11px;
-    color: var(--text-muted);
-    opacity: 0.5;
-    letter-spacing: 0.05em;
-  }
+  /* Modals */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; align-items: center; justify-content: center; padding: 1.5rem; }
+  .modal-overlay.active { display: flex; }
+  .modal-box { width: 100%; max-width: 340px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; position: relative; }
+  .modal-close { position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: var(--text-muted); font-size: 18px; cursor: pointer; }
+  .modal-title { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; color: var(--accent); margin-bottom: 1.25rem; }
+  .form-group { margin-bottom: 1rem; display: flex; flex-direction: column; gap: 6px; }
+  .form-group label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+  .form-input { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; font-size: 13px; color: var(--text); font-family: 'DM Sans', sans-serif; }
+  .form-input:focus { outline: none; border-color: var(--accent-dim); }
+  .modal-btn { width: 100%; padding: 12px; background: var(--accent-dim); border: none; border-radius: 8px; color: var(--bg); font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 0.05em; cursor: pointer; margin-top: 0.5rem; }
+  .modal-btn:active { background: var(--accent); }
+  .modal-switch { text-align: center; font-size: 12px; color: var(--text-muted); margin-top: 1rem; cursor: pointer; }
+  .modal-switch span { color: var(--accent); text-decoration: underline; }
+  .auth-tab { display: none; }
+  .auth-tab.active { display: block; }
 </style>
 </head>
 <body>
-
-<div class="screen">
+<div class="screen" id="screen">
   <div class="bg-grid"></div>
 
-<div class="profile-circle" id="profile-btn">
-  <img src="/img/icon-pf.webp" alt="Perfil">
-</div>
-
-  <div class="logo-area">
-    <div class="diamond">
-      <span class="diamond-inner">◈</span>
+  <!-- Topbar normal -->
+  <div class="topbar" id="topbar-normal">
+    <div class="profile-circle" id="profile-btn">
+      <img src="/img/icon-pf.webp" alt="Perfil" id="profile-img">
     </div>
+    <div style="width:36px"></div>
+  </div>
+
+  <!-- Topbar modo seleção -->
+  <div class="select-topbar" id="topbar-select">
+    <button class="select-cancel" onclick="exitSelectMode()">Cancelar</button>
+    <span class="select-count" id="select-count">0 selecionados</span>
+    <button class="select-delete" onclick="deleteSelected()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+      Apagar
+    </button>
+  </div>
+
+  <!-- Logo -->
+  <div class="logo-area">
+    <div class="diamond"><span class="diamond-inner">◈</span></div>
     <div class="title">SIMS 4 TRANSLATOR</div>
     <div class="subtitle">Tradução de mods .package</div>
   </div>
 
-  <div class="import-area">
-    <input type="file" id="file-input" accept=".package">
-    <button class="btn-import" onclick="document.getElementById('file-input').click()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-        <polyline points="17 8 12 3 7 8"/>
-        <line x1="12" y1="3" x2="12" y2="15"/>
-      </svg>
-      IMPORTAR
-    </button>
-    <p class="hint">Selecione um arquivo .package do seu celular</p>
+  <!-- Área de import/novo -->
+  <div class="import-area" id="import-area" style="position:relative;z-index:1;width:100%;max-width:340px;">
+    <!-- Botão IMPORTAR (primeira vez) -->
+    <div id="btn-import-wrap">
+      <input type="file" id="file-input" accept=".package">
+      <button class="btn-import" onclick="document.getElementById('file-input').click()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/>
+          <line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+        IMPORTAR
+      </button>
+      <p class="hint">Selecione um arquivo .package do seu celular</p>
+    </div>
+    <!-- Botão + (após primeiro save) -->
+    <div id="btn-new-wrap" style="display:none">
+      <button class="btn-new" onclick="document.getElementById('file-input-new').click()">+</button>
+      <input type="file" id="file-input-new" accept=".package" style="display:none">
+    </div>
     <div class="error-msg" id="error-msg"></div>
+  </div>
+
+  <!-- Mascote divisor -->
+  <div class="mascot-divider" id="mascot-div" style="display:none">
+    <img src="/img/sillyblumbob.webp" alt="">
+  </div>
+
+  <!-- Saves -->
+  <div id="saves-area" style="display:none;width:100%;max-width:340px;position:relative;z-index:1;">
+    <div class="saves-label">Traduções salvas</div>
+    <div class="saves-list" id="saves-list"></div>
   </div>
 
   <div class="version">v1.0 · MIT · Voky1 • Remake by AlucardYummy</div>
@@ -281,37 +199,360 @@
   <input type="file" name="package" id="form-file">
 </form>
 
-<script>
-  const fileInput = document.getElementById('file-input');
-  const formFile = document.getElementById('form-file');
-  const uploadForm = document.getElementById('upload-form');
-  const loading = document.getElementById('loading');
-  const errorMsg = document.getElementById('error-msg');
+<!-- AUTH MODAL -->
+<div class="modal-overlay" id="auth-modal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeAuthModal()">✕</button>
+    <div class="auth-tab active" id="tab-login">
+      <h3 class="modal-title">Entrar na Conta</h3>
+      <div class="form-group"><label>Nome de Usuário</label><input type="text" class="form-input" id="login-username" placeholder="Seu usuário"></div>
+      <div class="form-group"><label>Senha</label><input type="password" class="form-input" id="login-password" placeholder="••••••••"></div>
+      <button class="modal-btn" onclick="handleLogin()">ENTRAR</button>
+      <p class="modal-switch" onclick="switchTab('forgot')"><span>Esqueceu a senha?</span></p>
+      <p class="modal-switch" onclick="switchTab('register')">Não tem conta? <span>Cadastre-se</span></p>
+    </div>
+    <div class="auth-tab" id="tab-register">
+      <h3 class="modal-title">Criar Conta</h3>
+      <div class="form-group"><label>Nome de Usuário</label><input type="text" class="form-input" id="reg-username" placeholder="Ex: Alucard"></div>
+      <div class="form-group"><label>Senha</label><input type="password" class="form-input" id="reg-password" placeholder="Mínimo 6 caracteres"></div>
+      <button class="modal-btn" onclick="handleRegister()">CRIAR CONTA</button>
+      <p class="modal-switch" onclick="switchTab('login')">Já tem uma conta? <span>Entrar</span></p>
+    </div>
+    <div class="auth-tab" id="tab-forgot">
+      <h3 class="modal-title">Recuperar Senha</h3>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:1rem;line-height:1.4">Digite seu usuário para redefinir a senha.</p>
+      <div class="form-group"><label>Usuário</label><input type="text" class="form-input" id="forgot-username" placeholder="Seu usuário"></div>
+      <div class="form-group"><label>Nova Senha</label><input type="password" class="form-input" id="forgot-new-password" placeholder="Nova senha"></div>
+      <button class="modal-btn" onclick="handleForgotPassword()">ALTERAR SENHA</button>
+      <p class="modal-switch" onclick="switchTab('login')">Voltar para o <span>Login</span></p>
+    </div>
+  </div>
+</div>
 
-  fileInput.addEventListener('change', function () {
+<!-- PROFILE MODAL -->
+<div class="modal-overlay" id="profile-modal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeProfileModal()">✕</button>
+    <h3 class="modal-title">Meu Perfil</h3>
+    <div style="text-align:center;margin-bottom:1rem">
+      <div style="width:64px;height:64px;border-radius:50%;overflow:hidden;margin:0 auto 10px;border:1px solid var(--border)">
+        <img src="/img/icon-pf.webp" id="modal-profile-img" style="width:100%;height:100%;object-fit:cover">
+      </div>
+    </div>
+    <div class="form-group"><label>Nome de Usuário</label><input type="text" class="form-input" id="edit-username"></div>
+    <div class="form-group">
+      <label>Foto de Perfil</label>
+      <input type="file" id="edit-profile-pic" accept="image/*" style="display:none">
+      <button type="button" class="form-input" style="cursor:pointer;text-align:center;background:var(--bg)" onclick="document.getElementById('edit-profile-pic').click()">📷 Escolher imagem</button>
+    </div>
+    <button class="modal-btn" onclick="saveProfile()">SALVAR ALTERAÇÕES</button>
+    <button class="modal-btn" style="background:transparent;border:1px solid #e07070;color:#e07070;margin-top:10px" onclick="handleLogout()">SAIR DA CONTA</button>
+  </div>
+</div>
+
+<script>
+let currentUser = null;
+let newProfilePicBase64 = null;
+let selectMode = false;
+let selectedIds = new Set();
+let hasSaves = false;
+
+// Verifica se já tem saves (pelo localStorage como flag rápida)
+function checkHasSaves() {
+  return localStorage.getItem('has_saves') === '1';
+}
+
+function updateImportUI() {
+  const hasSavesNow = hasSaves || checkHasSaves();
+  if (hasSavesNow) {
+    document.getElementById('btn-import-wrap').style.display = 'none';
+    document.getElementById('btn-new-wrap').style.display = 'block';
+  } else {
+    document.getElementById('btn-import-wrap').style.display = 'block';
+    document.getElementById('btn-new-wrap').style.display = 'none';
+  }
+}
+
+// Upload handlers
+function setupFileInput(inputId) {
+  document.getElementById(inputId).addEventListener('change', function() {
     const file = this.files[0];
     if (!file) return;
-
     if (!file.name.endsWith('.package')) {
-      showError('Arquivo inválido. Selecione um arquivo .package');
+      document.getElementById('error-msg').textContent = 'Arquivo inválido. Selecione um arquivo .package';
+      document.getElementById('error-msg').classList.add('active');
       return;
     }
-
-    loading.classList.add('active');
-    errorMsg.classList.remove('active');
-
+    document.getElementById('loading').classList.add('active');
+    document.getElementById('error-msg').classList.remove('active');
     const dt = new DataTransfer();
     dt.items.add(file);
-    formFile.files = dt.files;
-
-    uploadForm.submit();
+    document.getElementById('form-file').files = dt.files;
+    document.getElementById('upload-form').submit();
   });
+}
+setupFileInput('file-input');
+setupFileInput('file-input-new');
 
-  function showError(msg) {
-    errorMsg.textContent = msg;
-    errorMsg.classList.add('active');
+// SELECT MODE (estilo BlackNote)
+function enterSelectMode() {
+  selectMode = true;
+  selectedIds.clear();
+  document.getElementById('topbar-normal').style.display = 'none';
+  document.getElementById('topbar-select').classList.add('active');
+  document.getElementById('screen').classList.add('select-mode');
+  updateSelectCount();
+  renderSaves();
+}
+
+function exitSelectMode() {
+  selectMode = false;
+  selectedIds.clear();
+  document.getElementById('topbar-normal').style.display = 'flex';
+  document.getElementById('topbar-select').classList.remove('active');
+  document.getElementById('screen').classList.remove('select-mode');
+  renderSaves();
+}
+
+function toggleSelect(id) {
+  if (selectedIds.has(id)) {
+    selectedIds.delete(id);
+  } else {
+    selectedIds.add(id);
   }
-</script>
+  updateSelectCount();
+  renderSaves();
+}
 
+function updateSelectCount() {
+  document.getElementById('select-count').textContent = selectedIds.size + ' selecionado' + (selectedIds.size !== 1 ? 's' : '');
+}
+
+async function deleteSelected() {
+  if (selectedIds.size === 0) return;
+  for (const id of selectedIds) {
+    await fetch('/api/delete_save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id })
+    });
+  }
+  exitSelectMode();
+  await loadSaves();
+}
+
+// SAVES
+let savesData = [];
+
+async function loadSaves() {
+  try {
+    const res = await fetch('/api/get_saves');
+    const data = await res.json();
+    savesData = data.saves || [];
+    hasSaves = savesData.length > 0;
+    if (hasSaves) localStorage.setItem('has_saves', '1');
+
+    const area = document.getElementById('saves-area');
+    const mascot = document.getElementById('mascot-div');
+
+    if (savesData.length > 0) {
+      area.style.display = 'block';
+      mascot.style.display = 'flex';
+    } else {
+      area.style.display = 'none';
+      mascot.style.display = 'none';
+    }
+
+    updateImportUI();
+    renderSaves();
+  } catch(e) {
+    console.error('Erro ao carregar saves', e);
+  }
+}
+
+function renderSaves() {
+  const list = document.getElementById('saves-list');
+  list.innerHTML = '';
+  savesData.forEach(save => {
+    const item = document.createElement('div');
+    item.className = 'save-item' + (selectedIds.has(save.id) ? ' selected' : '');
+
+    const circle = document.createElement('div');
+    circle.className = 'sel-circle' + (selectedIds.has(save.id) ? ' checked' : '');
+    circle.style.display = selectMode ? 'flex' : 'none';
+
+    const info = document.createElement('div');
+    info.className = 'save-info';
+    info.innerHTML =
+      '<div class="save-title">' + save.project_name + '</div>' +
+      '<div class="save-meta">' + save.source_lang + ' → ' + save.target_lang + '</div>';
+
+    const actions = document.createElement('div');
+    actions.className = 'save-actions';
+    actions.style.display = selectMode ? 'none' : 'flex';
+    actions.innerHTML =
+      '<button class="btn-icon" onclick="editSave(' + save.id + ');event.stopPropagation()">editar</button>' +
+      '<button class="btn-icon delete" onclick="deleteSingleSave(' + save.id + ');event.stopPropagation()">✕</button>';
+
+    item.appendChild(circle);
+    item.appendChild(info);
+    item.appendChild(actions);
+
+    // Toque longo entra no modo seleção
+    let pressTimer;
+    item.addEventListener('touchstart', () => {
+      pressTimer = setTimeout(() => {
+        if (!selectMode) enterSelectMode();
+        toggleSelect(save.id);
+      }, 500);
+    });
+    item.addEventListener('touchend', () => clearTimeout(pressTimer));
+    item.addEventListener('touchmove', () => clearTimeout(pressTimer));
+
+    // Toque simples: se em modo seleção, seleciona; senão, abre
+    item.addEventListener('click', () => {
+      if (selectMode) {
+        toggleSelect(save.id);
+      } else {
+        editSave(save.id);
+      }
+    });
+
+    list.appendChild(item);
+  });
+}
+
+async function deleteSingleSave(id) {
+  await fetch('/api/delete_save', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id })
+  });
+  await loadSaves();
+}
+
+async function editSave(id) {
+  try {
+    const res = await fetch('/api/load_save/' + id);
+    const data = await res.json();
+    if (data.success) {
+      sessionStorage.setItem('selected_instance_str', data.translation_data[0]?.key || '');
+      sessionStorage.setItem('target_lang', data.target_lang);
+      sessionStorage.setItem('original_lang', data.source_lang);
+      sessionStorage.setItem('original_name', data.project_name.split(' (')[0]);
+      window.location.href = '/editor';
+    }
+  } catch(e) { alert('Erro ao carregar save.'); }
+}
+
+// AUTH
+async function checkLogin() {
+  try {
+    const res = await fetch('/api/me');
+    const data = await res.json();
+    if (data.logged_in) {
+      currentUser = data;
+      const src = data.profile_pic || '/img/icon-pf.webp';
+      document.getElementById('profile-img').src = src;
+      document.getElementById('modal-profile-img').src = src;
+    }
+  } catch(e) {}
+}
+
+document.getElementById('profile-btn').addEventListener('click', () => {
+  if (currentUser) {
+    newProfilePicBase64 = null;
+    document.getElementById('edit-profile-pic').value = '';
+    document.getElementById('edit-username').value = currentUser.username || '';
+    document.getElementById('modal-profile-img').src = currentUser.profile_pic || '/img/icon-pf.webp';
+    document.getElementById('profile-modal').classList.add('active');
+  } else {
+    document.getElementById('auth-modal').classList.add('active');
+  }
+});
+
+document.getElementById('edit-profile-pic').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    newProfilePicBase64 = ev.target.result;
+    document.getElementById('modal-profile-img').src = newProfilePicBase64;
+  };
+  reader.readAsDataURL(file);
+});
+
+async function saveProfile() {
+  const newName = document.getElementById('edit-username').value.trim();
+  const newPic = newProfilePicBase64 || (currentUser ? currentUser.profile_pic : '') || '';
+  try {
+    const res = await fetch('/api/update_profile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: newName, profile_pic: newPic })
+    });
+    const data = await res.json();
+    if (data.success) window.location.reload();
+    else alert(data.error);
+  } catch(e) { alert('Erro ao salvar perfil.'); }
+}
+
+function closeAuthModal() { document.getElementById('auth-modal').classList.remove('active'); }
+function closeProfileModal() { document.getElementById('profile-modal').classList.remove('active'); }
+async function handleLogout() { await fetch('/api/logout', { method: 'POST' }); window.location.reload(); }
+function switchTab(tab) {
+  document.querySelectorAll('.auth-tab').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+}
+
+async function handleLogin() {
+  const username = document.getElementById('login-username').value.trim();
+  const password = document.getElementById('login-password').value.trim();
+  if (!username || !password) { alert('Preencha todos os campos.'); return; }
+  try {
+    const res = await fetch('/api/login', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+    const data = await res.json();
+    if (data.success) window.location.reload();
+    else alert(data.error || 'Erro ao entrar.');
+  } catch(e) { alert('Erro de conexão.'); }
+}
+
+async function handleRegister() {
+  const username = document.getElementById('reg-username').value.trim();
+  const password = document.getElementById('reg-password').value.trim();
+  if (!username || !password) { alert('Preencha todos os campos.'); return; }
+  try {
+    const res = await fetch('/api/register', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+    const data = await res.json();
+    if (data.success) window.location.reload();
+    else alert(data.error || 'Erro ao criar conta.');
+  } catch(e) { alert('Erro de conexão.'); }
+}
+
+async function handleForgotPassword() {
+  const username = document.getElementById('forgot-username').value.trim();
+  const new_password = document.getElementById('forgot-new-password').value.trim();
+  if (!username || !new_password) { alert('Preencha todos os campos.'); return; }
+  try {
+    const res = await fetch('/api/forgot_password', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, new_password })
+    });
+    const data = await res.json();
+    if (data.success) { alert('Senha alterada!'); switchTab('login'); }
+    else alert(data.error || 'Erro.');
+  } catch(e) { alert('Erro de conexão.'); }
+}
+
+// INIT
+checkLogin();
+loadSaves();
+</script>
 </body>
 </html>

@@ -26,7 +26,19 @@
   .topbar-info { flex: 1; overflow: hidden; }
   .topbar-title { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .topbar-sub { font-size: 10px; color: var(--text-muted); font-family: 'DM Mono', monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .count-badge { font-size: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 3px 8px; color: var(--text-muted); font-family: 'DM Mono', monospace; flex-shrink: 0; }
+  .topbar-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .count-badge { font-size: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 3px 8px; color: var(--text-muted); font-family: 'DM Mono', monospace; }
+  .save-progress-btn {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--text-muted); font-size: 15px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; -webkit-tap-highlight-color: transparent;
+    transition: all 0.2s;
+  }
+  .save-progress-btn.saved { border-color: #4caf50; color: #4caf50; background: rgba(76,175,80,0.1); }
+  .save-progress-btn.saving { border-color: var(--accent-dim); color: var(--accent); animation: pulse 0.8s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
   .col-headers { display: grid; grid-template-columns: 86px 1fr 1fr 40px; gap: 6px; padding: 7px 1rem; border-bottom: 1px solid var(--border); flex-shrink: 0; background: var(--bg); }
   .col-header { font-size: 9px; color: var(--text-dim); letter-spacing: 0.08em; text-transform: uppercase; }
   .strings-list { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: 80px; }
@@ -39,8 +51,8 @@
   .translate-btn { width: 32px; height: 32px; border-radius: 50%; background: var(--surface); border: 1px solid var(--accent-dim); color: var(--accent); display: flex; align-items: center; justify-content: center; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: all 0.2s; margin-top: 2px; }
   .translate-btn:active { transform: scale(0.9); }
   .translate-btn.loading { animation: spin 1s linear infinite; }
-  .translate-btn.success { background: rgba(76, 175, 80, 0.2); border-color: #4caf50; color: #4caf50; }
-  .translate-btn.error { background: rgba(244, 67, 54, 0.2); border-color: #f44336; color: #f44336; }
+  .translate-btn.success { background: rgba(76,175,80,0.2); border-color: #4caf50; color: #4caf50; }
+  .translate-btn.error { background: rgba(244,67,54,0.2); border-color: #f44336; color: #f44336; }
   @keyframes spin { to { transform: rotate(360deg); } }
   .bottom-bar { border-top: 1px solid var(--border); padding: 1rem; background: var(--bg); flex-shrink: 0; }
   .filename-row { display: flex; align-items: center; gap: 8px; margin-bottom: 0.75rem; }
@@ -69,35 +81,10 @@
   .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 3rem 2rem; gap: 0.75rem; }
   .empty-icon { font-size: 32px; opacity: 0.3; }
   .empty-text { font-size: 13px; color: var(--text-muted); text-align: center; }
-
-  /* NOVO CSS PARA O MENU DE TRADUÇÃO */
-  .engine-menu {
-    display: none;
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: var(--surface);
-    border: 1px solid var(--accent-dim);
-    border-radius: 12px;
-    z-index: 500;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-    min-width: 180px;
-    overflow: hidden;
-  }
-  .engine-option {
-    padding: 12px 16px;
-    color: var(--text);
-    font-size: 13px;
-    cursor: pointer;
-    border-bottom: 1px solid var(--border);
-  }
-  .engine-option:last-child {
-    border-bottom: none;
-  }
-  .engine-option:hover, .engine-option:active {
-    background: var(--surface2);
-  }
+  .engine-menu { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--surface); border: 1px solid var(--accent-dim); border-radius: 12px; z-index: 500; box-shadow: 0 10px 30px rgba(0,0,0,0.8); min-width: 180px; overflow: hidden; }
+  .engine-option { padding: 12px 16px; color: var(--text); font-size: 13px; cursor: pointer; border-bottom: 1px solid var(--border); }
+  .engine-option:last-child { border-bottom: none; }
+  .engine-option:active { background: var(--surface2); }
 </style>
 </head>
 <body>
@@ -112,7 +99,10 @@
       <div class="topbar-title" id="top-title">Editor</div>
       <div class="topbar-sub" id="top-sub">—</div>
     </div>
-    <div class="count-badge" id="count-badge">—</div>
+    <div class="topbar-right">
+      <div class="count-badge" id="count-badge">—</div>
+      <button class="save-progress-btn" id="save-progress-btn" onclick="saveProgressManual()" title="Salvar progresso">✓</button>
+    </div>
   </div>
   <div class="col-headers">
     <div class="col-header">Key</div>
@@ -148,7 +138,7 @@
     <div class="success-sub" id="success-sub">—</div>
     <div class="success-downloads-note" id="downloads-note"></div>
     <a href="/download" class="success-new">⬇ BAIXAR ARQUIVO</a>
-    <button class="success-new" onclick="window.location.href='/'" style="background:transparent; border:1px solid var(--border2); color:var(--text-muted);">Traduzir outro arquivo</button>
+    <button class="success-new" onclick="window.location.href='/'" style="background:transparent; border:1px solid var(--border2); color:var(--text-muted);">Ver minhas traduções</button>
     <button class="success-back" onclick="document.getElementById('success-sheet').classList.remove('open')">Continuar editando</button>
   </div>
 </div>
@@ -164,6 +154,8 @@ let instanceStr  = sessionStorage.getItem('selected_instance_str') || '';
 let targetLang   = sessionStorage.getItem('target_lang') || 'POR_BR';
 let originalLang = sessionStorage.getItem('original_lang') || 'ENG_US';
 let currentIdx = null;
+let autoSaveTimer = null;
+let progressSaved = false;
 
 function autoResize(el) {
   el.style.height = 'auto';
@@ -171,12 +163,10 @@ function autoResize(el) {
 }
 
 function showEngineMenu(idx, event) {
-  if (event) event.stopPropagation(); 
-  
+  if (event) event.stopPropagation();
   currentIdx = idx;
   const menu = document.getElementById('engine-menu');
   menu.style.display = 'block';
-  
   setTimeout(() => {
     document.addEventListener('click', function closeMenu(e) {
       if (!menu.contains(e.target)) {
@@ -190,42 +180,29 @@ function showEngineMenu(idx, event) {
 async function processTranslation(engine) {
   document.getElementById('engine-menu').style.display = 'none';
   if (currentIdx === null) return;
-  
   const idx = currentIdx;
-  const btn = document.querySelector(`[data-translate-idx="${idx}"]`);
-  const textarea = document.querySelector(`[data-idx="${idx}"]`);
+  const btn = document.querySelector('[data-translate-idx="' + idx + '"]');
+  const textarea = document.querySelector('[data-idx="' + idx + '"]');
   const originalText = stringsData[idx].value;
-  
   if (!originalText) return;
-  
   btn.classList.add('loading');
   btn.innerHTML = '◌';
-  
   try {
     const res = await fetch('/api/translate', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({
-        text: originalText,
-        engine: engine,
-        source_lang: originalLang,
-        target_lang: targetLang
-      })
+      body: JSON.stringify({ text: originalText, engine: engine, source_lang: originalLang, target_lang: targetLang })
     });
-    
     const data = await res.json();
-    
     if (data.success && data.translated) {
       textarea.value = data.translated;
       stringsData[idx].value = data.translated;
       autoResize(textarea);
+      triggerAutoSave();
       btn.classList.remove('loading');
       btn.classList.add('success');
       btn.innerHTML = '✓';
-      setTimeout(() => {
-        btn.classList.remove('success');
-        btn.innerHTML = '◈';
-      }, 2000);
+      setTimeout(() => { btn.classList.remove('success'); btn.innerHTML = '◈'; }, 2000);
     } else {
       throw new Error(data.error || 'Erro na tradução');
     }
@@ -233,12 +210,67 @@ async function processTranslation(engine) {
     btn.classList.remove('loading');
     btn.classList.add('error');
     btn.innerHTML = '✕';
-    setTimeout(() => {
-      btn.classList.remove('error');
-      btn.innerHTML = '◈';
-    }, 2000);
+    setTimeout(() => { btn.classList.remove('error'); btn.innerHTML = '◈'; }, 2000);
   }
 }
+
+function triggerAutoSave() {
+  clearTimeout(autoSaveTimer);
+  const btn = document.getElementById('save-progress-btn');
+  btn.classList.remove('saved');
+  btn.classList.add('saving');
+  autoSaveTimer = setTimeout(() => { saveProgressToDatabase(); }, 2000);
+}
+
+async function saveProgressToDatabase() {
+  if (stringsData.length === 0) return;
+  const originalName = sessionStorage.getItem('original_name') || 'arquivo.package';
+  const projectName = originalName + ' (' + instanceStr + ')';
+  const payload = {
+    project_name: projectName,
+    source_lang: originalLang,
+    target_lang: targetLang,
+    strings: stringsData
+  };
+  const btn = document.getElementById('save-progress-btn');
+  try {
+    await fetch('/api/save_progress', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    btn.classList.remove('saving');
+    btn.classList.add('saved');
+    progressSaved = true;
+    localStorage.setItem('has_saves', '1');
+  } catch(e) {
+    btn.classList.remove('saving');
+    console.error("Erro no auto-save", e);
+  }
+}
+
+async function saveProgressManual() {
+  const btn = document.getElementById('save-progress-btn');
+  if (stringsData.length === 0) return;
+  btn.classList.add('saving');
+  await saveProgressToDatabase();
+  window.location.href = '/';
+}
+
+window.addEventListener('beforeunload', () => {
+  if (stringsData.length > 0) {
+    const originalName = sessionStorage.getItem('original_name') || 'arquivo.package';
+    const projectName = originalName + ' (' + instanceStr + ')';
+    const payload = JSON.stringify({
+      project_name: projectName,
+      source_lang: originalLang,
+      target_lang: targetLang,
+      strings: stringsData
+    });
+    navigator.sendBeacon('/api/save_progress', new Blob([payload], {type: 'application/json'}));
+    localStorage.setItem('has_saves', '1');
+  }
+});
 
 async function load() {
   if (!instanceStr) { window.location.href = '/'; return; }
@@ -273,15 +305,14 @@ function renderStrings() {
     row.innerHTML =
       '<div class="key-hex">' + item.key_hex + '</div>' +
       '<div class="original-text">' + (safe || '<em style="opacity:0.4">vazio</em>') + '</div>' +
-      '<div class="edit-container">' +
-        '<textarea class="edit-textarea" data-idx="' + idx + '" rows="1">' + (item.value || '') + '</textarea>' +
-      '</div>' +
+      '<div class="edit-container"><textarea class="edit-textarea" data-idx="' + idx + '" rows="1">' + (item.value || '') + '</textarea></div>' +
       '<div class="translate-btn" data-translate-idx="' + idx + '" onclick="showEngineMenu(' + idx + ', event)">◈</div>';
     list.appendChild(row);
     const ta = row.querySelector('textarea');
     autoResize(ta);
     ta.addEventListener('input', function() {
       autoResize(this);
+      triggerAutoSave();
       stringsData[parseInt(this.dataset.idx)].value = this.value;
     });
   });
@@ -309,6 +340,7 @@ async function save() {
       document.getElementById('success-sub').textContent = data.output_name;
       document.getElementById('downloads-note').textContent = '';
       document.getElementById('success-sheet').classList.add('open');
+      await saveProgressToDatabase();
     } else {
       alert('Erro ao salvar: ' + (data.error || 'desconhecido'));
     }
@@ -322,4 +354,3 @@ load();
 </script>
 </body>
 </html>
-
