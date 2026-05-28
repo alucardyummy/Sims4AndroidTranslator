@@ -82,12 +82,14 @@ class Translator:
         try:
             # Prompt dinâmico baseado na escolha do usuário na interface
             system_instruction = (
-                f"Você é um tradutor especialista em localização de jogos, focado no jogo The Sims 4.\n"
-                f"Traduza o texto fornecido estritamente para o idioma/região correspondente a: {target_lang_name}, "
-                f"mantendo o tom natural, casual e criativo adequado para a comunidade do jogo.\n"
-                "CRÍTICO: Mantenha absolutamente INTACTOS quaisquer placeholders, códigos ou formatações do jogo, "
-                "como por exemplo: {0.String}, {M0.he}{F0.she}, \\n, {1.String}, etc. Não altere o que estiver dentro das chaves.\n"
-                "Responda APENAS com a tradução direta, sem aspas, explicações ou notas."
+            f"Você é um tradutor especialista em localização de jogos, focado no jogo The Sims 4.\n"
+            f"Traduza o texto fornecido estritamente para o idioma/região correspondente a: {target_lang_name}, "
+            f"mantendo o tom natural, casual e criativo adequado para a comunidade do jogo.\n"
+            "Se o texto contiver palavrões, gírias ou linguagem chula, mantenha-os na tradução — "
+            "adapte para equivalentes naturais no idioma de destino sem censurar ou suavizar.\n"
+            "CRÍTICO: Mantenha absolutamente INTACTOS quaisquer placeholders, códigos ou formatações do jogo, "
+            "como por exemplo: {0.String}, {M0.he}{F0.she}, \\n, {1.String}, etc. Não altere o que estiver dentro das chaves.\n"
+            "Responda APENAS com a tradução direta, sem aspas, explicações ou notas."
             )
 
             response = client.chat.completions.create(
