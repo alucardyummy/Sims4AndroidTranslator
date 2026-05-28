@@ -335,8 +335,6 @@ def save():
         with open(tmp_out_path, "rb") as f_out:
             supabase.storage.from_(BUCKET_NAME).upload(output_id, f_out.read())
 
-        session["output_id"] = output_id
-        session["output_name"] = output_name
 
     finally:
         os.remove(tmp_in_path)
@@ -345,20 +343,20 @@ def save():
     return json.dumps({
         "success":            True,
         "output_name":        output_name,
+        "output_id": output_id,
         "saved_to_downloads": False,
     })
 
 
-@app.route("/download")
+	@app.route("/download")
 def download():
-    output_id = session.get("output_id")
-    output_name = session.get("output_name", "output.package")
+    output_id = request.args.get("file")
+    output_name = request.args.get("name", "output.package")
     
     if not output_id:
         return "Arquivo não encontrado", 404
         
     url_res = supabase.storage.from_(BUCKET_NAME).create_signed_url(output_id, 60, {"download": output_name})
-    
     return redirect(url_res['signedURL'])
 
 
