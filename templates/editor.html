@@ -16,8 +16,10 @@
     --border: #2a2a2a; --border2: #333;
     --accent: #c8a96e; --accent-dim: #8a6f42;
     --text: #f0ece4; --text-muted: #7a7570; --text-dim: #4a4540;
-    --radius: 16px; --radius-sm: 10px;
-  }
+    --radius: 16px; --radius-sm: 10px; 
+ }
+  * { caret-color: #9cb8b2; accent-color: #9cb8b2; }
+  ::selection { background: rgba(156,184,178,0.4); }
   html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; overscroll-behavior: none; }
   .page { display: flex; flex-direction: column; height: 100dvh; }
   .topbar { display: flex; align-items: center; gap: 10px; padding: 1rem 1rem 0.75rem; border-bottom: 1px solid var(--border); flex-shrink: 0; background: var(--bg); }
@@ -156,6 +158,7 @@ let originalLang = sessionStorage.getItem('original_lang') || 'ENG_US';
 let currentIdx = null;
 let autoSaveTimer = null;
 let progressSaved = false;
+let editedIndices = new Set();
 
 function autoResize(el) {
   el.style.height = 'auto';
@@ -199,6 +202,8 @@ async function processTranslation(engine) {
       stringsData[idx].value = data.translated;
       autoResize(textarea);
       triggerAutoSave();
+      editedIndices.add(idx);
+      updateProgressBadge();
       btn.classList.remove('loading');
       btn.innerHTML = '◈';
     } else {
@@ -213,9 +218,9 @@ async function processTranslation(engine) {
 }
 
 function triggerAutoSave() {
-  clearTimeout(autoSaveTimer);
-  autoSaveTimer = setTimeout(() => { saveProgressToDatabase(); }, 2000);
-}
+    clearTimeout(autoSaveTimer);
+    autoSaveTimer = setTimeout(() => { saveProgressToDatabase(); }, 2000);
+  }
 
 async function saveProgressToDatabase() {
   if (stringsData.length === 0) return;
@@ -281,6 +286,7 @@ async function load() {
     const data = await res.json();
     stringsData = data.strings || [];
     document.getElementById('count-badge').textContent = stringsData.length + ' strings';
+    updateProgressBadge();
     document.getElementById('loading').classList.remove('active');
     renderStrings();
     document.getElementById('save-btn').disabled = stringsData.length === 0;
@@ -310,11 +316,18 @@ function renderStrings() {
     const ta = row.querySelector('textarea');
     autoResize(ta);
     ta.addEventListener('input', function() {
+    editedIndices.add(parseInt(this.dataset.idx));
+    updateProgressBadge();
       autoResize(this);
       triggerAutoSave();
       stringsData[parseInt(this.dataset.idx)].value = this.value;
     });
   });
+}
+
+function updateProgressBadge() {
+  document.getElementById('count-badge').textContent = 
+    editedIndices.size + '/' + stringsData.length + ' traduzidas';
 }
 
 async function save() {

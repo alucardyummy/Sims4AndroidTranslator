@@ -131,7 +131,7 @@ class _DbpfWriter:
 
     def put_rsrc(self, content):
         seek = self.f.seek
-        zcontent = zlib.compress(content)
+        zcontent = zlib.compress(content, 8)
         self.f.put_raw_bytes(zcontent)
         locator = DbpfLocator(seek, len(zcontent), (0x5A42, 1))
         return locator

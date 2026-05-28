@@ -220,11 +220,16 @@ def api_strings():
     pkg_id = session.get("package_id")
 
     if pkg_id == "DATABASE_SAVE":
-        db_strings = session.get("db_save_strings", [])
-        return app.response_class(
-            response=json.dumps({"strings": db_strings}),
-            mimetype="application/json"
-        )
+        db_save_id = session.get("db_save_id")
+        if not db_save_id:
+            return app.response_class(response=json.dumps({"strings": []}), mimetype="application/json")
+        conn = get_db()
+        c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        c.execute("SELECT translation_data FROM saves WHERE id = %s", (db_save_id,))
+        row = c.fetchone()
+        conn.close()
+        db_strings = json.loads(row["translation_data"]) if row else []
+        return app.response_class(response=json.dumps({"strings": db_strings}), mimetype="application/json")
 
     instance_int = int(instance_str)
     strings = []
@@ -475,7 +480,7 @@ def load_save(save_id):
 
     session["package_id"]      = pkg_id
     session["original_name"]   = save["project_name"].split(" (")[0]
-    session["db_save_strings"] = strings
+    session["db_save_id"] = save_id
 
     return json.dumps({
         "success":          True,
