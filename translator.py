@@ -61,25 +61,39 @@ class Translator:
             return {'status_code': 400, 'text': f'Engine "{engine}" não reconhecida pelo sistema'}
 
     def _translate_google(self, text, source_lang, target_lang):
-    try:
-        params = {
-            'client': 'gtx',
-            'sl': source_lang,
-            'tl': target_lang,
-            'dt': 't',
-            'q': text
-        }
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-        }
-        response = requests.get(self.engines['google'], params=params, headers=headers, timeout=10)
-        if response.status_code == 200:
-            result = response.json()
-            translated = ''.join([item[0] for item in result[0] if item[0]])
-            return {'status_code': 200, 'text': translated}
-        return {'status_code': response.status_code, 'text': 'Google Translation failed'}
-    except Exception as e:
-        return {'status_code': 500, 'text': str(e)}
+        try:
+            params = {
+                'client': 'gtx',
+                'sl': 'auto',
+                'tl': target_lang,
+                'dt': 't',
+                'q': text
+            }
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            }
+            
+            print(f"\n🔍 [DEBUG GOOGLE] Idiomas: {source_lang} -> {target_lang}")
+            print(f"🔍 [DEBUG GOOGLE] Texto original: {text}")
+            
+            response = requests.get(self.engines['google'], params=params, headers=headers, timeout=10)
+            
+            print(f"🔍 [DEBUG GOOGLE] Status retornado pelo Google: {response.status_code}")
+            
+            if response.status_code == 200:
+                result = response.json()
+                print(f"🔍 [DEBUG GOOGLE] Resposta JSON do Google: {result}")
+                
+                translated = ''.join([item[0] for item in result[0] if item[0]])
+                print(f"🔍 [DEBUG GOOGLE] Texto extraído: {translated}")
+                
+                return {'status_code': 200, 'text': translated}
+                
+            print(f"❌ [DEBUG GOOGLE] Falha na API. Resposta do servidor: {response.text}")
+            return {'status_code': response.status_code, 'text': 'Google Translation failed'}
+        except Exception as e:
+            print(f"💥 [DEBUG GOOGLE] Erro na execução: {str(e)}")
+            return {'status_code': 500, 'text': str(e)}
 
     def _translate_llm(self, client, model_name, text, target_lang_name):
         try:
