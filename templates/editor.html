@@ -214,9 +214,6 @@ async function processTranslation(engine) {
 
 function triggerAutoSave() {
   clearTimeout(autoSaveTimer);
-  const btn = document.getElementById('save-progress-btn');
-  btn.classList.remove('saved');
-  btn.classList.add('saving');
   autoSaveTimer = setTimeout(() => { saveProgressToDatabase(); }, 2000);
 }
 
