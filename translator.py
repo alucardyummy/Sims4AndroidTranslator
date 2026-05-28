@@ -55,7 +55,7 @@ class Translator:
         elif 'groq' in engine_clean or 'llama' in engine_clean:
             if not self.groq_client:
                 return {'status_code': 401, 'text': 'Chave API da Groq não configurada no .env'}
-            return self._translate_llm(self.groq_client, "llama-3.1-8b-instant", text, t_lang_clean)
+            return self._translate_llm(self.groq_client, "llama-3.3-70b-versatile", text, t_lang_clean)
             
         else:
             return {'status_code': 400, 'text': f'Engine "{engine}" não reconhecida pelo sistema'}
