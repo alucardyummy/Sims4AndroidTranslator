@@ -348,7 +348,7 @@ def save():
     })
 
 
-	@app.route("/download")
+@app.route("/download")
 def download():
     output_id = request.args.get("file")
     output_name = request.args.get("name", "output.package")
