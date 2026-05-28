@@ -44,23 +44,15 @@ def ensure_guest_session():
         session['guest_session_id'] = str(uuid.uuid4())
 
 
-# --- CONFIGURAÇÃO DO BANCO DE DADOS EM NUVEM (POSTGRESQL) ---
 def get_db():
-
     db_url = os.environ.get("DATABASE_URL")
-
     if db_url and "sslmode" not in db_url:
-
         separator = "&" if "?" in db_url else "?"
-
         db_url += f"{separator}sslmode=require"
-
     conn = psycopg2.connect(db_url, connect_timeout=5)
-
     return conn
 
 def init_db():
-    """Cria ou atualiza as tabelas no banco em nuvem caso elas ainda não existam."""
     try:
         conn = get_db()
         c = conn.cursor()
@@ -72,14 +64,11 @@ def init_db():
                 profile_pic TEXT
             );
         ''')
-        
-        # --- ATUALIZAÇÃO SEGURA: Adiciona os campos de segurança se não existirem ---
         try:
             c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS security_question TEXT;")
             c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS security_answer_hash VARCHAR(255);")
         except Exception as e:
             print("Colunas de segurança já existem ou houve um aviso:", e)
-            
         c.execute('''
             CREATE TABLE IF NOT EXISTS saves (
                 id SERIAL PRIMARY KEY,
@@ -92,6 +81,10 @@ def init_db():
                 last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         ''')
+        try:
+            c.execute("ALTER TABLE saves ADD COLUMN IF NOT EXISTS package_id VARCHAR(255);")
+        except Exception as e:
+            print("Coluna package_id já existe ou houve um aviso:", e)
         conn.commit()
         conn.close()
     except Exception as e:
@@ -153,12 +146,12 @@ def upload():
                     "language_code": rid.language_code or "0x0017",
                 })
     finally:
-        os.remove(tmp_path) # Apaga do disco efêmero
+        os.remove(tmp_path)
 
     if not all_instances:
         return "Nenhuma STBL encontrada no arquivo", 400
 
-    session["package_id"] = file_id 
+    session["package_id"] = file_id
     session["original_name"] = f.filename
     session["all_instances"] = all_instances
     return redirect("/info")
@@ -205,6 +198,7 @@ def api_instances():
             "original_name": original_name,
             "langs_present": langs_present,
             "total_stbl":    len(all_instances),
+            "package_id":    session.get("package_id", ""),
         }),
         mimetype="application/json"
     )
@@ -225,7 +219,7 @@ def api_strings():
 
     pkg_id = session.get("package_id")
 
-    if session.get("package_id") == "DATABASE_SAVE":
+    if pkg_id == "DATABASE_SAVE":
         db_strings = session.get("db_save_strings", [])
         return app.response_class(
             response=json.dumps({"strings": db_strings}),
@@ -275,27 +269,22 @@ def save():
     if not output_name.endswith(".package"):
         output_name += ".package"
 
-    print(f">>> /save chamado. package_id da sessão: {session.get('package_id')}")
-
     if session.get("package_id") == "DATABASE_SAVE":
-        return json.dumps({"success": True, "output_name": output_name, "saved_to_downloads": False})
+        return json.dumps({"success": True, "output_name": output_name, "output_id": None, "saved_to_downloads": False})
 
     pkg_id = session.get("package_id")
-    print(f">>> pkg_id: {pkg_id}")
-    
     if not pkg_id:
         return json.dumps({"error": "package_id não encontrado na sessão"}), 400
 
-    pkg_id = session.get("package_id")
     target_rid  = None
     target_stbl = None
+    output_id   = None
 
-    # Baixa o original do Supabase para ler
     original_bytes = supabase.storage.from_(BUCKET_NAME).download(pkg_id)
-    
+
     with tempfile.NamedTemporaryFile(delete=False) as tmp_in, tempfile.NamedTemporaryFile(delete=False) as tmp_out:
         tmp_in.write(original_bytes)
-        tmp_in_path = tmp_in.name
+        tmp_in_path  = tmp_in.name
         tmp_out_path = tmp_out.name
 
     try:
@@ -317,7 +306,6 @@ def save():
         except Exception:
             new_rid = target_rid
 
-        # Escreve o pacote final no arquivo temporário de saída
         with DbpfPackage.write(tmp_out_path) as outpkg:
             with DbpfPackage.read(tmp_in_path) as original:
                 for rid in original.search():
@@ -329,12 +317,10 @@ def save():
                         pass
                     else:
                         outpkg.put(rid, content)
-        
-        # Sobe o arquivo editado para o Supabase
+
         output_id = f"out_{uuid.uuid4().hex}.package"
         with open(tmp_out_path, "rb") as f_out:
             supabase.storage.from_(BUCKET_NAME).upload(output_id, f_out.read())
-
 
     finally:
         os.remove(tmp_in_path)
@@ -343,7 +329,7 @@ def save():
     return json.dumps({
         "success":            True,
         "output_name":        output_name,
-        "output_id": output_id,
+        "output_id":          output_id,
         "saved_to_downloads": False,
     })
 
@@ -352,10 +338,10 @@ def save():
 def download():
     output_id = request.args.get("file")
     output_name = request.args.get("name", "output.package")
-    
-    if not output_id:
+
+    if not output_id or output_id == "null":
         return "Arquivo não encontrado", 404
-        
+
     url_res = supabase.storage.from_(BUCKET_NAME).create_signed_url(output_id, 60, {"download": output_name})
     return redirect(url_res['signedURL'])
 
@@ -389,6 +375,7 @@ def save_progress():
     source_lang      = data.get("source_lang", "ENG_US")
     target_lang      = data.get("target_lang", "POR_BR")
     translation_data = json.dumps(data.get("strings", []))
+    package_id       = data.get("package_id", "")
 
     user_id  = session.get('user_id')
     guest_id = session.get('guest_session_id')
@@ -405,13 +392,13 @@ def save_progress():
 
     if existing_save:
         c.execute(
-            "UPDATE saves SET translation_data = %s, last_updated = CURRENT_TIMESTAMP WHERE id = %s",
-            (translation_data, existing_save['id'])
+            "UPDATE saves SET translation_data = %s, package_id = %s, last_updated = CURRENT_TIMESTAMP WHERE id = %s",
+            (translation_data, package_id, existing_save['id'])
         )
     else:
         c.execute(
-            "INSERT INTO saves (user_id, guest_session_id, project_name, source_lang, target_lang, translation_data) VALUES (%s, %s, %s, %s, %s, %s)",
-            (user_id, guest_id, project_name, source_lang, target_lang, translation_data)
+            "INSERT INTO saves (user_id, guest_session_id, project_name, source_lang, target_lang, translation_data, package_id) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+            (user_id, guest_id, project_name, source_lang, target_lang, translation_data, package_id)
         )
 
     conn.commit()
@@ -436,7 +423,6 @@ def get_saves():
     conn.close()
 
     saves = [dict(row) for row in rows]
-    # Converte timestamp para string para serializar o JSON corretamente
     for save in saves:
         if 'last_updated' in save and save['last_updated']:
             save['last_updated'] = str(save['last_updated'])
@@ -485,7 +471,7 @@ def load_save(save_id):
 
     strings = json.loads(save["translation_data"])
 
-    session["package_id"]    = "DATABASE_SAVE"
+    session["package_id"]      = save.get("package_id") or "DATABASE_SAVE"
     session["original_name"]   = save["project_name"].split(" (")[0]
     session["db_save_strings"] = strings
 
@@ -517,12 +503,11 @@ def register():
         conn.close()
         return json.dumps({"success": False, "error": "Nome de usuário já existe."}), 400
 
-    pass_hash = generate_password_hash(password)
-    # Criptografa a resposta também para segurança máxima
-    answer_hash = generate_password_hash(answer.lower()) 
+    pass_hash   = generate_password_hash(password)
+    answer_hash = generate_password_hash(answer.lower())
 
     c.execute(
-        "INSERT INTO users (username, password_hash, security_question, security_answer_hash) VALUES (%s, %s, %s, %s) RETURNING id", 
+        "INSERT INTO users (username, password_hash, security_question, security_answer_hash) VALUES (%s, %s, %s, %s) RETURNING id",
         (username, pass_hash, question, answer_hash)
     )
     new_user_id = c.fetchone()['id']

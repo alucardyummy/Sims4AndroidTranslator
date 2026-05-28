@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -221,11 +221,13 @@ async function saveProgressToDatabase() {
   if (stringsData.length === 0) return;
   const originalName = sessionStorage.getItem('original_name') || 'arquivo.package';
   const projectName = originalName + ' (' + instanceStr + ')';
+  const packageId = sessionStorage.getItem('package_id') || '';
   const payload = {
     project_name: projectName,
     source_lang: originalLang,
     target_lang: targetLang,
-    strings: stringsData
+    strings: stringsData,
+    package_id: packageId
   };
   const btn = document.getElementById('save-progress-btn');
   try {
@@ -256,11 +258,13 @@ window.addEventListener('beforeunload', () => {
   if (stringsData.length > 0) {
     const originalName = sessionStorage.getItem('original_name') || 'arquivo.package';
     const projectName = originalName + ' (' + instanceStr + ')';
+    const packageId = sessionStorage.getItem('package_id') || '';
     const payload = JSON.stringify({
       project_name: projectName,
       source_lang: originalLang,
       target_lang: targetLang,
-      strings: stringsData
+      strings: stringsData,
+      package_id: packageId
     });
     navigator.sendBeacon('/api/save_progress', new Blob([payload], {type: 'application/json'}));
     localStorage.setItem('has_saves', '1');
@@ -334,7 +338,12 @@ async function save() {
     if (data.success) {
       document.getElementById('success-sub').textContent = data.output_name;
       document.getElementById('downloads-note').textContent = '';
-      document.getElementById('download-link').href = '/download?file=' + data.output_id + '&name=' + encodeURIComponent(data.output_name);
+      if (data.output_id && data.output_id !== 'null') {
+        document.getElementById('download-link').href = '/download?file=' + data.output_id + '&name=' + encodeURIComponent(data.output_name);
+        document.getElementById('download-link').style.display = 'block';
+      } else {
+        document.getElementById('download-link').style.display = 'none';
+      }
       document.getElementById('success-sheet').classList.add('open');
       await saveProgressToDatabase();
     } else {
