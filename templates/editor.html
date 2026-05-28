@@ -208,9 +208,7 @@ async function processTranslation(engine) {
     }
   } catch(e) {
     btn.classList.remove('loading');
-    btn.classList.add('error');
-    btn.innerHTML = '✕';
-    setTimeout(() => { btn.classList.remove('error'); btn.innerHTML = '◈'; }, 2000);
+    btn.innerHTML = '◈';
   }
 }
 
