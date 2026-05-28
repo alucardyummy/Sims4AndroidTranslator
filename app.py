@@ -212,7 +212,7 @@ def api_instances():
 
 @app.route("/editor")
 def editor():
-    if not session.get("package_path"):
+    if not session.get("package_id"):
         return redirect("/")
     return send_file(os.path.join(TEMPLATE_DIR, "editor.html"))
 
