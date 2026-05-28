@@ -235,7 +235,6 @@ async function saveProgressToDatabase() {
       body: JSON.stringify(payload)
     });
     btn.classList.remove('saving');
-    btn.classList.add('saved');
     progressSaved = true;
     localStorage.setItem('has_saves', '1');
   } catch(e) {
@@ -248,6 +247,7 @@ async function saveProgressManual() {
   const btn = document.getElementById('save-progress-btn');
   if (stringsData.length === 0) return;
   btn.classList.add('saving');
+  btn.classList.add('saved');
   await saveProgressToDatabase();
   window.location.href = '/';
 }
