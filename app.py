@@ -275,12 +275,16 @@ def save():
     if not output_name.endswith(".package"):
         output_name += ".package"
 
+    print(f">>> /save chamado. package_id da sessão: {session.get('package_id')}")
+
     if session.get("package_id") == "DATABASE_SAVE":
-        return json.dumps({
-            "success": True,
-            "output_name": output_name,
-            "saved_to_downloads": False,
-        })
+        return json.dumps({"success": True, "output_name": output_name, "saved_to_downloads": False})
+
+    pkg_id = session.get("package_id")
+    print(f">>> pkg_id: {pkg_id}")
+    
+    if not pkg_id:
+        return json.dumps({"error": "package_id não encontrado na sessão"}), 400
 
     pkg_id = session.get("package_id")
     target_rid  = None
