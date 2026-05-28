@@ -321,11 +321,13 @@ async function save() {
   const outputName = (document.getElementById('filename-input').value.trim() || 'output');
   document.getElementById('loading-text').textContent = 'Salvando arquivo...';
   document.getElementById('loading').classList.add('active');
+  const packageId = sessionStorage.getItem('package_id') || '';
   const payload = {
     instance: instanceStr,
     strings: stringsData.map(s => ({ key: s.key, value: s.value })),
     target_language: targetLang,
-    output_name: outputName
+    output_name: outputName,
+    package_id: packageId
   };
   try {
     const res = await fetch('/save', {
@@ -338,12 +340,7 @@ async function save() {
     if (data.success) {
       document.getElementById('success-sub').textContent = data.output_name;
       document.getElementById('downloads-note').textContent = '';
-      if (data.output_id && data.output_id !== 'null') {
-        document.getElementById('download-link').href = '/download?file=' + data.output_id + '&name=' + encodeURIComponent(data.output_name);
-        document.getElementById('download-link').style.display = 'block';
-      } else {
-        document.getElementById('download-link').style.display = 'none';
-      }
+      document.getElementById('download-link').href = '/download?file=' + data.output_id + '&name=' + encodeURIComponent(data.output_name);
       document.getElementById('success-sheet').classList.add('open');
       await saveProgressToDatabase();
     } else {

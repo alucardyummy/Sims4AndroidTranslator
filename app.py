@@ -19,7 +19,6 @@ SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 BUCKET_NAME = "packages"
 
-
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMPLATE_DIR = os.path.join(BASE_DIR, 'templates')
 
@@ -51,6 +50,7 @@ def get_db():
         db_url += f"{separator}sslmode=require"
     conn = psycopg2.connect(db_url, connect_timeout=5)
     return conn
+
 
 def init_db():
     try:
@@ -84,7 +84,7 @@ def init_db():
         try:
             c.execute("ALTER TABLE saves ADD COLUMN IF NOT EXISTS package_id VARCHAR(255);")
         except Exception as e:
-            print("Coluna package_id já existe ou houve um aviso:", e)
+            print("Coluna package_id já existe:", e)
         conn.commit()
         conn.close()
     except Exception as e:
@@ -269,12 +269,13 @@ def save():
     if not output_name.endswith(".package"):
         output_name += ".package"
 
-    if session.get("package_id") == "DATABASE_SAVE":
-        return json.dumps({"success": True, "output_name": output_name, "output_id": None, "saved_to_downloads": False})
-
     pkg_id = session.get("package_id")
-    if not pkg_id:
-        return json.dumps({"error": "package_id não encontrado na sessão"}), 400
+
+    if not pkg_id or pkg_id == "DATABASE_SAVE":
+        pkg_id = data.get("package_id", "")
+
+    if not pkg_id or pkg_id == "DATABASE_SAVE":
+        return json.dumps({"success": False, "error": "Arquivo original não disponível. Reimporte o .package para gerar o arquivo traduzido."}), 400
 
     target_rid  = None
     target_stbl = None
@@ -470,8 +471,9 @@ def load_save(save_id):
         return "Save não encontrado ou acesso negado", 404
 
     strings = json.loads(save["translation_data"])
+    pkg_id  = save.get("package_id") or "DATABASE_SAVE"
 
-    session["package_id"]      = save.get("package_id") or "DATABASE_SAVE"
+    session["package_id"]      = pkg_id
     session["original_name"]   = save["project_name"].split(" (")[0]
     session["db_save_strings"] = strings
 
@@ -480,7 +482,8 @@ def load_save(save_id):
         "project_name":     save["project_name"],
         "source_lang":      save["source_lang"],
         "target_lang":      save["target_lang"],
-        "translation_data": strings
+        "translation_data": strings,
+        "package_id":       pkg_id,
     })
 
 
