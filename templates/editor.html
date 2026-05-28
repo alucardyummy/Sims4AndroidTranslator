@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -200,15 +200,15 @@ async function processTranslation(engine) {
       autoResize(textarea);
       triggerAutoSave();
       btn.classList.remove('loading');
-      btn.classList.add('success');
-      btn.innerHTML = '✓';
-      setTimeout(() => { btn.classList.remove('success'); btn.innerHTML = '◈'; }, 2000);
+      btn.innerHTML = '◈';
     } else {
       throw new Error(data.error || 'Erro na tradução');
     }
   } catch(e) {
     btn.classList.remove('loading');
-    btn.innerHTML = '◈';
+    btn.classList.add('error');
+    btn.innerHTML = '✕';
+    setTimeout(() => { btn.classList.remove('error'); btn.innerHTML = '◈'; }, 2000);
   }
 }
 
