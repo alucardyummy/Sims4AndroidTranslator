@@ -61,22 +61,25 @@ class Translator:
             return {'status_code': 400, 'text': f'Engine "{engine}" não reconhecida pelo sistema'}
 
     def _translate_google(self, text, source_lang, target_lang):
-        try:
-            params = {
-                'client': 'gtx',
-                'sl': source_lang,
-                'tl': target_lang,
-                'dt': 't',
-                'q': text
-            }
-            response = requests.get(self.engines['google'], params=params, timeout=10)
-            if response.status_code == 200:
-                result = response.json()
-                translated = ''.join([item[0] for item in result[0] if item[0]])
-                return {'status_code': 200, 'text': translated}
-            return {'status_code': response.status_code, 'text': 'Google Translation failed'}
-        except Exception as e:
-            return {'status_code': 500, 'text': str(e)}
+    try:
+        params = {
+            'client': 'gtx',
+            'sl': source_lang,
+            'tl': target_lang,
+            'dt': 't',
+            'q': text
+        }
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        }
+        response = requests.get(self.engines['google'], params=params, headers=headers, timeout=10)
+        if response.status_code == 200:
+            result = response.json()
+            translated = ''.join([item[0] for item in result[0] if item[0]])
+            return {'status_code': 200, 'text': translated}
+        return {'status_code': response.status_code, 'text': 'Google Translation failed'}
+    except Exception as e:
+        return {'status_code': 500, 'text': str(e)}
 
     def _translate_llm(self, client, model_name, text, target_lang_name):
         try:
