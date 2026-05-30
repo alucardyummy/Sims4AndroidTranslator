@@ -634,6 +634,31 @@ def update_profile():
     conn.close()
     return json.dumps({"success": True})
 
+@app.route("/api/import_translations", methods=["POST"])
+def import_translations():
+    data = request.get_json()
+    save_id = data.get("save_id")
+    user_id = session.get('user_id')
+    guest_id = session.get('guest_session_id')
+
+    conn = get_db()
+    c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    if user_id:
+        c.execute("SELECT translation_data FROM saves WHERE id = %s AND user_id = %s", (save_id, user_id))
+    else:
+        c.execute("SELECT translation_data FROM saves WHERE id = %s AND guest_session_id = %s", (save_id, guest_id))
+
+    row = c.fetchone()
+    conn.close()
+
+    if not row:
+        return json.dumps({"success": False, "error": "Save não encontrado"}), 404
+
+    strings = json.loads(row["translation_data"])
+    translation_map = {str(s["key"]): s["value"] for s in strings if s.get("value")}
+
+    return json.dumps({"success": True, "translations": translation_map})
 
 @app.route("/api/logout", methods=["POST"])
 def logout():

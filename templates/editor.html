@@ -16,8 +16,8 @@
     --border: #2a2a2a; --border2: #333;
     --accent: #c8a96e; --accent-dim: #8a6f42;
     --text: #f0ece4; --text-muted: #7a7570; --text-dim: #4a4540;
-    --radius: 16px; --radius-sm: 10px; 
- }
+    --radius: 16px; --radius-sm: 10px;
+  }
   * { caret-color: #9cb8b2; accent-color: #9cb8b2; }
   ::selection { background: rgba(156,184,178,0.4); }
   html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; overscroll-behavior: none; }
@@ -30,14 +30,7 @@
   .topbar-sub { font-size: 10px; color: var(--text-muted); font-family: 'DM Mono', monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .topbar-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
   .count-badge { font-size: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 3px 8px; color: var(--text-muted); font-family: 'DM Mono', monospace; }
-  .save-progress-btn {
-    width: 32px; height: 32px; border-radius: 50%;
-    background: var(--surface); border: 1px solid var(--border);
-    color: var(--text-muted); font-size: 15px;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; -webkit-tap-highlight-color: transparent;
-    transition: all 0.2s;
-  }
+  .save-progress-btn { width: 32px; height: 32px; border-radius: 50%; background: var(--surface); border: 1px solid var(--border); color: var(--text-muted); font-size: 15px; display: flex; align-items: center; justify-content: center; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: all 0.2s; }
   .save-progress-btn.saved { border-color: #4caf50; color: #4caf50; background: rgba(76,175,80,0.1); }
   .save-progress-btn.saving { border-color: var(--accent-dim); color: var(--accent); animation: pulse 0.8s infinite; }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
@@ -62,6 +55,8 @@
   .filename-input { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; font-size: 13px; color: var(--text); font-family: 'DM Mono', monospace; min-width: 0; }
   .filename-input:focus { outline: none; border-color: var(--accent-dim); }
   .ext-label { font-size: 12px; color: var(--text-muted); font-family: 'DM Mono', monospace; flex-shrink: 0; }
+  .import-btn { width: 100%; padding: 12px; background: transparent; border: 1px solid var(--border2); border-radius: var(--radius); color: var(--text-muted); font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.06em; cursor: pointer; -webkit-tap-highlight-color: transparent; margin-bottom: 0.75rem; }
+  .import-btn:active { background: var(--surface2); }
   .save-btn { width: 100%; padding: 16px; background: var(--accent-dim); border: none; border-radius: var(--radius); color: var(--bg); font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; letter-spacing: 0.08em; cursor: pointer; -webkit-tap-highlight-color: transparent; }
   .save-btn:active { transform: scale(0.97); background: var(--accent); }
   .save-btn:disabled { opacity: 0.4; pointer-events: none; }
@@ -87,6 +82,16 @@
   .engine-option { padding: 12px 16px; color: var(--text); font-size: 13px; cursor: pointer; border-bottom: 1px solid var(--border); }
   .engine-option:last-child { border-bottom: none; }
   .engine-option:active { background: var(--surface2); }
+  .import-sheet { display: none; position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,0.85); align-items: flex-end; }
+  .import-sheet.open { display: flex; }
+  .import-sheet-inner { width: 100%; background: var(--surface); border-top: 1px solid var(--border); border-radius: 20px 20px 0 0; padding: 1.5rem 1rem 2.5rem; max-height: 70dvh; overflow-y: auto; animation: slideUp 0.25s ease; }
+  .import-sheet-title { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; color: var(--accent); margin-bottom: 0.25rem; }
+  .import-sheet-sub { font-size: 12px; color: var(--text-muted); margin-bottom: 1.25rem; line-height: 1.5; }
+  .import-save-item { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 8px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .import-save-item:active { border-color: var(--accent-dim); }
+  .import-save-name { font-size: 12px; color: var(--text); font-family: 'DM Mono', monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .import-save-meta { font-size: 10px; color: var(--text-muted); margin-top: 3px; }
+  .import-cancel { width: 100%; padding: 13px; background: transparent; border: 1px solid var(--border2); border-radius: var(--radius-sm); color: var(--text-muted); font-size: 13px; cursor: pointer; text-align: center; margin-top: 8px; -webkit-tap-highlight-color: transparent; }
 </style>
 </head>
 <body>
@@ -124,6 +129,7 @@
       <input type="text" class="filename-input" id="filename-input" placeholder="output" maxlength="100">
       <span class="ext-label">.package</span>
     </div>
+    <button class="import-btn" onclick="openImportSheet()">↺ Carregar traduções de um save</button>
     <button class="save-btn" id="save-btn" onclick="save()" disabled>SALVAR PACKAGE</button>
   </div>
 </div>
@@ -148,6 +154,15 @@
 <div class="engine-menu" id="engine-menu">
   <div class="engine-option" onclick="processTranslation('google')">Google</div>
   <div class="engine-option" onclick="processTranslation('groq (llama)')">Groq (Llama)</div>
+</div>
+
+<div class="import-sheet" id="import-sheet">
+  <div class="import-sheet-inner">
+    <div class="import-sheet-title">Carregar traduções salvas</div>
+    <div class="import-sheet-sub">Escolha um save para preencher as traduções que já existem. Strings sem correspondência ficam em branco.</div>
+    <div id="import-saves-list"></div>
+    <button class="import-cancel" onclick="closeImportSheet()">Cancelar</button>
+  </div>
 </div>
 
 <script>
@@ -218,9 +233,9 @@ async function processTranslation(engine) {
 }
 
 function triggerAutoSave() {
-    clearTimeout(autoSaveTimer);
-    autoSaveTimer = setTimeout(() => { saveProgressToDatabase(); }, 2000);
-  }
+  clearTimeout(autoSaveTimer);
+  autoSaveTimer = setTimeout(() => { saveProgressToDatabase(); }, 2000);
+}
 
 async function saveProgressToDatabase() {
   if (stringsData.length === 0) return;
@@ -316,8 +331,8 @@ function renderStrings() {
     const ta = row.querySelector('textarea');
     autoResize(ta);
     ta.addEventListener('input', function() {
-    editedIndices.add(parseInt(this.dataset.idx));
-    updateProgressBadge();
+      editedIndices.add(parseInt(this.dataset.idx));
+      updateProgressBadge();
       autoResize(this);
       triggerAutoSave();
       stringsData[parseInt(this.dataset.idx)].value = this.value;
@@ -326,8 +341,75 @@ function renderStrings() {
 }
 
 function updateProgressBadge() {
-  document.getElementById('count-badge').textContent = 
+  document.getElementById('count-badge').textContent =
     editedIndices.size + '/' + stringsData.length + ' traduzidas';
+}
+
+async function openImportSheet() {
+  const listEl = document.getElementById('import-saves-list');
+  listEl.innerHTML = '<div style="font-size:12px;color:var(--text-muted);text-align:center;padding:1rem">Carregando saves...</div>';
+  document.getElementById('import-sheet').classList.add('open');
+  try {
+    const res = await fetch('/api/get_saves');
+    const data = await res.json();
+    const saves = data.saves || [];
+    if (saves.length === 0) {
+      listEl.innerHTML = '<div style="font-size:12px;color:var(--text-muted);text-align:center;padding:1rem">Nenhum save encontrado.</div>';
+      return;
+    }
+    listEl.innerHTML = '';
+    saves.forEach(save => {
+      const item = document.createElement('div');
+      item.className = 'import-save-item';
+      item.innerHTML =
+        '<div class="import-save-name">' + save.project_name + '</div>' +
+        '<div class="import-save-meta">' + save.source_lang + ' → ' + save.target_lang + ' · ' + (save.last_updated || '').slice(0, 16) + '</div>';
+      item.addEventListener('click', () => applyTranslationsFromSave(save.id, save.project_name));
+      listEl.appendChild(item);
+    });
+  } catch(e) {
+    listEl.innerHTML = '<div style="font-size:12px;color:#e07070;text-align:center;padding:1rem">Erro ao carregar saves.</div>';
+  }
+}
+
+function closeImportSheet() {
+  document.getElementById('import-sheet').classList.remove('open');
+}
+
+async function applyTranslationsFromSave(saveId, saveName) {
+  closeImportSheet();
+  document.getElementById('loading-text').textContent = 'Carregando traduções...';
+  document.getElementById('loading').classList.add('active');
+  try {
+    const res = await fetch('/api/import_translations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ save_id: saveId })
+    });
+    const data = await res.json();
+    document.getElementById('loading').classList.remove('active');
+    if (!data.success) {
+      alert('Erro ao importar: ' + (data.error || 'desconhecido'));
+      return;
+    }
+    const translationMap = data.translations;
+    let filled = 0;
+    stringsData.forEach((item, idx) => {
+      const key = String(item.key);
+      if (translationMap[key]) {
+        stringsData[idx].value = translationMap[key];
+        editedIndices.add(idx);
+        filled++;
+      }
+    });
+    renderStrings();
+    updateProgressBadge();
+    triggerAutoSave();
+    alert(filled + ' traduções carregadas de "' + saveName + '"!');
+  } catch(e) {
+    document.getElementById('loading').classList.remove('active');
+    alert('Erro de conexão ao importar traduções.');
+  }
 }
 
 async function save() {
