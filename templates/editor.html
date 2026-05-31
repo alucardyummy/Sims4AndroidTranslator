@@ -84,13 +84,24 @@
   .engine-option:active { background: var(--surface2); }
   .import-sheet { display: none; position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,0.85); align-items: flex-end; }
   .import-sheet.open { display: flex; }
-  .import-sheet-inner { width: 100%; background: var(--surface); border-top: 1px solid var(--border); border-radius: 20px 20px 0 0; padding: 1.5rem 1rem 2.5rem; max-height: 70dvh; overflow-y: auto; animation: slideUp 0.25s ease; }
+  .import-sheet-inner { width: 100%; background: var(--surface); border-top: 1px solid var(--border); border-radius: 20px 20px 0 0; padding: 1.5rem 1rem 2.5rem; max-height: 75dvh; overflow-y: auto; animation: slideUp 0.25s ease; }
   .import-sheet-title { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; color: var(--accent); margin-bottom: 0.25rem; }
   .import-sheet-sub { font-size: 12px; color: var(--text-muted); margin-bottom: 1.25rem; line-height: 1.5; }
+  .import-source-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 1.25rem; }
+  .import-source-btn { padding: 12px 8px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-muted); font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.05em; cursor: pointer; text-align: center; -webkit-tap-highlight-color: transparent; transition: all 0.15s; }
+  .import-source-btn.active { border-color: var(--accent-dim); color: var(--accent); background: rgba(200,169,110,0.06); }
+  .import-source-btn:active { background: var(--surface2); }
+  .import-section { display: none; }
+  .import-section.active { display: block; }
   .import-save-item { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 8px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
   .import-save-item:active { border-color: var(--accent-dim); }
   .import-save-name { font-size: 12px; color: var(--text); font-family: 'DM Mono', monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .import-save-meta { font-size: 10px; color: var(--text-muted); margin-top: 3px; }
+  .import-file-area { border: 1px dashed var(--border2); border-radius: var(--radius-sm); padding: 2rem 1rem; text-align: center; cursor: pointer; -webkit-tap-highlight-color: transparent; margin-bottom: 8px; }
+  .import-file-area:active { background: var(--surface2); }
+  .import-file-icon { font-size: 28px; margin-bottom: 0.5rem; opacity: 0.5; }
+  .import-file-label { font-size: 13px; color: var(--text-muted); }
+  .import-file-hint { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
   .import-cancel { width: 100%; padding: 13px; background: transparent; border: 1px solid var(--border2); border-radius: var(--radius-sm); color: var(--text-muted); font-size: 13px; cursor: pointer; text-align: center; margin-top: 8px; -webkit-tap-highlight-color: transparent; }
 </style>
 </head>
@@ -156,11 +167,32 @@
   <div class="engine-option" onclick="processTranslation('groq (llama)')">Groq (Llama)</div>
 </div>
 
+<!-- Sheet de importar traduções -->
 <div class="import-sheet" id="import-sheet">
   <div class="import-sheet-inner">
-    <div class="import-sheet-title">Carregar traduções salvas</div>
-    <div class="import-sheet-sub">Escolha um save para preencher as traduções que já existem. Strings sem correspondência ficam em branco.</div>
-    <div id="import-saves-list"></div>
+    <div class="import-sheet-title">Carregar traduções</div>
+    <div class="import-sheet-sub">Escolha de onde importar as traduções para preencher o editor automaticamente.</div>
+
+    <div class="import-source-btns">
+      <button class="import-source-btn active" id="btn-source-saves" onclick="switchImportSource('saves')">💾 De um save</button>
+      <button class="import-source-btn" id="btn-source-file" onclick="switchImportSource('file')">📦 De um .package</button>
+    </div>
+
+    <!-- Seção: saves -->
+    <div class="import-section active" id="section-saves">
+      <div id="import-saves-list"></div>
+    </div>
+
+    <!-- Seção: arquivo -->
+    <div class="import-section" id="section-file">
+      <div class="import-file-area" onclick="document.getElementById('import-package-input').click()">
+        <div class="import-file-icon">📦</div>
+        <div class="import-file-label">Toque para selecionar um .package</div>
+        <div class="import-file-hint">O arquivo será lido localmente e as traduções extraídas</div>
+      </div>
+      <input type="file" id="import-package-input" accept=".package" style="display:none">
+    </div>
+
     <button class="import-cancel" onclick="closeImportSheet()">Cancelar</button>
   </div>
 </div>
@@ -345,10 +377,28 @@ function updateProgressBadge() {
     editedIndices.size + '/' + stringsData.length + ' traduzidas';
 }
 
+// ---- IMPORTAR TRADUÇÕES ----
+
+function switchImportSource(source) {
+  document.querySelectorAll('.import-source-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.import-section').forEach(s => s.classList.remove('active'));
+  document.getElementById('btn-source-' + source).classList.add('active');
+  document.getElementById('section-' + source).classList.add('active');
+}
+
 async function openImportSheet() {
+  document.getElementById('import-sheet').classList.add('open');
+  switchImportSource('saves');
+  await loadImportSaves();
+}
+
+function closeImportSheet() {
+  document.getElementById('import-sheet').classList.remove('open');
+}
+
+async function loadImportSaves() {
   const listEl = document.getElementById('import-saves-list');
   listEl.innerHTML = '<div style="font-size:12px;color:var(--text-muted);text-align:center;padding:1rem">Carregando saves...</div>';
-  document.getElementById('import-sheet').classList.add('open');
   try {
     const res = await fetch('/api/get_saves');
     const data = await res.json();
@@ -372,10 +422,6 @@ async function openImportSheet() {
   }
 }
 
-function closeImportSheet() {
-  document.getElementById('import-sheet').classList.remove('open');
-}
-
 async function applyTranslationsFromSave(saveId, saveName) {
   closeImportSheet();
   document.getElementById('loading-text').textContent = 'Carregando traduções...';
@@ -388,28 +434,54 @@ async function applyTranslationsFromSave(saveId, saveName) {
     });
     const data = await res.json();
     document.getElementById('loading').classList.remove('active');
-    if (!data.success) {
-      alert('Erro ao importar: ' + (data.error || 'desconhecido'));
-      return;
-    }
-    const translationMap = data.translations;
-    let filled = 0;
-    stringsData.forEach((item, idx) => {
-      const key = String(item.key);
-      if (translationMap[key]) {
-        stringsData[idx].value = translationMap[key];
-        editedIndices.add(idx);
-        filled++;
-      }
-    });
-    renderStrings();
-    updateProgressBadge();
-    triggerAutoSave();
-    alert(filled + ' traduções carregadas de "' + saveName + '"!');
+    if (!data.success) { alert('Erro ao importar: ' + (data.error || 'desconhecido')); return; }
+    applyTranslationMap(data.translations, saveName);
   } catch(e) {
     document.getElementById('loading').classList.remove('active');
     alert('Erro de conexão ao importar traduções.');
   }
+}
+
+// Importar de arquivo .package
+document.getElementById('import-package-input').addEventListener('change', async function() {
+  const file = this.files[0];
+  if (!file) return;
+  if (!file.name.endsWith('.package')) { alert('Selecione um arquivo .package válido.'); return; }
+  closeImportSheet();
+  document.getElementById('loading-text').textContent = 'Lendo arquivo...';
+  document.getElementById('loading').classList.add('active');
+  try {
+    const formData = new FormData();
+    formData.append('package', file);
+    const res = await fetch('/api/import_from_package', {
+      method: 'POST',
+      body: formData
+    });
+    const data = await res.json();
+    document.getElementById('loading').classList.remove('active');
+    if (!data.success) { alert('Erro ao ler arquivo: ' + (data.error || 'desconhecido')); return; }
+    applyTranslationMap(data.translations, file.name);
+  } catch(e) {
+    document.getElementById('loading').classList.remove('active');
+    alert('Erro de conexão ao ler arquivo.');
+  }
+  this.value = '';
+});
+
+function applyTranslationMap(translationMap, sourceName) {
+  let filled = 0;
+  stringsData.forEach((item, idx) => {
+    const key = String(item.key);
+    if (translationMap[key]) {
+      stringsData[idx].value = translationMap[key];
+      editedIndices.add(idx);
+      filled++;
+    }
+  });
+  renderStrings();
+  updateProgressBadge();
+  triggerAutoSave();
+  alert(filled + ' traduções carregadas de "' + sourceName + '"!');
 }
 
 async function save() {

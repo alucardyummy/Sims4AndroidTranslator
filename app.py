@@ -665,6 +665,28 @@ def logout():
     session.clear()
     return json.dumps({"success": True})
 
+@app.route("/api/import_from_package", methods=["POST"])
+def import_from_package():
+    if "package" not in request.files:
+        return json.dumps({"success": False, "error": "Nenhum arquivo enviado"}), 400
+    f = request.files["package"]
+    if not f.filename.endswith(".package"):
+        return json.dumps({"success": False, "error": "Arquivo inválido"}), 400
+    strings = {}
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".package") as tmp:
+        f.save(tmp.name)
+        tmp_path = tmp.name
+    try:
+        with DbpfPackage.read(tmp_path) as pkg:
+            for rid in pkg.search_stbl():
+                stbl = load_stbl(pkg, rid)
+                for key, value in stbl._strings.items():
+                    if value:
+                        strings[str(key)] = value
+    finally:
+        os.remove(tmp_path)
+    return json.dumps({"success": True, "translations": strings})
+
 with app.app_context():
     init_db()
 
