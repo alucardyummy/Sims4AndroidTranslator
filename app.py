@@ -28,8 +28,6 @@ app = Flask(__name__,
             static_url_path='/img')
 app.secret_key = "sims4translator_secret"
 app.permanent_session_lifetime = timedelta(days=30)
-app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
-app.config["SESSION_COOKIE_SECURE"] = True
 
 UPLOAD_FOLDER = tempfile.gettempdir()
 
@@ -43,7 +41,6 @@ def manifest():
 def ensure_guest_session():
     if 'user_id' not in session and 'guest_session_id' not in session:
         session['guest_session_id'] = str(uuid.uuid4())
-    session.permanent = True
 
 
 def get_db():
@@ -72,6 +69,7 @@ def init_db():
             c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS security_answer_hash VARCHAR(255);")
         except Exception as e:
             print("Colunas de segurança já existem ou houve um aviso:", e)
+
         c.execute('''
             CREATE TABLE IF NOT EXISTS saves (
                 id SERIAL PRIMARY KEY,
@@ -88,6 +86,7 @@ def init_db():
             c.execute("ALTER TABLE saves ADD COLUMN IF NOT EXISTS package_id VARCHAR(255);")
         except Exception as e:
             print("Coluna package_id já existe:", e)
+
         conn.commit()
         conn.close()
     except Exception as e:
@@ -103,43 +102,6 @@ def load_stbl(pkg, rid):
     return stbl
 
 
-def _process_package_bytes(file_bytes):
-    """
-    Recebe os bytes de um .package, extrai todas as instâncias STBL
-    e retorna a lista de instâncias + um dict de cache de strings
-    indexado por instance (int).
-
-    O cache evita re-downloads do Supabase nas rotas /api/strings e /save.
-    """
-    all_instances = []
-    strings_cache = {}  # { instance_int: [ {key, key_hex, value}, ... ] }
-
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".package") as tmp:
-        tmp.write(file_bytes)
-        tmp_path = tmp.name
-
-    try:
-        with DbpfPackage.read(tmp_path) as pkg:
-            for rid in pkg.search_stbl():
-                lang = rid.language or "UNKNOWN"
-                all_instances.append({
-                    "instance":      rid.instance,
-                    "instance_hex":  rid.hex_instance,
-                    "group_hex":     rid.str_group,
-                    "language":      lang,
-                    "language_code": rid.language_code or "0x0017",
-                })
-                stbl = load_stbl(pkg, rid)
-                strings_cache[rid.instance] = [
-                    {"key": k, "key_hex": hex(k), "value": v}
-                    for k, v in stbl._strings.items()
-                ]
-    finally:
-        os.remove(tmp_path)
-
-    return all_instances, strings_cache
-
-
 @app.route("/")
 def home():
     user_id = session.get('user_id')
@@ -149,6 +111,7 @@ def home():
         session['user_id'] = user_id
     if guest_id:
         session['guest_session_id'] = guest_id
+
     response = send_file(os.path.join(TEMPLATE_DIR, "index.html"))
     response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
     response.headers['Pragma'] = 'no-cache'
@@ -156,103 +119,47 @@ def home():
     return response
 
 
-# ---------------------------------------------------------------------------
-# NOVO FLUXO DE UPLOAD (upload direto Frontend → Supabase)
-# ---------------------------------------------------------------------------
-
-@app.route("/api/upload_url", methods=["POST"])
-def get_upload_url():
-    """
-    Gera uma signed URL para o frontend fazer o upload do .package
-    diretamente no Supabase Storage, sem passar pelo Flask.
-    """
-    file_id = f"{uuid.uuid4().hex}.package"
-    res = supabase.storage.from_(BUCKET_NAME).create_signed_upload_url(file_id)
-    return app.response_class(
-        response=json.dumps({
-            "file_id":    file_id,
-            "signed_url": res["signed_url"],
-        }),
-        mimetype="application/json"
-    )
-
-
-@app.route("/upload/confirm", methods=["POST"])
-def upload_confirm():
-    """
-    Chamado pelo frontend APÓS o upload direto para o Supabase.
-    Baixa o arquivo UMA vez, processa todas as STBLs e cacheia as strings
-    na sessão para que /api/strings nunca precise baixar de novo.
-    """
-    data          = request.get_json()
-    file_id       = data.get("file_id")
-    original_name = data.get("original_name", "output.package")
-
-    if not file_id:
-        return json.dumps({"error": "file_id ausente"}), 400
-
-    try:
-        file_bytes = supabase.storage.from_(BUCKET_NAME).download(file_id)
-    except Exception as e:
-        return json.dumps({"error": f"Erro ao baixar arquivo do storage: {e}"}), 500
-
-    all_instances, strings_cache = _process_package_bytes(file_bytes)
-
-    if not all_instances:
-        return json.dumps({"error": "Nenhuma STBL encontrada no arquivo"}), 400
-
-    session["package_id"]     = file_id
-    session["original_name"]  = original_name
-    session["all_instances"]  = all_instances
-    # Cache das strings indexado por instance como string (sessão só aceita JSON)
-    session["strings_cache"]  = {str(k): v for k, v in strings_cache.items()}
-
-    return json.dumps({"success": True, "redirect": "/info"})
-
-
-# Rota legada mantida para compatibilidade com o Android/Termux que ainda usa
-# o form submit. Remove quando migrar o index.html do app nativo também.
 @app.route("/upload", methods=["POST"])
 def upload():
     if "package" not in request.files:
         return "Nenhum arquivo enviado", 400
+
     f = request.files["package"]
     if not f.filename.endswith(".package"):
         return "Arquivo inválido. Envie um .package", 400
 
+    file_id = f"{uuid.uuid4().hex}.package"
     file_bytes = f.read()
-    file_id    = f"{uuid.uuid4().hex}.package"
+    supabase.storage.from_(BUCKET_NAME).upload(file_id, file_bytes)
+
+    all_instances = []
+    with tempfile.NamedTemporaryFile(delete=False) as tmp:
+        tmp.write(file_bytes)
+        tmp_path = tmp.name
 
     try:
-        import requests as req_lib
-        upload_url = f"{SUPABASE_URL}/storage/v1/object/{BUCKET_NAME}/{file_id}"
-        resp = req_lib.post(
-            upload_url,
-            headers={
-                "Authorization":  f"Bearer {SUPABASE_KEY}",
-                "Content-Type":   "application/octet-stream",
-            },
-            data=file_bytes,
-        )
-        if resp.status_code not in (200, 201):
-            return f"Erro no upload para o storage: {resp.text}", 500
-    except Exception as e:
-        return f"Erro no upload: {e}", 500
-
-    all_instances, strings_cache = _process_package_bytes(file_bytes)
+        with DbpfPackage.read(tmp_path) as pkg:
+            for rid in pkg.search_stbl():
+                lang = rid.language or "UNKNOWN"
+                all_instances.append({
+                    "instance": rid.instance,
+                    "instance_hex": rid.hex_instance,
+                    "group_hex": rid.str_group,
+                    "language": lang,
+                    "language_code": rid.language_code or "0x0017",
+                })
+    finally:
+        os.remove(tmp_path)
 
     if not all_instances:
         return "Nenhuma STBL encontrada no arquivo", 400
 
-    session["package_id"]    = file_id
+    session["package_id"] = file_id
     session["original_name"] = f.filename
     session["all_instances"] = all_instances
-    session["strings_cache"] = {str(k): v for k, v in strings_cache.items()}
 
     return redirect("/info")
 
-
-# ---------------------------------------------------------------------------
 
 @app.route("/info")
 def info():
@@ -281,8 +188,8 @@ def api_instances():
         {
             "instance_str": str(i["instance"]),
             "instance_hex": i["instance_hex"],
-            "group_hex":    i["group_hex"],
-            "language":     i["language"],
+            "group_hex": i["group_hex"],
+            "language": i["language"],
         }
         for i in unique_instances
     ]
@@ -291,11 +198,11 @@ def api_instances():
 
     return app.response_class(
         response=json.dumps({
-            "instances":     safe,
+            "instances": safe,
             "original_name": original_name,
             "langs_present": langs_present,
-            "total_stbl":    len(all_instances),
-            "package_id":    session.get("package_id", ""),
+            "total_stbl": len(all_instances),
+            "package_id": session.get("package_id", ""),
         }),
         mimetype="application/json"
     )
@@ -316,33 +223,25 @@ def api_strings():
 
     pkg_id = session.get("package_id")
 
-    # --- Caso especial: save do banco sem .package associado ---
     if pkg_id == "DATABASE_SAVE":
         db_save_id = session.get("db_save_id")
         if not db_save_id:
             return app.response_class(response=json.dumps({"strings": []}), mimetype="application/json")
+
         conn = get_db()
         c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         c.execute("SELECT translation_data FROM saves WHERE id = %s", (db_save_id,))
         row = c.fetchone()
         conn.close()
+
         db_strings = json.loads(row["translation_data"]) if row else []
         return app.response_class(response=json.dumps({"strings": db_strings}), mimetype="application/json")
 
-    # --- Caminho otimizado: usa cache da sessão (sem re-download) ---
-    strings_cache = session.get("strings_cache", {})
-    if instance_str in strings_cache:
-        return app.response_class(
-            response=json.dumps({"strings": strings_cache[instance_str]}),
-            mimetype="application/json"
-        )
-
-    # --- Fallback: baixa do Supabase se não houver cache (ex: sessão expirou) ---
     instance_int = int(instance_str)
     strings = []
 
     file_bytes = supabase.storage.from_(BUCKET_NAME).download(pkg_id)
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".package") as tmp:
+    with tempfile.NamedTemporaryFile(delete=False) as tmp:
         tmp.write(file_bytes)
         tmp_path = tmp.name
 
@@ -353,9 +252,9 @@ def api_strings():
                     stbl = load_stbl(pkg, rid)
                     for key, value in stbl._strings.items():
                         strings.append({
-                            "key":     key,
+                            "key": key,
                             "key_hex": hex(key),
-                            "value":   value,
+                            "value": value,
                         })
                     break
     finally:
@@ -370,42 +269,38 @@ def api_strings():
 @app.route("/save", methods=["POST"])
 def save():
     data = request.get_json()
-    instance_str   = str(data["instance"])
-    instance_int   = int(instance_str)
+    instance_str = str(data["instance"])
+    instance_int = int(instance_str)
     strings_edited = data["strings"]
-    target_lang    = data.get("target_language", "POR_BR")
-    output_name    = data.get("output_name", "output").strip()
-
+    target_lang = data.get("target_language", "POR_BR")
+    output_name = data.get("output_name", "output").strip()
     if not output_name:
         output_name = "output"
     if not output_name.endswith(".package"):
         output_name += ".package"
 
     pkg_id = session.get("package_id")
-
     if not pkg_id or pkg_id == "DATABASE_SAVE":
         pkg_id = data.get("package_id", "")
-
     if not pkg_id or pkg_id == "DATABASE_SAVE":
         return json.dumps({"success": False, "error": "Arquivo original não disponível. Reimporte o .package para gerar o arquivo traduzido."}), 400
 
-    target_rid  = None
+    target_rid = None
     target_stbl = None
-    output_id   = None
+    output_id = None
 
     original_bytes = supabase.storage.from_(BUCKET_NAME).download(pkg_id)
 
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".package") as tmp_in, \
-         tempfile.NamedTemporaryFile(delete=False, suffix=".package") as tmp_out:
+    with tempfile.NamedTemporaryFile(delete=False) as tmp_in, tempfile.NamedTemporaryFile(delete=False) as tmp_out:
         tmp_in.write(original_bytes)
-        tmp_in_path  = tmp_in.name
+        tmp_in_path = tmp_in.name
         tmp_out_path = tmp_out.name
 
     try:
         with DbpfPackage.read(tmp_in_path) as pkg:
             for rid in pkg.search_stbl():
                 if rid.instance == instance_int:
-                    target_rid  = rid
+                    target_rid = rid
                     target_stbl = load_stbl(pkg, rid)
                     break
 
@@ -424,7 +319,7 @@ def save():
             with DbpfPackage.read(tmp_in_path) as original:
                 for rid in original.search():
                     resource = original[rid]
-                    content  = original.content(resource)
+                    content = original.content(resource)
                     if rid == target_rid:
                         outpkg.put(new_rid, target_stbl.binary)
                     elif rid == new_rid:
@@ -432,40 +327,25 @@ def save():
                     else:
                         outpkg.put(rid, content)
 
-        # Upload do output via requests direto (evita limite do SDK)
         output_id = f"out_{uuid.uuid4().hex}.package"
-        import requests as req_lib
-        upload_url = f"{SUPABASE_URL}/storage/v1/object/{BUCKET_NAME}/{output_id}"
         with open(tmp_out_path, "rb") as f_out:
-            out_bytes = f_out.read()
-        resp = req_lib.post(
-            upload_url,
-            headers={
-                "Authorization": f"Bearer {SUPABASE_KEY}",
-                "Content-Type":  "application/octet-stream",
-            },
-            data=out_bytes,
-        )
-        if resp.status_code not in (200, 201):
-            return json.dumps({"success": False, "error": f"Erro ao salvar output: {resp.text}"}), 500
-
+            supabase.storage.from_(BUCKET_NAME).upload(output_id, f_out.read())
     finally:
         os.remove(tmp_in_path)
         os.remove(tmp_out_path)
 
     return json.dumps({
-        "success":            True,
-        "output_name":        output_name,
-        "output_id":          output_id,
+        "success": True,
+        "output_name": output_name,
+        "output_id": output_id,
         "saved_to_downloads": False,
     })
 
 
 @app.route("/download")
 def download():
-    output_id   = request.args.get("file")
+    output_id = request.args.get("file")
     output_name = request.args.get("name", "output.package")
-
     if not output_id or output_id == "null":
         return "Arquivo não encontrado", 404
 
@@ -476,10 +356,9 @@ def download():
 @app.route("/api/translate", methods=["POST"])
 def api_translate():
     from translator import translator
-
-    data        = request.get_json()
-    text        = data.get("text", "")
-    engine      = data.get("engine", "google")
+    data = request.get_json()
+    text = data.get("text", "")
+    engine = data.get("engine", "google")
     source_lang = data.get("source_lang", "ENG_US")
     target_lang = data.get("target_lang", "POR_BR")
 
@@ -489,22 +368,21 @@ def api_translate():
     result = translator.translate(engine, text, source_lang=source_lang, target_lang=target_lang)
 
     return json.dumps({
-        "success":    result['status_code'] == 200,
+        "success": result['status_code'] == 200,
         "translated": result['text'] if result['status_code'] == 200 else None,
-        "error":      result['text'] if result['status_code'] != 200 else None
+        "error": result['text'] if result['status_code'] != 200 else None
     })
 
 
 @app.route("/api/save_progress", methods=["POST"])
 def save_progress():
-    data             = request.get_json()
-    project_name     = data.get("project_name", "Projeto sem nome")
-    source_lang      = data.get("source_lang", "ENG_US")
-    target_lang      = data.get("target_lang", "POR_BR")
+    data = request.get_json()
+    project_name = data.get("project_name", "Projeto sem nome")
+    source_lang = data.get("source_lang", "ENG_US")
+    target_lang = data.get("target_lang", "POR_BR")
     translation_data = json.dumps(data.get("strings", []))
-    package_id       = data.get("package_id", "")
-
-    user_id  = session.get('user_id')
+    package_id = data.get("package_id", "")
+    user_id = session.get('user_id')
     guest_id = session.get('guest_session_id')
 
     conn = get_db()
@@ -514,7 +392,6 @@ def save_progress():
         c.execute("SELECT id FROM saves WHERE user_id = %s AND project_name = %s", (user_id, project_name))
     else:
         c.execute("SELECT id FROM saves WHERE guest_session_id = %s AND project_name = %s", (guest_id, project_name))
-
     existing_save = c.fetchone()
 
     if existing_save:
@@ -535,7 +412,7 @@ def save_progress():
 
 @app.route("/api/get_saves")
 def get_saves():
-    user_id  = session.get('user_id')
+    user_id = session.get('user_id')
     guest_id = session.get('guest_session_id')
 
     conn = get_db()
@@ -559,9 +436,9 @@ def get_saves():
 
 @app.route("/api/delete_save", methods=["POST"])
 def delete_save():
-    data     = request.get_json()
-    save_id  = data.get("id")
-    user_id  = session.get('user_id')
+    data = request.get_json()
+    save_id = data.get("id")
+    user_id = session.get('user_id')
     guest_id = session.get('guest_session_id')
 
     conn = get_db()
@@ -579,7 +456,7 @@ def delete_save():
 
 @app.route("/api/load_save/<int:save_id>")
 def load_save(save_id):
-    user_id  = session.get('user_id')
+    user_id = session.get('user_id')
     guest_id = session.get('guest_session_id')
 
     conn = get_db()
@@ -597,29 +474,29 @@ def load_save(save_id):
         return "Save não encontrado ou acesso negado", 404
 
     strings = json.loads(save["translation_data"])
-    pkg_id  = save.get("package_id") or "DATABASE_SAVE"
+    pkg_id = save.get("package_id") or "DATABASE_SAVE"
 
-    session["package_id"]    = pkg_id
+    session["package_id"] = pkg_id
     session["original_name"] = save["project_name"].split(" (")[0]
-    session["db_save_id"]    = save_id
+    session["db_save_id"] = save_id
 
     return json.dumps({
-        "success":          True,
-        "project_name":     save["project_name"],
-        "source_lang":      save["source_lang"],
-        "target_lang":      save["target_lang"],
+        "success": True,
+        "project_name": save["project_name"],
+        "source_lang": save["source_lang"],
+        "target_lang": save["target_lang"],
         "translation_data": strings,
-        "package_id":       pkg_id,
+        "package_id": pkg_id,
     })
 
 
 @app.route("/api/register", methods=["POST"])
 def register():
-    data     = request.get_json()
+    data = request.get_json()
     username = data.get("username", "").strip()
     password = data.get("password", "").strip()
     question = data.get("security_question", "").strip()
-    answer   = data.get("security_answer", "").strip()
+    answer = data.get("security_answer", "").strip()
 
     if not username or len(password) < 6 or not question or not answer:
         return json.dumps({"success": False, "error": "Preencha todos os campos. A senha deve ter no mínimo 6 caracteres."}), 400
@@ -632,7 +509,7 @@ def register():
         conn.close()
         return json.dumps({"success": False, "error": "Nome de usuário já existe."}), 400
 
-    pass_hash   = generate_password_hash(password)
+    pass_hash = generate_password_hash(password)
     answer_hash = generate_password_hash(answer.lower())
 
     c.execute(
@@ -654,7 +531,7 @@ def register():
 
 @app.route("/api/login", methods=["POST"])
 def login():
-    data     = request.get_json()
+    data = request.get_json()
     username = data.get("username", "").strip()
     password = data.get("password", "").strip()
 
@@ -664,8 +541,8 @@ def login():
     user = c.fetchone()
 
     if user and check_password_hash(user['password_hash'], password):
-        session['user_id']   = user['id']
-        session.permanent    = True
+        session['user_id'] = user['id']
+        session.permanent = True
 
         guest_id = session.get('guest_session_id')
         if guest_id:
@@ -681,10 +558,10 @@ def login():
 
 @app.route("/api/forgot_password", methods=["POST"])
 def forgot_password():
-    data         = request.get_json()
-    username     = data.get("username", "").strip()
-    question     = data.get("security_question", "").strip()
-    answer       = data.get("security_answer", "").strip()
+    data = request.get_json()
+    username = data.get("username", "").strip()
+    question = data.get("security_question", "").strip()
+    answer = data.get("security_answer", "").strip()
     new_password = data.get("new_password", "").strip()
 
     if not username or not question or not answer or len(new_password) < 6:
@@ -724,8 +601,8 @@ def me():
 
     if user:
         return json.dumps({
-            "logged_in":   True,
-            "username":    user["username"],
+            "logged_in": True,
+            "username": user["username"],
             "profile_pic": user["profile_pic"]
         })
     return json.dumps({"logged_in": False})
@@ -737,9 +614,9 @@ def update_profile():
     if not user_id:
         return json.dumps({"success": False, "error": "Não logado"}), 401
 
-    data         = request.get_json()
+    data = request.get_json()
     new_username = data.get("username", "").strip()
-    new_pic      = data.get("profile_pic", "").strip()
+    new_pic = data.get("profile_pic", "").strip()
 
     conn = get_db()
     c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -758,9 +635,9 @@ def update_profile():
 
 @app.route("/api/import_translations", methods=["POST"])
 def import_translations():
-    data     = request.get_json()
-    save_id  = data.get("save_id")
-    user_id  = session.get('user_id')
+    data = request.get_json()
+    save_id = data.get("save_id")
+    user_id = session.get('user_id')
     guest_id = session.get('guest_session_id')
 
     conn = get_db()
@@ -793,13 +670,16 @@ def logout():
 def import_from_package():
     if "package" not in request.files:
         return json.dumps({"success": False, "error": "Nenhum arquivo enviado"}), 400
+
     f = request.files["package"]
     if not f.filename.endswith(".package"):
         return json.dumps({"success": False, "error": "Arquivo inválido"}), 400
+
     strings = {}
     with tempfile.NamedTemporaryFile(delete=False, suffix=".package") as tmp:
         f.save(tmp.name)
         tmp_path = tmp.name
+
     try:
         with DbpfPackage.read(tmp_path) as pkg:
             for rid in pkg.search_stbl():
@@ -809,6 +689,7 @@ def import_from_package():
                         strings[str(key)] = value
     finally:
         os.remove(tmp_path)
+
     return json.dumps({"success": True, "translations": strings})
 
 
