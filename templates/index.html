@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -405,7 +405,11 @@ async function loadSaves() {
     const data = await res.json();
     savesData = data.saves || [];
     hasSaves = savesData.length > 0;
-    if (hasSaves) localStorage.setItem('has_saves', '1');
+    if (hasSaves) {
+      localStorage.setItem('has_saves', '1');
+    } else {
+      localStorage.removeItem('has_saves');
+    }
 
     const area = document.getElementById('saves-area');
     const mascot = document.getElementById('mascot-div');
@@ -661,4 +665,4 @@ if ('serviceWorker' in navigator) {
 }
 </script>
 </body>
-</html> 
+</html>
