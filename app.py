@@ -229,18 +229,7 @@ def upload():
     file_bytes = f.read()
 
     try:
-        import requests as req_lib
-        upload_url = f"{SUPABASE_URL}/storage/v1/object/{BUCKET_NAME}/{file_id}"
-        resp = req_lib.post(
-            upload_url,
-            headers={
-                "Authorization":  f"Bearer {SUPABASE_KEY}",
-                "Content-Type":   "application/octet-stream",
-            },
-            data=file_bytes,
-        )
-        if resp.status_code not in (200, 201):
-            return f"Erro no upload para o storage: {resp.text}", 500
+        supabase.storage.from_(BUCKET_NAME).upload(file_id, file_bytes)
     except Exception as e:
         return f"Erro no upload: {e}", 500
 
@@ -429,20 +418,8 @@ def save():
                         outpkg.put(rid, content)
 
         output_id = f"out_{uuid.uuid4().hex}.package"
-        import requests as req_lib
-        upload_url = f"{SUPABASE_URL}/storage/v1/object/{BUCKET_NAME}/{output_id}"
         with open(tmp_out_path, "rb") as f_out:
-            out_bytes = f_out.read()
-        resp = req_lib.post(
-            upload_url,
-            headers={
-                "Authorization": f"Bearer {SUPABASE_KEY}",
-                "Content-Type":  "application/octet-stream",
-            },
-            data=out_bytes,
-        )
-        if resp.status_code not in (200, 201):
-            return json.dumps({"success": False, "error": f"Erro ao salvar output: {resp.text}"}), 500
+            supabase.storage.from_(BUCKET_NAME).upload(output_id, f_out.read())
     finally:
         os.remove(tmp_in_path)
         os.remove(tmp_out_path)
