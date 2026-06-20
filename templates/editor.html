@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -200,6 +200,19 @@
 <script>
 let stringsData = [];
 let instanceStr  = sessionStorage.getItem('selected_instance_str') || '';
+
+// Se estamos reabrindo um save existente, original_name já vem preenchido
+// (pelo index.html). Pré-preenche o campo de nome pra não obrigar o usuário
+// a redigitar o nome de algo que já tinha nome.
+(function prefillFilename() {
+  const existingName = sessionStorage.getItem('original_name');
+  if (existingName) {
+    document.addEventListener('DOMContentLoaded', () => {
+      const input = document.getElementById('filename-input');
+      if (input && !input.value) input.value = existingName.replace(/\.package$/i, '');
+    });
+  }
+})();
 let targetLang   = sessionStorage.getItem('target_lang') || 'POR_BR';
 let originalLang = sessionStorage.getItem('original_lang') || 'ENG_US';
 let currentIdx = null;
@@ -269,10 +282,21 @@ function triggerAutoSave() {
   autoSaveTimer = setTimeout(() => { saveProgressToDatabase(); }, 2000);
 }
 
+// Nome do projeto agora vem do campo "Nome do arquivo" (#filename-input),
+// que é a mesma caixa usada pra exportar o .package. Sem nome ali, não
+// salva na lista — em vez de cair no genérico "arquivo.package" que
+// bagunçava a lista de saves.
+function getProjectBaseName() {
+  const input = document.getElementById('filename-input');
+  return (input?.value || '').trim().replace(/\.package$/i, '');
+}
+
 async function saveProgressToDatabase() {
   if (stringsData.length === 0) return;
-  const originalName = sessionStorage.getItem('original_name') || 'arquivo.package';
-  const projectName = originalName + ' (' + instanceStr + ')';
+  const baseName = getProjectBaseName();
+  if (!baseName) return; // autosave fica em espera até o usuário dar um nome
+  sessionStorage.setItem('original_name', baseName);
+  const projectName = baseName + ' (' + instanceStr + ')';
   const packageId = sessionStorage.getItem('package_id') || '';
   const payload = {
     project_name: projectName,
@@ -298,8 +322,16 @@ async function saveProgressToDatabase() {
 }
 
 async function saveProgressManual() {
+  clearTimeout(autoSaveTimer); // evita o autosave pendente disparar em duplicidade
   const btn = document.getElementById('save-progress-btn');
   if (stringsData.length === 0) return;
+  if (!getProjectBaseName()) {
+    const input = document.getElementById('filename-input');
+    input.focus();
+    input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    alert('Dê um nome ao arquivo no campo "Nome do arquivo" antes de salvar o progresso.');
+    return;
+  }
   btn.classList.add('saving');
   btn.classList.add('saved');
   await saveProgressToDatabase();
@@ -307,9 +339,10 @@ async function saveProgressManual() {
 }
 
 window.addEventListener('beforeunload', () => {
-  if (stringsData.length > 0) {
-    const originalName = sessionStorage.getItem('original_name') || 'arquivo.package';
-    const projectName = originalName + ' (' + instanceStr + ')';
+  clearTimeout(autoSaveTimer); // evita disparar autosave junto com o sendBeacon abaixo
+  const baseName = getProjectBaseName();
+  if (stringsData.length > 0 && baseName) {
+    const projectName = baseName + ' (' + instanceStr + ')';
     const packageId = sessionStorage.getItem('package_id') || '';
     const payload = JSON.stringify({
       project_name: projectName,
@@ -522,4 +555,4 @@ async function save() {
 load();
 </script>
 </body>
-</html>
+</html> 
