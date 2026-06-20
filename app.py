@@ -28,6 +28,8 @@ app = Flask(__name__,
             static_url_path='/img')
 app.secret_key = "sims4translator_secret"
 app.permanent_session_lifetime = timedelta(days=30)
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+app.config["SESSION_COOKIE_SECURE"] = True
 
 UPLOAD_FOLDER = tempfile.gettempdir()
 
@@ -41,6 +43,7 @@ def manifest():
 def ensure_guest_session():
     if 'user_id' not in session and 'guest_session_id' not in session:
         session['guest_session_id'] = str(uuid.uuid4())
+    session.permanent = True
 
 
 def get_db():
