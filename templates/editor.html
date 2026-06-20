@@ -362,19 +362,7 @@ async function load() {
   document.getElementById('loading-text').textContent = 'Carregando strings...';
   document.getElementById('loading').classList.add('active');
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
-    const res = await fetch('/api/strings?instance=' + encodeURIComponent(instanceStr), {
-      signal: controller.signal
-    });
-    clearTimeout(timeoutId);
-
-    if (!res.ok) {
-      let bodyText = '';
-      try { bodyText = await res.text(); } catch(_) {}
-      throw new Error('HTTP ' + res.status + ' — ' + bodyText.slice(0, 300));
-    }
-
+    const res = await fetch('/api/strings?instance=' + encodeURIComponent(instanceStr));
     const data = await res.json();
     stringsData = data.strings || [];
     document.getElementById('count-badge').textContent = stringsData.length + ' strings';
@@ -384,11 +372,7 @@ async function load() {
     document.getElementById('save-btn').disabled = stringsData.length === 0;
   } catch(e) {
     document.getElementById('loading').classList.remove('active');
-    if (e.name === 'AbortError') {
-      alert('Tempo esgotado (15s) esperando o servidor responder em /api/strings. instance=' + instanceStr + '. Provavelmente o backend travou ou demorou demais (ex: baixando um arquivo grande do Storage, ou erro silencioso no servidor).');
-    } else {
-      alert('Erro ao carregar strings: ' + e.message);
-    }
+    alert('Erro ao carregar strings: ' + e.message);
   }
 }
 
@@ -559,8 +543,6 @@ async function save() {
       document.getElementById('download-link').href = '/download?file=' + data.output_id + '&name=' + encodeURIComponent(data.output_name);
       document.getElementById('success-sheet').classList.add('open');
       await saveProgressToDatabase();
-    } else if (data.error && data.error.includes('Arquivo original não disponível')) {
-      promptReattachPackage();
     } else {
       alert('Erro ao salvar: ' + (data.error || 'desconhecido'));
     }
@@ -570,45 +552,7 @@ async function save() {
   }
 }
 
-// --- Reconectar .package perdido (saves antigos sem referência válida) ---
-function promptReattachPackage() {
-  const ok = confirm(
-    'Esse projeto perdeu a referência do arquivo .package original (provavelmente salvo numa versão mais antiga do app).\n\n' +
-    'Sua tradução não foi perdida — só falta reconectar o arquivo .package original pra gerar o arquivo traduzido.\n\n' +
-    'Selecionar o .package agora?'
-  );
-  if (ok) document.getElementById('reattach-input').click();
-}
-
-document.getElementById('reattach-input').addEventListener('change', async (e) => {
-  const file = e.target.files[0];
-  e.target.value = '';
-  if (!file) return;
-
-  document.getElementById('loading-text').textContent = 'Reconectando arquivo...';
-  document.getElementById('loading').classList.add('active');
-
-  try {
-    const formData = new FormData();
-    formData.append('package', file);
-    const res = await fetch('/api/reattach_package', { method: 'POST', body: formData });
-    const data = await res.json();
-    document.getElementById('loading').classList.remove('active');
-
-    if (data.success) {
-      sessionStorage.setItem('package_id', data.package_id);
-      save(); // tenta salvar de novo automaticamente, agora com o arquivo conectado
-    } else {
-      alert('Não foi possível reconectar o arquivo: ' + (data.error || 'erro desconhecido'));
-    }
-  } catch(err) {
-    document.getElementById('loading').classList.remove('active');
-    alert('Erro de conexão ao reconectar o arquivo.');
-  }
-});
-
 load();
 </script>
-<input type="file" id="reattach-input" accept=".package" style="display:none">
 </body>
 </html> 
