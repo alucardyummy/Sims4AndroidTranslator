@@ -252,11 +252,7 @@ def upload():
 def info():
     if not session.get("all_instances"):
         return redirect("/")
-    response = send_file(os.path.join(TEMPLATE_DIR, "info.html"))
-    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-    response.headers['Pragma'] = 'no-cache'
-    response.headers['Expires'] = '0'
-    return response
+    return send_file(os.path.join(TEMPLATE_DIR, "info.html"))
 
 
 @app.route("/api/instances")
@@ -303,11 +299,7 @@ def api_instances():
 def editor():
     if not session.get("package_id"):
         return redirect("/")
-    response = send_file(os.path.join(TEMPLATE_DIR, "editor.html"))
-    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-    response.headers['Pragma'] = 'no-cache'
-    response.headers['Expires'] = '0'
-    return response
+    return send_file(os.path.join(TEMPLATE_DIR, "editor.html"))
 
 
 @app.route("/api/strings")
@@ -361,48 +353,6 @@ def api_strings():
         response=json.dumps({"strings": strings}),
         mimetype="application/json"
     )
-
-
-@app.route("/api/reattach_package", methods=["POST"])
-def reattach_package():
-    """
-    Usada quando um save antigo perdeu a referência do .package original
-    (package_id vazio/inválido). O usuário seleciona o mesmo .package de
-    novo, a gente sobe ele e reconecta esse package_id ao save existente,
-    sem precisar refazer a tradução.
-    """
-    if "package" not in request.files:
-        return json.dumps({"success": False, "error": "Nenhum arquivo enviado"}), 400
-
-    f = request.files["package"]
-    if not f.filename.endswith(".package"):
-        return json.dumps({"success": False, "error": "Arquivo inválido. Envie um .package"}), 400
-
-    db_save_id = request.form.get("save_id") or session.get("db_save_id")
-    file_bytes = f.read()
-    file_id = f"{uuid.uuid4().hex}.package"
-
-    try:
-        supabase.storage.from_(BUCKET_NAME).upload(file_id, file_bytes)
-    except Exception as e:
-        return json.dumps({"success": False, "error": f"Erro ao subir o arquivo: {e}"}), 500
-
-    session["package_id"] = file_id
-
-    # Persiste a nova referência no save, se a gente souber qual é
-    if db_save_id:
-        user_id = session.get('user_id')
-        guest_id = session.get('guest_session_id')
-        conn = get_db()
-        c = conn.cursor()
-        if user_id:
-            c.execute("UPDATE saves SET package_id = %s WHERE id = %s AND user_id = %s", (file_id, db_save_id, user_id))
-        else:
-            c.execute("UPDATE saves SET package_id = %s WHERE id = %s AND guest_session_id = %s", (file_id, db_save_id, guest_id))
-        conn.commit()
-        conn.close()
-
-    return json.dumps({"success": True, "package_id": file_id})
 
 
 @app.route("/save", methods=["POST"])
@@ -582,14 +532,7 @@ def delete_save():
     guest_id = session.get('guest_session_id')
 
     conn = get_db()
-    c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-
-    # Pega o package_id antes de apagar, pra também limpar o Storage
-    if user_id:
-        c.execute("SELECT package_id FROM saves WHERE id = %s AND user_id = %s", (save_id, user_id))
-    else:
-        c.execute("SELECT package_id FROM saves WHERE id = %s AND guest_session_id = %s", (save_id, guest_id))
-    row = c.fetchone()
+    c = conn.cursor()
 
     if user_id:
         c.execute("DELETE FROM saves WHERE id = %s AND user_id = %s", (save_id, user_id))
@@ -598,15 +541,6 @@ def delete_save():
 
     conn.commit()
     conn.close()
-
-    # Limpa o arquivo órfão no Storage, se houver e não for um marcador especial
-    pkg_id = row.get("package_id") if row else None
-    if pkg_id and pkg_id != "DATABASE_SAVE":
-        try:
-            supabase.storage.from_(BUCKET_NAME).remove([pkg_id])
-        except Exception as e:
-            print(f"Aviso: não foi possível remover {pkg_id} do storage: {e}")
-
     return json.dumps({"success": True})
 
 
