@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -452,7 +452,14 @@ async function editSave(id) {
     const res = await fetch('/api/load_save/' + id);
     const data = await res.json();
     if (data.success) {
-      sessionStorage.setItem('selected_instance_str', data.translation_data[0]?.key || '');
+      // Extrai o instance real do sufixo "(numero)" do project_name.
+      // Antes isso usava data.translation_data[0].key por engano, que é a key
+      // de uma string individual (não o instance da STBL) — isso fazia o
+      // /api/save_progress achar que era um projeto novo a cada reabertura,
+      // criando "duplicatas" com números diferentes do mesmo save.
+      const match = data.project_name.match(/\(([^)]+)\)\s*$/);
+      const instanceFromName = match ? match[1] : '';
+      sessionStorage.setItem('selected_instance_str', instanceFromName);
       sessionStorage.setItem('target_lang', data.target_lang);
       sessionStorage.setItem('original_lang', data.source_lang);
       sessionStorage.setItem('original_name', data.project_name.split(' (')[0]);
@@ -615,4 +622,4 @@ if ('serviceWorker' in navigator) {
 }
 </script>
 </body>
-</html>
+</html> 
