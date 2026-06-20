@@ -153,10 +153,10 @@
 <div class="success-sheet" id="success-sheet">
   <div class="success-inner">
     <div class="success-icon">✦</div>
+    <div class="success-title">Package salvo!</div>
     <div class="success-sub" id="success-sub">—</div>
-    <div class="success-title">⬇ Baixe sua tradução abaixo :3!</div>
     <div class="success-downloads-note" id="downloads-note"></div>
-    <a id="download-link" href="#" class="success-new">BAIXAR ARQUIVO</a>
+    <a id="download-link" href="#" class="success-new">⬇ BAIXAR ARQUIVO</a>
     <button class="success-new" onclick="window.location.href='/'" style="background:transparent; border:1px solid var(--border2); color:var(--text-muted);">Ver minhas traduções</button>
     <button class="success-back" onclick="document.getElementById('success-sheet').classList.remove('open')">Continuar editando</button>
   </div>
@@ -543,6 +543,8 @@ async function save() {
       document.getElementById('download-link').href = '/download?file=' + data.output_id + '&name=' + encodeURIComponent(data.output_name);
       document.getElementById('success-sheet').classList.add('open');
       await saveProgressToDatabase();
+    } else if (data.error && data.error.includes('Arquivo original não disponível')) {
+      promptReattachPackage();
     } else {
       alert('Erro ao salvar: ' + (data.error || 'desconhecido'));
     }
@@ -552,7 +554,45 @@ async function save() {
   }
 }
 
+// --- Reconectar .package perdido (saves antigos sem referência válida) ---
+function promptReattachPackage() {
+  const ok = confirm(
+    'Esse projeto perdeu a referência do arquivo .package original (provavelmente salvo numa versão mais antiga do app).\n\n' +
+    'Sua tradução não foi perdida — só falta reconectar o arquivo .package original pra gerar o arquivo traduzido.\n\n' +
+    'Selecionar o .package agora?'
+  );
+  if (ok) document.getElementById('reattach-input').click();
+}
+
+document.getElementById('reattach-input').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+
+  document.getElementById('loading-text').textContent = 'Reconectando arquivo...';
+  document.getElementById('loading').classList.add('active');
+
+  try {
+    const formData = new FormData();
+    formData.append('package', file);
+    const res = await fetch('/api/reattach_package', { method: 'POST', body: formData });
+    const data = await res.json();
+    document.getElementById('loading').classList.remove('active');
+
+    if (data.success) {
+      sessionStorage.setItem('package_id', data.package_id);
+      save(); // tenta salvar de novo automaticamente, agora com o arquivo conectado
+    } else {
+      alert('Não foi possível reconectar o arquivo: ' + (data.error || 'erro desconhecido'));
+    }
+  } catch(err) {
+    document.getElementById('loading').classList.remove('active');
+    alert('Erro de conexão ao reconectar o arquivo.');
+  }
+});
+
 load();
 </script>
+<input type="file" id="reattach-input" accept=".package" style="display:none">
 </body>
 </html> 
