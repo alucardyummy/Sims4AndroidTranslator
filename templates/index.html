@@ -189,9 +189,7 @@
   <div class="loading-text">Lendo arquivo...</div>
 </div>
 
-<form id="upload-form" action="/upload" method="POST" enctype="multipart/form-data" style="display:none">
-  <input type="file" name="package" id="form-file">
-</form>
+<!-- form legado removido: upload agora é direto Frontend → Supabase -->
 
 <div class="modal-overlay" id="auth-modal">
   <div class="modal-box">
@@ -292,21 +290,62 @@ function updateImportUI() {
   }
 }
 
+function setLoadingText(msg) {
+  document.querySelector('.loading-text').textContent = msg;
+}
+
+async function handleUpload(file) {
+  if (!file.name.endsWith('.package')) {
+    document.getElementById('error-msg').textContent = 'Arquivo inválido. Selecione um arquivo .package';
+    document.getElementById('error-msg').classList.add('active');
+    return;
+  }
+
+  document.getElementById('error-msg').classList.remove('active');
+  document.getElementById('loading').classList.add('active');
+
+  try {
+    // 1. Pede a signed URL ao Flask
+    setLoadingText('Preparando upload...');
+    const urlRes = await fetch('/api/upload_url', { method: 'POST' });
+    if (!urlRes.ok) throw new Error('Erro ao obter URL de upload');
+    const { file_id, signed_url } = await urlRes.json();
+
+    // 2. Faz o upload DIRETO para o Supabase Storage (sem passar pelo Flask)
+    setLoadingText('Enviando arquivo...');
+    const uploadRes = await fetch(signed_url, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/octet-stream' },
+      body: file,
+    });
+    if (!uploadRes.ok) throw new Error('Erro no upload: ' + uploadRes.statusText);
+
+    // 3. Avisa o Flask para processar o arquivo
+    setLoadingText('Processando...');
+    const confirmRes = await fetch('/upload/confirm', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ file_id, original_name: file.name }),
+    });
+    const result = await confirmRes.json();
+
+    if (result.success) {
+      window.location.href = result.redirect;
+    } else {
+      throw new Error(result.error || 'Erro ao processar arquivo');
+    }
+  } catch (e) {
+    document.getElementById('loading').classList.remove('active');
+    document.getElementById('error-msg').textContent = e.message || 'Erro desconhecido';
+    document.getElementById('error-msg').classList.add('active');
+    setLoadingText('Lendo arquivo...');
+  }
+}
+
 function setupFileInput(inputId) {
   document.getElementById(inputId).addEventListener('change', function() {
     const file = this.files[0];
-    if (!file) return;
-    if (!file.name.endsWith('.package')) {
-      document.getElementById('error-msg').textContent = 'Arquivo inválido. Selecione um arquivo .package';
-      document.getElementById('error-msg').classList.add('active');
-      return;
-    }
-    document.getElementById('loading').classList.add('active');
-    document.getElementById('error-msg').classList.remove('active');
-    const dt = new DataTransfer();
-    dt.items.add(file);
-    document.getElementById('form-file').files = dt.files;
-    document.getElementById('upload-form').submit();
+    if (file) handleUpload(file);
   });
 }
 setupFileInput('file-input');
