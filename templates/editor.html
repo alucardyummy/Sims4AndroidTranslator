@@ -34,6 +34,13 @@
   .save-progress-btn.saved { border-color: #4caf50; color: #4caf50; background: rgba(76,175,80,0.1); }
   .save-progress-btn.saving { border-color: var(--accent-dim); color: var(--accent); animation: pulse 0.8s infinite; }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .undo-btn { width: 32px; height: 32px; border-radius: 50%; background: var(--surface); border: 1px solid var(--border); color: var(--text-muted); font-size: 16px; display: flex; align-items: center; justify-content: center; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: all 0.2s; }
+  .undo-btn:disabled { opacity: 0.35; pointer-events: none; }
+  .undo-btn.active { border-color: var(--accent-dim); color: var(--accent); }
+  .filter-bar { display: flex; flex-direction: column; gap: 8px; padding: 0.7rem 1rem; border-bottom: 1px solid var(--border); flex-shrink: 0; background: var(--bg); }
+  .search-input { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 12px; color: var(--text); font-family: 'DM Sans', sans-serif; }
+  .search-input:focus { outline: none; border-color: var(--accent-dim); }
+  .filter-checkbox-label { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-muted); cursor: pointer; -webkit-tap-highlight-color: transparent; }
   .col-headers { display: grid; grid-template-columns: 86px 1fr 1fr 40px; gap: 6px; padding: 7px 1rem; border-bottom: 1px solid var(--border); flex-shrink: 0; background: var(--bg); }
   .col-header { font-size: 9px; color: var(--text-dim); letter-spacing: 0.08em; text-transform: uppercase; }
   .strings-list { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: 80px; }
@@ -118,9 +125,17 @@
       <div class="topbar-sub" id="top-sub">—</div>
     </div>
     <div class="topbar-right">
+      <button class="undo-btn" id="undo-btn" onclick="undoLastEdit()" disabled title="Desfazer última alteração">↶</button>
       <div class="count-badge" id="count-badge">—</div>
       <button class="save-progress-btn" id="save-progress-btn" onclick="saveProgressManual()" title="Salvar progresso">✓</button>
     </div>
+  </div>
+  <div class="filter-bar">
+    <input type="text" id="search-input" class="search-input" placeholder="Buscar por key, original ou tradução...">
+    <label class="filter-checkbox-label">
+      <input type="checkbox" id="filter-untranslated">
+      Mostrar apenas não traduzidas
+    </label>
   </div>
   <div class="col-headers">
     <div class="col-header">Key</div>
@@ -219,6 +234,8 @@ let currentIdx = null;
 let autoSaveTimer = null;
 let progressSaved = false;
 let editedIndices = new Set();
+let editSnapshots = {}; // idx -> valor de antes da edição atual (1 nível de undo)
+let lastEdit = null;     // { idx, previousValue } da última alteração feita
 
 function autoResize(el) {
   el.style.height = 'auto';
@@ -365,6 +382,11 @@ async function load() {
     const res = await fetch('/api/strings?instance=' + encodeURIComponent(instanceStr));
     const data = await res.json();
     stringsData = data.strings || [];
+    // Congela uma cópia do valor original de cada string. "value" continua
+    // sendo o campo vivo que o usuário edita; "original" nunca muda depois
+    // disso e é usado pela coluna "Original" e pela busca, pra não bagunçar
+    // a referência quando a lista é re-renderizada após uma edição/filtro.
+    stringsData.forEach(item => { item.original = item.value; });
     document.getElementById('count-badge').textContent = stringsData.length + ' strings';
     updateProgressBadge();
     document.getElementById('loading').classList.remove('active');
@@ -376,34 +398,97 @@ async function load() {
   }
 }
 
+function escapeHtml(str) {
+  return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// Decide se uma string passa pelo filtro de busca + "apenas não traduzidas".
+// Não toca em stringsData, só decide o que aparece na tela.
+function matchesFilters(item, term, onlyUntranslated) {
+  if (onlyUntranslated && item.value) return false;
+  if (!term) return true;
+  const t = term.toLowerCase();
+  return (item.key_hex || '').toLowerCase().includes(t) ||
+         String(item.key ?? '').toLowerCase().includes(t) ||
+         (item.original || '').toLowerCase().includes(t) ||
+         (item.value || '').toLowerCase().includes(t);
+}
+
 function renderStrings() {
   const list = document.getElementById('strings-list');
   if (stringsData.length === 0) {
     list.innerHTML = '<div class="empty-state"><div class="empty-icon">◌</div><div class="empty-text">Nenhuma string encontrada nesta instância.</div></div>';
     return;
   }
-  list.innerHTML = '';
+
+  const term = (document.getElementById('search-input')?.value || '').trim();
+  const onlyUntranslated = document.getElementById('filter-untranslated')?.checked || false;
+  const visibleIndices = [];
   stringsData.forEach((item, idx) => {
+    if (matchesFilters(item, term, onlyUntranslated)) visibleIndices.push(idx);
+  });
+
+  if (visibleIndices.length === 0) {
+    list.innerHTML = '<div class="empty-state"><div class="empty-icon">◌</div><div class="empty-text">Nenhuma string encontrada com esse filtro.</div></div>';
+    return;
+  }
+
+  list.innerHTML = '';
+  visibleIndices.forEach(idx => {
+    const item = stringsData[idx];
     const row = document.createElement('div');
     row.className = 'string-row';
-    const safe = (item.value || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const safeOriginal = escapeHtml(item.original);
     row.innerHTML =
       '<div class="key-hex">' + item.key_hex + '</div>' +
-      '<div class="original-text">' + (safe || '<em style="opacity:0.4">vazio</em>') + '</div>' +
+      '<div class="original-text">' + (safeOriginal || '<em style="opacity:0.4">vazio</em>') + '</div>' +
       '<div class="edit-container"><textarea class="edit-textarea" data-idx="' + idx + '" rows="1">' + (item.value || '') + '</textarea></div>' +
       '<div class="translate-btn" data-translate-idx="' + idx + '" onclick="showEngineMenu(' + idx + ', event)">◈</div>';
     list.appendChild(row);
     const ta = row.querySelector('textarea');
     autoResize(ta);
+
+    // Guarda o valor "antes da edição" assim que o campo recebe foco —
+    // é esse valor que o botão Desfazer vai restaurar.
+    ta.addEventListener('focus', function() {
+      editSnapshots[parseInt(this.dataset.idx)] = stringsData[parseInt(this.dataset.idx)].value;
+    });
+
     ta.addEventListener('input', function() {
-      editedIndices.add(parseInt(this.dataset.idx));
+      const i = parseInt(this.dataset.idx);
+      editedIndices.add(i);
       updateProgressBadge();
       autoResize(this);
       triggerAutoSave();
-      stringsData[parseInt(this.dataset.idx)].value = this.value;
+      stringsData[i].value = this.value;
+
+      if (i in editSnapshots) {
+        lastEdit = { idx: i, previousValue: editSnapshots[i] };
+        const undoBtn = document.getElementById('undo-btn');
+        undoBtn.disabled = false;
+        undoBtn.classList.add('active');
+      }
     });
   });
 }
+
+function undoLastEdit() {
+  if (!lastEdit) return;
+  const { idx, previousValue } = lastEdit;
+  stringsData[idx].value = previousValue;
+  delete editSnapshots[idx];
+  lastEdit = null;
+
+  const undoBtn = document.getElementById('undo-btn');
+  undoBtn.disabled = true;
+  undoBtn.classList.remove('active');
+
+  renderStrings();
+  triggerAutoSave();
+}
+
+document.getElementById('search-input').addEventListener('input', renderStrings);
+document.getElementById('filter-untranslated').addEventListener('change', renderStrings);
 
 function updateProgressBadge() {
   document.getElementById('count-badge').textContent =
