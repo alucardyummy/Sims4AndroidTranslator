@@ -44,7 +44,7 @@ Ele é um remake mobile-first baseado no projeto do [Voky1](https://github.com/v
 
 ## ✦ Créditos
 
-- Projeto original: **[Voky1](https://github.com/voky1/sims4-translator)**
+- Projeto original: **[The Sims 4 Translator](https://github.com/voky1/sims4-translator)**
 
 ---
 
