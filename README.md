@@ -73,5 +73,5 @@ python app.py
 <div align="center">
   <img src="img/sillyblumbob.webp" width="60" /><br/>
   <sub>Feito com ♡ e muita gambiarra · MIT · 2026</sub>
-  <sub>Remake mobile: **AlucardYummy**</sub>
+  <sub>Remake mobile: <b>AlucardYummy<b/></sub>
 </div>
