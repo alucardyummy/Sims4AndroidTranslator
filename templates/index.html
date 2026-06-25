@@ -134,6 +134,17 @@
   <div class="topbar" id="topbar-normal">
     <div class="profile-circle" id="profile-btn">
       <img src="/img/icon-pf.webp" alt="Perfil" id="profile-img">
+      <script>
+        // Aplica a foto de perfil guardada em cache local IMEDIATAMENTE, antes
+        // mesmo do checkLogin() ir buscar no servidor. Sem isso, todo reload
+        // mostra o ícone genérico por um instante até a rede responder.
+        (function() {
+          try {
+            const cached = localStorage.getItem('cached_profile_pic');
+            if (cached) document.getElementById('profile-img').src = cached;
+          } catch (e) {}
+        })();
+      </script>
     </div>
     <div style="width:36px"></div>
   </div>
@@ -520,6 +531,14 @@ async function checkLogin() {
       const src = data.profile_pic || '/img/icon-pf.webp';
       document.getElementById('profile-img').src = src;
       document.getElementById('modal-profile-img').src = src;
+      try {
+        if (data.profile_pic) localStorage.setItem('cached_profile_pic', data.profile_pic);
+        else localStorage.removeItem('cached_profile_pic');
+      } catch (e) {}
+    } else {
+      // Não logado (ex.: sessão expirou, ou trocou de conta no mesmo aparelho)
+      // — não faz sentido continuar mostrando a foto cacheada de outro usuário.
+      try { localStorage.removeItem('cached_profile_pic'); } catch (e) {}
     }
   } catch(e) {}
 }
@@ -589,7 +608,11 @@ async function saveProfile() {
 
 function closeAuthModal() { document.getElementById('auth-modal').classList.remove('active'); }
 function closeProfileModal() { document.getElementById('profile-modal').classList.remove('active'); }
-async function handleLogout() { await fetch('/api/logout', { method: 'POST' }); window.location.reload(); }
+async function handleLogout() {
+  await fetch('/api/logout', { method: 'POST' });
+  try { localStorage.removeItem('cached_profile_pic'); } catch (e) {}
+  window.location.reload();
+}
 function switchTab(tab) {
   document.querySelectorAll('.auth-tab').forEach(el => el.classList.remove('active'));
   document.getElementById('tab-' + tab).classList.add('active');
@@ -665,4 +688,4 @@ if ('serviceWorker' in navigator) {
 }
 </script>
 </body>
-</html>
+</html> 
