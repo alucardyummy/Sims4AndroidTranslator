@@ -35,14 +35,14 @@ Ele é um remake mobile-first baseado no projeto [Voky1](https://github.com/voky
 ## ✦ Estrutura do projeto
 
 ```
-├── app.py           # Servidor Flask principal
-├── translator.py    # Lógica de tradução dos .package
-├── db.py            # Banco de dados / autenticação
-├── main.py          # Entry point Kivy (Android)
-├── templates/       # HTML das páginas
-├── utils/           # Funções auxiliares
-├── java/org/kivy/   # Bridge Android nativa
-└── buildozer.spec   # Config de build Android
+├── app.py           • Servidor Flask principal
+├── translator.py    • Lógica de tradução dos .package
+├── db.py            • Banco de dados / autenticação
+├── main.py          • Entry point Kivy (Android)
+├── templates/       • HTML das páginas
+├── utils/           • Funções auxiliares
+├── java/org/kivy/   • Bridge Android nativa
+└── buildozer.spec   • Config de build Android
 ```
 
 ---
