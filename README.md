@@ -37,6 +37,8 @@ Ele é um remake mobile-first baseado no projeto do [Voky1](https://github.com/v
 
 * 📥 Importar strings de um .package antigo traduzido no site (para traduções antigas ou feitas em atualizações anteriores do site, serve para reimportar e restaurar strings que você acha que "perdeu" após uma atualização no site!)
 
+---
+
 ## ✦ Créditos
 
 - Projeto original: **[Voky1](https://github.com/voky1/sims4-translator)**
