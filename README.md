@@ -61,7 +61,11 @@ python app.py
 ## ✦ Créditos
 
 - Projeto original: **[Voky1](https://github.com/voky1)**
-- Remake mobile: **AlucardYummy**
+
+---
+
+## Meus outros projetos
+
 - Emular TS4 no Android (guia): **[Sims4AndroidBR](https://sims4androidbr.vercel.app)**
 
 ---
@@ -69,4 +73,5 @@ python app.py
 <div align="center">
   <img src="img/sillyblumbob.webp" width="60" /><br/>
   <sub>Feito com ♡ e muita gambiarra · MIT · 2026</sub>
+  <sub>Remake mobile: **AlucardYummy**</sub>
 </div>
