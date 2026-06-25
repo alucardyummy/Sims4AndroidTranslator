@@ -30,8 +30,11 @@ Ele é um remake mobile-first baseado no projeto do [Voky1](https://github.com/v
 ## O que o site oferece, o que esperar e o que saber?
 
 * ✏️ Editar strings, perfeitamente funcional, não muda instâncias originais.
+
 * 🌐 Tradução automática manual (losango ao lado de cada string) ou completo (losango acima de "Salvar Package" no editor)
+
 * 💾 Salvar progresso: importante salvar o progresso SEMPRE que for sair do site, pois o salvamento atualmente NÃO é automático.
+
 * 📥 Importar strings de um .package antigo traduzido no site (para traduções antigas ou feitas em atualizações anteriores do site, serve para reimportar e restaurar strings que você acha que "perdeu" após uma atualização no site!)
 
 ## ✦ Créditos
