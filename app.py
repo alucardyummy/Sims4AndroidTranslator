@@ -151,6 +151,12 @@ def home():
         session['user_id'] = user_id
     if guest_id:
         session['guest_session_id'] = guest_id
+    # session.clear() também apaga a flag interna "_permanent" do Flask, que é
+    # o que faz o cookie durar os 30 dias de app.permanent_session_lifetime.
+    # Sem isso, o cookie volta a ser um cookie de sessão comum (sem prazo
+    # fixo), que o Android Chrome descarta quando mata o processo do app em
+    # segundo plano — e o login parece "expirar" sem motivo.
+    session.permanent = True
 
     response = send_file(os.path.join(TEMPLATE_DIR, "index.html"))
     response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
