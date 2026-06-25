@@ -5,13 +5,13 @@
 
 ✦ O **Sims4AndroidTranslator** é uma ferramenta web que permite traduzir arquivos `.package` do The Sims 4 diretamente pelo celular Android, sem precisar de um PC.
 
-Ele é um remake mobile-first baseado no projeto [Voky1](https://github.com/voky1), reconstruído com Flask + Kivy e hospedado via Vercel.
+Ele é um remake mobile-first baseado no projeto [Voky1](https://github.com/voky1/sims4-translator), reconstruído com Flask + Kivy e hospedado via Vercel.
 
 ---
 
 ## ✦ Como usar
 
-1. Acesse **[droidtranslator.vercel.app](https://droidtranslator.vercel.app)**
+1. Acesse **[sims4androidtranslator.vercel.app](https://sims4androidtranslator.vercel.app)**
 2. Toque em **IMPORTAR** e selecione o arquivo `.package` do seu celular
 3. Escolha o idioma de destino
 4. Faça sua tradução
@@ -23,7 +23,7 @@ Ele é um remake mobile-first baseado no projeto [Voky1](https://github.com/voky
 
 ## ✦ Créditos
 
-- Projeto original: **[Voky1](https://github.com/voky1)**
+- Projeto original: **[Voky1](https://github.com/voky1/sims4-translator)**
 
 ---
 
