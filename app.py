@@ -166,7 +166,7 @@ def home():
 
 
 # ---------------------------------------------------------------------------
-# NOVO FLUXO DE UPLOAD (upload direto Frontend → Supabase)
+#  FLUXO DE UPLOAD (upload direto Frontend → Supabase)
 # ---------------------------------------------------------------------------
 
 @app.route("/api/upload_url", methods=["POST"])
