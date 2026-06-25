@@ -32,6 +32,7 @@ Ele é um remake mobile-first baseado no projeto do [Voky1](https://github.com/v
 * ✏️ Editar strings, perfeitamente funcional, não muda instâncias originais.
 
 * 🌐 Tradução automática manual (losango ao lado de cada string) ou completo (losango acima de "Salvar Package" no editor)
+* ! Entretanto, as vezes as traduções podem ser inconsistentes, por isso sempre revise se a frase traduzida faz sentido com placeholders como: {SimFirstName}, {SimPronounSubjective}, {SimPronounObjective}, {SimPronounPossessiveDependent}, {SimPossessiveIndependent}, {SimPronounReflexive} etc.
 
 * 💾 Salvar progresso: importante salvar o progresso SEMPRE que for sair do site, pois o salvamento atualmente NÃO é automático.
 
