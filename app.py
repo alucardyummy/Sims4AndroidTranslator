@@ -26,7 +26,7 @@ app = Flask(__name__,
             template_folder=TEMPLATE_DIR,
             static_folder=os.path.join(BASE_DIR, 'img'),
             static_url_path='/img')
-app.secret_key = "sims4translator_secret"
+app.secret_key = os.environ.get("FLASK_SECRET_KEY")
 app.permanent_session_lifetime = timedelta(days=30)
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 app.config["SESSION_COOKIE_SECURE"] = True
