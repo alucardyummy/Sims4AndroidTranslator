@@ -735,7 +735,7 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 async function startTranslateAll() {
   const pending = stringsData
     .map((item, idx) => ({ idx, item }))
-    .filter(({ item }) => !item.value || !item.value.trim());
+    .filter(({ idx, item }) => !editedIndices.has(idx));
 
   if (pending.length === 0) {
     document.getElementById('tall-status').textContent = 'Nenhuma string vazia encontrada!';
