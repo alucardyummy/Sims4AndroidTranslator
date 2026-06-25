@@ -538,35 +538,14 @@ def delete_save():
     guest_id = session.get('guest_session_id')
 
     conn = get_db()
-    c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    c = conn.cursor()
 
-    # Busca o package_id antes de deletar
-    if user_id:
-        c.execute("SELECT package_id FROM saves WHERE id = %s AND user_id = %s", (save_id, user_id))
-    else:
-        c.execute("SELECT package_id FROM saves WHERE id = %s AND guest_session_id = %s", (save_id, guest_id))
-
-    row = c.fetchone()
-    package_id = row["package_id"] if row else None
-
-    # Deleta o save
     if user_id:
         c.execute("DELETE FROM saves WHERE id = %s AND user_id = %s", (save_id, user_id))
     else:
         c.execute("DELETE FROM saves WHERE id = %s AND guest_session_id = %s", (save_id, guest_id))
 
     conn.commit()
-
-    # Deleta do Supabase só se nenhum outro save usa o mesmo package_id
-    if package_id and package_id != "DATABASE_SAVE":
-        c.execute("SELECT COUNT(*) as cnt FROM saves WHERE package_id = %s", (package_id,))
-        result = c.fetchone()
-        if result and result["cnt"] == 0:
-            try:
-                supabase.storage.from_(BUCKET_NAME).remove([package_id])
-            except Exception as e:
-                print(f"Aviso: não foi possível deletar {package_id} do Supabase: {e}")
-
     conn.close()
     return json.dumps({"success": True})
 
