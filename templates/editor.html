@@ -110,6 +110,21 @@
   .import-file-label { font-size: 13px; color: var(--text-muted); }
   .import-file-hint { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
   .import-cancel { width: 100%; padding: 13px; background: transparent; border: 1px solid var(--border2); border-radius: var(--radius-sm); color: var(--text-muted); font-size: 13px; cursor: pointer; text-align: center; margin-top: 8px; -webkit-tap-highlight-color: transparent; }
+  .translate-all-btn { width: 100%; padding: 13px; background: transparent; border: 1px solid var(--accent-dim); border-radius: var(--radius); color: var(--accent); font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.06em; cursor: pointer; -webkit-tap-highlight-color: transparent; margin-bottom: 0.75rem; transition: all 0.2s; }
+  .translate-all-btn:active { background: rgba(200,169,110,0.08); }
+  .translate-all-btn:disabled { opacity: 0.35; pointer-events: none; }
+  .tall-sheet { display: none; position: fixed; inset: 0; z-index: 400; background: rgba(0,0,0,0.85); align-items: flex-end; }
+  .tall-sheet.open { display: flex; }
+  .tall-sheet-inner { width: 100%; background: var(--surface); border-top: 1px solid var(--border); border-radius: 20px 20px 0 0; padding: 1.5rem 1rem 2.5rem; animation: slideUp 0.25s ease; }
+  .tall-title { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; color: var(--accent); margin-bottom: 0.25rem; }
+  .tall-sub { font-size: 12px; color: var(--text-muted); margin-bottom: 1.25rem; line-height: 1.5; }
+  .tall-progress-track { width: 100%; height: 6px; background: var(--border); border-radius: 99px; overflow: hidden; margin-bottom: 0.75rem; }
+  .tall-progress-fill { height: 100%; background: var(--accent-dim); border-radius: 99px; width: 0%; transition: width 0.3s ease; }
+  .tall-status { font-size: 12px; color: var(--text-muted); font-family: 'DM Mono', monospace; margin-bottom: 1.5rem; min-height: 18px; }
+  .tall-engine-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 1.25rem; }
+  .tall-engine-btn { padding: 12px 8px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-muted); font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.05em; cursor: pointer; text-align: center; -webkit-tap-highlight-color: transparent; transition: all 0.15s; }
+  .tall-engine-btn.active { border-color: var(--accent-dim); color: var(--accent); background: rgba(200,169,110,0.06); }
+  .tall-cancel-btn { width: 100%; padding: 13px; background: transparent; border: 1px solid var(--border2); border-radius: var(--radius-sm); color: var(--text-muted); font-size: 13px; cursor: pointer; text-align: center; -webkit-tap-highlight-color: transparent; }
 </style>
 </head>
 <body>
@@ -156,6 +171,7 @@
       <span class="ext-label">.package</span>
     </div>
     <button class="import-btn" onclick="openImportSheet()">↺ Carregar traduções de um save</button>
+    <button class="translate-all-btn" id="translate-all-btn" onclick="openTranslateAllSheet()" disabled>◈ Traduzir tudo automaticamente</button>
     <button class="save-btn" id="save-btn" onclick="save()" disabled>SALVAR PACKAGE</button>
   </div>
 </div>
@@ -180,6 +196,22 @@
 <div class="engine-menu" id="engine-menu">
   <div class="engine-option" onclick="processTranslation('google')">Google</div>
   <div class="engine-option" onclick="processTranslation('groq (llama)')">Groq (Llama)</div>
+</div>
+
+<!-- Sheet de traduzir tudo -->
+<div class="tall-sheet" id="tall-sheet">
+  <div class="tall-sheet-inner">
+    <div class="tall-title" id="tall-title">Traduzir tudo</div>
+    <div class="tall-sub" id="tall-sub">Escolha a engine e toque em iniciar. Strings já traduzidas serão ignoradas.</div>
+    <div class="tall-engine-row">
+      <button class="tall-engine-btn active" id="tall-engine-google" onclick="selectTallEngine('google')">🌐 Google</button>
+      <button class="tall-engine-btn" id="tall-engine-groq" onclick="selectTallEngine('groq (llama)')">⚡ Groq</button>
+    </div>
+    <div class="tall-progress-track"><div class="tall-progress-fill" id="tall-fill"></div></div>
+    <div class="tall-status" id="tall-status">Aguardando...</div>
+    <button class="translate-all-btn" id="tall-start-btn" onclick="startTranslateAll()" style="margin-bottom:0.75rem">▶ INICIAR</button>
+    <button class="tall-cancel-btn" id="tall-cancel-btn" onclick="cancelTranslateAll()">Cancelar</button>
+  </div>
 </div>
 
 <!-- Sheet de importar traduções -->
@@ -392,6 +424,7 @@ async function load() {
     document.getElementById('loading').classList.remove('active');
     renderStrings();
     document.getElementById('save-btn').disabled = stringsData.length === 0;
+    document.getElementById('translate-all-btn').disabled = stringsData.length === 0;
   } catch(e) {
     document.getElementById('loading').classList.remove('active');
     alert('Erro ao carregar strings: ' + e.message);
@@ -635,6 +668,137 @@ async function save() {
     document.getElementById('loading').classList.remove('active');
     alert('Erro de conexão ao salvar.');
   }
+}
+
+// ---- TRADUZIR TUDO ----
+let tallEngine = 'google';
+let tallCancelled = false;
+let tallRunning = false;
+
+function openTranslateAllSheet() {
+  if (stringsData.length === 0) return;
+  tallCancelled = false;
+  tallRunning = false;
+  document.getElementById('tall-title').textContent = 'Traduzir tudo';
+  document.getElementById('tall-sub').textContent = 'Escolha a engine e toque em iniciar. Strings já traduzidas serão ignoradas.';
+  document.getElementById('tall-fill').style.width = '0%';
+  document.getElementById('tall-status').textContent = 'Aguardando...';
+  document.getElementById('tall-start-btn').disabled = false;
+  document.getElementById('tall-start-btn').textContent = '▶ INICIAR';
+  document.getElementById('tall-sheet').classList.add('open');
+}
+
+function selectTallEngine(engine) {
+  tallEngine = engine;
+  document.querySelectorAll('.tall-engine-btn').forEach(b => b.classList.remove('active'));
+  const id = engine === 'google' ? 'tall-engine-google' : 'tall-engine-groq';
+  document.getElementById(id).classList.add('active');
+}
+
+function cancelTranslateAll() {
+  tallCancelled = true;
+  if (!tallRunning) {
+    document.getElementById('tall-sheet').classList.remove('open');
+  } else {
+    document.getElementById('tall-status').textContent = 'Cancelando...';
+  }
+}
+
+async function translateSingleWithRetry(idx, engine, maxRetries = 2) {
+  const text = stringsData[idx].original;
+  if (!text || !text.trim()) return 'skip';
+  let attempt = 0;
+  while (attempt <= maxRetries) {
+    try {
+      const res = await fetch('/api/translate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, engine, source_lang: originalLang, target_lang: targetLang })
+      });
+      const data = await res.json();
+      if (data.success && data.translated) {
+        stringsData[idx].value = data.translated;
+        editedIndices.add(idx);
+        return 'ok';
+      }
+      throw new Error(data.error || 'fail');
+    } catch(e) {
+      attempt++;
+      if (attempt <= maxRetries) await sleep(1000);
+    }
+  }
+  return 'error';
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+async function startTranslateAll() {
+  const pending = stringsData
+    .map((item, idx) => ({ idx, item }))
+    .filter(({ item }) => !item.value || !item.value.trim());
+
+  if (pending.length === 0) {
+    document.getElementById('tall-status').textContent = 'Nenhuma string vazia encontrada!';
+    return;
+  }
+
+  tallRunning = true;
+  tallCancelled = false;
+  document.getElementById('tall-start-btn').disabled = true;
+  document.getElementById('tall-start-btn').textContent = 'Traduzindo...';
+  document.getElementById('tall-title').textContent = 'Traduzindo...';
+
+  const total = pending.length;
+  let done = 0;
+  let errors = 0;
+  let consecutiveErrors = 0;
+  const BATCH = 5;
+  const DELAY_BETWEEN_BATCHES = 300;
+  const PAUSE_ON_MANY_ERRORS = 5000;
+  const CONSECUTIVE_ERROR_THRESHOLD = 5;
+
+  for (let i = 0; i < pending.length; i += BATCH) {
+    if (tallCancelled) break;
+    const batch = pending.slice(i, i + BATCH);
+    await Promise.all(batch.map(async ({ idx }) => {
+      if (tallCancelled) return;
+      const result = await translateSingleWithRetry(idx, tallEngine);
+      done++;
+      if (result === 'error') { errors++; consecutiveErrors++; }
+      else consecutiveErrors = 0;
+      const pct = Math.round((done / total) * 100);
+      document.getElementById('tall-fill').style.width = pct + '%';
+      document.getElementById('tall-status').textContent =
+        done + '/' + total + ' strings · ' + errors + ' falhas';
+    }));
+
+    renderStrings();
+    updateProgressBadge();
+    triggerAutoSave();
+
+    if (consecutiveErrors >= CONSECUTIVE_ERROR_THRESHOLD && !tallCancelled) {
+      document.getElementById('tall-status').textContent =
+        'Muitas falhas seguidas — pausando 5s...';
+      await sleep(PAUSE_ON_MANY_ERRORS);
+      consecutiveErrors = 0;
+    } else if (i + BATCH < pending.length && !tallCancelled) {
+      await sleep(DELAY_BETWEEN_BATCHES);
+    }
+  }
+
+  tallRunning = false;
+  if (tallCancelled) {
+    document.getElementById('tall-title').textContent = 'Cancelado';
+    document.getElementById('tall-status').textContent =
+      done + ' traduzidas · ' + errors + ' falhas';
+  } else {
+    document.getElementById('tall-title').textContent = 'Concluído ✦';
+    document.getElementById('tall-status').textContent =
+      (done - errors) + ' traduzidas · ' + errors + ' puladas';
+  }
+  document.getElementById('tall-start-btn').textContent = 'Fechar';
+  document.getElementById('tall-start-btn').disabled = false;
+  document.getElementById('tall-start-btn').onclick = () => document.getElementById('tall-sheet').classList.remove('open');
 }
 
 load();
