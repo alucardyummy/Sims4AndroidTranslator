@@ -17,11 +17,13 @@ Ele é um remake mobile-first baseado no projeto do [Voky1](https://github.com/v
 
 - Escolha o idioma de destino
 
+- Adicione um nome ao arquivo em "output"
+
 - Faça sua tradução
 
 - Baixe o arquivo traduzido
 
-- Adicione o arquivo traduzido diretamente na sua pasta Mods
+- Adicione o arquivo .package traduzido diretamente na sua pasta Mods
 
   <p align="center">Fácil né? :3</p>
 
@@ -34,7 +36,7 @@ Ele é um remake mobile-first baseado no projeto do [Voky1](https://github.com/v
 * 🌐 Tradução automática manual (losango ao lado de cada string) ou completo (losango acima de "Salvar Package" no editor)
 * ! Entretanto, as vezes as traduções podem ser inconsistentes, por isso sempre revise se a frase traduzida faz sentido com placeholders como: {SimFirstName}, {SimPronounSubjective}, {SimPronounObjective}, {SimPronounPossessiveDependent}, {SimPossessiveIndependent}, {SimPronounReflexive} etc.
 
-* 💾 Salvar progresso: importante salvar o progresso SEMPRE que for sair do site, pois o salvamento atualmente NÃO é automático.
+* 💾 Salvar progresso: SEMPRE salve o progresso antes de sair. O salvamento automático na home do site só funciona se o arquivo tiver nome.
 
 * 📥 Carregar traduções de um save: serve para reimportar uma tradução feita no site para outro .package se as keys coincidirem.
 
