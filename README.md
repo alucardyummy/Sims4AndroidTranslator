@@ -12,11 +12,17 @@ Ele é um remake mobile-first baseado no projeto do [Voky1](https://github.com/v
 ## ✦ Como usar
 
 - Acesse **[sims4androidtranslator.vercel.app](https://sims4androidtranslator.vercel.app)**
+
 - Toque em **IMPORTAR** e selecione o arquivo `.package` do seu celular
+
 - Escolha o idioma de destino
+
 - Faça sua tradução
+
 - Baixe o arquivo traduzido
+
 - Adicione o arquivo traduzido diretamente na sua pasta Mods
+
   <p align="center">Fácil né? :3</p>
 
 ---
