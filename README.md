@@ -35,7 +35,7 @@ Ele é um remake mobile-first baseado no projeto do [Voky1](https://github.com/v
 
 * 💾 Salvar progresso: importante salvar o progresso SEMPRE que for sair do site, pois o salvamento atualmente NÃO é automático.
 
-* 📥 Importar strings de um .package antigo traduzido no site (para traduções antigas ou feitas em atualizações anteriores do site, serve para reimportar e restaurar strings que você acha que "perdeu" após uma atualização no site!)
+* 📥 Carregar traduções de um save: serve para reimportar uma tradução feita no site para outro .package se as keys coincidirem.
 
 ---
 
