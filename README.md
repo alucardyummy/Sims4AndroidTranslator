@@ -11,15 +11,22 @@ Ele é um remake mobile-first baseado no projeto do [Voky1](https://github.com/v
 
 ## ✦ Como usar
 
-1. Acesse **[sims4androidtranslator.vercel.app](https://sims4androidtranslator.vercel.app)**
-2. Toque em **IMPORTAR** e selecione o arquivo `.package` do seu celular
-3. Escolha o idioma de destino
-4. Faça sua tradução
-5. Baixe o arquivo traduzido
-6. Adicione o arquivo traduzido diretamente na sua pasta Mods
+Acesse **[sims4androidtranslator.vercel.app](https://sims4androidtranslator.vercel.app)**
+Toque em **IMPORTAR** e selecione o arquivo `.package` do seu celular
+Escolha o idioma de destino
+Faça sua tradução
+Baixe o arquivo traduzido
+Adicione o arquivo traduzido diretamente na sua pasta Mods
 <p align="center">Fácil né? :3</p>
 
 ---
+
+## O que o site oferece, o que esperar e o que saber?
+
+✏️ Editar strings, perfeitamente funcional, não muda instâncias originais.
+🌐 Tradução automática manual (losango ao lado de cada string) ou completo (losango acima de "Salvar Package" no editor)
+💾 Salvar progresso: importante salvar o progresso SEMPRE que for sair do site, pois o salvamento atualmente NÃO é automático.
+📥 Importar strings de um .package antigo traduzido no site (para traduções antigas ou feitas em atualizações anteriores do site, serve para reimportar e restaurar strings que você acha que "perdeu" após uma atualização no site!)
 
 ## ✦ Créditos
 
