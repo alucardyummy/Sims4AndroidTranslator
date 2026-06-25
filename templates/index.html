@@ -397,20 +397,44 @@ function updateSelectCount() {
 
 async function deleteSelected() {
   if (selectedIds.size === 0) return;
-  for (const id of selectedIds) {
-    await fetch('/api/delete_save', {
+  // Remove da lista imediatamente (optimistic update)
+  const toDelete = new Set(selectedIds);
+  savesData = savesData.filter(s => !toDelete.has(s.id));
+  hasSaves = savesData.length > 0;
+  if (!hasSaves) {
+    localStorage.removeItem('has_saves');
+    document.getElementById('saves-area').style.display = 'none';
+    document.getElementById('mascot-div').style.display = 'none';
+  }
+  updateImportUI();
+  exitSelectMode();
+  // Confirma com o servidor em segundo plano
+  for (const id of toDelete) {
+    fetch('/api/delete_save', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id })
     });
   }
-  exitSelectMode();
-  await loadSaves();
 }
 
 let savesData = [];
 
 async function loadSaves() {
+  // Mostra saves em cache imediatamente enquanto busca no servidor
+  try {
+    const cached = localStorage.getItem('cached_saves');
+    if (cached) {
+      savesData = JSON.parse(cached);
+      hasSaves = savesData.length > 0;
+      const area = document.getElementById('saves-area');
+      const mascot = document.getElementById('mascot-div');
+      if (hasSaves) { area.style.display = 'block'; mascot.style.display = 'flex'; }
+      updateImportUI();
+      renderSaves();
+    }
+  } catch(e) {}
+
   try {
     const res = await fetch('/api/get_saves');
     const data = await res.json();
@@ -418,8 +442,10 @@ async function loadSaves() {
     hasSaves = savesData.length > 0;
     if (hasSaves) {
       localStorage.setItem('has_saves', '1');
+      localStorage.setItem('cached_saves', JSON.stringify(savesData));
     } else {
       localStorage.removeItem('has_saves');
+      localStorage.removeItem('cached_saves');
     }
 
     const area = document.getElementById('saves-area');
@@ -493,12 +519,22 @@ function renderSaves() {
 }
 
 async function deleteSingleSave(id) {
-  await fetch('/api/delete_save', {
+  // Remove da lista imediatamente (optimistic update)
+  savesData = savesData.filter(s => s.id !== id);
+  hasSaves = savesData.length > 0;
+  if (!hasSaves) {
+    localStorage.removeItem('has_saves');
+    document.getElementById('saves-area').style.display = 'none';
+    document.getElementById('mascot-div').style.display = 'none';
+  }
+  updateImportUI();
+  renderSaves();
+  // Confirma com o servidor em segundo plano
+  fetch('/api/delete_save', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ id })
   });
-  await loadSaves();
 }
 
 async function editSave(id) {
