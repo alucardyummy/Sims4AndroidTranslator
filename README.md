@@ -21,43 +21,6 @@ Ele é um remake mobile-first baseado no projeto [Voky1](https://github.com/voky
 
 ---
 
-## ✦ Tecnologias
-
-| Camada | Tecnologia |
-|---|---|
-| Backend | Python · Flask |
-| Empacotamento Android | Buildozer · Kivy |
-| Frontend | HTML · Jinja2 |
-| Deploy | Vercel |
-
----
-
-## ✦ Estrutura do projeto
-
-```
-├── app.py           • Servidor Flask principal
-├── translator.py    • Lógica de tradução dos .package
-├── db.py            • Banco de dados / autenticação
-├── main.py          • Entry point Kivy (Android)
-├── templates/       • HTML das páginas
-├── utils/           • Funções auxiliares
-├── java/org/kivy/   • Bridge Android nativa
-└── buildozer.spec   • Config de build Android
-```
-
----
-
-## ✦ Rodando localmente
-
-```bash
-git clone https://github.com/alucardyummy/Sims4AndroidTranslator
-cd Sims4AndroidTranslator
-pip install -r requirements.txt
-python app.py
-```
-
----
-
 ## ✦ Créditos
 
 - Projeto original: **[Voky1](https://github.com/voky1)**
