@@ -789,6 +789,59 @@ def import_from_package():
     return json.dumps({"success": True, "translations": strings})
 
 
+@app.route("/merge")
+def merge_page():
+    return send_file(os.path.join(TEMPLATE_DIR, "merge.html"))
+
+
+@app.route("/api/merge", methods=["POST"])
+def api_merge():
+    files = request.files.getlist("packages")
+    if not files or len(files) < 2:
+        return json.dumps({"error": "Envie pelo menos 2 arquivos .package"}), 400
+
+    for f in files:
+        if not f.filename.endswith(".package"):
+            return json.dumps({"error": f"Arquivo inválido: {f.filename}"}), 400
+
+    tmp_out = tempfile.NamedTemporaryFile(delete=False, suffix=".package")
+    tmp_out_path = tmp_out.name
+    tmp_out.close()
+
+    tmp_inputs = []
+    try:
+        with DbpfPackage.write(tmp_out_path) as outpkg:
+            for f in files:
+                tmp_in = tempfile.NamedTemporaryFile(delete=False, suffix=".package")
+                f.save(tmp_in.name)
+                tmp_in.close()
+                tmp_inputs.append(tmp_in.name)
+
+                with DbpfPackage.read(tmp_in.name) as pkg:
+                    for rid in pkg.search():
+                        resource = pkg[rid]
+                        content = pkg.content(resource)
+                        try:
+                            outpkg.put(rid, content)
+                        except Exception:
+                            pass  # ignora conflitos de key duplicada
+
+        return send_file(
+            tmp_out_path,
+            as_attachment=True,
+            download_name="merged.package",
+            mimetype="application/octet-stream"
+        )
+    except Exception as e:
+        return json.dumps({"error": f"Erro ao mesclar: {e}"}), 500
+    finally:
+        for p in tmp_inputs:
+            try:
+                os.remove(p)
+            except Exception:
+                pass
+
+
 with app.app_context():
     init_db()
 
