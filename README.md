@@ -37,17 +37,15 @@ Ele é um remake mobile-first baseado no projeto do [Voky1](https://github.com/v
 * ! Porém, as vezes as traduções podem ser inconsistentes, por isso sempre revise se a frase traduzida faz sentido com placeholders como:
 
 <div align="center">
-
-```text
+<pre>
 ├── {SimFirstName}
 ├── {SimPronounSubjective}
 ├── {SimPronounObjective}
 ├── {SimPronounPossessiveDependent}
 ├── {SimPossessiveIndependent}
 ├── {SimPronounReflexive}
-```
 etc
-
+</pre>
 </div>
 
 * 💾 Salvar progresso: SEMPRE salve o progresso antes de sair. O salvamento automático na home do site só funciona se o arquivo tiver nome.
