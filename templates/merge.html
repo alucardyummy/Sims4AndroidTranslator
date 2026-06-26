@@ -1,0 +1,203 @@
+ <!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0f0f0f">
+<title>Sims 4 Translator · Mesclar</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0f0f0f; --surface: #1a1a1a; --surface2: #222;
+    --border: #2a2a2a; --border2: #333;
+    --accent: #c8a96e; --accent-dim: #8a6f42;
+    --text: #f0ece4; --text-muted: #7a7570;
+    --radius: 16px; --radius-sm: 10px;
+  }
+  html, body { min-height: 100%; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; }
+  .page { min-height: 100dvh; display: flex; flex-direction: column; padding: 1.25rem 1rem 2rem; }
+  .topbar { display: flex; align-items: center; gap: 12px; margin-bottom: 1.75rem; }
+  .back-btn { width: 36px; height: 36px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-muted); text-decoration: none; -webkit-tap-highlight-color: transparent; flex-shrink: 0; }
+  .back-btn svg { width: 18px; height: 18px; }
+  .topbar-title { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 600; letter-spacing: 0.06em; color: var(--text-muted); text-transform: uppercase; }
+  .section-label { font-size: 11px; color: var(--text-muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.75rem; padding-left: 2px; }
+  .separator { height: 1px; background: var(--border); margin: 1.25rem 0; }
+
+  /* Drop zone */
+  .drop-zone { border: 1.5px dashed var(--border2); border-radius: var(--radius); padding: 2rem 1rem; display: flex; flex-direction: column; align-items: center; gap: 0.75rem; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: border-color 0.2s; margin-bottom: 1.25rem; }
+  .drop-zone.has-files { border-color: var(--accent-dim); }
+  .drop-zone-icon { font-size: 28px; }
+  .drop-zone-label { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.06em; color: var(--text-muted); text-transform: uppercase; }
+  .drop-zone-sub { font-size: 11px; color: var(--text-muted); text-align: center; line-height: 1.5; }
+  #file-input { display: none; }
+
+  /* Lista de arquivos */
+  .file-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 1.25rem; }
+  .file-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); gap: 8px; }
+  .file-item-name { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .file-item-size { font-size: 10px; color: var(--text-muted); white-space: nowrap; flex-shrink: 0; }
+  .file-item-remove { width: 24px; height: 24px; background: transparent; border: none; color: var(--text-muted); font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; -webkit-tap-highlight-color: transparent; border-radius: 4px; }
+  .file-item-remove:active { color: var(--text); }
+
+  .file-count { font-size: 12px; color: var(--text-muted); text-align: center; margin-bottom: 0.5rem; }
+
+  /* Botão mesclar */
+  .merge-btn { width: 100%; padding: 18px; background: var(--accent-dim); border: none; border-radius: var(--radius); color: var(--bg); font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; letter-spacing: 0.08em; cursor: pointer; -webkit-tap-highlight-color: transparent; margin-top: auto; transition: background 0.15s; }
+  .merge-btn:active { background: var(--accent); transform: scale(0.97); }
+  .merge-btn:disabled { opacity: 0.3; pointer-events: none; }
+
+  /* Loading */
+  .loading-overlay { display: none; position: fixed; inset: 0; background: rgba(15,15,15,0.92); z-index: 100; align-items: center; justify-content: center; flex-direction: column; gap: 1rem; }
+  .loading-overlay.active { display: flex; }
+  .spinner { width: 36px; height: 36px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { font-size: 13px; color: var(--text-muted); letter-spacing: 0.05em; }
+
+  /* Toast de erro */
+  .toast { position: fixed; bottom: 2rem; left: 1rem; right: 1rem; background: #2a1a1a; border: 1px solid #5a2a2a; border-radius: var(--radius-sm); padding: 12px 16px; font-size: 13px; color: #e08080; z-index: 200; display: none; text-align: center; }
+  .toast.show { display: block; animation: fadeIn 0.2s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="topbar">
+    <a href="/" class="back-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M19 12H5M12 5l-7 7 7 7"/>
+      </svg>
+    </a>
+    <div class="topbar-title">Mesclar .packages</div>
+  </div>
+
+  <div class="section-label">Arquivos selecionados</div>
+
+  <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+    <div class="drop-zone-icon">◈</div>
+    <div class="drop-zone-label">Selecionar arquivos</div>
+    <div class="drop-zone-sub">Toque para escolher os .package<br>que deseja juntar num só</div>
+  </div>
+  <input type="file" id="file-input" accept=".package" multiple>
+
+  <div class="file-list" id="file-list"></div>
+  <div class="file-count" id="file-count"></div>
+
+  <div class="separator"></div>
+
+  <button class="merge-btn" id="merge-btn" onclick="doMerge()" disabled>MESCLAR E BAIXAR</button>
+</div>
+
+<div class="loading-overlay" id="loading">
+  <div class="spinner"></div>
+  <div class="loading-text" id="loading-text">Mesclando...</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let selectedFiles = [];
+
+document.getElementById('file-input').addEventListener('change', function() {
+  addFiles(Array.from(this.files));
+  this.value = '';
+});
+
+function addFiles(newFiles) {
+  for (const f of newFiles) {
+    if (!f.name.endsWith('.package')) {
+      showToast('Apenas arquivos .package são aceitos.');
+      continue;
+    }
+    const already = selectedFiles.some(x => x.name === f.name && x.size === f.size);
+    if (!already) selectedFiles.push(f);
+  }
+  renderList();
+}
+
+function removeFile(idx) {
+  selectedFiles.splice(idx, 1);
+  renderList();
+}
+
+function formatSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' kB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
+function renderList() {
+  const list = document.getElementById('file-list');
+  const count = document.getElementById('file-count');
+  const btn = document.getElementById('merge-btn');
+  const drop = document.getElementById('drop-zone');
+
+  list.innerHTML = '';
+  selectedFiles.forEach((f, idx) => {
+    const item = document.createElement('div');
+    item.className = 'file-item';
+    item.innerHTML =
+      '<span class="file-item-name">' + f.name + '</span>' +
+      '<span class="file-item-size">' + formatSize(f.size) + '</span>' +
+      '<button class="file-item-remove" onclick="removeFile(' + idx + ')">✕</button>';
+    list.appendChild(item);
+  });
+
+  const n = selectedFiles.length;
+  count.textContent = n > 0 ? n + ' arquivo' + (n !== 1 ? 's' : '') + ' selecionado' + (n !== 1 ? 's' : '') : '';
+  btn.disabled = n < 2;
+  drop.classList.toggle('has-files', n > 0);
+
+  const sub = document.querySelector('.drop-zone-sub');
+  sub.textContent = n > 0 ? 'Toque para adicionar mais arquivos' : 'Toque para escolher os .package\nque deseja juntar num só';
+}
+
+async function doMerge() {
+  if (selectedFiles.length < 2) return;
+
+  const loading = document.getElementById('loading');
+  const loadingText = document.getElementById('loading-text');
+  loading.classList.add('active');
+  loadingText.textContent = 'Mesclando ' + selectedFiles.length + ' arquivos...';
+
+  try {
+    const formData = new FormData();
+    selectedFiles.forEach(f => formData.append('packages', f));
+
+    const res = await fetch('/api/merge', { method: 'POST', body: formData });
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error || 'Erro ao mesclar');
+    }
+
+    // Baixa o arquivo
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'merged.package';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    loading.classList.remove('active');
+  } catch(e) {
+    loading.classList.remove('active');
+    showToast(e.message || 'Erro ao mesclar os arquivos.');
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+</script>
+</body>
+</html> 
