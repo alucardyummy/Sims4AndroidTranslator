@@ -161,7 +161,11 @@ function renderList() {
   });
 
   const n = selectedFiles.length;
-  count.textContent = n > 0 ? n + ' arquivo' + (n !== 1 ? 's' : '') + ' selecionado' + (n !== 1 ? 's' : '') : '';
+  const totalBytes = selectedFiles.reduce((acc, f) => acc + f.size, 0);
+  const totalStr = totalBytes < 1024 * 1024
+    ? (totalBytes / 1024).toFixed(1) + ' kB'
+    : (totalBytes / (1024 * 1024)).toFixed(2) + ' MB';
+  count.textContent = n > 0 ? n + ' arquivo' + (n !== 1 ? 's' : '') + ' · ~' + totalStr : '';
   btn.disabled = n < 2;
   drop.classList.toggle('has-files', n > 0);
 
