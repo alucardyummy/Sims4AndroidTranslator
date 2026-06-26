@@ -38,12 +38,12 @@ Ele é um remake mobile-first baseado no projeto do [Voky1](https://github.com/v
 
 <div align="center">
 <pre>
-├── {SimFirstName}
-       ├── {SimPronounSubjective}
-      ├── {SimPronounObjective}
-      ├── {SimPronounPossessiveDependent}
-           ├── {SimPossessiveIndependent}
-         ├── {SimPronounReflexive}
+├──  {SimFirstName}
+├──  {SimPronounSubjective}
+├──  {SimPronounObjective}
+├──  {SimPronounPossessiveDependent}
+├──  {SimPossessiveIndependent}
+├──  {SimPronounReflexive}
 etc
 </pre>
 </div>
