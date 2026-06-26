@@ -33,12 +33,14 @@ Ele é um remake mobile-first baseado no projeto do [Voky1](https://github.com/v
 
 * ✏️ Editar strings, perfeitamente funcional, não muda instâncias originais.
 
-* 🌐 Tradução automática manual (losango ao lado de cada string) ou completo (losango acima de "Salvar Package" no editor)
-* ! Entretanto, as vezes as traduções podem ser inconsistentes, por isso sempre revise se a frase traduzida faz sentido com placeholders como: {SimFirstName}, {SimPronounSubjective}, {SimPronounObjective}, {SimPronounPossessiveDependent}, {SimPossessiveIndependent}, {SimPronounReflexive} etc.
+* 🌐 Tradução automática manual (losango ao lado de cada string) ou sistema de traduzir tudo (losango acima de "Salvar Package" no editor)
+* ! Porém, as vezes as traduções podem ser inconsistentes, por isso sempre revise se a frase traduzida faz sentido com placeholders como: {SimFirstName}, {SimPronounSubjective}, {SimPronounObjective}, {SimPronounPossessiveDependent}, {SimPossessiveIndependent}, {SimPronounReflexive} etc.
 
 * 💾 Salvar progresso: SEMPRE salve o progresso antes de sair. O salvamento automático na home do site só funciona se o arquivo tiver nome.
 
 * 📥 Carregar traduções de um save: serve para reimportar uma tradução feita no site para outro .package se as keys coincidirem.
+
+* 🔀 Mesclar vários .packages em um: Junta vários arquivos `.package` em um só. Útil quando você precisa combinar traduções de um mesmo mod num único arquivo.
 
 ---
 
