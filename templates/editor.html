@@ -29,7 +29,10 @@
   .topbar-title { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .topbar-sub { font-size: 10px; color: var(--text-muted); font-family: 'DM Mono', monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .topbar-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-  .count-badge { font-size: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 3px 8px; color: var(--text-muted); font-family: 'DM Mono', monospace; }
+  .count-badge { font-size: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 3px 8px; color: var(--text-muted); font-family: 'DM Mono', monospace; cursor: pointer; -webkit-tap-highlight-color: transparent; user-select: none; }
+  .count-badge:active { border-color: var(--accent-dim); color: var(--accent); }
+  .count-badge.filter-active { border-color: var(--accent-dim); color: var(--accent); background: rgba(200,169,110,0.08); }
+  .timer-badge { font-size: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 3px 8px; color: var(--text-muted); font-family: 'DM Mono', monospace; }
   .save-progress-btn { width: 32px; height: 32px; border-radius: 50%; background: var(--surface); border: 1px solid var(--border); color: var(--text-muted); font-size: 15px; display: flex; align-items: center; justify-content: center; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: all 0.2s; }
   .save-progress-btn.saved { border-color: #4caf50; color: #4caf50; background: rgba(76,175,80,0.1); }
   .save-progress-btn.saving { border-color: var(--accent-dim); color: var(--accent); animation: pulse 0.8s infinite; }
@@ -130,7 +133,7 @@
 <body>
 <div class="page">
   <div class="topbar">
-    <a href="/info" class="back-btn">
+    <a href="/info" class="back-btn" id="back-btn" onclick="confirmBack(event)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
         <path d="M19 12H5M12 5l-7 7 7 7"/>
       </svg>
@@ -141,7 +144,8 @@
     </div>
     <div class="topbar-right">
       <button class="undo-btn" id="undo-btn" onclick="undoLastEdit()" disabled title="Desfazer última alteração">↶</button>
-      <div class="count-badge" id="count-badge">—</div>
+      <div class="timer-badge" id="timer-badge">0:00</div>
+      <div class="count-badge" id="count-badge" onclick="toggleUntranslatedFilter()" title="Clique para filtrar não traduzidas">—</div>
       <button class="save-progress-btn" id="save-progress-btn" onclick="saveProgressManual()" title="Salvar progresso">✓</button>
     </div>
   </div>
@@ -524,8 +528,12 @@ document.getElementById('search-input').addEventListener('input', renderStrings)
 document.getElementById('filter-untranslated').addEventListener('change', renderStrings);
 
 function updateProgressBadge() {
-  document.getElementById('count-badge').textContent =
-    editedIndices.size + '/' + stringsData.length + ' traduzidas';
+  // Conta strings que diferem do original (editedIndices + carregadas de save)
+  const translatedCount = stringsData.filter((item, idx) =>
+    editedIndices.has(idx) || (item.value && item.value !== item.original)
+  ).length;
+  const badge = document.getElementById('count-badge');
+  badge.textContent = translatedCount + '/' + stringsData.length + ' traduzidas';
 }
 
 // ---- IMPORTAR TRADUÇÕES ----
@@ -799,6 +807,33 @@ async function startTranslateAll() {
   document.getElementById('tall-start-btn').textContent = 'Fechar';
   document.getElementById('tall-start-btn').disabled = false;
   document.getElementById('tall-start-btn').onclick = () => document.getElementById('tall-sheet').classList.remove('open');
+}
+
+// ---- CRONÔMETRO ----
+const _sessionStart = Date.now();
+function updateTimer() {
+  const elapsed = Math.floor((Date.now() - _sessionStart) / 1000);
+  const m = Math.floor(elapsed / 60);
+  const s = elapsed % 60;
+  document.getElementById('timer-badge').textContent = m + ':' + String(s).padStart(2, '0');
+}
+setInterval(updateTimer, 1000);
+
+// ---- TOGGLE FILTRO PELO BADGE ----
+function toggleUntranslatedFilter() {
+  const cb = document.getElementById('filter-untranslated');
+  const badge = document.getElementById('count-badge');
+  cb.checked = !cb.checked;
+  badge.classList.toggle('filter-active', cb.checked);
+  renderStrings();
+}
+
+// ---- CONFIRMAR VOLTAR ----
+function confirmBack(e) {
+  if (editedIndices.size === 0) return; // nada editado, volta normalmente
+  e.preventDefault();
+  const ok = confirm('Você tem traduções não salvas. Deseja voltar mesmo assim?');
+  if (ok) window.location.href = '/info';
 }
 
 load();
