@@ -32,7 +32,6 @@ Ele é um remake mobile-first baseado no projeto do [Voky1](https://github.com/v
 ## O que o site oferece, o que esperar e o que saber?
 
 ### ✏️ Editar strings
-
 * Perfeitamente funcional, não muda instâncias originais.
 
 ### 🌐 Tradução manual ou automática
