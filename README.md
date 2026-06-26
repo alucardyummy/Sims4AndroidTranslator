@@ -35,7 +35,10 @@ Ele é um remake mobile-first baseado no projeto do [Voky1](https://github.com/v
 
 * 🌐 Tradução automática manual (losango ao lado de cada string) ou sistema de traduzir tudo (losango acima de "Salvar Package" no editor)
 * ! Porém, as vezes as traduções podem ser inconsistentes, por isso sempre revise se a frase traduzida faz sentido com placeholders como:
-```
+
+<div align="center">
+
+```text
 ├── {SimFirstName}
 ├── {SimPronounSubjective}
 ├── {SimPronounObjective}
@@ -43,7 +46,9 @@ Ele é um remake mobile-first baseado no projeto do [Voky1](https://github.com/v
 ├── {SimPossessiveIndependent}
 ├── {SimPronounReflexive}
 ```
-etc.
+etc
+
+</div>
 
 * 💾 Salvar progresso: SEMPRE salve o progresso antes de sair. O salvamento automático na home do site só funciona se o arquivo tiver nome.
 
