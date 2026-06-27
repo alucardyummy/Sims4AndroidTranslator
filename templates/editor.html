@@ -44,16 +44,16 @@
   .search-input { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 7px; padding: 6px 9px; font-size: 12px; color: var(--text); font-family: 'DM Sans', sans-serif; }
   .search-input:focus { outline: none; border-color: var(--accent-dim); }
   .filter-checkbox-label { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-muted); cursor: pointer; -webkit-tap-highlight-color: transparent; }
-  .col-headers { display: grid; grid-template-columns: 86px 1fr 1fr 40px; gap: 6px; padding: 4px 0.75rem; border-bottom: 1px solid var(--border); flex-shrink: 0; background: var(--bg); }
+  .col-headers { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 4px 0.75rem; border-bottom: 1px solid var(--border); flex-shrink: 0; background: var(--bg); }
   .col-header { font-size: 9px; color: var(--text-dim); letter-spacing: 0.08em; text-transform: uppercase; }
   .strings-list { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: 80px; }
-  .string-row { display: grid; grid-template-columns: 86px 1fr 1fr 40px; gap: 6px; padding: 8px 1rem; border-bottom: 1px solid var(--border); align-items: start; }
-  .key-hex { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text-muted); padding-top: 8px; word-break: break-all; line-height: 1.5; }
+  .string-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 6px 0.75rem; border-bottom: 1px solid var(--border); align-items: start; }
+  .key-hex { font-family: 'DM Mono', monospace; font-size: 8px; color: var(--text-dim); letter-spacing: 0.03em; margin-bottom: 3px; }
   .original-text { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 7px 9px; font-size: 12px; color: var(--text-muted); line-height: 1.5; word-break: break-word; font-style: italic; min-height: 36px; }
-  .edit-container { position: relative; }
+  .edit-container { display: flex; gap: 5px; align-items: flex-start; }
   .edit-textarea { background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; padding: 7px 9px; font-size: 12px; color: var(--text); line-height: 1.5; width: 100%; resize: none; font-family: 'DM Sans', sans-serif; min-height: 36px; overflow: hidden; }
   .edit-textarea:focus { outline: none; border-color: var(--accent-dim); }
-  .translate-btn { width: 32px; height: 32px; border-radius: 50%; background: var(--surface); border: 1px solid var(--accent-dim); color: var(--accent); display: flex; align-items: center; justify-content: center; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: all 0.2s; margin-top: 2px; }
+  .translate-btn { width: 26px; height: 26px; border-radius: 50%; background: var(--surface); border: 1px solid var(--accent-dim); color: var(--accent); display: flex; align-items: center; justify-content: center; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: all 0.2s; flex-shrink: 0; font-size: 13px; }
   .translate-btn:active { transform: scale(0.9); }
   .translate-btn.loading { animation: spin 1s linear infinite; }
   .translate-btn.success { background: rgba(76,175,80,0.2); border-color: #4caf50; color: #4caf50; }
@@ -172,10 +172,8 @@
     </label>
   </div>
   <div class="col-headers">
-    <div class="col-header">Key</div>
     <div class="col-header">Original</div>
     <div class="col-header">Tradução</div>
-    <div class="col-header"></div>
   </div>
   <div class="strings-list" id="strings-list">
     <div class="empty-state">
@@ -508,10 +506,14 @@ function renderStrings() {
     row.className = 'string-row';
     const safeOriginal = escapeHtml(item.original);
     row.innerHTML =
-      '<div class="key-hex">' + item.key_hex + '</div>' +
-      '<div class="original-text">' + (safeOriginal || '<em style="opacity:0.4">vazio</em>') + '</div>' +
-      '<div class="edit-container"><textarea class="edit-textarea" data-idx="' + idx + '" rows="1">' + (item.value || '') + '</textarea></div>' +
-      '<div class="translate-btn" data-translate-idx="' + idx + '" onclick="showEngineMenu(' + idx + ', event)">◈</div>';
+      '<div>' +
+        '<div class="key-hex">' + item.key_hex + '</div>' +
+        '<div class="original-text">' + (safeOriginal || '<em style="opacity:0.4">vazio</em>') + '</div>' +
+      '</div>' +
+      '<div class="edit-container">' +
+        '<textarea class="edit-textarea" data-idx="' + idx + '" rows="1">' + (item.value || '') + '</textarea>' +
+        '<div class="translate-btn" data-translate-idx="' + idx + '" onclick="showEngineMenu(' + idx + ', event)">◈</div>' +
+      '</div>';
     list.appendChild(row);
     const ta = row.querySelector('textarea');
     autoResize(ta);
