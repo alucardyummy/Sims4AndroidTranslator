@@ -82,14 +82,19 @@
   .success-title { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; color: var(--accent); text-align: center; margin-bottom: 0.25rem; }
   .success-sub { font-size: 13px; color: var(--text-muted); text-align: center; margin-bottom: 0.5rem; }
   .success-downloads-note { font-size: 12px; color: var(--accent); text-align: center; padding: 6px 0 1.25rem; font-weight: 500; }
-  .instance-section { margin: 1rem 0 0; border-top: 1px solid var(--border); padding-top: 1rem; }
-  .instance-label { font-size: 10px; color: var(--text-muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px; text-align: left; }
-  .instance-row { display: flex; gap: 8px; align-items: center; }
-  .instance-input { flex: 1; padding: 10px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-family: 'DM Mono', monospace; font-size: 12px; outline: none; text-transform: uppercase; letter-spacing: 0.05em; -webkit-appearance: none; }
-  .instance-input:focus { border-color: var(--border2); }
-  .instance-input.valid { border-color: #4caf50; }
-  .instance-input.invalid { border-color: #e05555; }
-  .instance-hint { font-size: 10px; color: var(--text-muted); margin-top: 4px; text-align: left; }
+  .instance-input { flex: 1; padding: 10px 0 10px 0; background: transparent; border: none; border-bottom: 1px solid var(--border); border-radius: 0; color: var(--text); font-family: 'DM Mono', monospace; font-size: 12px; outline: none; text-transform: uppercase; letter-spacing: 0.05em; -webkit-appearance: none; }
+  .instance-input:focus { border-bottom-color: var(--border2); }
+  .instance-input.valid { border-bottom-color: #4caf50; }
+  .instance-input.invalid { border-bottom-color: #e05555; }
+  .instance-hint { font-size: 10px; color: var(--text-muted); margin-top: 4px; }
+  .instance-toggle-row { display: flex; align-items: center; gap: 6px; margin-bottom: 0; padding: 6px 0; cursor: pointer; -webkit-tap-highlight-color: transparent; user-select: none; }
+  .instance-toggle-label { font-size: 11px; color: var(--text-muted); flex: 1; }
+  .instance-toggle-arrow { font-size: 9px; color: var(--text-muted); transition: transform 0.2s; display: inline-block; }
+  .instance-toggle-arrow.open { transform: rotate(180deg); }
+  .instance-collapsible { display: none; padding-bottom: 0.5rem; }
+  .instance-collapsible.open { display: block; }
+  .instance-prefix { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--accent-dim); padding-bottom: 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  .instance-row { display: flex; align-items: flex-end; gap: 6px; }
   .success-new { display: block; width: 100%; padding: 15px; background: var(--accent-dim); border: none; border-radius: var(--radius-sm); color: var(--bg); font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 0.06em; cursor: pointer; text-align: center; margin-bottom: 10px; -webkit-tap-highlight-color: transparent; text-decoration: none; }
   .success-new:active { background: var(--accent); }
   .success-back { display: block; width: 100%; padding: 13px; background: transparent; border: 1px solid var(--border2); border-radius: var(--radius-sm); color: var(--text-muted); font-size: 13px; cursor: pointer; text-align: center; -webkit-tap-highlight-color: transparent; }
@@ -183,6 +188,17 @@
       <input type="text" class="filename-input" id="filename-input" placeholder="output" maxlength="100">
       <span class="ext-label">.package</span>
     </div>
+    <div class="instance-toggle-row" onclick="toggleInstance()">
+      <span class="instance-toggle-label">⚙ Alterar instância base</span>
+      <span class="instance-toggle-arrow" id="instance-arrow">▼</span>
+    </div>
+    <div class="instance-collapsible" id="instance-collapsible">
+      <div class="instance-row">
+        <span class="instance-prefix" id="instance-prefix-display">XX</span>
+        <input class="instance-input" id="instance-input" type="text" maxlength="14" placeholder="14 dígitos hex — base da instância" oninput="validateInstanceInput(this)" autocomplete="off" autocorrect="off" spellcheck="false">
+      </div>
+      <div class="instance-hint" id="instance-hint">Deixe vazio para manter a instância original. O locale (2 dígitos) é prefixado automaticamente.</div>
+    </div>
     <button class="import-btn" onclick="openImportSheet()">↺ Carregar traduções de um save</button>
     <button class="translate-all-btn" id="translate-all-btn" onclick="openTranslateAllSheet()" disabled>◈ Traduzir tudo automaticamente</button>
     <button class="save-btn" id="save-btn" onclick="save()" disabled>SALVAR PACKAGE</button>
@@ -201,13 +217,7 @@
     <div class="success-title">⬇ Clique Abaixo para Salvar sua Tradução!</div>
     <div class="success-downloads-note" id="downloads-note"></div>
     <a id="download-link" href="#" class="success-new">BAIXAR ARQUIVO</a>
-    <div class="instance-section">
-      <div class="instance-label">Alterar instância base (opcional)</div>
-      <div class="instance-row">
-        <input class="instance-input" id="instance-input" type="text" maxlength="14" placeholder="14 dígitos hex" oninput="validateInstanceInput(this)" autocomplete="off" autocorrect="off" spellcheck="false">
-      </div>
-      <div class="instance-hint" id="instance-hint">Deixe vazio para manter a instância original. O locale (2 dígitos) é adicionado automaticamente.</div>
-    </div>
+
     <button class="success-new" onclick="window.location.href='/'" style="background:transparent; border:1px solid var(--border2); color:var(--text-muted);">Ver minhas traduções</button>
     <button class="success-back" onclick="document.getElementById('success-sheet').classList.remove('open')">Continuar editando</button>
   </div>
@@ -280,6 +290,8 @@ let instanceStr  = sessionStorage.getItem('selected_instance_str') || '';
     });
   }
 })();
+
+document.addEventListener('DOMContentLoaded', updateInstancePrefix);
 let targetLang   = sessionStorage.getItem('target_lang') || 'POR_BR';
 let originalLang = sessionStorage.getItem('original_lang') || 'ENG_US';
 let currentIdx = null;
@@ -686,16 +698,33 @@ function applyTranslationMap(translationMap, sourceName) {
   alert(filled + ' traduções carregadas de "' + sourceName + '"!');
 }
 
+function toggleInstance() {
+  const col = document.getElementById('instance-collapsible');
+  const arrow = document.getElementById('instance-arrow');
+  col.classList.toggle('open');
+  arrow.classList.toggle('open');
+}
+
+function updateInstancePrefix() {
+  // Mostra os 2 dígitos do locale da instância original no prefixo visual
+  const hex = sessionStorage.getItem('selected_instance_hex') || '';
+  // hex_instance formato: "0x115BB614C9012DBA" -> locale = hex[2:4] = "11"
+  const prefix = hex.length >= 4 ? hex.slice(2, 4).toUpperCase() : 'XX';
+  const el = document.getElementById('instance-prefix-display');
+  if (el) el.textContent = prefix;
+}
+
 function validateInstanceInput(el) {
   const val = el.value.replace(/[^0-9a-fA-F]/g, '');
   el.value = val.toUpperCase();
   const hint = document.getElementById('instance-hint');
   if (val.length === 0) {
     el.classList.remove('valid', 'invalid');
-    hint.textContent = 'Deixe vazio para manter a instância original. O locale (2 dígitos) é adicionado automaticamente.';
+    hint.textContent = 'Deixe vazio para manter a instância original. O locale (2 dígitos) é prefixado automaticamente.';
   } else if (val.length === 14) {
     el.classList.add('valid'); el.classList.remove('invalid');
-    hint.textContent = '✓ Instância válida!';
+    const prefix = (document.getElementById('instance-prefix-display') || {}).textContent || 'XX';
+    hint.textContent = '✓ Instância resultante: ' + prefix + val.toUpperCase();
   } else {
     el.classList.add('invalid'); el.classList.remove('valid');
     hint.textContent = val.length + '/14 dígitos — precisa ter exatamente 14.';
