@@ -50,17 +50,9 @@
   .col-headers { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 4px 0.75rem; border-bottom: 1px solid var(--border); flex-shrink: 0; background: var(--bg); }
   .col-header { font-size: 9px; color: var(--text-dim); letter-spacing: 0.08em; text-transform: uppercase; text-align: center; }
   .strings-list { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: 80px; }
-  .string-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 6px 0.75rem; border-bottom: 1px solid var(--border); align-items: start; }
-  .key-hex { font-family: 'DM Mono', monospace; font-size: 8px; color: var(--text-dim); letter-spacing: 0.03em; margin-bottom: 3px; text-align: center; }
-  .original-text { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 7px 9px; font-size: 12px; color: var(--text-muted); line-height: 1.5; word-break: break-word; font-style: italic; min-height: 36px; }
-  .edit-container { display: flex; gap: 5px; align-items: center; }
+  .edit-container { display: flex; gap: 5px; align-items: flex-start; }
   .edit-textarea { background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; padding: 7px 9px; font-size: 12px; color: var(--text); line-height: 1.5; width: 100%; resize: none; font-family: 'DM Sans', sans-serif; min-height: 36px; overflow: hidden; }
   .edit-textarea:focus { outline: none; border-color: var(--accent-dim); }
-  .translate-btn { width: 26px; height: 26px; border-radius: 50%; background: var(--surface); border: 1px solid var(--accent-dim); color: var(--accent); display: flex; align-items: center; justify-content: center; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: all 0.2s; flex-shrink: 0; font-size: 13px; }
-  .translate-btn:active { transform: scale(0.9); }
-  .translate-btn.loading { animation: spin 1s linear infinite; }
-  .translate-btn.success { background: rgba(76,175,80,0.2); border-color: #4caf50; color: #4caf50; }
-  .translate-btn.error { background: rgba(244,67,54,0.2); border-color: #f44336; color: #f44336; }
   @keyframes spin { to { transform: rotate(360deg); } }
   .bottom-bar { border-top: 1px solid var(--border); padding: 0.45rem 0.75rem 0.5rem; background: var(--bg); flex-shrink: 0; }
   .filename-row { display: flex; align-items: center; gap: 6px; margin-bottom: 0.35rem; }
@@ -145,15 +137,74 @@
   .tall-engine-btn { padding: 12px 8px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-muted); font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.05em; cursor: pointer; text-align: center; -webkit-tap-highlight-color: transparent; transition: all 0.15s; }
   .tall-engine-btn.active { border-color: var(--accent-dim); color: var(--accent); background: rgba(200,169,110,0.06); }
   .tall-cancel-btn { width: 100%; padding: 13px; background: transparent; border: 1px solid var(--border2); border-radius: var(--radius-sm); color: var(--text-muted); font-size: 13px; cursor: pointer; text-align: center; -webkit-tap-highlight-color: transparent; }
+
+  /* FILTRO ACORDEÃO */
+  .filter-toggle-row { display: flex; align-items: center; gap: 6px; cursor: pointer; -webkit-tap-highlight-color: transparent; user-select: none; padding: 1px 0; }
+  .filter-toggle-label { font-size: 11px; color: var(--text-muted); flex: 1; }
+  .filter-toggle-arrow { font-size: 9px; color: var(--text-muted); transition: transform 0.2s; display: inline-block; }
+  .filter-toggle-arrow.open { transform: rotate(180deg); }
+  .filter-collapsible { flex-direction: column; gap: 4px; padding-top: 6px; }
+  .filter-collapsible.hidden { display: none !important; }
+  .filter-collapsible:not(.hidden) { display: flex; }
+
+  /* ORIGINAL BOX */
+  .original-wrapper { }
+  .original-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; min-height: 14px; }
+  .original-key { font-family: 'DM Mono', monospace; font-size: 8px; color: var(--text-dim); letter-spacing: 0.03em; }
+  .original-actions { display: flex; gap: 3px; align-items: center; }
+  .orig-action-btn { background: none; border: none; color: var(--text-dim); font-size: 11px; cursor: pointer; padding: 1px 3px; border-radius: 4px; -webkit-tap-highlight-color: transparent; transition: color 0.15s; line-height: 1; }
+  .orig-action-btn:active { color: var(--text-muted); }
+  .orig-action-btn.star-active { color: #9cb8b2; }
+
+  /* TRADUÇÃO col botões laterais */
+  .edit-col { display: flex; flex-direction: column; gap: 3px; }
+  .edit-side-btns { display: flex; flex-direction: column; gap: 3px; align-items: center; }
+  .side-btn { width: 24px; height: 24px; border-radius: 6px; background: var(--surface); border: 1px solid var(--border); color: var(--text-dim); font-size: 11px; display: flex; align-items: center; justify-content: center; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: all 0.15s; flex-shrink: 0; }
+  .side-btn:active { background: var(--surface2); color: var(--text-muted); }
+  .side-btn.translate-main { border-color: var(--accent-dim); color: var(--accent); background: var(--surface); }
+  .side-btn.translate-main:active { background: rgba(200,169,110,0.08); }
+  .side-btn.translate-main.loading { animation: spin 1s linear infinite; }
+  .side-btn.translate-main.success { background: rgba(76,175,80,0.2); border-color: #4caf50; color: #4caf50; }
+  .side-btn.translate-main.error { background: rgba(244,67,54,0.2); border-color: #f44336; color: #f44336; }
+
+  /* PLACEHOLDERS destacados */
+  .ph { color: #9cb8b2; font-style: normal; font-weight: 500; }
+  .ph-blur { color: #a08ac8; font-style: normal; font-weight: 500; }
+
+  /* TRADUÇÃO header */
+  .trans-header { display: flex; align-items: center; gap: 3px; margin-bottom: 2px; min-height: 14px; }
+  .trans-expand-btn { background: none; border: none; color: var(--text-dim); font-size: 10px; cursor: pointer; padding: 1px 3px; border-radius: 4px; -webkit-tap-highlight-color: transparent; transition: color 0.15s; line-height: 1; }
+  .trans-expand-btn:active { color: var(--text-muted); }
+  .note-indicator { font-size: 8px; color: #a08ac8; margin-left: auto; display: none; }
+  .note-indicator.has-note { display: inline; }
+
+  /* STRING ROW collapsible */
+  .string-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 6px 0.75rem; border-bottom: 1px solid var(--border); align-items: start; }
+  .string-row.collapsed .original-text { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; min-height: 0; cursor: pointer; }
+  .string-row.collapsed .edit-textarea { overflow: hidden; height: 36px !important; }
+  .string-row.collapsed .edit-col-bottom { display: none; }
+  .string-row.collapsed .edit-side-btns .side-btn:not(.translate-main) { display: none; }
+  .edit-col-bottom { margin-top: 4px; }
+
+  /* NOTA */
+  .note-area { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 7px; padding: 5px 8px; font-size: 11px; color: var(--text-muted); font-family: 'DM Sans', sans-serif; resize: none; min-height: 30px; display: none; }
+  .note-area.open { display: block; }
+  .note-area:focus { outline: none; border-color: #a08ac8; }
+  .note-area::placeholder { color: var(--text-dim); font-style: italic; }
+
+  /* MODO FOCO */
+  .focus-mode .bottom-bar { display: none; }
 </style>
 </head>
 <body>
 <div class="page">
   <div class="topbar">
-    <a href="/info" class="back-btn" id="back-btn" onclick="confirmBack(event)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-        <path d="M19 12H5M12 5l-7 7 7 7"/>
-      </svg>
+    <a href="/info" class="back-btn" id="back-btn" onclick="handleBackBtn(event)">
+      <span id="back-btn-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:15px;height:15px">
+          <path d="M19 12H5M12 5l-7 7 7 7"/>
+        </svg>
+      </span>
     </a>
     <div class="topbar-info">
       <div class="topbar-title" id="top-title">Editor</div>
@@ -165,16 +216,26 @@
         <button class="undo-btn" id="redo-btn" onclick="redoNative()" title="Refazer (↷)">↷</button>
       </div>
       <div class="timer-badge" id="timer-badge">0:00</div>
-      <div class="count-badge" id="count-badge" onclick="toggleUntranslatedFilter()" title="Clique para filtrar não traduzidas">—</div>
+      <div class="count-badge" id="count-badge" title="Clique para filtrar não traduzidas">—</div>
       <button class="save-progress-btn" id="save-progress-btn" onclick="saveProgressManual()" title="Salvar progresso">✓</button>
     </div>
   </div>
   <div class="filter-bar">
     <input type="text" id="search-input" class="search-input" placeholder="Buscar por key, original ou tradução...">
-    <label class="filter-checkbox-label">
-      <input type="checkbox" id="filter-untranslated">
-      Mostrar apenas não traduzidas
-    </label>
+    <div class="filter-toggle-row" onclick="toggleFilterPanel()">
+      <span class="filter-toggle-label">Filtrar por</span>
+      <span class="filter-toggle-arrow" id="filter-arrow">▼</span>
+    </div>
+    <div class="filter-collapsible hidden" id="filter-collapsible">
+      <label class="filter-checkbox-label">
+        <input type="checkbox" id="filter-untranslated">
+        Não traduzidas
+      </label>
+      <label class="filter-checkbox-label">
+        <input type="checkbox" id="filter-favorites">
+        Favoritas
+      </label>
+    </div>
   </div>
   <div class="col-headers">
     <div class="col-header">Original</div>
@@ -219,7 +280,7 @@
   <div class="loading-text" id="loading-text">Carregando...</div>
 </div>
 
-<div class="success-sheet" id="success-sheet">
+<div class="success-sheet" id="success-sheet" onclick="closeSheetOnOverlay(event, 'success-sheet')">
   <div class="success-inner">
     <div class="success-icon">✦</div>
     <div class="success-sub" id="success-sub">—</div>
@@ -238,7 +299,7 @@
 </div>
 
 <!-- Sheet de traduzir tudo -->
-<div class="tall-sheet" id="tall-sheet">
+<div class="tall-sheet" id="tall-sheet" onclick="closeSheetOnOverlay(event, 'tall-sheet')">
   <div class="tall-sheet-inner">
     <div class="tall-title" id="tall-title">Traduzir tudo</div>
     <div class="tall-sub" id="tall-sub">Escolha a engine e toque em iniciar. Strings já traduzidas serão ignoradas.</div>
@@ -254,7 +315,7 @@
 </div>
 
 <!-- Sheet de importar traduções -->
-<div class="import-sheet" id="import-sheet">
+<div class="import-sheet" id="import-sheet" onclick="closeSheetOnOverlay(event, 'import-sheet')">
   <div class="import-sheet-inner">
     <div class="import-sheet-title">Carregar traduções</div>
     <div class="import-sheet-sub">Escolha de onde importar as traduções para preencher o editor automaticamente.</div>
@@ -286,6 +347,10 @@
 <script>
 let stringsData = [];
 let instanceStr  = sessionStorage.getItem('selected_instance_str') || '';
+let favorites = JSON.parse(localStorage.getItem('fav_' + instanceStr) || '{}'); // key_hex -> bool
+let notes = JSON.parse(localStorage.getItem('notes_' + instanceStr) || '{}');   // key_hex -> string
+let focusMode = false;
+let expandedRows = new Set(); // idx de rows expandidas (default: todas colapsadas)
 
 // Se estamos reabrindo um save existente, original_name já vem preenchido
 // (pelo index.html). Pré-preenche o campo de nome pra não obrigar o usuário
@@ -339,7 +404,7 @@ async function processTranslation(engine) {
   const originalText = stringsData[idx].value;
   if (!originalText) return;
   btn.classList.add('loading');
-  btn.innerHTML = '◌';
+  btn.textContent = '◌';
   try {
     const res = await fetch('/api/translate', {
       method: 'POST',
@@ -355,15 +420,15 @@ async function processTranslation(engine) {
       editedIndices.add(idx);
       updateProgressBadge();
       btn.classList.remove('loading');
-      btn.innerHTML = '◈';
+      btn.textContent = '◈';
     } else {
       throw new Error(data.error || 'Erro na tradução');
     }
   } catch(e) {
     btn.classList.remove('loading');
     btn.classList.add('error');
-    btn.innerHTML = '✕';
-    setTimeout(() => { btn.classList.remove('error'); btn.innerHTML = '◈'; }, 2000);
+    btn.textContent = '✕';
+    setTimeout(() => { btn.classList.remove('error'); btn.textContent = '◈'; }, 2000);
   }
 }
 
@@ -478,14 +543,22 @@ function escapeHtml(str) {
 
 // Decide se uma string passa pelo filtro de busca + "apenas não traduzidas".
 // Não toca em stringsData, só decide o que aparece na tela.
-function matchesFilters(item, term, onlyUntranslated) {
+function matchesFilters(item, term, onlyUntranslated, onlyFavorites) {
   if (onlyUntranslated && item.value) return false;
+  if (onlyFavorites && !favorites[item.key_hex]) return false;
   if (!term) return true;
   const t = term.toLowerCase();
   return (item.key_hex || '').toLowerCase().includes(t) ||
          String(item.key ?? '').toLowerCase().includes(t) ||
          (item.original || '').toLowerCase().includes(t) ||
          (item.value || '').toLowerCase().includes(t);
+}
+
+// ── HIGHLIGHT PLACEHOLDERS ──
+function highlightPlaceholders(text, blurred) {
+  if (!text) return '<em style="opacity:0.4">vazio</em>';
+  const cls = blurred ? 'ph-blur' : 'ph';
+  return escapeHtml(text).replace(/\{[^}]+\}/g, m => '<span class="' + cls + '">' + m + '</span>');
 }
 
 function renderStrings() {
@@ -497,9 +570,10 @@ function renderStrings() {
 
   const term = (document.getElementById('search-input')?.value || '').trim();
   const onlyUntranslated = document.getElementById('filter-untranslated')?.checked || false;
+  const onlyFavorites = document.getElementById('filter-favorites')?.checked || false;
   const visibleIndices = [];
   stringsData.forEach((item, idx) => {
-    if (matchesFilters(item, term, onlyUntranslated)) visibleIndices.push(idx);
+    if (matchesFilters(item, term, onlyUntranslated, onlyFavorites)) visibleIndices.push(idx);
   });
 
   if (visibleIndices.length === 0) {
@@ -510,26 +584,87 @@ function renderStrings() {
   list.innerHTML = '';
   visibleIndices.forEach(idx => {
     const item = stringsData[idx];
+    const isExpanded = expandedRows.has(idx);
+    const isFav = !!favorites[item.key_hex];
+    const noteText = notes[item.key_hex] || '';
+    const hasNote = !!noteText;
+
     const row = document.createElement('div');
-    row.className = 'string-row';
-    const safeOriginal = escapeHtml(item.original);
-    row.innerHTML =
-      '<div>' +
-        '<div class="key-hex">' + item.key_hex + '</div>' +
-        '<div class="original-text">' + (safeOriginal || '<em style="opacity:0.4">vazio</em>') + '</div>' +
+    row.className = 'string-row' + (isExpanded ? '' : ' collapsed');
+    row.dataset.idx = idx;
+
+    // ── LEFT: original ──
+    const leftDiv = document.createElement('div');
+    const origHtml = highlightPlaceholders(item.original, false);
+    leftDiv.innerHTML =
+      '<div class="original-header">' +
+        '<span class="original-key">' + (item.key_hex || '') + '</span>' +
+        '<div class="original-actions">' +
+          '<button class="orig-action-btn copy-orig-btn" title="Copiar original" onclick="copyOriginal(' + idx + ', event)">⎘</button>' +
+          '<button class="orig-action-btn star-btn' + (isFav ? ' star-active' : '') + '" title="Favoritar" onclick="toggleFav(' + idx + ', event)">✦</button>' +
+        '</div>' +
       '</div>' +
-      '<div class="edit-container">' +
-        '<textarea class="edit-textarea" data-idx="' + idx + '" rows="1">' + (item.value || '') + '</textarea>' +
-        '<div class="translate-btn" data-translate-idx="' + idx + '" onclick="showEngineMenu(' + idx + ', event)">◈</div>' +
-      '</div>';
+      '<div class="original-text" onclick="toggleRowExpand(' + idx + ')">' + origHtml + '</div>';
+    row.appendChild(leftDiv);
+
+    // ── RIGHT: tradução ──
+    const rightDiv = document.createElement('div');
+    rightDiv.className = 'edit-col';
+
+    const transHeaderDiv = document.createElement('div');
+    transHeaderDiv.className = 'trans-header';
+    transHeaderDiv.innerHTML =
+      '<button class="trans-expand-btn" onclick="toggleRowExpand(' + idx + ')" title="Expandir/recolher">' + (isExpanded ? '▲' : '▼') + '</button>' +
+      '<span class="note-indicator' + (hasNote ? ' has-note' : '') + '" id="note-ind-' + idx + '">◆</span>';
+    rightDiv.appendChild(transHeaderDiv);
+
+    const editContainerDiv = document.createElement('div');
+    editContainerDiv.className = 'edit-container';
+
+    const ta = document.createElement('textarea');
+    ta.className = 'edit-textarea';
+    ta.dataset.idx = idx;
+    ta.rows = 1;
+    ta.value = item.value || '';
+    editContainerDiv.appendChild(ta);
+
+    const sideBtns = document.createElement('div');
+    sideBtns.className = 'edit-side-btns';
+    sideBtns.innerHTML =
+      '<div class="side-btn translate-main" data-translate-idx="' + idx + '" onclick="showEngineMenu(' + idx + ', event)" title="Traduzir">◈</div>' +
+      '<button class="side-btn clear-btn" onclick="clearTranslation(' + idx + ', event)" title="Limpar tradução">🗑</button>' +
+      '<button class="side-btn note-btn" onclick="toggleNote(' + idx + ', event)" title="Nota">📝</button>' +
+      '<button class="side-btn focus-row-btn" onclick="toggleFocusMode(event)" title="Modo foco">👁</button>';
+    editContainerDiv.appendChild(sideBtns);
+
+    rightDiv.appendChild(editContainerDiv);
+
+    // bottom: nota
+    const colBottom = document.createElement('div');
+    colBottom.className = 'edit-col-bottom';
+    const noteEl = document.createElement('textarea');
+    noteEl.className = 'note-area' + (false ? ' open' : '');
+    noteEl.dataset.noteIdx = idx;
+    noteEl.placeholder = '📝 Anotação (não vai ao package)...';
+    noteEl.rows = 2;
+    noteEl.value = noteText;
+    colBottom.appendChild(noteEl);
+    rightDiv.appendChild(colBottom);
+
+    row.appendChild(rightDiv);
     list.appendChild(row);
-    const ta = row.querySelector('textarea');
+
     autoResize(ta);
 
-    // Guarda o valor "antes da edição" assim que o campo recebe foco —
-    // é esse valor que o botão Desfazer vai restaurar.
+    // focus/blur para placeholder highlight na tradução
     ta.addEventListener('focus', function() {
-      editSnapshots[parseInt(this.dataset.idx)] = stringsData[parseInt(this.dataset.idx)].value;
+      const i = parseInt(this.dataset.idx);
+      editSnapshots[i] = stringsData[i].value;
+      // original permanece com ph verde
+    });
+
+    ta.addEventListener('blur', function() {
+      // não precisamos mudar o original, apenas o visual do textarea não tem highlight
     });
 
     ta.addEventListener('input', function() {
@@ -539,7 +674,6 @@ function renderStrings() {
       autoResize(this);
       triggerAutoSave();
       stringsData[i].value = this.value;
-
       if (i in editSnapshots) {
         lastEdit = { idx: i, previousValue: editSnapshots[i] };
         const undoBtn = document.getElementById('undo-btn');
@@ -547,7 +681,119 @@ function renderStrings() {
         undoBtn.classList.add('active');
       }
     });
+
+    // nota: salva ao digitar
+    noteEl.addEventListener('input', function() {
+      const i = parseInt(this.dataset.noteIdx);
+      const key = stringsData[i].key_hex;
+      notes[key] = this.value;
+      localStorage.setItem('notes_' + instanceStr, JSON.stringify(notes));
+      const ind = document.getElementById('note-ind-' + i);
+      if (ind) ind.classList.toggle('has-note', !!this.value);
+    });
   });
+}
+
+// ── ROW EXPAND/COLLAPSE ──
+function toggleRowExpand(idx) {
+  if (expandedRows.has(idx)) {
+    expandedRows.delete(idx);
+  } else {
+    expandedRows.add(idx);
+  }
+  renderStrings();
+}
+
+// ── COPIAR ORIGINAL ──
+function copyOriginal(idx, event) {
+  if (event) event.stopPropagation();
+  const text = stringsData[idx].original || '';
+  navigator.clipboard.writeText(text).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+  });
+  const btn = event && event.currentTarget;
+  if (btn) { const orig = btn.textContent; btn.textContent = '✓'; setTimeout(() => btn.textContent = orig, 1000); }
+}
+
+// ── LIMPAR TRADUÇÃO ──
+function clearTranslation(idx, event) {
+  if (event) event.stopPropagation();
+  const prev = stringsData[idx].value;
+  editSnapshots[idx] = prev;
+  stringsData[idx].value = '';
+  editedIndices.add(idx);
+  lastEdit = { idx, previousValue: prev };
+  document.getElementById('undo-btn').disabled = false;
+  document.getElementById('undo-btn').classList.add('active');
+  updateProgressBadge();
+  triggerAutoSave();
+  const ta = document.querySelector('[data-idx="' + idx + '"]');
+  if (ta) { ta.value = ''; autoResize(ta); }
+}
+
+// ── TOGGLE NOTA ──
+function toggleNote(idx, event) {
+  if (event) event.stopPropagation();
+  const row = document.querySelector('.string-row[data-idx="' + idx + '"]');
+  if (!row) return;
+  // ensure expanded
+  if (!expandedRows.has(idx)) { expandedRows.add(idx); renderStrings(); return; }
+  const noteEl = row.querySelector('.note-area');
+  if (!noteEl) return;
+  noteEl.classList.toggle('open');
+  if (noteEl.classList.contains('open')) noteEl.focus();
+}
+
+// ── FAVORITAR ──
+function toggleFav(idx, event) {
+  if (event) event.stopPropagation();
+  const key = stringsData[idx].key_hex;
+  favorites[key] = !favorites[key];
+  localStorage.setItem('fav_' + instanceStr, JSON.stringify(favorites));
+  const btn = event && event.currentTarget;
+  if (btn) btn.classList.toggle('star-active', !!favorites[key]);
+}
+
+// ── MODO FOCO ──
+function toggleFocusMode(event) {
+  if (event) event.stopPropagation();
+  focusMode = !focusMode;
+  document.querySelector('.page').classList.toggle('focus-mode', focusMode);
+  const backIcon = document.getElementById('back-btn-icon');
+  if (focusMode) {
+    backIcon.innerHTML = '👁';
+    backIcon.style.fontSize = '16px';
+  } else {
+    backIcon.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:15px;height:15px"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>';
+    backIcon.style.fontSize = '';
+  }
+}
+
+// ── BACK BTN (modo foco = sair, normal = voltar) ──
+function handleBackBtn(event) {
+  if (focusMode) {
+    event.preventDefault();
+    toggleFocusMode(null);
+  } else {
+    confirmBack(event);
+  }
+}
+
+// ── FECHAR SHEET CLICANDO NO OVERLAY ──
+function closeSheetOnOverlay(event, sheetId) {
+  if (event.target === document.getElementById(sheetId)) {
+    if (sheetId === 'tall-sheet' && tallRunning) return;
+    document.getElementById(sheetId).classList.remove('open');
+  }
+}
+
+// ── FILTRO ACORDEÃO ──
+function toggleFilterPanel() {
+  const col = document.getElementById('filter-collapsible');
+  const arrow = document.getElementById('filter-arrow');
+  col.classList.toggle('hidden');
+  arrow.classList.toggle('open', !col.classList.contains('hidden'));
 }
 
 // ---- UNDO/REDO NATIVO ----
@@ -594,6 +840,7 @@ function redoNative() {
 
 document.getElementById('search-input').addEventListener('input', renderStrings);
 document.getElementById('filter-untranslated').addEventListener('change', renderStrings);
+document.getElementById('filter-favorites').addEventListener('change', renderStrings);
 
 function updateProgressBadge() {
   // Conta strings que diferem do original (editedIndices + carregadas de save)
@@ -936,13 +1183,10 @@ function updateTimer() {
 }
 setInterval(updateTimer, 1000);
 
-// ---- TOGGLE FILTRO PELO BADGE ----
+// ---- TOGGLE FILTRO PELO BADGE (legado, mantido por compatibilidade) ----
 function toggleUntranslatedFilter() {
   const cb = document.getElementById('filter-untranslated');
-  const badge = document.getElementById('count-badge');
-  cb.checked = !cb.checked;
-  badge.classList.toggle('filter-active', cb.checked);
-  renderStrings();
+  if (cb) { cb.checked = !cb.checked; renderStrings(); }
 }
 
 // ---- CONFIRMAR VOLTAR ----
