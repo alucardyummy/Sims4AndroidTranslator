@@ -412,8 +412,8 @@ def save():
             # Se o usuário forneceu uma instância base customizada (14 dígitos hex),
             # substitui os 14 dígitos base mantendo o language.code do locale no início
             if custom_instance_base and len(custom_instance_base) == 14:
-                # hex_instance = "0x0017BE1A6E0180A50E" -> locale code = primeiros 4 dígitos após "0x"
-                locale_code = new_rid.hex_instance[2:6]  # ex: "0017"
+                # hex_instance = "0x115BB614C9012DBA" -> locale code = 2 dígitos após "0x"
+                locale_code = new_rid.hex_instance[2:4]  # ex: "11"
                 new_instance_int = int(locale_code + custom_instance_base, 16)
                 new_rid = new_rid._replace(instance=new_instance_int)
         except Exception:
