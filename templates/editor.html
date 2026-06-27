@@ -29,17 +29,20 @@
   .topbar-title { font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .topbar-sub { font-size: 10px; color: var(--text-muted); font-family: 'DM Mono', monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .topbar-right { display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
-  .count-badge { font-size: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 3px 8px; color: var(--text-muted); font-family: 'DM Mono', monospace; cursor: pointer; -webkit-tap-highlight-color: transparent; user-select: none; }
+  .count-badge { font-size: 9px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 3px 6px; color: var(--text-muted); font-family: 'DM Mono', monospace; cursor: pointer; -webkit-tap-highlight-color: transparent; user-select: none; white-space: nowrap; flex-shrink: 0; }
   .count-badge:active { border-color: var(--accent-dim); color: var(--accent); }
   .count-badge.filter-active { border-color: var(--accent-dim); color: var(--accent); background: rgba(200,169,110,0.08); }
-  .timer-badge { font-size: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 3px 0; color: var(--text-muted); font-family: 'DM Mono', monospace; width: 46px; text-align: center; flex-shrink: 0; transition: font-size 0.2s; }
-  .save-progress-btn { width: 28px; height: 28px; border-radius: 50%; background: var(--surface); border: 1px solid var(--border); color: var(--text-muted); font-size: 13px; display: flex; align-items: center; justify-content: center; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: all 0.2s; }
+  .timer-badge { font-size: 9px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 3px 0; color: var(--text-muted); font-family: 'DM Mono', monospace; width: 38px; text-align: center; flex-shrink: 0; transition: font-size 0.2s; }
+  .save-progress-btn { width: 26px; height: 26px; border-radius: 50%; background: var(--surface); border: 1px solid var(--border); color: var(--text-muted); font-size: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: all 0.2s; flex-shrink: 0; }
   .save-progress-btn.saved { border-color: #4caf50; color: #4caf50; background: rgba(76,175,80,0.1); }
   .save-progress-btn.saving { border-color: var(--accent-dim); color: var(--accent); animation: pulse 0.8s infinite; }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-  .undo-btn { width: 28px; height: 28px; border-radius: 50%; background: var(--surface); border: 1px solid var(--border); color: var(--text-muted); font-size: 14px; display: flex; align-items: center; justify-content: center; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: all 0.2s; }
-  .undo-btn:disabled { opacity: 0.35; pointer-events: none; }
-  .undo-btn.active { border-color: var(--accent-dim); color: var(--accent); }
+  /* Undo/Redo agrupados num pill */
+  .undo-group { display: flex; align-items: center; background: var(--surface); border: 1px solid var(--border); border-radius: 7px; overflow: hidden; flex-shrink: 0; }
+  .undo-btn { width: 26px; height: 26px; background: transparent; border: none; color: var(--text-muted); font-size: 14px; display: flex; align-items: center; justify-content: center; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: all 0.2s; }
+  .undo-btn + .undo-btn { border-left: 1px solid var(--border); }
+  .undo-btn:disabled { opacity: 0.3; pointer-events: none; }
+  .undo-btn.active { color: var(--accent); }
   .filter-bar { display: flex; flex-direction: column; gap: 5px; padding: 0.45rem 0.75rem; border-bottom: 1px solid var(--border); flex-shrink: 0; background: var(--bg); }
   .search-input { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 7px; padding: 6px 9px; font-size: 12px; color: var(--text); font-family: 'DM Sans', sans-serif; }
   .search-input:focus { outline: none; border-color: var(--accent-dim); }
@@ -157,8 +160,10 @@
       <div class="topbar-sub" id="top-sub">—</div>
     </div>
     <div class="topbar-right">
-      <button class="undo-btn" id="undo-btn" onclick="undoNative()" title="Desfazer (↶)">↶</button>
-      <button class="undo-btn" id="redo-btn" onclick="redoNative()" title="Refazer (↷)">↷</button>
+      <div class="undo-group">
+        <button class="undo-btn" id="undo-btn" onclick="undoNative()" title="Desfazer (↶)">↶</button>
+        <button class="undo-btn" id="redo-btn" onclick="redoNative()" title="Refazer (↷)">↷</button>
+      </div>
       <div class="timer-badge" id="timer-badge">0:00</div>
       <div class="count-badge" id="count-badge" onclick="toggleUntranslatedFilter()" title="Clique para filtrar não traduzidas">—</div>
       <button class="save-progress-btn" id="save-progress-btn" onclick="saveProgressManual()" title="Salvar progresso">✓</button>
@@ -596,7 +601,7 @@ function updateProgressBadge() {
     editedIndices.has(idx) || (item.value && item.value !== item.original)
   ).length;
   const badge = document.getElementById('count-badge');
-  badge.textContent = translatedCount + '/' + stringsData.length + ' traduzidas';
+  badge.textContent = translatedCount + '/' + stringsData.length;
 }
 
 // ---- IMPORTAR TRADUÇÕES ----
