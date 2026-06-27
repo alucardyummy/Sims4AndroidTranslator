@@ -369,6 +369,7 @@ def save():
     strings_edited = data["strings"]
     target_lang = data.get("target_language", "POR_BR")
     output_name = data.get("output_name", "output").strip()
+    custom_instance_base = data.get("custom_instance_base", None)  # 14 dígitos hex opcionais
     if not output_name:
         output_name = "output"
     if not output_name.endswith(".package"):
@@ -408,6 +409,12 @@ def save():
 
         try:
             new_rid = target_rid.convert_instance(locale=target_lang)
+            # Se o usuário forneceu uma instância base customizada (14 dígitos hex),
+            # substitui os 14 dígitos base mantendo o language.code do locale no início
+            if custom_instance_base and len(custom_instance_base) == 14:
+                language_code = new_rid.hex_instance[2:4]  # 2 dígitos do locale ex: "17"
+                new_instance_int = int(language_code + custom_instance_base, 16)
+                new_rid = new_rid._replace(instance=new_instance_int)
         except Exception:
             new_rid = target_rid
 
