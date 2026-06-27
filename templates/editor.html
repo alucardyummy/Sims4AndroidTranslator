@@ -82,6 +82,14 @@
   .success-title { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; color: var(--accent); text-align: center; margin-bottom: 0.25rem; }
   .success-sub { font-size: 13px; color: var(--text-muted); text-align: center; margin-bottom: 0.5rem; }
   .success-downloads-note { font-size: 12px; color: var(--accent); text-align: center; padding: 6px 0 1.25rem; font-weight: 500; }
+  .instance-section { margin: 1rem 0 0; border-top: 1px solid var(--border); padding-top: 1rem; }
+  .instance-label { font-size: 10px; color: var(--text-muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px; text-align: left; }
+  .instance-row { display: flex; gap: 8px; align-items: center; }
+  .instance-input { flex: 1; padding: 10px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-family: 'DM Mono', monospace; font-size: 12px; outline: none; text-transform: uppercase; letter-spacing: 0.05em; -webkit-appearance: none; }
+  .instance-input:focus { border-color: var(--border2); }
+  .instance-input.valid { border-color: #4caf50; }
+  .instance-input.invalid { border-color: #e05555; }
+  .instance-hint { font-size: 10px; color: var(--text-muted); margin-top: 4px; text-align: left; }
   .success-new { display: block; width: 100%; padding: 15px; background: var(--accent-dim); border: none; border-radius: var(--radius-sm); color: var(--bg); font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 0.06em; cursor: pointer; text-align: center; margin-bottom: 10px; -webkit-tap-highlight-color: transparent; text-decoration: none; }
   .success-new:active { background: var(--accent); }
   .success-back { display: block; width: 100%; padding: 13px; background: transparent; border: 1px solid var(--border2); border-radius: var(--radius-sm); color: var(--text-muted); font-size: 13px; cursor: pointer; text-align: center; -webkit-tap-highlight-color: transparent; }
@@ -143,7 +151,8 @@
       <div class="topbar-sub" id="top-sub">—</div>
     </div>
     <div class="topbar-right">
-      <button class="undo-btn" id="undo-btn" onclick="undoLastEdit()" disabled title="Desfazer última alteração">↶</button>
+      <button class="undo-btn" id="undo-btn" onclick="undoNative()" title="Desfazer (↶)">↶</button>
+      <button class="undo-btn" id="redo-btn" onclick="redoNative()" title="Refazer (↷)">↷</button>
       <div class="timer-badge" id="timer-badge">0:00</div>
       <div class="count-badge" id="count-badge" onclick="toggleUntranslatedFilter()" title="Clique para filtrar não traduzidas">—</div>
       <button class="save-progress-btn" id="save-progress-btn" onclick="saveProgressManual()" title="Salvar progresso">✓</button>
@@ -192,6 +201,13 @@
     <div class="success-title">⬇ Clique Abaixo para Salvar sua Tradução!</div>
     <div class="success-downloads-note" id="downloads-note"></div>
     <a id="download-link" href="#" class="success-new">BAIXAR ARQUIVO</a>
+    <div class="instance-section">
+      <div class="instance-label">Alterar instância base (opcional)</div>
+      <div class="instance-row">
+        <input class="instance-input" id="instance-input" type="text" maxlength="14" placeholder="14 dígitos hex" oninput="validateInstanceInput(this)" autocomplete="off" autocorrect="off" spellcheck="false">
+      </div>
+      <div class="instance-hint" id="instance-hint">Deixe vazio para manter a instância original. O locale (2 dígitos) é adicionado automaticamente.</div>
+    </div>
     <button class="success-new" onclick="window.location.href='/'" style="background:transparent; border:1px solid var(--border2); color:var(--text-muted);">Ver minhas traduções</button>
     <button class="success-back" onclick="document.getElementById('success-sheet').classList.remove('open')">Continuar editando</button>
   </div>
@@ -509,19 +525,46 @@ function renderStrings() {
   });
 }
 
-function undoLastEdit() {
-  if (!lastEdit) return;
-  const { idx, previousValue } = lastEdit;
-  stringsData[idx].value = previousValue;
-  delete editSnapshots[idx];
-  lastEdit = null;
+// ---- UNDO/REDO NATIVO ----
+// Rastreia qual textarea está focado para aplicar undo/redo nativo
+let _focusedTextarea = null;
+document.addEventListener('focusin', e => {
+  if (e.target.tagName === 'TEXTAREA') _focusedTextarea = e.target;
+});
+document.addEventListener('focusout', e => {
+  if (e.target.tagName === 'TEXTAREA') {
+    // mantém referência por 200ms pra permitir clique no botão
+    setTimeout(() => { if (_focusedTextarea === e.target) _focusedTextarea = null; }, 200);
+  }
+});
 
-  const undoBtn = document.getElementById('undo-btn');
-  undoBtn.disabled = true;
-  undoBtn.classList.remove('active');
+function undoNative() {
+  if (_focusedTextarea) {
+    _focusedTextarea.focus();
+    document.execCommand('undo');
+    // Atualiza stringsData com novo valor do textarea
+    const idx = parseInt(_focusedTextarea.dataset.idx);
+    if (!isNaN(idx)) {
+      stringsData[idx].value = _focusedTextarea.value;
+      editedIndices.add(idx);
+      triggerAutoSave();
+      updateProgressBadge();
+    }
+  }
+}
 
-  renderStrings();
-  triggerAutoSave();
+function redoNative() {
+  if (_focusedTextarea) {
+    _focusedTextarea.focus();
+    document.execCommand('redo');
+    const idx = parseInt(_focusedTextarea.dataset.idx);
+    if (!isNaN(idx)) {
+      stringsData[idx].value = _focusedTextarea.value;
+      editedIndices.add(idx);
+      triggerAutoSave();
+      updateProgressBadge();
+    }
+  }
 }
 
 document.getElementById('search-input').addEventListener('input', renderStrings);
@@ -643,7 +686,31 @@ function applyTranslationMap(translationMap, sourceName) {
   alert(filled + ' traduções carregadas de "' + sourceName + '"!');
 }
 
+function validateInstanceInput(el) {
+  const val = el.value.replace(/[^0-9a-fA-F]/g, '');
+  el.value = val.toUpperCase();
+  const hint = document.getElementById('instance-hint');
+  if (val.length === 0) {
+    el.classList.remove('valid', 'invalid');
+    hint.textContent = 'Deixe vazio para manter a instância original. O locale (2 dígitos) é adicionado automaticamente.';
+  } else if (val.length === 14) {
+    el.classList.add('valid'); el.classList.remove('invalid');
+    hint.textContent = '✓ Instância válida!';
+  } else {
+    el.classList.add('invalid'); el.classList.remove('valid');
+    hint.textContent = val.length + '/14 dígitos — precisa ter exatamente 14.';
+  }
+}
+
 async function save() {
+  // Valida instância customizada se preenchida
+  const instanceInputEl = document.getElementById('instance-input');
+  const customInstanceBase = instanceInputEl ? instanceInputEl.value.trim().toUpperCase() : '';
+  if (customInstanceBase && customInstanceBase.length !== 14) {
+    alert('A instância base precisa ter exatamente 14 dígitos hexadecimais.');
+    return;
+  }
+
   const outputName = (document.getElementById('filename-input').value.trim() || 'output');
   document.getElementById('loading-text').textContent = 'Salvando arquivo...';
   document.getElementById('loading').classList.add('active');
@@ -653,7 +720,8 @@ async function save() {
     strings: stringsData.map(s => ({ key: s.key, value: s.value })),
     target_language: targetLang,
     output_name: outputName,
-    package_id: packageId
+    package_id: packageId,
+    custom_instance_base: customInstanceBase || null
   };
   try {
     const res = await fetch('/save', {
@@ -813,9 +881,13 @@ async function startTranslateAll() {
 const _sessionStart = Date.now();
 function updateTimer() {
   const elapsed = Math.floor((Date.now() - _sessionStart) / 1000);
-  const m = Math.floor(elapsed / 60);
+  const h = Math.floor(elapsed / 3600);
+  const m = Math.floor((elapsed % 3600) / 60);
   const s = elapsed % 60;
-  document.getElementById('timer-badge').textContent = m + ':' + String(s).padStart(2, '0');
+  const timeStr = h > 0
+    ? h + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0')
+    : m + ':' + String(s).padStart(2, '0');
+  document.getElementById('timer-badge').textContent = timeStr;
 }
 setInterval(updateTimer, 1000);
 
