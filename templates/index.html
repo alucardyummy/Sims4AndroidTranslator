@@ -74,7 +74,7 @@
   .btn-import svg { width: 18px; height: 18px; flex-shrink: 0; }
   .hint { text-align: center; font-size: 11px; color: var(--text-muted); margin-top: 0.75rem; }
   .btn-merge { width: 100%; padding: 12px; background: transparent; border: 1px solid var(--border2); border-radius: var(--radius-sm); color: var(--text-muted); font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; cursor: pointer; -webkit-tap-highlight-color: transparent; margin-top: 0.75rem; }
-  .btn-merge:active { color: var(--accent); border-color: var(--accent-dim); }
+  .btn-merge:active { color: var(--accent); border-color: var(--accent-dim); transform: scale(0.97); }
   #file-input { display: none; }
 
   /* Botão + — aparece após primeiro save */
@@ -404,8 +404,10 @@
   html.pre-has-saves body,
   html.pre-no-saves body {
     opacity: 1;
-    transition: opacity 0.18s ease-out;
+    transition: opacity 0.18s ease-out, filter 0.16s ease-out;
   }
+  /* Blur in/out ao clicar em qualquer botão da interface ou dos modais */
+  body.click-blur { filter: blur(4px); }
 
   /* Estado: usuário JÁ tem saves (mostra skeleton + botão "+", esconde IMPORTAR) */
   html.pre-has-saves #btn-import-wrap { display: none; }
@@ -1140,6 +1142,23 @@ async function handleForgotPassword() {
     else alert(data.error || 'Erro ao redefinir.');
   } catch(e) { alert('Erro de conexão.'); }
 }
+
+// Blur in/out ao clicar em qualquer botão (interface ou modais).
+// Detecta cliques em <button> e em elementos que agem como botão
+// (ex: o avatar de perfil, que é uma div clicável), aplica um blur
+// rápido na tela e remove logo depois — efeito de "foco" no clique.
+(function() {
+  let blurTimeout = null;
+  document.addEventListener('click', function(e) {
+    const target = e.target.closest('button, [role="button"], #profile-btn, .btn-icon');
+    if (!target) return;
+    document.body.classList.add('click-blur');
+    clearTimeout(blurTimeout);
+    blurTimeout = setTimeout(() => {
+      document.body.classList.remove('click-blur');
+    }, 160);
+  }, true);
+})();
 
 // INIT
 checkLogin();
