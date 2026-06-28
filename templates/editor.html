@@ -646,6 +646,10 @@ function renderStrings() {
     if (taExpanded) autoResize(ta);
     updateBackdrop(idx, true);
 
+    ta.addEventListener('mousedown', function(e) {
+      if (e.detail === 2) e.preventDefault();
+    });
+
     ta.addEventListener('dblclick', function(e) {
       e.preventDefault();
       toggleTranslationExpand(parseInt(this.dataset.idx), null);
