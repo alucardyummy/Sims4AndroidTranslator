@@ -843,8 +843,9 @@ function toggleFocusMode() {
 // ---- UNDO/REDO NATIVO ----
 // Rastreia qual textarea está focado para aplicar undo/redo nativo
 let _focusedTextarea = null;
+let _lastFocusedTextarea = null; // nunca zera — usado pelo redo quando foco já saiu
 document.addEventListener('focusin', e => {
-  if (e.target.tagName === 'TEXTAREA') _focusedTextarea = e.target;
+  if (e.target.tagName === 'TEXTAREA') { _focusedTextarea = e.target; _lastFocusedTextarea = e.target; }
 });
 document.addEventListener('focusout', e => {
   if (e.target.tagName === 'TEXTAREA') {
@@ -854,13 +855,14 @@ document.addEventListener('focusout', e => {
 });
 
 function undoNative() {
-  if (_focusedTextarea) {
-    _focusedTextarea.focus();
+  const ta = _focusedTextarea || _lastFocusedTextarea;
+  if (ta) {
+    ta.focus();
     document.execCommand('undo');
     // Atualiza stringsData com novo valor do textarea
-    const idx = parseInt(_focusedTextarea.dataset.idx);
+    const idx = parseInt(ta.dataset.idx);
     if (!isNaN(idx)) {
-      stringsData[idx].value = _focusedTextarea.value;
+      stringsData[idx].value = ta.value;
       editedIndices.add(idx);
       triggerAutoSave();
       updateProgressBadge();
@@ -872,20 +874,20 @@ function undoNative() {
 
 function redoNative() {
   const redoBtn = document.getElementById('redo-btn');
-  if (_focusedTextarea) {
-    _focusedTextarea.focus();
+  const ta = _focusedTextarea || _lastFocusedTextarea;
+  if (ta) {
+    ta.focus();
     document.execCommand('redo');
-    const idx = parseInt(_focusedTextarea.dataset.idx);
+    const idx = parseInt(ta.dataset.idx);
     if (!isNaN(idx)) {
-      stringsData[idx].value = _focusedTextarea.value;
+      stringsData[idx].value = ta.value;
       editedIndices.add(idx);
       triggerAutoSave();
       updateProgressBadge();
     }
-    // Após refazer, remove a cor (não há mais nada a refazer neste momento)
     redoBtn.classList.remove('has-history');
   } else {
-    // Nada focado / nada desfeito: flash temporário como efeito visual
+    // Flash visual temporário (sem textarea focado = nada a refazer)
     redoBtn.classList.add('has-history');
     setTimeout(() => redoBtn.classList.remove('has-history'), 600);
   }
