@@ -381,8 +381,12 @@ function autoResize(el) {
 
 function showEngineMenu(idx, event) {
   if (event) event.stopPropagation();
-  currentIdx = idx;
   const menu = document.getElementById('engine-menu');
+  if (menu.style.display === 'block' && currentIdx === idx) {
+    menu.style.display = 'none';
+    return;
+  }
+  currentIdx = idx;
   menu.style.display = 'block';
   setTimeout(() => {
     document.addEventListener('click', function closeMenu(e) {
@@ -390,7 +394,7 @@ function showEngineMenu(idx, event) {
         menu.style.display = 'none';
         document.removeEventListener('click', closeMenu);
       }
-    }, { once: true });
+    });
   }, 50);
 }
 
