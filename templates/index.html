@@ -27,8 +27,8 @@
 
   /* Cor de seleção de texto (highlight ao arrastar/selecionar palavras),
      trocando o azul padrão do navegador pelo tom da marca. */
-  ::selection { background: #9cb8b2; color: #1a1a1a; }
-  ::-moz-selection { background: #9cb8b2; color: #1a1a1a; }
+  ::selection { background: #837991; color: #fff; }
+  ::-moz-selection { background: #837991; color: #fff; }
   :root {
     --bg: #9cb8b2; 
     --surface: rgba(255,255,255,0.22); 
@@ -78,8 +78,8 @@
   .btn-import:active { }
   .btn-import svg { width: 18px; height: 18px; flex-shrink: 0; }
   .hint { text-align: center; font-size: 11px; color: var(--text-muted); margin-top: 0.75rem; }
-  .btn-merge { width: 100%; padding: 12px; background: transparent; border: 1px solid var(--border2); border-radius: var(--radius-sm); color: var(--text-muted); font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; cursor: pointer; -webkit-tap-highlight-color: transparent; margin-top: 0.75rem; }
-  .btn-merge:active { color: var(--accent); border-color: var(--accent-dim); }
+  .btn-merge { width: 100%; padding: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--accent); font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; cursor: pointer; display: flex; align-items: center; justify-content: center; -webkit-tap-highlight-color: transparent; margin-top: 0.75rem; }
+  .btn-merge:active { background: rgba(0,0,0,0.1); }
   #file-input { display: none; }
 
   /* Botão + — aparece após primeiro save */
@@ -354,6 +354,13 @@
     -webkit-backdrop-filter: blur(18px) saturate(1.4);
     box-shadow: 0 4px 24px rgba(100,80,140,0.1), inset 0 1px 0 rgba(255,255,255,0.5);
     transition: transform 0.15s, box-shadow 0.15s;
+    /* Força camada de composição própria — corrige um bug conhecido do
+       Chrome Android onde o texto dentro de elementos com
+       backdrop-filter às vezes não é repintado até outro evento de
+       toque/scroll acontecer (ficando "invisível" em repouso). */
+    isolation: isolate;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
   }
   .btn-import:hover, .btn-new:hover {
     background: rgba(255,255,255,0.22) !important;
@@ -367,7 +374,7 @@
     transition: transform 0.15s ease-out, filter 0.15s ease-out, background 0.15s, color 0.15s, border-color 0.15s !important;
   }
   .fx-press:active {
-    transform: scale(0.97);
+    transform: translateZ(0) scale(0.97);
     filter: blur(1.5px);
   }
 
