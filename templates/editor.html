@@ -32,7 +32,7 @@
   .count-badge { font-size: 9px; background: transparent; border: 1px solid transparent; border-radius: 6px; padding: 3px 6px; color: var(--text-dim); font-family: 'DM Mono', monospace; cursor: pointer; -webkit-tap-highlight-color: transparent; user-select: none; white-space: nowrap; flex-shrink: 0; }
   .count-badge:active { border-color: var(--accent-dim); color: var(--accent); }
   .count-badge.filter-active { border-color: var(--accent-dim); color: var(--accent); background: rgba(156,184,178,0.08); }
-  .timer-badge { font-size: 9px; background: transparent; border: 1px solid transparent; border-radius: 6px; padding: 3px 0; color: var(--text-dim); font-family: 'DM Mono', monospace; width: 38px; text-align: center; flex-shrink: 0; transition: font-size 0.2s; }
+  .timer-badge { font-size: 9px; background: transparent; border: 1px solid transparent; border-radius: 6px; padding: 3px 0; color: var(--text-dim); font-family: 'DM Mono', monospace; font-variant-numeric: tabular-nums; width: 38px; text-align: center; flex-shrink: 0; transition: font-size 0.2s; }
   .save-progress-btn { width: 26px; height: 26px; border-radius: 50%; background: transparent; border: 1px solid transparent; color: var(--text-dim); font-size: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: all 0.2s; flex-shrink: 0; }
   .save-progress-btn.saved { border-color: #9cb8b2; color: #9cb8b2; background: rgba(156,184,178,0.1); }
   .save-progress-btn.saving { border-color: var(--accent-dim); color: var(--accent); animation: pulse 0.8s infinite; }
@@ -82,10 +82,11 @@
   .action-btn.clear-undo { border-color: #9cb8b2; color: #9cb8b2; }
   /* Botão ⋮ kebab */
   .kebab-wrap { position: relative; flex-shrink: 0; }
-  .kebab-btn { width: 26px; height: 26px; border-radius: 50%; background: transparent; border: 1px solid transparent; color: var(--text-dim); display: flex; align-items: center; justify-content: center; cursor: pointer; -webkit-tap-highlight-color: transparent; font-size: 15px; line-height: 1; transition: all 0.2s; }
+  .kebab-btn { width: 26px; height: 26px; border-radius: 50%; background: transparent; border: 1px solid transparent; color: var(--text-dim); display: flex; align-items: center; justify-content: center; cursor: pointer; -webkit-tap-highlight-color: transparent; font-size: 15px; line-height: 1; transition: color 0.15s; }
+  .kebab-btn:active, .kebab-btn.open { color: #9cb8b2; }
   .kebab-btn:active { transform: scale(0.9); }
-  .kebab-menu { display: none; position: absolute; right: 0; top: 30px; background: var(--surface); border: 1px solid var(--border2); border-radius: 10px; z-index: 50; min-width: 148px; overflow: hidden; box-shadow: 0 6px 20px rgba(0,0,0,0.6); }
-  .kebab-menu.open { display: block; }
+  .kebab-menu { position: absolute; right: 0; top: 30px; background: var(--surface); border: 1px solid var(--border2); border-radius: 10px; z-index: 50; min-width: 148px; overflow: hidden; box-shadow: 0 6px 20px rgba(0,0,0,0.6); transform-origin: top right; transform: scale(0.95); opacity: 0; pointer-events: none; transition: transform 0.12s ease, opacity 0.12s ease; }
+  .kebab-menu.open { transform: scale(1); opacity: 1; pointer-events: auto; }
   .kebab-item { display: flex; align-items: center; gap: 8px; padding: 9px 12px; font-size: 11px; color: var(--text-muted); cursor: pointer; -webkit-tap-highlight-color: transparent; border-bottom: 1px solid var(--border); white-space: nowrap; }
   .kebab-item:last-child { border-bottom: none; }
   .kebab-item:active { background: var(--surface2); }
@@ -874,16 +875,26 @@ let _openKebab = null;
 function toggleKebab(idx, event) {
   if (event) event.stopPropagation();
   const menu = document.getElementById('kebab-menu-' + idx);
+  const btn = menu ? menu.previousElementSibling : null;
   if (!menu) return;
   const isOpen = menu.classList.contains('open');
   if (_openKebab !== null && _openKebab !== idx) closeKebab(_openKebab);
-  menu.classList.toggle('open', !isOpen);
-  _openKebab = isOpen ? null : idx;
+  if (isOpen) {
+    closeKebab(idx);
+  } else {
+    menu.classList.remove('closing');
+    menu.classList.add('open');
+    if (btn) btn.classList.add('open');
+    _openKebab = idx;
+  }
 }
 
 function closeKebab(idx) {
   const menu = document.getElementById('kebab-menu-' + idx);
-  if (menu) menu.classList.remove('open');
+  const btn = menu ? menu.previousElementSibling : null;
+  if (!menu) return;
+  menu.classList.remove('open');
+  if (btn) btn.classList.remove('open');
   if (_openKebab === idx) _openKebab = null;
 }
 
