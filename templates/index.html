@@ -8,6 +8,19 @@
 <title>Sims 4 Translator</title>
 <link rel="icon" type="image/png" href="/img/favicon.png">
 <link rel="manifest" href="./manifest.json">
+<script>
+  // Anti-FOUC: decide o estado visual ANTES do CSS/HTML do body pintar.
+  // Roda de forma síncrona e bloqueante no <head>, então o navegador
+  // nunca chega a desenhar o estado "errado" (import vs +, skeleton vs lista).
+  (function() {
+    try {
+      var hasSaves = localStorage.getItem('has_saves') === '1';
+      document.documentElement.classList.add(hasSaves ? 'pre-has-saves' : 'pre-no-saves');
+    } catch (e) {
+      document.documentElement.classList.add('pre-no-saves');
+    }
+  })();
+</script>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; tap-highlight-color: transparent; }
@@ -378,8 +391,46 @@
     background: rgba(255,255,255,0.22);
   }
   .sk-line.short { width: 45%; height: 8px; }
+
+  /* ── Anti-FOUC ──
+     Por padrão (sem JS, ou antes da classe ser aplicada), a página fica
+     com opacidade 0. O <head> aplica .pre-has-saves ou .pre-no-saves
+     de forma síncrona e bloqueante antes do primeiro paint, então o
+     navegador já pinta direto no estado certo — sem flash de "import"
+     trocando pra "+" ou vice-versa.
+  */
+  body { opacity: 0; }
+  #btn-new-wrap, #skeleton-area, #mascot-div { display: none; }
+  html.pre-has-saves body,
+  html.pre-no-saves body {
+    opacity: 1;
+    transition: opacity 0.18s ease-out;
+  }
+
+  /* Estado: usuário JÁ tem saves (mostra skeleton + botão "+", esconde IMPORTAR) */
+  html.pre-has-saves #btn-import-wrap { display: none; }
+  html.pre-has-saves #btn-new-wrap { display: block; }
+  html.pre-has-saves #skeleton-area { display: block; }
+  html.pre-has-saves #mascot-div { display: flex; }
+
+  /* Estado: sem saves (mostra IMPORTAR, esconde "+", sem skeleton) */
+  html.pre-no-saves #btn-import-wrap { display: block; }
+  html.pre-no-saves #btn-new-wrap { display: none; }
+  html.pre-no-saves #skeleton-area { display: none; }
+  html.pre-no-saves #mascot-div { display: none; }
 </style>
 </head>
+<script>
+  // Failsafe: se por algum motivo o script principal nunca rodar (erro,
+  // bloqueio de localStorage, etc.), garante que a página não fique
+  // escondida pra sempre — revela no estado "sem saves" depois de 1.2s.
+  setTimeout(function() {
+    var html = document.documentElement;
+    if (!html.classList.contains('pre-has-saves') && !html.classList.contains('pre-no-saves')) {
+      html.classList.add('pre-no-saves');
+    }
+  }, 1200);
+</script>
 <body>
 <link rel="manifest" href="/manifest.json">
 
@@ -431,7 +482,7 @@
       </button>
       <p class="hint">Selecione um arquivo .package do seu celular</p>
     </div>
-    <div id="btn-new-wrap" style="display:none">
+    <div id="btn-new-wrap">
       <button class="btn-new" onclick="document.getElementById('file-input-new').click()">+</button>
       <input type="file" id="file-input-new" accept=".package" style="display:none">
     </div>
@@ -439,7 +490,7 @@
     <div class="error-msg" id="error-msg"></div>
   </div>
 
-  <div class="mascot-divider" id="mascot-div" style="display:none">
+  <div class="mascot-divider" id="mascot-div">
     <img src="/img/sillyblumbob.webp" alt="">
   </div>
 
@@ -449,7 +500,7 @@
   </div>
 
   <!-- Skeleton placeholder (visível enquanto carrega) -->
-  <div id="skeleton-area" style="display:none;width:100%;max-width:340px;position:relative;z-index:1;">
+  <div id="skeleton-area" style="width:100%;max-width:340px;position:relative;z-index:1;">
     <div class="saves-label">Traduções salvas</div>
     <div class="saves-list" style="display:flex;flex-direction:column;gap:8px;">
       <div class="skeleton-item"><div class="sk-circle"></div><div class="sk-lines"><div class="sk-line"></div><div class="sk-line short"></div></div></div>
