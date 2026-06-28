@@ -820,11 +820,16 @@ function exitSelectMode() {
     topbarSelect.classList.remove('active', 'topbar-exit');
     // Só mostra a topbar normal após a outra sair
     topbarNormal.style.opacity = '0';
+    topbarNormal.style.filter = 'blur(6px)';
     topbarNormal.style.display = 'flex';
     requestAnimationFrame(() => {
-      topbarNormal.style.transition = 'opacity 0.22s ease';
+      topbarNormal.style.transition = 'opacity 0.32s ease, filter 0.32s ease';
       topbarNormal.style.opacity = '1';
-      setTimeout(() => topbarNormal.style.transition = '', 240);
+      topbarNormal.style.filter = 'blur(0px)';
+      setTimeout(() => {
+        topbarNormal.style.transition = '';
+        topbarNormal.style.filter = '';
+      }, 340);
     });
   }, { once: true });
 
