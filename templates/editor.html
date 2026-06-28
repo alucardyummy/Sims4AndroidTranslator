@@ -623,10 +623,10 @@ function renderStrings() {
               '<span class="kebab-item-icon">◈</span>Selecionar Tradutor' +
             '</div>' +
             '<div class="kebab-item' + (hasNote ? ' note-filled-item' : '') + '" id="kebab-note-' + idx + '" onclick="closeKebab(' + idx + '); toggleNote(' + idx + ', event)">' +
-              '<span class="kebab-item-icon">📝</span>Nota' +
+              '<span class="kebab-item-icon">⎙ˊ˗</span>Nota' +
             '</div>' +
             '<div class="kebab-item" id="clear-btn-' + idx + '" onclick="closeKebab(' + idx + '); clearTranslation(' + idx + ', event)">' +
-              '<span class="kebab-item-icon">🗑</span>Limpar tradução' +
+              '<span class="kebab-item-icon">⌫</span>Limpar tradução' +
             '</div>' +
           '</div>' +
         '</div>' +
@@ -645,6 +645,10 @@ function renderStrings() {
     const backdrop = document.getElementById('ta-backdrop-' + idx);
     if (taExpanded) autoResize(ta);
     updateBackdrop(idx, true);
+
+    ta.addEventListener('dblclick', function() {
+      toggleTranslationExpand(parseInt(this.dataset.idx), null);
+    });
 
     // Guarda o valor "antes da edição" assim que o campo recebe foco —
     // é esse valor que o botão Desfazer vai restaurar.
@@ -816,7 +820,7 @@ function restoreClearBtn(idx) {
   const btn = document.getElementById('clear-btn-' + idx);
   if (btn) {
     btn.classList.remove('clear-undo-item');
-    btn.querySelector('.kebab-item-icon').textContent = '🗑';
+    btn.querySelector('.kebab-item-icon').textContent = '⌫';
     btn.lastChild.textContent = 'Limpar tradução';
     btn.onclick = function(e) { closeKebab(idx); clearTranslation(idx, e); };
   }
