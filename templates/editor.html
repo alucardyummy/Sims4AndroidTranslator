@@ -94,7 +94,7 @@
   .kebab-item.note-filled-item .kebab-item-icon { color: var(--accent); }
   .kebab-item.clear-undo-item { color: #9cb8b2; }
   /* Ponto de nota ao lado da estrela */
-  .note-dot { display: inline-block; width: 3px; height: 3px; border-radius: 50%; background: #9cb8b2; position: absolute; top: 8px; left: 19px; z-index: 4; pointer-events: none; }
+  .note-dot { display: inline-block; width: 3px; height: 3px; border-radius: 50%; background: #9cb8b2; position: absolute; top: 9px; left: 19px; z-index: 4; pointer-events: none; }
   .note-row { display: none; padding: 0 0.75rem 8px; }
   .note-row.open { display: block; }
   .note-textarea { width: 100%; background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; padding: 7px 9px; font-size: 11px; color: var(--text); font-family: 'DM Sans', sans-serif; resize: none; min-height: 32px; }
@@ -134,9 +134,11 @@
   .loading-overlay.active { display: flex; }
   .spinner { width: 36px; height: 36px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
   .loading-text { font-size: 13px; color: var(--text-muted); letter-spacing: 0.04em; text-align: center; }
-  .success-sheet { display: none; position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,0.8); align-items: flex-end; }
+  .success-sheet { display: none; position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,0); align-items: flex-end; transition: background 0.32s ease; }
   .success-sheet.open { display: flex; }
-  .success-inner { width: 100%; background: var(--surface); border-top: 1px solid var(--border); border-radius: 20px 20px 0 0; padding: 1.5rem 1rem 2.5rem; animation: slideUp 0.25s ease; }
+  .success-sheet.open-active { background: rgba(0,0,0,0.8); }
+  .success-inner { width: 100%; background: var(--surface); border-top: 1px solid var(--border); border-radius: 20px 20px 0 0; padding: 1.5rem 1rem 2.5rem; transform: translateX(60px); opacity: 0; filter: blur(6px); transition: transform 0.32s ease, opacity 0.32s ease, filter 0.32s ease; }
+  .success-sheet.open-active .success-inner { transform: translateX(0); opacity: 1; filter: blur(0px); }
   @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
   .success-icon { font-size: 40px; text-align: center; margin-bottom: 0.75rem; }
   .success-title { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; color: var(--accent); text-align: center; margin-bottom: 0.25rem; }
@@ -291,7 +293,7 @@
   <div class="loading-text" id="loading-text">Carregando...</div>
 </div>
 
-<div class="success-sheet" id="success-sheet">
+<div class="success-sheet" id="success-sheet" onclick="if(event.target===this) closeSuccessSheet();">
   <div class="success-inner">
     <div class="success-icon">✦</div>
     <div class="success-sub" id="success-sub">—</div>
@@ -300,7 +302,7 @@
     <a id="download-link" href="#" class="success-new">BAIXAR ARQUIVO</a>
 
     <button class="success-new" onclick="window.location.href='/'" style="background:transparent; border:1px solid var(--border2); color:var(--text-muted);">Ver minhas traduções</button>
-    <button class="success-back" onclick="document.getElementById('success-sheet').classList.remove('open')">Continuar editando</button>
+    <button class="success-back" onclick="closeSuccessSheet()">Continuar editando</button>
   </div>
 </div>
 
@@ -1180,7 +1182,9 @@ async function save() {
       document.getElementById('success-sub').textContent = data.output_name;
       document.getElementById('downloads-note').textContent = '';
       document.getElementById('download-link').href = '/download?file=' + data.output_id + '&name=' + encodeURIComponent(data.output_name);
-      document.getElementById('success-sheet').classList.add('open');
+      const sheet = document.getElementById('success-sheet');
+      sheet.classList.add('open');
+      requestAnimationFrame(() => requestAnimationFrame(() => sheet.classList.add('open-active')));
       await saveProgressToDatabase();
     } else {
       alert('Erro ao salvar: ' + (data.error || 'desconhecido'));
@@ -1189,6 +1193,12 @@ async function save() {
     document.getElementById('loading').classList.remove('active');
     alert('Erro de conexão ao salvar.');
   }
+}
+
+function closeSuccessSheet() {
+  const sheet = document.getElementById('success-sheet');
+  sheet.classList.remove('open-active');
+  setTimeout(() => sheet.classList.remove('open'), 350);
 }
 
 // ---- TRADUZIR TUDO ----
