@@ -70,16 +70,16 @@
   /* Botão IMPORTAR — aparece só na primeira vez */
   .btn-import { width: 100%; padding: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--accent); font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 600; letter-spacing: 0.08em; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; -webkit-tap-highlight-color: transparent; position: relative; overflow: hidden; }
   .btn-import::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 60%); }
-  .btn-import:active { transform: scale(0.97); }
+  .btn-import:active { }
   .btn-import svg { width: 18px; height: 18px; flex-shrink: 0; }
   .hint { text-align: center; font-size: 11px; color: var(--text-muted); margin-top: 0.75rem; }
   .btn-merge { width: 100%; padding: 12px; background: transparent; border: 1px solid var(--border2); border-radius: var(--radius-sm); color: var(--text-muted); font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; cursor: pointer; -webkit-tap-highlight-color: transparent; margin-top: 0.75rem; }
-  .btn-merge:active { color: var(--accent); border-color: var(--accent-dim); transform: scale(0.97); }
+  .btn-merge:active { color: var(--accent); border-color: var(--accent-dim); }
   #file-input { display: none; }
 
   /* Botão + — aparece após primeiro save */
   .btn-new { width: 100%; padding: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--accent); font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 300; cursor: pointer; display: flex; align-items: center; justify-content: center; -webkit-tap-highlight-color: transparent; }
-  .btn-new:active { transform: scale(0.97); background: rgba(0,0,0,0.1); }
+  .btn-new:active { background: rgba(0,0,0,0.1); }
 
   /* MASCOTE DIVISOR */
   .mascot-divider { display: flex; justify-content: center; margin: 1rem 0 0.75rem; }
@@ -351,6 +351,18 @@
     background: rgba(255,255,255,0.22) !important;
   }
 
+  /* Efeito "afundar + blur in/out" — usado em: IMPORTAR, +, Mesclar,
+     SALVAR ALTERAÇÕES e SAIR DA CONTA. Ao pressionar (:active), o botão
+     encolhe e ganha um leve blur (blur in); ao soltar, a mesma transição
+     CSS desfaz tudo suavemente (blur out) — sem precisar de JS. */
+  .fx-press {
+    transition: transform 0.15s ease-out, filter 0.15s ease-out, background 0.15s, color 0.15s, border-color 0.15s !important;
+  }
+  .fx-press:active {
+    transform: scale(0.97);
+    filter: blur(1.5px);
+  }
+
   /* ── Skeleton loader ── */
   @keyframes skeletonShimmer {
     0%   { background-position: -200% center; }
@@ -404,10 +416,8 @@
   html.pre-has-saves body,
   html.pre-no-saves body {
     opacity: 1;
-    transition: opacity 0.18s ease-out, filter 0.16s ease-out;
+    transition: opacity 0.18s ease-out;
   }
-  /* Blur in/out ao clicar em qualquer botão da interface ou dos modais */
-  body.click-blur { filter: blur(4px); }
 
   /* Estado: usuário JÁ tem saves (mostra skeleton + botão "+", esconde IMPORTAR) */
   html.pre-has-saves #btn-import-wrap { display: none; }
@@ -474,7 +484,7 @@
   <div class="import-area" id="import-area">
     <div id="btn-import-wrap">
       <input type="file" id="file-input" accept=".package">
-      <button class="btn-import" onclick="document.getElementById('file-input').click()">
+      <button class="btn-import fx-press" onclick="document.getElementById('file-input').click()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
           <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
           <polyline points="17 8 12 3 7 8"/>
@@ -485,10 +495,10 @@
       <p class="hint">Selecione um arquivo .package do seu celular</p>
     </div>
     <div id="btn-new-wrap">
-      <button class="btn-new" onclick="document.getElementById('file-input-new').click()">+</button>
+      <button class="btn-new fx-press" onclick="document.getElementById('file-input-new').click()">+</button>
       <input type="file" id="file-input-new" accept=".package" style="display:none">
     </div>
-    <button class="btn-merge" onclick="window.location.href='/merge'">◈ Mesclar vários .packages em um</button>
+    <button class="btn-merge fx-press" onclick="window.location.href='/merge'">◈ Mesclar vários .packages em um</button>
     <div class="error-msg" id="error-msg"></div>
   </div>
 
@@ -599,8 +609,8 @@
       <input type="file" id="edit-profile-pic" accept="image/*" style="display:none">
       <button type="button" class="form-input" style="cursor:pointer;text-align:center;" onclick="document.getElementById('edit-profile-pic').click()">Escolher imagem :3</button>
     </div>
-    <button class="modal-btn" onclick="saveProfile()">SALVAR ALTERAÇÕES</button>
-    <button class="modal-btn" style="background:transparent;border:1px solid #b89cd9;color:#413d57;margin-top:10px" onclick="handleLogout()">SAIR DA CONTA</button>
+    <button class="modal-btn fx-press" onclick="saveProfile()">SALVAR ALTERAÇÕES</button>
+    <button class="modal-btn fx-press" style="background:transparent;border:1px solid #b89cd9;color:#413d57;margin-top:10px" onclick="handleLogout()">SAIR DA CONTA</button>
   </div></div><script>
 let currentUser = null;
 let newProfilePicBase64 = null;
@@ -1142,23 +1152,6 @@ async function handleForgotPassword() {
     else alert(data.error || 'Erro ao redefinir.');
   } catch(e) { alert('Erro de conexão.'); }
 }
-
-// Blur in/out ao clicar em qualquer botão (interface ou modais).
-// Detecta cliques em <button> e em elementos que agem como botão
-// (ex: o avatar de perfil, que é uma div clicável), aplica um blur
-// rápido na tela e remove logo depois — efeito de "foco" no clique.
-(function() {
-  let blurTimeout = null;
-  document.addEventListener('click', function(e) {
-    const target = e.target.closest('button, [role="button"], #profile-btn, .btn-icon');
-    if (!target) return;
-    document.body.classList.add('click-blur');
-    clearTimeout(blurTimeout);
-    blurTimeout = setTimeout(() => {
-      document.body.classList.remove('click-blur');
-    }, 160);
-  }, true);
-})();
 
 // INIT
 checkLogin();
