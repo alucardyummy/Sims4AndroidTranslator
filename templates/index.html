@@ -805,23 +805,28 @@ function exitSelectMode() {
   selectedIds.clear();
   document.getElementById('screen').classList.remove('select-mode');
 
-  // Anima topbar saindo
+  // Anima topbar saindo — mantém no layout até animação terminar
   const topbarSelect = document.getElementById('topbar-select');
   topbarSelect.classList.remove('topbar-enter');
+  topbarSelect.style.display = 'flex'; // mantém visível durante animação
   topbarSelect.classList.add('topbar-exit');
-  topbarSelect.addEventListener('animationend', () => {
-    topbarSelect.classList.remove('active', 'topbar-exit');
-  }, { once: true });
 
-  // Restaura topbar normal com fade in
+  // Esconde topbar normal até a animação de saída terminar, para não empurrar o layout
   const topbarNormal = document.getElementById('topbar-normal');
-  topbarNormal.style.opacity = '0';
-  topbarNormal.style.display = 'flex';
-  setTimeout(() => {
-    topbarNormal.style.transition = 'opacity 0.25s ease';
-    topbarNormal.style.opacity = '1';
-    setTimeout(() => topbarNormal.style.transition = '', 260);
-  }, 10);
+  topbarNormal.style.display = 'none';
+
+  topbarSelect.addEventListener('animationend', () => {
+    topbarSelect.style.display = '';
+    topbarSelect.classList.remove('active', 'topbar-exit');
+    // Só mostra a topbar normal após a outra sair
+    topbarNormal.style.opacity = '0';
+    topbarNormal.style.display = 'flex';
+    requestAnimationFrame(() => {
+      topbarNormal.style.transition = 'opacity 0.22s ease';
+      topbarNormal.style.opacity = '1';
+      setTimeout(() => topbarNormal.style.transition = '', 240);
+    });
+  }, { once: true });
 
   // Anima círculos saindo e restaura botões com stagger
   const items = document.querySelectorAll('#saves-list .save-item');
