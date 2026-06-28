@@ -121,8 +121,10 @@
   .bottom-bar { border-top: 1px solid var(--border); padding: 0.45rem 0.75rem 0.5rem; background: var(--bg); flex-shrink: 0; }
   .filename-row { display: flex; align-items: center; gap: 6px; margin-bottom: 0.35rem; }
   .filename-label { font-size: 11px; color: var(--text-muted); flex-shrink: 0; }
-  .filename-input { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 7px; padding: 5px 9px; font-size: 12px; color: var(--text); font-family: 'DM Mono', monospace; min-width: 0; }
+  .filename-input { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 7px; padding: 5px 9px; font-size: 12px; color: var(--text); font-family: 'DM Mono', monospace; min-width: 0; transition: border-color 0.2s; }
   .filename-input:focus { outline: none; border-color: var(--accent-dim); }
+  .filename-input.empty-error { border-color: #e07070 !important; animation: shake 0.3s ease; }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-4px)} 75%{transform:translateX(4px)} }
   .ext-label { font-size: 12px; color: var(--text-muted); font-family: 'DM Mono', monospace; flex-shrink: 0; }
   .bottom-actions { display: flex; gap: 5px; align-items: center; margin-top: 4px; }
   .import-btn { flex: 0 0 auto; padding: 7px 11px; background: transparent; border: 1px solid var(--border2); border-radius: 8px; color: var(--text-muted); font-size: 14px; line-height: 1; cursor: pointer; -webkit-tap-highlight-color: transparent; }
@@ -532,15 +534,26 @@ let stringsData = [];
 let instanceStr  = sessionStorage.getItem('selected_instance_str') || '';
 
 // Se estamos reabrindo um save existente, original_name já vem preenchido
-// (pelo index.html). Pré-preenche o campo de nome pra não obrigar o usuário
-// a redigitar o nome de algo que já tinha nome.
+// (pelo index.html via editSave). Pré-preenche o campo de nome só nesse caso.
+// Para novos uploads (redirect do Flask), original_name NÃO vem via sessionStorage
+// — vem via query param ou simplesmente não existe — então limpamos aqui para
+// garantir que o campo fique vazio e o usuário nomeie do zero.
 (function prefillFilename() {
-  const existingName = sessionStorage.getItem('original_name');
-  if (existingName) {
-    document.addEventListener('DOMContentLoaded', () => {
-      const input = document.getElementById('filename-input');
-      if (input && !input.value) input.value = existingName.replace(/\.package$/i, '');
-    });
+  // Se veio de um editSave, o index.html seta 'editing_save' como flag.
+  // Caso contrário, é um novo upload e limpamos o nome anterior.
+  const editingSave = sessionStorage.getItem('editing_save');
+  if (editingSave) {
+    sessionStorage.removeItem('editing_save');
+    const existingName = sessionStorage.getItem('original_name');
+    if (existingName) {
+      document.addEventListener('DOMContentLoaded', () => {
+        const input = document.getElementById('filename-input');
+        if (input && !input.value) input.value = existingName.replace(/\.package$/i, '');
+      });
+    }
+  } else {
+    // Novo upload — descarta qualquer nome de sessão anterior
+    sessionStorage.removeItem('original_name');
   }
 })();
 
@@ -665,6 +678,8 @@ async function saveProgressManual() {
   if (stringsData.length === 0) return;
   if (!getProjectBaseName()) {
     const input = document.getElementById('filename-input');
+    input.classList.add('empty-error');
+    input.addEventListener('input', () => input.classList.remove('empty-error'), { once: true });
     input.focus();
     input.scrollIntoView({ behavior: 'smooth', block: 'center' });
     showToast('Dê um nome ao arquivo antes de salvar o progresso.', 'error', 4000);
@@ -1332,6 +1347,17 @@ function validateInstanceInput(el) {
 }
 
 async function save() {
+  // Valida nome do arquivo
+  const filenameInput = document.getElementById('filename-input');
+  if (!filenameInput.value.trim()) {
+    filenameInput.classList.add('empty-error');
+    filenameInput.addEventListener('input', () => filenameInput.classList.remove('empty-error'), { once: true });
+    filenameInput.focus();
+    filenameInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    showToast('Dê um nome ao arquivo antes de salvar.', 'error', 4000);
+    return;
+  }
+
   // Valida instância customizada se preenchida
   const instanceInputEl = document.getElementById('instance-input');
   const customInstanceBase = instanceInputEl ? instanceInputEl.value.trim().toUpperCase() : '';
@@ -1340,7 +1366,7 @@ async function save() {
     return;
   }
 
-  const outputName = (document.getElementById('filename-input').value.trim() || 'output');
+  const outputName = filenameInput.value.trim();
   document.getElementById('loading-text').textContent = 'Salvando arquivo...';
   document.getElementById('loading').classList.add('active');
   const packageId = sessionStorage.getItem('package_id') || '';
@@ -1586,16 +1612,25 @@ function toggleUntranslatedFilter() {
 
 // ---- CONFIRMAR VOLTAR ----
 function confirmBack(e) {
+  // No modo JSON, o botão voltar mostra o modal de "aplicar JSON?" em vez de navegar
+  if (jsonModeActive) {
+    e.preventDefault();
+    exitJsonMode();
+    return;
+  }
   if (editedIndices.size === 0) return; // nada editado, volta normalmente
   e.preventDefault();
   showModal({
     icon: '↩',
-    title: 'Voltar sem salvar?',
-    msg: 'Você tem traduções não salvas. Se voltar agora, as alterações serão perdidas.',
-    confirmText: 'VOLTAR MESMO ASSIM',
-    cancelText: 'Continuar editando',
-    danger: true
-  }).then(() => { window.location.href = '/info'; }).catch(() => {});
+    title: 'Salvar antes de sair?',
+    msg: 'Você tem traduções não salvas. Deseja salvar o progresso antes de sair?',
+    confirmText: 'SALVAR E SAIR',
+    cancelText: 'Sair sem salvar',
+    danger: false
+  }).then(async () => {
+    await saveProgressToDatabase();
+    window.location.href = '/info';
+  }).catch(() => { window.location.href = '/info'; });
 }
 
 // ──────────────────────────────────────────────
