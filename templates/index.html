@@ -139,6 +139,28 @@
   /* Version */
   .version { font-size: 11px; color: var(--text-muted); opacity: 0.6; letter-spacing: 0.05em; margin-top: 2rem; position: relative; z-index: 1; }
 
+  /* Animação de destruição: encolhe e some */
+  @keyframes saveDisintegrate {
+    0%   { transform: scale(1);    opacity: 1;    filter: blur(0px); }
+    30%  { transform: scale(0.96); opacity: 0.85; filter: blur(1px); }
+    70%  { transform: scale(0.90); opacity: 0.4;  filter: blur(3px); }
+    100% { transform: scale(0.82); opacity: 0;    filter: blur(6px); max-height: 0; padding: 0; margin: 0; }
+  }
+  .save-item.disintegrating {
+    animation: saveDisintegrate 1.1s cubic-bezier(0.4, 0, 0.8, 0) forwards;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  /* Canvas de partículas */
+  .dust-canvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 9999;
+  }
+
   /* Modals */
   .modal-overlay { display: flex; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; align-items: center; justify-content: center; padding: 1.5rem; opacity: 0; visibility: hidden; backdrop-filter: blur(0px); -webkit-backdrop-filter: blur(0px); transition: opacity 0.32s ease, visibility 0.32s, backdrop-filter 0.32s ease, -webkit-backdrop-filter 0.32s ease; }
   @keyframes modalIn {
@@ -792,17 +814,34 @@ function updateSelectCount() {
 
 async function deleteSelected() {
   if (selectedIds.size === 0) return;
-  // Remove da lista imediatamente (optimistic update)
   const toDelete = new Set(selectedIds);
-  savesData = savesData.filter(s => !toDelete.has(s.id));
-  hasSaves = savesData.length > 0;
-  if (!hasSaves) {
-    localStorage.removeItem('has_saves');
-    document.getElementById('saves-area').style.display = 'none';
-    document.getElementById('mascot-div').style.display = 'none';
-  }
-  updateImportUI();
-  exitSelectMode();
+
+  // Coleta os elementos DOM dos selecionados antes de sair do modo seleção
+  const items = document.querySelectorAll('#saves-list .save-item');
+  const selectedEls = [];
+  items.forEach((el, i) => {
+    if (savesData[i] && toDelete.has(savesData[i].id)) selectedEls.push(el);
+  });
+
+  // Anima todos em paralelo; aguarda o mais lento (900ms) e então faz cleanup
+  selectedEls.forEach(el => {
+    const rect = el.getBoundingClientRect();
+    spawnDustParticles(rect);
+    el.classList.add('disintegrating');
+  });
+
+  setTimeout(() => {
+    savesData = savesData.filter(s => !toDelete.has(s.id));
+    hasSaves = savesData.length > 0;
+    if (!hasSaves) {
+      localStorage.removeItem('has_saves');
+      document.getElementById('saves-area').style.display = 'none';
+      document.getElementById('mascot-div').style.display = 'none';
+    }
+    updateImportUI();
+    exitSelectMode();
+  }, 900);
+
   // Confirma com o servidor em segundo plano
   for (const id of toDelete) {
     fetch('/api/delete_save', {
@@ -964,16 +1003,31 @@ function renderSaves(animate = false) {
 }
 
 async function deleteSingleSave(id) {
-  // Remove da lista imediatamente (optimistic update)
-  savesData = savesData.filter(s => s.id !== id);
-  hasSaves = savesData.length > 0;
-  if (!hasSaves) {
-    localStorage.removeItem('has_saves');
-    document.getElementById('saves-area').style.display = 'none';
-    document.getElementById('mascot-div').style.display = 'none';
+  // Encontra o elemento do save para animar
+  const items = document.querySelectorAll('#saves-list .save-item');
+  let targetEl = null;
+  items.forEach((el, i) => {
+    if (savesData[i] && savesData[i].id === id) targetEl = el;
+  });
+
+  const doDelete = () => {
+    savesData = savesData.filter(s => s.id !== id);
+    hasSaves = savesData.length > 0;
+    if (!hasSaves) {
+      localStorage.removeItem('has_saves');
+      document.getElementById('saves-area').style.display = 'none';
+      document.getElementById('mascot-div').style.display = 'none';
+    }
+    updateImportUI();
+    renderSaves();
+  };
+
+  if (targetEl) {
+    animateDeleteItem(targetEl, doDelete);
+  } else {
+    doDelete();
   }
-  updateImportUI();
-  renderSaves();
+
   // Confirma com o servidor em segundo plano
   fetch('/api/delete_save', {
     method: 'POST',
@@ -1003,6 +1057,91 @@ async function editSave(id) {
     }
   } catch(e) { alert('Erro ao carregar save.'); }
 }
+
+// ─── Animação de poeira/fumaça ───────────────────────────────────────────────
+function spawnDustParticles(rect) {
+  const canvas = document.createElement('canvas');
+  canvas.className = 'dust-canvas';
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  document.body.appendChild(canvas);
+  const ctx = canvas.getContext('2d');
+
+  const cx = rect.left + rect.width / 2;
+  const cy = rect.top  + rect.height / 2;
+
+  // Partículas de poeira (#a89fb3)
+  const dustParticles = Array.from({ length: 22 }, () => ({
+    x: cx + (Math.random() - 0.5) * rect.width * 0.8,
+    y: cy + (Math.random() - 0.5) * rect.height * 0.8,
+    r: 1.5 + Math.random() * 3.5,
+    vx: (Math.random() - 0.5) * 2.8,
+    vy: -0.6 - Math.random() * 2.2,
+    life: 1,
+    decay: 0.008 + Math.random() * 0.012,
+    type: 'dust'
+  }));
+
+  // Partículas de fumaça (#282e38) — maiores, mais lentas
+  const smokeParticles = Array.from({ length: 10 }, () => ({
+    x: cx + (Math.random() - 0.5) * rect.width * 0.5,
+    y: cy + (Math.random() - 0.5) * rect.height * 0.3,
+    r: 6 + Math.random() * 10,
+    vx: (Math.random() - 0.5) * 0.9,
+    vy: -0.25 - Math.random() * 0.6,
+    life: 1,
+    decay: 0.004 + Math.random() * 0.006,
+    type: 'smoke'
+  }));
+
+  const all = [...dustParticles, ...smokeParticles];
+  let running = true;
+
+  function tick() {
+    if (!running) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    let alive = false;
+    for (const p of all) {
+      if (p.life <= 0) continue;
+      alive = true;
+      p.x  += p.vx;
+      p.y  += p.vy;
+      p.vy += 0.018; // queda leve
+      p.vx *= 0.985;
+      p.r  += p.type === 'smoke' ? 0.18 : -0.01;
+      p.life -= p.decay;
+
+      const alpha = Math.max(0, p.life);
+      ctx.save();
+      ctx.globalAlpha = alpha * (p.type === 'smoke' ? 0.22 : 0.72);
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, Math.max(0.1, p.r), 0, Math.PI * 2);
+      ctx.fillStyle = p.type === 'smoke' ? '#282e38' : '#a89fb3';
+      ctx.fill();
+      ctx.restore();
+    }
+
+    if (alive) {
+      requestAnimationFrame(tick);
+    } else {
+      running = false;
+      canvas.remove();
+    }
+  }
+  requestAnimationFrame(tick);
+}
+
+// Anima um save-item antes de removê-lo do DOM, depois chama o callback
+function animateDeleteItem(el, callback) {
+  const rect = el.getBoundingClientRect();
+  spawnDustParticles(rect);
+  el.classList.add('disintegrating');
+  setTimeout(() => {
+    callback();
+  }, 900);
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 async function checkLogin() {
   try {
