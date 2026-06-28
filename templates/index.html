@@ -1339,6 +1339,28 @@ async function handleForgotPassword() {
 // INIT
 checkLogin();
 
+// Clique fora dos saves sai do modo seleção
+document.addEventListener('click', (e) => {
+  if (!selectMode) return;
+  if (
+    e.target.closest('.save-item') ||
+    e.target.closest('#topbar-select') ||
+    e.target.closest('.select-topbar')
+  ) return;
+  exitSelectMode();
+});
+
+// Clique fora dos saves sai do modo seleção
+document.addEventListener('click', (e) => {
+  if (!selectMode) return;
+  if (
+    e.target.closest('.save-item') ||
+    e.target.closest('#topbar-select') ||
+    e.target.closest('.select-topbar')
+  ) return;
+  exitSelectMode();
+});
+
 // Mostra skeleton imediatamente se houve saves antes
 if (localStorage.getItem('has_saves') === '1') {
   document.getElementById('skeleton-area').style.display = 'block';
