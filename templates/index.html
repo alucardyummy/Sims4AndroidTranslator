@@ -33,7 +33,7 @@
   .select-topbar.active { display: flex; }
   .select-cancel { background: none; border: none; color: var(--text-muted); font-size: 13px; cursor: pointer; padding: 4px 8px; -webkit-tap-highlight-color: transparent; }
   .select-count { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 600; color: var(--text); }
-  .select-delete { background: none; border: none; color: #a33030; font-size: 13px; cursor: pointer; padding: 4px 8px; -webkit-tap-highlight-color: transparent; display: flex; align-items: center; gap: 6px; }
+  .select-delete { background: none; border: none; color: #b89cd9; font-size: 13px; cursor: pointer; padding: 4px 8px; -webkit-tap-highlight-color: transparent; display: flex; align-items: center; gap: 6px; }
 
   /* LOGO */
   .logo-area { text-align: center; margin: 1.5rem 0 1.25rem; position: relative; z-index: 1; }
@@ -97,7 +97,7 @@
   .save-item.selected { border-color: var(--accent-dim); background: rgba(0,0,0,0.08); }
 
   /* Error */
-  .error-msg { display: none; background: rgba(200,60,60,0.15); border: 1px solid rgba(200,60,60,0.4); border-radius: 10px; padding: 12px 16px; font-size: 13px; color: #a33030; margin-top: 1rem; text-align: center; width: 100%; }
+  .error-msg { display: none; background: rgba(184,156,217,0.15); border: 1px solid rgba(184,156,217,0.4); border-radius: 10px; padding: 12px 16px; font-size: 13px; color: #8a7fa6; margin-top: 1rem; text-align: center; width: 100%; }
   .error-msg.active { display: block; }
 
   /* Loading */
@@ -126,6 +126,131 @@
   .modal-switch span { color: var(--accent); text-decoration: underline; font-weight: 500; }
   .auth-tab { display: none; }
   .auth-tab.active { display: block; }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: 
+      radial-gradient(ellipse at 20% 10%, rgba(184,156,217,0.18) 0%, transparent 55%),
+      radial-gradient(ellipse at 80% 80%, rgba(138,127,166,0.14) 0%, transparent 55%);
+    pointer-events: none;
+    z-index: 0;
+    animation: bgPulse 8s ease-in-out infinite alternate;
+  }
+  @keyframes bgPulse { 0% { opacity: 0.7; } 100% { opacity: 1; } }
+
+  body::after {
+    content: '✦  ✧  ✦  ✧  ✦  ✧';
+    position: fixed;
+    top: 6px;
+    left: 0; right: 0;
+    text-align: center;
+    font-size: 8px;
+    color: rgba(184,156,217,0.35);
+    letter-spacing: 12px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Animação suave ao pressionar save */
+  @keyframes savePressBlur {
+    0%   { transform: scale(1);    filter: blur(0px);   opacity: 1; }
+    30%  { transform: scale(0.95); filter: blur(2.5px); opacity: 0.75; }
+    60%  { transform: scale(0.97); filter: blur(1px);   opacity: 0.9; }
+    100% { transform: scale(1);    filter: blur(0px);   opacity: 1; }
+  }
+  .save-item.pressing {
+    animation: savePressBlur 0.38s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    pointer-events: none;
+  }
+
+  /* Save item mais bonito */
+  .save-item {
+    background: linear-gradient(135deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0.15) 100%) !important;
+    border: 1px solid rgba(184,156,217,0.35) !important;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 2px 12px rgba(138,127,166,0.08), inset 0 1px 0 rgba(255,255,255,0.3);
+    transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+  }
+  .save-item:hover {
+    border-color: rgba(184,156,217,0.6) !important;
+    box-shadow: 0 4px 20px rgba(138,127,166,0.15), inset 0 1px 0 rgba(255,255,255,0.4);
+  }
+  .save-item.selected {
+    border-color: rgba(184,156,217,0.65) !important;
+    background: linear-gradient(135deg, rgba(184,156,217,0.2) 0%, rgba(138,127,166,0.12) 100%) !important;
+  }
+
+  /* Círculo seleção roxo */
+  .sel-circle.checked { background: #8a7fa6 !important; border-color: #8a7fa6 !important; }
+
+  /* Botão selecionar tudo */
+  .select-all-btn {
+    background: none; border: none; color: #b89cd9; font-size: 13px;
+    cursor: pointer; padding: 4px 8px; -webkit-tap-highlight-color: transparent;
+    font-family: 'DM Sans', sans-serif; transition: opacity 0.15s;
+  }
+  .select-all-btn:active { opacity: 0.6; }
+
+  /* Topbar seleção redesenhada */
+  .select-topbar {
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(184,156,217,0.25);
+    border-radius: var(--radius);
+    backdrop-filter: blur(8px);
+  }
+
+  /* Saves label decorativa */
+  .saves-label {
+    display: flex !important; align-items: center; gap: 8px;
+  }
+  .saves-label::before, .saves-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(184,156,217,0.4), transparent);
+  }
+
+  /* Modal bonito */
+  .modal-box {
+    border: 1px solid rgba(184,156,217,0.3) !important;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.2);
+    backdrop-filter: blur(12px);
+  }
+
+  /* Versão badge */
+  .version {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(184,156,217,0.25);
+    border-radius: 20px;
+    padding: 5px 14px;
+    backdrop-filter: blur(6px);
+  }
+
+  /* Título gradiente */
+  .title {
+    background: linear-gradient(135deg, #1a1a1a 0%, #4a3a5c 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Mascote flutuante */
+  .mascot-divider img {
+    filter: drop-shadow(0 0 8px rgba(184,156,217,0.4));
+    animation: mascotFloat 3s ease-in-out infinite;
+  }
+  @keyframes mascotFloat {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-4px); }
+  }
+
+  /* Botão importar mais bonito */
+  .btn-import {
+    box-shadow: 0 4px 20px rgba(138,127,166,0.15), inset 0 1px 0 rgba(255,255,255,0.4);
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
 </style>
 </head>
 <body>
@@ -154,6 +279,7 @@
   <div class="select-topbar" id="topbar-select">
     <button class="select-cancel" onclick="exitSelectMode()">Cancelar</button>
     <span class="select-count" id="select-count">0 selecionados</span>
+    <button class="select-all-btn" onclick="selectAll()">Tudo</button>
     <button class="select-delete" onclick="deleteSelected()">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
       Apagar
@@ -281,7 +407,7 @@
       <button type="button" class="form-input" style="cursor:pointer;text-align:center;" onclick="document.getElementById('edit-profile-pic').click()">Escolher imagem :3</button>
     </div>
     <button class="modal-btn" onclick="saveProfile()">SALVAR ALTERAÇÕES</button>
-    <button class="modal-btn" style="background:transparent;border:1px solid #a33030;color:#a33030;margin-top:10px" onclick="handleLogout()">SAIR DA CONTA</button>
+    <button class="modal-btn" style="background:transparent;border:1px solid #b89cd9;color:#b89cd9;margin-top:10px" onclick="handleLogout()">SAIR DA CONTA</button>
   </div></div><script>
 let currentUser = null;
 let newProfilePicBase64 = null;
@@ -390,6 +516,12 @@ function toggleSelect(id) {
   } else {
     selectedIds.add(id);
   }
+  updateSelectCount();
+  renderSaves();
+}
+
+function selectAll() {
+  savesData.forEach(s => selectedIds.add(s.id));
   updateSelectCount();
   renderSaves();
 }
@@ -508,12 +640,17 @@ function renderSaves() {
     item.addEventListener('touchend', () => clearTimeout(pressTimer));
     item.addEventListener('touchmove', () => clearTimeout(pressTimer));
 
-    // Toque simples: se em modo seleção, seleciona; senão, abre
+    // Toque simples: se em modo seleção, seleciona; senão, abre com animação
     item.addEventListener('click', () => {
       if (selectMode) {
         toggleSelect(save.id);
       } else {
-        editSave(save.id);
+        // Animação suave de pressionar
+        item.classList.add('pressing');
+        item.addEventListener('animationend', () => {
+          item.classList.remove('pressing');
+          editSave(save.id);
+        }, { once: true });
       }
     });
 
