@@ -248,6 +248,10 @@
         <input type="checkbox" id="filter-favorite">
         Favoritas
       </label>
+      <label class="filter-checkbox-label">
+        <input type="checkbox" id="filter-notes">
+        Com notas
+      </label>
     </div>
   </div>
   <div class="col-headers">
@@ -564,9 +568,10 @@ function highlightPlaceholdersHtml(rawText, blurred) {
 
 // Decide se uma string passa pelo filtro de busca + "não traduzidas" + "favoritas".
 // Não toca em stringsData, só decide o que aparece na tela.
-function matchesFilters(item, term, onlyUntranslated, onlyFavorite) {
+function matchesFilters(item, term, onlyUntranslated, onlyFavorite, onlyNotes) {
   if (onlyUntranslated && item.value) return false;
   if (onlyFavorite && !item.favorite) return false;
+  if (onlyNotes && !item.note) return false;
   if (!term) return true;
   const t = term.toLowerCase();
   return (item.key_hex || '').toLowerCase().includes(t) ||
@@ -588,9 +593,10 @@ function renderStrings() {
   const term = (document.getElementById('search-input')?.value || '').trim();
   const onlyUntranslated = document.getElementById('filter-untranslated')?.checked || false;
   const onlyFavorite = document.getElementById('filter-favorite')?.checked || false;
+  const onlyNotes = document.getElementById('filter-notes')?.checked || false;
   const visibleIndices = [];
   stringsData.forEach((item, idx) => {
-    if (matchesFilters(item, term, onlyUntranslated, onlyFavorite)) visibleIndices.push(idx);
+    if (matchesFilters(item, term, onlyUntranslated, onlyFavorite, onlyNotes)) visibleIndices.push(idx);
   });
 
   if (visibleIndices.length === 0) {
@@ -995,14 +1001,18 @@ function redoNative() {
 document.getElementById('search-input').addEventListener('input', renderStrings);
 document.getElementById('filter-untranslated').addEventListener('change', renderStrings);
 document.getElementById('filter-favorite').addEventListener('change', renderStrings);
+document.getElementById('filter-notes').addEventListener('change', renderStrings);
 
 function updateProgressBadge() {
-  // Conta strings que diferem do original (editedIndices + carregadas de save)
   const translatedCount = stringsData.filter((item, idx) =>
     editedIndices.has(idx) || (item.value && item.value !== item.original)
   ).length;
   const badge = document.getElementById('count-badge');
   badge.textContent = translatedCount + '/' + stringsData.length;
+  const anyFilter = document.getElementById('filter-untranslated')?.checked ||
+                    document.getElementById('filter-favorite')?.checked ||
+                    document.getElementById('filter-notes')?.checked;
+  badge.classList.toggle('filter-active', !!anyFilter);
 }
 
 // ---- IMPORTAR TRADUÇÕES ----
