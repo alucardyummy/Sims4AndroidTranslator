@@ -217,7 +217,7 @@
         <button class="undo-btn" id="undo-btn" onclick="undoNative()" title="Desfazer (↶)">↶</button>
         <button class="undo-btn" id="redo-btn" onclick="redoNative()" title="Refazer (↷)">↷</button>
       </div>
-      <button class="focus-toggle-btn" id="focus-btn" onclick="toggleFocusMode()" title="Modo foco">👁️</button>
+      <button class="focus-toggle-btn" id="focus-btn" onclick="toggleFocusMode()" title="Modo foco" style="font-size:10px;line-height:1;padding-bottom:3px;">𓂁𓂄</button>
       <div class="timer-badge" id="timer-badge">0:00</div>
       <div class="count-badge" id="count-badge" onclick="toggleUntranslatedFilter()" title="Clique para filtrar não traduzidas">—</div>
       <button class="save-progress-btn" id="save-progress-btn" onclick="saveProgressManual()" title="Salvar progresso">✓</button>
@@ -646,7 +646,8 @@ function renderStrings() {
     if (taExpanded) autoResize(ta);
     updateBackdrop(idx, true);
 
-    ta.addEventListener('dblclick', function() {
+    ta.addEventListener('dblclick', function(e) {
+      e.preventDefault();
       toggleTranslationExpand(parseInt(this.dataset.idx), null);
     });
 
@@ -888,7 +889,7 @@ function toggleFocusMode() {
   if (focusModeActive) {
     page.classList.add('focus-mode');
     if (_backBtnOriginalHTML === null) _backBtnOriginalHTML = backBtn.innerHTML;
-    backBtn.innerHTML = '👁️';
+    backBtn.innerHTML = '<span style="font-size:10px;line-height:1;padding-bottom:3px;">𓂁𓂄</span>';
     backBtn.removeAttribute('href');
     backBtn.title = 'Sair do modo foco';
     backBtn.onclick = function(e) { e.preventDefault(); toggleFocusMode(); };
