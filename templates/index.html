@@ -177,21 +177,23 @@
     pointer-events: none;
   }
 
-  /* Save item mais bonito */
+  /* Save item glassmorphism real */
   .save-item {
-    background: linear-gradient(135deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0.15) 100%) !important;
-    border: 1px solid rgba(184,156,217,0.35) !important;
-    backdrop-filter: blur(8px);
-    box-shadow: 0 2px 12px rgba(138,127,166,0.08), inset 0 1px 0 rgba(255,255,255,0.3);
+    background: rgba(255,255,255,0.14) !important;
+    border: 1px solid rgba(255,255,255,0.45) !important;
+    backdrop-filter: blur(18px) saturate(1.4);
+    -webkit-backdrop-filter: blur(18px) saturate(1.4);
+    box-shadow: 0 4px 24px rgba(100,80,140,0.12), inset 0 1px 0 rgba(255,255,255,0.5);
     transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
   }
   .save-item:hover {
-    border-color: rgba(184,156,217,0.6) !important;
-    box-shadow: 0 4px 20px rgba(138,127,166,0.15), inset 0 1px 0 rgba(255,255,255,0.4);
+    background: rgba(255,255,255,0.2) !important;
+    border-color: rgba(184,156,217,0.7) !important;
+    box-shadow: 0 6px 30px rgba(138,127,166,0.2), inset 0 1px 0 rgba(255,255,255,0.6);
   }
   .save-item.selected {
-    border-color: rgba(184,156,217,0.65) !important;
-    background: linear-gradient(135deg, rgba(184,156,217,0.2) 0%, rgba(138,127,166,0.12) 100%) !important;
+    border-color: rgba(184,156,217,0.8) !important;
+    background: rgba(184,156,217,0.18) !important;
   }
 
   /* Círculo seleção roxo */
@@ -224,11 +226,13 @@
     background: linear-gradient(90deg, transparent, rgba(184,156,217,0.4), transparent);
   }
 
-  /* Modal bonito */
+  /* Modal com glass */
   .modal-box {
-    border: 1px solid rgba(184,156,217,0.3) !important;
-    box-shadow: 0 24px 60px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.2);
-    backdrop-filter: blur(12px);
+    background: rgba(255,255,255,0.18) !important;
+    border: 1px solid rgba(255,255,255,0.45) !important;
+    box-shadow: 0 24px 60px rgba(80,60,120,0.25), inset 0 1px 0 rgba(255,255,255,0.5);
+    backdrop-filter: blur(24px) saturate(1.5);
+    -webkit-backdrop-filter: blur(24px) saturate(1.5);
   }
 
   /* Versão badge */
@@ -258,10 +262,17 @@
     50% { transform: translateY(-4px); }
   }
 
-  /* Botão importar mais bonito */
-  .btn-import {
-    box-shadow: 0 4px 20px rgba(138,127,166,0.15), inset 0 1px 0 rgba(255,255,255,0.4);
+  /* Botões com glass */
+  .btn-import, .btn-new, .btn-merge {
+    background: rgba(255,255,255,0.14) !important;
+    border: 1px solid rgba(255,255,255,0.45) !important;
+    backdrop-filter: blur(18px) saturate(1.4);
+    -webkit-backdrop-filter: blur(18px) saturate(1.4);
+    box-shadow: 0 4px 24px rgba(100,80,140,0.1), inset 0 1px 0 rgba(255,255,255,0.5);
     transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .btn-import:hover, .btn-new:hover {
+    background: rgba(255,255,255,0.22) !important;
   }
 </style>
 </head>
