@@ -43,6 +43,7 @@
   .undo-btn + .undo-btn { border-left: 1px solid var(--border); }
   .undo-btn:disabled { opacity: 0.3; pointer-events: none; }
   .undo-btn:active { color: #9cb8b2; }
+  .undo-btn.has-history { color: #9cb8b2; }
   .filter-bar { display: flex; flex-direction: column; gap: 5px; padding: 0.45rem 0.75rem; border-bottom: 1px solid var(--border); flex-shrink: 0; background: var(--bg); }
   .search-input { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 7px; padding: 6px 9px; font-size: 12px; color: var(--text); font-family: 'DM Sans', sans-serif; }
   .search-input:focus { outline: none; border-color: var(--accent-dim); }
@@ -58,8 +59,8 @@
   .original-text .ph { color: #9cb8b2; font-style: normal; }
   .copy-btn { position: absolute; top: 4px; right: 4px; width: 18px; height: 18px; border-radius: 5px; background: var(--surface2); border: 1px solid var(--border2); color: var(--text-muted); font-size: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; -webkit-tap-highlight-color: transparent; z-index: 2; line-height: 1; }
   .copy-btn:active { transform: scale(0.9); border-color: #9cb8b2; color: #9cb8b2; }
-  .copy-btn.copied { color: #4caf50; border-color: #4caf50; }
-  .edit-container { display: flex; gap: 5px; align-items: flex-start; }
+  .copy-btn.copied { color: #9cb8b2; border-color: #9cb8b2; }
+  .edit-container { display: flex; gap: 5px; align-items: flex-start; margin-top: 14px; }
   .edit-actions-col { display: flex; flex-direction: column; gap: 5px; flex-shrink: 0; }
   .ta-wrap { position: relative; flex: 1; min-width: 0; }
   .edit-textarea { position: relative; z-index: 1; background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; padding: 18px 9px 7px 9px; font-size: 12px; color: transparent; caret-color: #f0ece4; line-height: 1.5; width: 100%; resize: none; font-family: 'DM Sans', sans-serif; min-height: 36px; overflow: hidden; }
@@ -647,6 +648,9 @@ function renderStrings() {
         lastEdit = { idx: i, previousValue: editSnapshots[i] };
         const undoBtn = document.getElementById('undo-btn');
         undoBtn.disabled = false;
+        undoBtn.classList.add('has-history');
+        // Redo perde a cor enquanto o usuário edita (ainda não há nada a refazer)
+        document.getElementById('redo-btn').classList.remove('has-history');
       }
     });
 
@@ -861,10 +865,13 @@ function undoNative() {
       triggerAutoSave();
       updateProgressBadge();
     }
+    // Redo fica colorido: agora há algo a refazer
+    document.getElementById('redo-btn').classList.add('has-history');
   }
 }
 
 function redoNative() {
+  const redoBtn = document.getElementById('redo-btn');
   if (_focusedTextarea) {
     _focusedTextarea.focus();
     document.execCommand('redo');
@@ -875,6 +882,12 @@ function redoNative() {
       triggerAutoSave();
       updateProgressBadge();
     }
+    // Após refazer, remove a cor (não há mais nada a refazer neste momento)
+    redoBtn.classList.remove('has-history');
+  } else {
+    // Nada focado / nada desfeito: flash temporário como efeito visual
+    redoBtn.classList.add('has-history');
+    setTimeout(() => redoBtn.classList.remove('has-history'), 600);
   }
 }
 
