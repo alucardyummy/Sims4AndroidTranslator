@@ -50,7 +50,7 @@
   .filter-checkbox-label { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-muted); cursor: pointer; -webkit-tap-highlight-color: transparent; }
   .col-headers { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 4px 0.75rem; border-bottom: 1px solid var(--border); flex-shrink: 0; background: var(--bg); }
   .col-header { font-size: 9px; color: var(--text-dim); letter-spacing: 0.08em; text-transform: uppercase; text-align: center; }
-  .strings-list { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: 80px; }
+  .strings-list { flex: 1; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; padding-bottom: 80px; }
   .string-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 6px 0.75rem; border-bottom: 1px solid var(--border); align-items: start; }
   .key-hex { font-family: 'DM Mono', monospace; font-size: 8px; color: var(--text-dim); letter-spacing: 0.03em; margin-bottom: 3px; text-align: center; }
   .original-text { position: relative; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 7px 26px 7px 9px; font-size: 12px; color: var(--text-muted); line-height: 1.5; word-break: break-word; font-style: italic; min-height: 36px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
@@ -929,6 +929,7 @@ function toggleFocusMode() {
   focusModeActive = !focusModeActive;
   const page = document.querySelector('.page');
   const backBtn = document.getElementById('back-btn');
+  const focusBtn = document.getElementById('focus-btn');
   if (focusModeActive) {
     page.classList.add('focus-mode');
     if (_backBtnOriginalHTML === null) _backBtnOriginalHTML = backBtn.innerHTML;
@@ -936,12 +937,16 @@ function toggleFocusMode() {
     backBtn.removeAttribute('href');
     backBtn.title = 'Sair do modo foco';
     backBtn.onclick = function(e) { e.preventDefault(); toggleFocusMode(); };
+    // Remove circle in focus mode
+    focusBtn.style.border = '1px solid transparent';
   } else {
     page.classList.remove('focus-mode');
     backBtn.innerHTML = _backBtnOriginalHTML;
     backBtn.setAttribute('href', '/info');
     backBtn.title = '';
     backBtn.onclick = confirmBack;
+    // Restore circle
+    focusBtn.style.border = '1px solid #9cb8b2';
   }
 }
 
@@ -1350,6 +1355,34 @@ async function startTranslateAll() {
   document.getElementById('tall-start-btn').onclick = () => closeTallSheet();
 }
 
+
+// ── Scrollbar diamond & is-scrolling ──
+(function() {
+  const list = document.getElementById('strings-list');
+  const diamond = document.getElementById('scroll-diamond');
+  let scrollTimer;
+
+  list.addEventListener('scroll', () => {
+    // is-scrolling class for scrollbar thumb opacity
+    list.classList.add('is-scrolling');
+
+    // Position diamond along the track
+    const ratio = list.scrollTop / (list.scrollHeight - list.clientHeight || 1);
+    const topMin = list.getBoundingClientRect().top + 8;
+    const topMax = list.getBoundingClientRect().bottom - 18;
+    const y = topMin + ratio * (topMax - topMin);
+    diamond.style.top = y + 'px';
+    diamond.classList.add('visible');
+
+    // Reset hide timer
+    clearTimeout(scrollTimer);
+    scrollTimer = setTimeout(() => {
+      list.classList.remove('is-scrolling');
+      diamond.classList.remove('visible');
+    }, 800);
+  }, { passive: true });
+})();
+
 // ---- CRONÔMETRO ----
 const _sessionStart = Date.now();
 function updateTimer() {
@@ -1386,5 +1419,6 @@ function confirmBack(e) {
 
 load();
 </script>
+<div id="scroll-diamond"></div>
 </body>
 </html> 
