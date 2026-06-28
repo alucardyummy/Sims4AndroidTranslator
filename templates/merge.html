@@ -14,60 +14,71 @@
   :root {
     --bg: #0f0f0f; --surface: #1a1a1a; --surface2: #222;
     --border: #2a2a2a; --border2: #333;
-    --accent: #c8a96e; --accent-dim: #8a6f42;
-    --text: #f0ece4; --text-muted: #7a7570;
+    --accent: #9cb8b2; --accent-dim: #6a9088;
+    --text: #f0ece4; --text-muted: #7a7570; --text-dim: #4a4a4a;
     --radius: 16px; --radius-sm: 10px;
   }
   html, body { min-height: 100%; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; }
   .page { min-height: 100dvh; display: flex; flex-direction: column; padding: 1.25rem 1rem 2rem; }
+
   .topbar { display: flex; align-items: center; gap: 12px; margin-bottom: 1.75rem; }
-  .back-btn { width: 36px; height: 36px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-muted); text-decoration: none; -webkit-tap-highlight-color: transparent; flex-shrink: 0; }
-  .back-btn svg { width: 18px; height: 18px; }
+  .back-btn { width: 34px; height: 34px; background: transparent; border: 1px solid transparent; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-muted); text-decoration: none; -webkit-tap-highlight-color: transparent; flex-shrink: 0; transition: color 0.15s; }
+  .back-btn:active { color: var(--accent); }
+  .back-btn svg { width: 17px; height: 17px; }
   .topbar-title { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 600; letter-spacing: 0.06em; color: var(--text-muted); text-transform: uppercase; }
-  .section-label { font-size: 11px; color: var(--text-muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.75rem; padding-left: 2px; }
+
+  .section-label { font-size: 10px; color: var(--text-dim); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.75rem; padding-left: 2px; }
   .separator { height: 1px; background: var(--border); margin: 1.25rem 0; }
 
   /* Drop zone */
-  .drop-zone { border: 1.5px dashed var(--border2); border-radius: var(--radius); padding: 2rem 1rem; display: flex; flex-direction: column; align-items: center; gap: 0.75rem; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: border-color 0.2s; margin-bottom: 1.25rem; }
+  .drop-zone { border: 1.5px dashed var(--border2); border-radius: var(--radius); padding: 2.25rem 1rem; display: flex; flex-direction: column; align-items: center; gap: 0.65rem; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: border-color 0.25s, background 0.25s; margin-bottom: 1.25rem; position: relative; overflow: hidden; }
+  .drop-zone::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at center, rgba(156,184,178,0.05) 0%, transparent 70%); opacity: 0; transition: opacity 0.3s; pointer-events: none; }
   .drop-zone.has-files { border-color: var(--accent-dim); }
-  .drop-zone-icon { font-size: 28px; }
-  .drop-zone-label { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.06em; color: var(--text-muted); text-transform: uppercase; }
-  .drop-zone-sub { font-size: 11px; color: var(--text-muted); text-align: center; line-height: 1.5; }
+  .drop-zone.has-files::before { opacity: 1; }
+  .drop-zone:active { background: rgba(156,184,178,0.03); }
+  .drop-zone-icon { font-size: 22px; color: var(--text-dim); transition: color 0.25s, transform 0.3s; }
+  .drop-zone.has-files .drop-zone-icon { color: var(--accent); transform: scale(1.15); }
+  .drop-zone-label { font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.08em; color: var(--text-muted); text-transform: uppercase; }
+  .drop-zone-sub { font-size: 11px; color: var(--text-dim); text-align: center; line-height: 1.6; }
   #file-input { display: none; }
 
   /* Lista de arquivos */
-  .file-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 1.25rem; }
-  .file-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); gap: 8px; }
+  .file-list { display: flex; flex-direction: column; gap: 5px; margin-bottom: 1rem; }
+  .file-item { display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); transition: border-color 0.15s; animation: itemIn 0.22s ease; }
+  @keyframes itemIn { from { opacity: 0; transform: translateX(12px); } to { opacity: 1; transform: translateX(0); } }
+  .file-item-index { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text-dim); flex-shrink: 0; width: 14px; text-align: right; font-variant-numeric: tabular-nums; }
   .file-item-name { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .file-item-size { font-size: 10px; color: var(--text-muted); white-space: nowrap; flex-shrink: 0; }
-  .file-item-remove { width: 24px; height: 24px; background: transparent; border: none; color: var(--text-muted); font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; -webkit-tap-highlight-color: transparent; border-radius: 4px; }
-  .file-item-remove:active { color: var(--text); }
+  .file-item-size { font-size: 10px; color: var(--text-dim); white-space: nowrap; flex-shrink: 0; font-family: 'DM Mono', monospace; font-variant-numeric: tabular-nums; }
+  .file-item-remove { width: 22px; height: 22px; background: transparent; border: none; color: var(--text-dim); font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; -webkit-tap-highlight-color: transparent; border-radius: 4px; transition: color 0.15s; }
+  .file-item-remove:active { color: #c08080; }
 
-  .file-count { font-size: 12px; color: var(--text-muted); text-align: center; margin-bottom: 0.5rem; }
+  .file-count { font-size: 10px; color: var(--text-dim); text-align: center; margin-bottom: 0.5rem; font-family: 'DM Mono', monospace; font-variant-numeric: tabular-nums; letter-spacing: 0.04em; }
 
   /* Botão mesclar */
-  .merge-btn { width: 100%; padding: 18px; background: var(--accent-dim); border: none; border-radius: var(--radius); color: var(--bg); font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; letter-spacing: 0.08em; cursor: pointer; -webkit-tap-highlight-color: transparent; margin-top: auto; transition: background 0.15s; }
+  .merge-btn { width: 100%; padding: 17px; background: var(--accent-dim); border: none; border-radius: var(--radius); color: #080808; font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 0.1em; cursor: pointer; -webkit-tap-highlight-color: transparent; margin-top: auto; transition: background 0.15s, transform 0.1s, opacity 0.2s; }
   .merge-btn:active { background: var(--accent); transform: scale(0.97); }
-  .merge-btn:disabled { opacity: 0.3; pointer-events: none; }
+  .merge-btn:disabled { opacity: 0.2; pointer-events: none; }
 
   /* Loading */
   .loading-overlay { display: none; position: fixed; inset: 0; background: rgba(15,15,15,0.92); z-index: 100; align-items: center; justify-content: center; flex-direction: column; gap: 1rem; }
   .loading-overlay.active { display: flex; }
-  .spinner { width: 36px; height: 36px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  .spinner { width: 30px; height: 30px; border: 1.5px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
-  .loading-text { font-size: 13px; color: var(--text-muted); letter-spacing: 0.05em; }
+  .loading-text { font-size: 11px; color: var(--text-muted); letter-spacing: 0.06em; font-family: 'DM Mono', monospace; }
 
-  /* Toast de erro */
-  .toast { position: fixed; bottom: 2rem; left: 1rem; right: 1rem; background: #2a1a1a; border: 1px solid #5a2a2a; border-radius: var(--radius-sm); padding: 12px 16px; font-size: 13px; color: #e08080; z-index: 200; display: none; text-align: center; }
-  .toast.show { display: block; animation: fadeIn 0.2s ease; }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-  .search-wrap { position: relative; margin-bottom: 0.75rem; display: none; }
-  .search-wrap.visible { display: block; }
-  .search-input { width: 100%; padding: 10px 12px 10px 36px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-family: 'DM Mono', monospace; font-size: 12px; outline: none; -webkit-appearance: none; }
-  .search-input::placeholder { color: var(--text-muted); }
+  /* Toast */
+  .toast { position: fixed; bottom: 2rem; left: 1rem; right: 1rem; background: #1c1212; border: 1px solid #3a2020; border-radius: var(--radius-sm); padding: 11px 16px; font-size: 12px; color: #b07070; z-index: 200; display: none; text-align: center; letter-spacing: 0.03em; }
+  .toast.show { display: block; animation: fadeInUp 0.22s ease; }
+  @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* Busca */
+  .search-wrap { position: relative; margin-bottom: 0.65rem; display: none; }
+  .search-wrap.visible { display: block; animation: fadeInUp 0.2s ease; }
+  .search-input { width: 100%; padding: 9px 12px 9px 33px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-family: 'DM Mono', monospace; font-size: 11px; outline: none; -webkit-appearance: none; transition: border-color 0.15s; }
+  .search-input::placeholder { color: var(--text-dim); }
   .search-input:focus { border-color: var(--border2); }
-  .search-icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 14px; pointer-events: none; }
-  .search-count { font-size: 10px; color: var(--text-muted); text-align: right; margin-top: -0.5rem; margin-bottom: 0.5rem; display: none; }
+  .search-icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--text-dim); font-size: 12px; pointer-events: none; }
+  .search-count { font-size: 10px; color: var(--text-dim); text-align: right; margin-top: -0.4rem; margin-bottom: 0.5rem; display: none; font-family: 'DM Mono', monospace; }
   .search-count.visible { display: block; }
   .file-item.hidden { display: none; }
 </style>
@@ -93,7 +104,7 @@
   <input type="file" id="file-input" accept=".package" multiple>
 
   <div class="search-wrap" id="search-wrap">
-    <span class="search-icon">🔍</span>
+    <span class="search-icon">◎</span>
     <input class="search-input" id="search-input" type="text" placeholder="Buscar arquivo..." oninput="filterList()">
   </div>
   <div class="search-count" id="search-count"></div>
@@ -154,6 +165,7 @@ function renderList() {
     const item = document.createElement('div');
     item.className = 'file-item';
     item.innerHTML =
+      '<span class="file-item-index">' + (idx + 1) + '</span>' +
       '<span class="file-item-name">' + f.name + '</span>' +
       '<span class="file-item-size">' + formatSize(f.size) + '</span>' +
       '<button class="file-item-remove" onclick="removeFile(' + idx + ')">✕</button>';
@@ -172,7 +184,6 @@ function renderList() {
   const sub = document.querySelector('.drop-zone-sub');
   sub.textContent = n > 0 ? 'Toque para adicionar mais arquivos' : 'Toque para escolher os .package\nque deseja juntar num só';
 
-  // Mostra/esconde campo de busca
   document.getElementById('search-wrap').classList.toggle('visible', n > 0);
   if (n === 0) {
     document.getElementById('search-input').value = '';
@@ -199,7 +210,6 @@ async function doMerge() {
       throw new Error(data.error || 'Erro ao mesclar');
     }
 
-    // Baixa o arquivo
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
