@@ -85,8 +85,8 @@
   .kebab-btn { width: 26px; height: 26px; border-radius: 50%; background: transparent; border: 1px solid transparent; color: var(--text-dim); display: flex; align-items: center; justify-content: center; cursor: pointer; -webkit-tap-highlight-color: transparent; font-size: 15px; line-height: 1; transition: color 0.15s; }
   .kebab-btn:active, .kebab-btn.open { color: #9cb8b2; }
   .kebab-btn:active { transform: scale(0.9); }
-  .kebab-menu { position: absolute; right: 0; top: 30px; background: var(--surface); border: 1px solid var(--border2); border-radius: 10px; z-index: 50; min-width: 148px; overflow: hidden; box-shadow: 0 6px 20px rgba(0,0,0,0.6); transform-origin: top right; transform: scale(0.95); opacity: 0; pointer-events: none; transition: transform 0.12s ease, opacity 0.12s ease; }
-  .kebab-menu.open { transform: scale(1); opacity: 1; pointer-events: auto; }
+  .kebab-menu { position: absolute; right: 0; top: 30px; background: var(--surface); border: 1px solid var(--border2); border-radius: 10px; z-index: 50; min-width: 148px; overflow: hidden; box-shadow: 0 6px 20px rgba(0,0,0,0.6); transform-origin: top right; transform: translateX(16px); opacity: 0; pointer-events: none; transition: transform 0.22s ease, opacity 0.22s ease; }
+  .kebab-menu.open { transform: translateX(0); opacity: 1; pointer-events: auto; }
   .kebab-item { display: flex; align-items: center; gap: 8px; padding: 9px 12px; font-size: 11px; color: var(--text-muted); cursor: pointer; -webkit-tap-highlight-color: transparent; border-bottom: 1px solid var(--border); white-space: nowrap; }
   .kebab-item:last-child { border-bottom: none; }
   .kebab-item:active { background: var(--surface2); }
@@ -94,7 +94,7 @@
   .kebab-item.note-filled-item .kebab-item-icon { color: var(--accent); }
   .kebab-item.clear-undo-item { color: #9cb8b2; }
   /* Ponto de nota ao lado da estrela */
-  .note-dot { display: inline-block; width: 3px; height: 3px; border-radius: 50%; background: #9cb8b2; position: absolute; top: 9px; left: 19px; z-index: 4; pointer-events: none; }
+  .note-dot { display: inline-block; width: 3px; height: 3px; border-radius: 50%; background: #9cb8b2; position: absolute; top: 8px; left: 19px; z-index: 4; pointer-events: none; }
   .note-row { display: none; padding: 0 0.75rem 8px; }
   .note-row.open { display: block; }
   .note-textarea { width: 100%; background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; padding: 7px 9px; font-size: 11px; color: var(--text); font-family: 'DM Sans', sans-serif; resize: none; min-height: 32px; }
@@ -165,9 +165,11 @@
   .engine-option { padding: 12px 16px; color: var(--text); font-size: 13px; cursor: pointer; border-bottom: 1px solid var(--border); }
   .engine-option:last-child { border-bottom: none; }
   .engine-option:active { background: var(--surface2); }
-  .import-sheet { display: none; position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,0.85); align-items: flex-end; }
+  .import-sheet { display: none; position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,0); align-items: flex-end; transition: background 0.28s ease; }
   .import-sheet.open { display: flex; }
-  .import-sheet-inner { width: 100%; background: var(--surface); border-top: 1px solid var(--border); border-radius: 20px 20px 0 0; padding: 1.5rem 1rem 2.5rem; max-height: 75dvh; overflow-y: auto; animation: slideUp 0.25s ease; }
+  .import-sheet.open-active { background: rgba(0,0,0,0.85); }
+  .import-sheet-inner { width: 100%; background: var(--surface); border-top: 1px solid var(--border); border-radius: 20px 20px 0 0; padding: 1.5rem 1rem 2.5rem; max-height: 75dvh; overflow-y: auto; transform: translateX(60px); opacity: 0; transition: transform 0.28s ease, opacity 0.28s ease; }
+  .import-sheet.open-active .import-sheet-inner { transform: translateX(0); opacity: 1; }
   .import-sheet-title { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; color: var(--accent); margin-bottom: 0.25rem; }
   .import-sheet-sub { font-size: 12px; color: var(--text-muted); margin-bottom: 1.25rem; line-height: 1.5; }
   .import-source-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 1.25rem; }
@@ -189,9 +191,11 @@
   .translate-all-btn { width: 100%; padding: 13px; background: transparent; border: 1px solid var(--accent-dim); border-radius: var(--radius); color: var(--accent); font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.06em; cursor: pointer; -webkit-tap-highlight-color: transparent; margin-bottom: 0.75rem; transition: all 0.2s; }
   .translate-all-btn:active { background: rgba(156,184,178,0.08); }
   .translate-all-btn:disabled { opacity: 0.35; pointer-events: none; }
-  .tall-sheet { display: none; position: fixed; inset: 0; z-index: 400; background: rgba(0,0,0,0.85); align-items: flex-end; }
+  .tall-sheet { display: none; position: fixed; inset: 0; z-index: 400; background: rgba(0,0,0,0); align-items: flex-end; transition: background 0.28s ease; }
   .tall-sheet.open { display: flex; }
-  .tall-sheet-inner { width: 100%; background: var(--surface); border-top: 1px solid var(--border); border-radius: 20px 20px 0 0; padding: 1.5rem 1rem 2.5rem; animation: slideUp 0.25s ease; }
+  .tall-sheet.open-active { background: rgba(0,0,0,0.85); }
+  .tall-sheet-inner { width: 100%; background: var(--surface); border-top: 1px solid var(--border); border-radius: 20px 20px 0 0; padding: 1.5rem 1rem 2.5rem; transform: translateX(60px); opacity: 0; transition: transform 0.28s ease, opacity 0.28s ease; }
+  .tall-sheet.open-active .tall-sheet-inner { transform: translateX(0); opacity: 1; }
   .tall-title { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; color: var(--accent); margin-bottom: 0.25rem; }
   .tall-sub { font-size: 12px; color: var(--text-muted); margin-bottom: 1.25rem; line-height: 1.5; }
   .tall-progress-track { width: 100%; height: 6px; background: var(--border); border-radius: 99px; overflow: hidden; margin-bottom: 0.75rem; }
@@ -305,7 +309,7 @@
 </div>
 
 <!-- Sheet de traduzir tudo -->
-<div class="tall-sheet" id="tall-sheet" onclick="if(event.target===this) cancelTranslateAll();">
+<div class="tall-sheet" id="tall-sheet" onclick="if(event.target===this) closeTallSheet();">
   <div class="tall-sheet-inner">
     <div class="tall-title" id="tall-title">Traduzir tudo</div>
     <div class="tall-sub" id="tall-sub">Escolha a engine e toque em iniciar. Strings já traduzidas serão ignoradas.</div>
@@ -1008,13 +1012,17 @@ function switchImportSource(source) {
 }
 
 async function openImportSheet() {
-  document.getElementById('import-sheet').classList.add('open');
+  const sheet = document.getElementById('import-sheet');
+  sheet.classList.add('open');
+  requestAnimationFrame(() => requestAnimationFrame(() => sheet.classList.add('open-active')));
   switchImportSource('saves');
   await loadImportSaves();
 }
 
 function closeImportSheet() {
-  document.getElementById('import-sheet').classList.remove('open');
+  const sheet = document.getElementById('import-sheet');
+  sheet.classList.remove('open-active');
+  setTimeout(() => sheet.classList.remove('open'), 300);
 }
 
 async function loadImportSaves() {
@@ -1197,7 +1205,15 @@ function openTranslateAllSheet() {
   document.getElementById('tall-status').textContent = 'Aguardando...';
   document.getElementById('tall-start-btn').disabled = false;
   document.getElementById('tall-start-btn').textContent = '▶ INICIAR';
-  document.getElementById('tall-sheet').classList.add('open');
+  const sheet = document.getElementById('tall-sheet');
+  sheet.classList.add('open');
+  requestAnimationFrame(() => requestAnimationFrame(() => sheet.classList.add('open-active')));
+}
+
+function closeTallSheet() {
+  const sheet = document.getElementById('tall-sheet');
+  sheet.classList.remove('open-active');
+  setTimeout(() => sheet.classList.remove('open'), 300);
 }
 
 function selectTallEngine(engine) {
@@ -1210,7 +1226,7 @@ function selectTallEngine(engine) {
 function cancelTranslateAll() {
   tallCancelled = true;
   if (!tallRunning) {
-    document.getElementById('tall-sheet').classList.remove('open');
+    closeTallSheet();
   } else {
     document.getElementById('tall-status').textContent = 'Cancelando...';
   }
@@ -1310,7 +1326,7 @@ async function startTranslateAll() {
   }
   document.getElementById('tall-start-btn').textContent = 'Fechar';
   document.getElementById('tall-start-btn').disabled = false;
-  document.getElementById('tall-start-btn').onclick = () => document.getElementById('tall-sheet').classList.remove('open');
+  document.getElementById('tall-start-btn').onclick = () => closeTallSheet();
 }
 
 // ---- CRONÔMETRO ----
