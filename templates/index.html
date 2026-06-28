@@ -336,6 +336,47 @@
   .btn-import:hover, .btn-new:hover {
     background: rgba(255,255,255,0.22) !important;
   }
+
+  /* ── Skeleton loader ── */
+  @keyframes skeletonShimmer {
+    0%   { background-position: -200% center; }
+    100% { background-position:  200% center; }
+  }
+  .skeleton-item {
+    border-radius: var(--radius-sm);
+    padding: 14px 14px;
+    display: flex; align-items: center; gap: 12px;
+    background: rgba(255,255,255,0.13);
+    border: 1px solid rgba(255,255,255,0.3);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    overflow: hidden;
+    position: relative;
+  }
+  .skeleton-item::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      105deg,
+      transparent 30%,
+      rgba(255,255,255,0.18) 50%,
+      transparent 70%
+    );
+    background-size: 200% 100%;
+    animation: skeletonShimmer 1.6s ease-in-out infinite;
+  }
+  .sk-circle {
+    width: 20px; height: 20px; border-radius: 50%;
+    background: rgba(255,255,255,0.22);
+    flex-shrink: 0;
+  }
+  .sk-lines { flex: 1; display: flex; flex-direction: column; gap: 7px; }
+  .sk-line {
+    height: 10px; border-radius: 6px;
+    background: rgba(255,255,255,0.22);
+  }
+  .sk-line.short { width: 45%; height: 8px; }
 </style>
 </head>
 <body>
@@ -404,6 +445,16 @@
   <div id="saves-area" style="display:none;width:100%;max-width:340px;position:relative;z-index:1;">
     <div class="saves-label">Traduções salvas</div>
     <div class="saves-list" id="saves-list"></div>
+  </div>
+
+  <!-- Skeleton placeholder (visível enquanto carrega) -->
+  <div id="skeleton-area" style="display:none;width:100%;max-width:340px;position:relative;z-index:1;">
+    <div class="saves-label">Traduções salvas</div>
+    <div class="saves-list" style="display:flex;flex-direction:column;gap:8px;">
+      <div class="skeleton-item"><div class="sk-circle"></div><div class="sk-lines"><div class="sk-line"></div><div class="sk-line short"></div></div></div>
+      <div class="skeleton-item"><div class="sk-circle"></div><div class="sk-lines"><div class="sk-line" style="width:80%"></div><div class="sk-line short"></div></div></div>
+      <div class="skeleton-item"><div class="sk-circle"></div><div class="sk-lines"><div class="sk-line" style="width:65%"></div><div class="sk-line short" style="width:35%"></div></div></div>
+    </div>
   </div>
 
   <div class="version">v1.0 · MIT · Voky1 • Remake by AlucardYummy</div>
@@ -674,7 +725,9 @@ async function deleteSelected() {
 let savesData = [];
 
 async function loadSaves() {
-  // Mostra saves em cache imediatamente enquanto busca no servidor
+  let shownFromCache = false;
+
+  // Mostra cache COM animação imediatamente — sem esperar rede
   try {
     const cached = localStorage.getItem('cached_saves');
     if (cached) {
@@ -684,15 +737,21 @@ async function loadSaves() {
       const mascot = document.getElementById('mascot-div');
       if (hasSaves) { area.style.display = 'block'; mascot.style.display = 'flex'; }
       updateImportUI();
-      renderSaves(false);
+      renderSaves(true); // anima do cache já
+      shownFromCache = true;
     }
   } catch(e) {}
 
   try {
     const res = await fetch('/api/get_saves');
     const data = await res.json();
-    savesData = data.saves || [];
+    const freshSaves = data.saves || [];
+
+    // Só re-renderiza se os dados mudaram (sem animação pra não repetir)
+    const changed = JSON.stringify(freshSaves) !== JSON.stringify(savesData);
+    savesData = freshSaves;
     hasSaves = savesData.length > 0;
+
     if (hasSaves) {
       localStorage.setItem('has_saves', '1');
       localStorage.setItem('cached_saves', JSON.stringify(savesData));
@@ -713,13 +772,20 @@ async function loadSaves() {
     }
 
     updateImportUI();
-    renderSaves(true);
+    // Se mudou, re-renderiza sem animação. Se não tinha cache, anima agora.
+    renderSaves(changed ? false : !shownFromCache);
   } catch(e) {
     console.error('Erro ao carregar saves', e);
+    // Se falhou a rede mas tinha cache, já está mostrando — tudo bem
   }
 }
 
 function renderSaves(animate = false) {
+  // Hide skeleton, show real area
+  document.getElementById('skeleton-area').style.display = 'none';
+  if (savesData.length > 0) {
+    document.getElementById('saves-area').style.display = 'block';
+  }
   const list = document.getElementById('saves-list');
   list.innerHTML = '';
   savesData.forEach(save => {
@@ -1021,6 +1087,12 @@ async function handleForgotPassword() {
 
 // INIT
 checkLogin();
+
+// Mostra skeleton imediatamente se houve saves antes
+if (localStorage.getItem('has_saves') === '1') {
+  document.getElementById('skeleton-area').style.display = 'block';
+}
+
 loadSaves();
 
 if ('serviceWorker' in navigator) {
