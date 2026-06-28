@@ -42,7 +42,7 @@
   .undo-btn { width: 26px; height: 26px; background: transparent; border: none; color: var(--text-muted); font-size: 14px; display: flex; align-items: center; justify-content: center; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: all 0.2s; }
   .undo-btn + .undo-btn { border-left: 1px solid var(--border); }
   .undo-btn:disabled { opacity: 0.3; pointer-events: none; }
-  .undo-btn.active { color: var(--accent); }
+  .undo-btn:active { color: #9cb8b2; }
   .filter-bar { display: flex; flex-direction: column; gap: 5px; padding: 0.45rem 0.75rem; border-bottom: 1px solid var(--border); flex-shrink: 0; background: var(--bg); }
   .search-input { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 7px; padding: 6px 9px; font-size: 12px; color: var(--text); font-family: 'DM Sans', sans-serif; }
   .search-input:focus { outline: none; border-color: var(--accent-dim); }
@@ -52,12 +52,12 @@
   .strings-list { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: 80px; }
   .string-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 6px 0.75rem; border-bottom: 1px solid var(--border); align-items: start; }
   .key-hex { font-family: 'DM Mono', monospace; font-size: 8px; color: var(--text-dim); letter-spacing: 0.03em; margin-bottom: 3px; text-align: center; }
-  .original-text { position: relative; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 7px 26px 7px 9px; font-size: 12px; color: var(--text-muted); line-height: 1.5; word-break: break-word; font-style: italic; min-height: 36px; cursor: pointer; }
+  .original-text { position: relative; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 7px 26px 7px 9px; font-size: 12px; color: var(--text-muted); line-height: 1.5; word-break: break-word; font-style: italic; min-height: 36px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
   .original-text-inner { display: block; }
   .original-text-inner.clamped { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .original-text .ph { color: #9cb8b2; font-style: normal; }
   .copy-btn { position: absolute; top: 4px; right: 4px; width: 18px; height: 18px; border-radius: 5px; background: var(--surface2); border: 1px solid var(--border2); color: var(--text-muted); font-size: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; -webkit-tap-highlight-color: transparent; z-index: 2; line-height: 1; }
-  .copy-btn:active { transform: scale(0.9); border-color: var(--accent-dim); color: var(--accent); }
+  .copy-btn:active { transform: scale(0.9); border-color: #9cb8b2; color: #9cb8b2; }
   .copy-btn.copied { color: #4caf50; border-color: #4caf50; }
   .edit-container { display: flex; gap: 5px; align-items: flex-start; }
   .edit-actions-col { display: flex; flex-direction: column; gap: 5px; flex-shrink: 0; }
@@ -647,7 +647,6 @@ function renderStrings() {
         lastEdit = { idx: i, previousValue: editSnapshots[i] };
         const undoBtn = document.getElementById('undo-btn');
         undoBtn.disabled = false;
-        undoBtn.classList.add('active');
       }
     });
 
@@ -709,7 +708,7 @@ function copyOriginal(idx, event) {
   const btn = document.getElementById('copy-btn-' + idx);
   const flash = () => {
     if (!btn) return;
-    btn.innerHTML = '❒';
+    btn.innerHTML = '✧';
     btn.classList.add('copied');
     setTimeout(() => { btn.innerHTML = '❐'; btn.classList.remove('copied'); }, 1200);
   };
