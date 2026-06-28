@@ -12,17 +12,28 @@
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; tap-highlight-color: transparent; }
   :root {
-    --bg: #9cb8b2; 
-    --surface: #9cb8b2; 
-    --border: #7c9a93; 
-    --border2: #6a8881;
+    --bg: #7a9e97; 
+    --surface: rgba(255,255,255,0.22); 
+    --border: rgba(255,255,255,0.35); 
+    --border2: rgba(255,255,255,0.22);
     --accent: #111111; 
     --accent-dim: #222222;
     --text: #1a1a1a; 
-    --text-muted: #3a3a3a; 
+    --text-muted: #3a4a47; 
     --radius: 16px; --radius-sm: 10px;
   }
-  html, body { min-height: 100%; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; }
+  html, body { min-height: 100%; color: var(--text); font-family: 'DM Sans', sans-serif; }
+  body {
+    background:
+      radial-gradient(ellipse at 15% 15%, #b89cd9 0%, transparent 40%),
+      radial-gradient(ellipse at 85% 10%, #8fc9c0 0%, transparent 38%),
+      radial-gradient(ellipse at 70% 55%, #c4b0e8 0%, transparent 35%),
+      radial-gradient(ellipse at 20% 75%, #7ab8b0 0%, transparent 40%),
+      radial-gradient(ellipse at 90% 85%, #a89fd4 0%, transparent 38%),
+      radial-gradient(ellipse at 50% 40%, #9ecfc7 0%, transparent 50%),
+      linear-gradient(160deg, #8ab4ad 0%, #7a9e97 40%, #86a9a2 100%);
+    background-attachment: fixed;
+  }
   .screen { min-height: 100dvh; display: flex; flex-direction: column; align-items: center; padding: 0 1rem 2rem; position: relative; }
 
   /* TOPBAR */
@@ -132,13 +143,14 @@
     position: fixed;
     inset: 0;
     background: 
-      radial-gradient(ellipse at 20% 10%, rgba(184,156,217,0.18) 0%, transparent 55%),
-      radial-gradient(ellipse at 80% 80%, rgba(138,127,166,0.14) 0%, transparent 55%);
+      radial-gradient(ellipse at 30% 20%, rgba(184,156,217,0.25) 0%, transparent 45%),
+      radial-gradient(ellipse at 75% 65%, rgba(138,127,166,0.2) 0%, transparent 40%),
+      radial-gradient(ellipse at 10% 80%, rgba(140,200,190,0.18) 0%, transparent 40%);
     pointer-events: none;
     z-index: 0;
-    animation: bgPulse 8s ease-in-out infinite alternate;
+    animation: bgPulse 7s ease-in-out infinite alternate;
   }
-  @keyframes bgPulse { 0% { opacity: 0.7; } 100% { opacity: 1; } }
+  @keyframes bgPulse { 0% { opacity: 0.6; } 100% { opacity: 1; } }
 
   body::after {
     content: '✦  ✧  ✦  ✧  ✦  ✧';
