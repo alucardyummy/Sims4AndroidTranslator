@@ -626,7 +626,7 @@ function renderStrings() {
               '<span class="kebab-item-icon">📝</span>Nota' +
             '</div>' +
             '<div class="kebab-item" id="clear-btn-' + idx + '" onclick="closeKebab(' + idx + '); clearTranslation(' + idx + ', event)">' +
-              '<span class="kebab-item-icon">🗑</span>Limpar tudo' +
+              '<span class="kebab-item-icon">🗑</span>Limpar tradução' +
             '</div>' +
           '</div>' +
         '</div>' +
@@ -817,7 +817,7 @@ function restoreClearBtn(idx) {
   if (btn) {
     btn.classList.remove('clear-undo-item');
     btn.querySelector('.kebab-item-icon').textContent = '🗑';
-    btn.lastChild.textContent = 'Limpar tudo';
+    btn.lastChild.textContent = 'Limpar tradução';
     btn.onclick = function(e) { closeKebab(idx); clearTranslation(idx, e); };
   }
   clearTimeout(clearUndoTimers[idx]);
