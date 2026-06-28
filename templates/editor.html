@@ -100,8 +100,9 @@
   .note-textarea { width: 100%; background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; padding: 7px 9px; font-size: 11px; color: var(--text); font-family: 'DM Sans', sans-serif; resize: none; min-height: 32px; }
   .note-textarea:focus { outline: none; border-color: #9cb8b2; }
   .note-hint { font-size: 9px; color: var(--text-dim); margin-top: 3px; }
-  .focus-toggle-btn { width: 26px; height: 26px; border-radius: 50%; background: transparent; border: 1px solid transparent; color: var(--text-dim); font-size: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; -webkit-tap-highlight-color: transparent; flex-shrink: 0; }
-  .focus-toggle-btn:active { transform: scale(0.92); }
+  .focus-toggle-btn { width: 26px; height: 26px; border-radius: 50%; background: var(--accent-dim); border: none; color: var(--bg); font-size: 11px; display: flex; align-items: center; justify-content: center; cursor: pointer; -webkit-tap-highlight-color: transparent; flex-shrink: 0; transition: background 0.2s; }
+  .focus-toggle-btn:active { transform: scale(0.92); background: var(--accent); }
+  .focus-toggle-btn.focus-on { background: var(--text-muted); }
   .filter-toggle-row { display: flex; align-items: center; gap: 6px; padding: 2px 0; cursor: pointer; -webkit-tap-highlight-color: transparent; user-select: none; }
   .filter-toggle-label { font-size: 11px; color: var(--text-muted); flex: 1; }
   .filter-arrow { font-size: 9px; color: var(--text-muted); transition: transform 0.2s; display: inline-block; }
@@ -291,7 +292,12 @@
         <button class="undo-btn" id="undo-btn" onclick="undoNative()" title="Desfazer (↶)">↶</button>
         <button class="undo-btn" id="redo-btn" onclick="redoNative()" title="Refazer (↷)">↷</button>
       </div>
-      <button class="focus-toggle-btn" id="focus-btn" onclick="toggleFocusMode()" title="Modo foco" style="font-size:10px;line-height:1;padding-bottom:3px;">𓂁𓂄</button>
+      <button class="focus-toggle-btn" id="focus-btn" onclick="toggleFocusMode()" title="Modo foco">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+          <circle cx="12" cy="12" r="3"/>
+        </svg>
+      </button>
       <div class="timer-badge" id="timer-badge">0:00</div>
       <div class="count-badge" id="count-badge" onclick="toggleUntranslatedFilter()" title="Clique para filtrar não traduzidas">—</div>
       <button class="save-progress-btn" id="save-progress-btn" onclick="saveProgressManual()" title="Salvar progresso">✓</button>
@@ -1114,21 +1120,19 @@ function toggleFocusMode() {
   const focusBtn = document.getElementById('focus-btn');
   if (focusModeActive) {
     page.classList.add('focus-mode');
+    focusBtn.classList.add('focus-on');
     if (_backBtnOriginalHTML === null) _backBtnOriginalHTML = backBtn.innerHTML;
-    backBtn.innerHTML = '<span style="font-size:10px;line-height:1;padding-bottom:3px;">𓂁𓂄</span>';
+    backBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
     backBtn.removeAttribute('href');
     backBtn.title = 'Sair do modo foco';
     backBtn.onclick = function(e) { e.preventDefault(); toggleFocusMode(); };
-    // Remove circle in focus mode
-    focusBtn.style.border = '1px solid transparent';
   } else {
     page.classList.remove('focus-mode');
+    focusBtn.classList.remove('focus-on');
     backBtn.innerHTML = _backBtnOriginalHTML;
     backBtn.setAttribute('href', '/info');
     backBtn.title = '';
     backBtn.onclick = confirmBack;
-    // Restore circle
-    focusBtn.style.border = '1px solid #9cb8b2';
   }
 }
 
