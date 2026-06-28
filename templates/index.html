@@ -908,6 +908,7 @@ async function editSave(id) {
       sessionStorage.setItem('target_lang', data.target_lang);
       sessionStorage.setItem('original_lang', data.source_lang);
       sessionStorage.setItem('original_name', data.project_name.split(' (')[0]);
+      sessionStorage.setItem('editing_save', '1');
       window.location.href = '/editor';
     }
   } catch(e) { alert('Erro ao carregar save.'); }
