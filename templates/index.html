@@ -135,7 +135,7 @@
   .version { font-size: 11px; color: var(--text-muted); opacity: 0.6; letter-spacing: 0.05em; margin-top: 2rem; position: relative; z-index: 1; }
 
   /* Modals */
-  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; align-items: center; justify-content: center; padding: 1.5rem; }
+  .modal-overlay { display: flex; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; align-items: center; justify-content: center; padding: 1.5rem; opacity: 0; visibility: hidden; backdrop-filter: blur(0px); -webkit-backdrop-filter: blur(0px); transition: opacity 0.32s ease, visibility 0.32s, backdrop-filter 0.32s ease, -webkit-backdrop-filter 0.32s ease; }
   @keyframes modalIn {
     0%   { opacity: 0; transform: scale(0.97) translateY(16px); filter: blur(8px); }
     60%  { opacity: 1; filter: blur(1px); }
@@ -147,7 +147,7 @@
   }
   .modal-box.animate-in  { animation: modalIn  0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
   .modal-box.animate-out { animation: modalOut 0.38s cubic-bezier(0.4, 0, 0.8, 0) forwards; }
-  .modal-overlay.active { display: flex; }
+  .modal-overlay.active { opacity: 1; visibility: visible; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
   .modal-box { width: 100%; max-width: 340px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; position: relative; }
   .modal-close { position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: var(--text-muted); font-size: 18px; cursor: pointer; }
   .modal-title { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; color: var(--accent); margin-bottom: 1.25rem; }
@@ -307,6 +307,8 @@
   /* Modal overlay mais suave */
   .modal-overlay {
     background: rgba(20,35,32,0.55) !important;
+  }
+  .modal-overlay.active {
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
   }
@@ -1076,8 +1078,8 @@ function closeAuthModal() {
   const box = document.querySelector('#auth-modal .modal-box');
   box.classList.remove('animate-in');
   box.classList.add('animate-out');
+  document.getElementById('auth-modal').classList.remove('active');
   setTimeout(() => {
-    document.getElementById('auth-modal').classList.remove('active');
     box.classList.remove('animate-out');
   }, 380);
 }
@@ -1085,8 +1087,8 @@ function closeProfileModal() {
   const box = document.querySelector('#profile-modal .modal-box');
   box.classList.remove('animate-in');
   box.classList.add('animate-out');
+  document.getElementById('profile-modal').classList.remove('active');
   setTimeout(() => {
-    document.getElementById('profile-modal').classList.remove('active');
     box.classList.remove('animate-out');
   }, 380);
 }
