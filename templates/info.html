@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -14,49 +14,69 @@
   :root {
     --bg: #0f0f0f; --surface: #1a1a1a; --surface2: #222;
     --border: #2a2a2a; --border2: #333;
-    --accent: #c8a96e; --accent-dim: #8a6f42;
-    --text: #f0ece4; --text-muted: #7a7570;
+    --accent: #9cb8b2; --accent-dim: #6a9088;
+    --text: #f0ece4; --text-muted: #7a7570; --text-dim: #4a4a4a;
     --radius: 16px; --radius-sm: 10px;
   }
   html, body { min-height: 100%; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; }
   .page { min-height: 100dvh; display: flex; flex-direction: column; padding: 1.25rem 1rem 2rem; }
+
+  /* Topbar */
   .topbar { display: flex; align-items: center; gap: 12px; margin-bottom: 1.75rem; }
-  .back-btn { width: 36px; height: 36px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-muted); text-decoration: none; -webkit-tap-highlight-color: transparent; flex-shrink: 0; }
-  .back-btn svg { width: 18px; height: 18px; }
+  .back-btn { width: 34px; height: 34px; background: transparent; border: 1px solid transparent; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-muted); text-decoration: none; -webkit-tap-highlight-color: transparent; flex-shrink: 0; transition: color 0.15s; }
+  .back-btn:active { color: var(--accent); }
+  .back-btn svg { width: 17px; height: 17px; }
   .topbar-title { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 600; letter-spacing: 0.06em; color: var(--text-muted); text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .section-label { font-size: 11px; color: var(--text-muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.75rem; padding-left: 2px; }
+
+  .section-label { font-size: 10px; color: var(--text-dim); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.75rem; padding-left: 2px; }
+
+  /* Info blocks */
   .three-cols { display: grid; grid-template-columns: 1fr 1.4fr 1fr; gap: 8px; margin-bottom: 1.25rem; }
-  .info-block { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 8px; display: flex; flex-direction: column; gap: 6px; min-height: 76px; }
-  .block-label { font-size: 9px; color: var(--text-muted); letter-spacing: 0.08em; text-transform: uppercase; text-align: center; }
+  .info-block { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 76px; }
+  .block-label { font-size: 9px; color: var(--text-dim); letter-spacing: 0.1em; text-transform: uppercase; text-align: center; }
   .block-value { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text); text-align: center; word-break: break-all; line-height: 1.5; }
-  .lang-btn { background: rgba(200,169,110,0.1); border: 1px solid var(--accent-dim); border-radius: 6px; padding: 5px 8px; color: var(--accent); font-size: 11px; font-weight: 500; font-family: 'DM Mono', monospace; cursor: pointer; text-align: center; width: 100%; -webkit-tap-highlight-color: transparent; }
-  .lang-hint { font-size: 9px; color: var(--text-muted); text-align: center; font-family: 'DM Sans', sans-serif; margin-top: 2px; }
-  .stbl-selector { margin-bottom: 1.25rem; }
-  .stbl-option { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 6px; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: border-color 0.15s; }
-  .stbl-option.selected { border-color: var(--accent-dim); background: rgba(200,169,110,0.05); }
-  .stbl-option-left { display: flex; flex-direction: column; gap: 3px; }
+
+  /* Lang button */
+  .lang-btn { background: rgba(156,184,178,0.08); border: 1px solid var(--accent-dim); border-radius: 7px; padding: 6px 10px; color: var(--accent); font-size: 11px; font-weight: 500; font-family: 'DM Mono', monospace; cursor: pointer; text-align: center; width: 100%; -webkit-tap-highlight-color: transparent; transition: background 0.15s; }
+  .lang-btn:active { background: rgba(156,184,178,0.14); }
+  .lang-hint { font-size: 9px; color: var(--text-dim); text-align: center; font-family: 'DM Sans', sans-serif; margin-top: 2px; }
+
+  /* STBL selector */
+  .stbl-selector { margin-bottom: 1.25rem; display: flex; flex-direction: column; gap: 5px; }
+  .stbl-option { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; -webkit-tap-highlight-color: transparent; transition: border-color 0.15s, background 0.15s; }
+  .stbl-option.selected { border-color: var(--accent-dim); background: rgba(156,184,178,0.04); }
+  .stbl-option-left { display: flex; flex-direction: column; gap: 4px; }
   .stbl-option-hex { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text); }
-  .stbl-option-meta { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-muted); }
-  .stbl-lang-badge { display: inline-block; font-size: 10px; color: var(--accent); background: rgba(200,169,110,0.1); border-radius: 4px; padding: 1px 5px; font-family: 'DM Mono', monospace; }
-  .stbl-option-check { width: 18px; height: 18px; border-radius: 50%; border: 1px solid var(--border2); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 11px; }
-  .stbl-option.selected .stbl-option-check { background: var(--accent-dim); border-color: var(--accent-dim); color: #000; }
-  .lang-dropdown { display: none; position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,0.7); align-items: flex-end; }
+  .stbl-option-meta { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-muted); display: flex; align-items: center; gap: 5px; }
+  .stbl-lang-badge { display: inline-block; font-size: 10px; color: var(--accent); background: rgba(156,184,178,0.1); border-radius: 4px; padding: 1px 5px; font-family: 'DM Mono', monospace; }
+  .stbl-option-check { width: 18px; height: 18px; border-radius: 50%; border: 1px solid var(--border2); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 10px; transition: background 0.15s, border-color 0.15s; }
+  .stbl-option.selected .stbl-option-check { background: var(--accent-dim); border-color: var(--accent-dim); color: #0a0a0a; }
+
+  /* Lang dropdown (sheet) */
+  .lang-dropdown { display: none; position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,0); align-items: flex-end; transition: background 0.28s ease; }
   .lang-dropdown.open { display: flex; }
-  .lang-sheet { width: 100%; background: var(--surface); border-top: 1px solid var(--border); border-radius: 20px 20px 0 0; padding: 1.25rem 1rem 2rem; max-height: 70dvh; overflow-y: auto; animation: slideUp 0.25s ease; }
-  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-  .lang-sheet-title { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.06em; color: var(--text-muted); text-transform: uppercase; margin-bottom: 1rem; text-align: center; }
-  .lang-option { padding: 13px 16px; border-radius: var(--radius-sm); cursor: pointer; font-family: 'DM Mono', monospace; font-size: 14px; color: var(--text); -webkit-tap-highlight-color: transparent; display: flex; align-items: center; justify-content: space-between; }
+  .lang-dropdown.open-active { background: rgba(0,0,0,0.75); }
+  .lang-sheet { width: 100%; background: var(--surface); border-top: 1px solid var(--border); border-radius: 20px 20px 0 0; padding: 1.25rem 1rem 2rem; max-height: 70dvh; overflow-y: auto; transform: translateX(50px); opacity: 0; filter: blur(5px); transition: transform 0.28s ease, opacity 0.28s ease, filter 0.28s ease; }
+  .lang-dropdown.open-active .lang-sheet { transform: translateX(0); opacity: 1; filter: blur(0px); }
+  .lang-sheet-title { font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.08em; color: var(--text-dim); text-transform: uppercase; margin-bottom: 1rem; text-align: center; }
+  .lang-option { padding: 12px 16px; border-radius: var(--radius-sm); cursor: pointer; font-family: 'DM Mono', monospace; font-size: 13px; color: var(--text-muted); -webkit-tap-highlight-color: transparent; display: flex; align-items: center; justify-content: space-between; transition: color 0.12s; }
   .lang-option.selected { color: var(--accent); }
-  .lang-option-check { font-size: 13px; opacity: 0; }
+  .lang-option:active { background: var(--surface2); }
+  .lang-option-check { font-size: 11px; opacity: 0; color: var(--accent); }
   .lang-option.selected .lang-option-check { opacity: 1; }
+
   .separator { height: 1px; background: var(--border); margin: 1rem 0 1.25rem; }
-  .start-btn { width: 100%; padding: 18px; background: var(--accent-dim); border: none; border-radius: var(--radius); color: var(--bg); font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; letter-spacing: 0.08em; cursor: pointer; -webkit-tap-highlight-color: transparent; margin-top: auto; }
+
+  /* Start button */
+  .start-btn { width: 100%; padding: 17px; background: var(--accent-dim); border: none; border-radius: var(--radius); color: #080808; font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 0.1em; cursor: pointer; -webkit-tap-highlight-color: transparent; margin-top: auto; transition: background 0.15s, transform 0.1s; }
   .start-btn:active { background: var(--accent); transform: scale(0.97); }
+
+  /* Loading */
   .loading-overlay { display: none; position: fixed; inset: 0; background: rgba(15,15,15,0.9); z-index: 100; align-items: center; justify-content: center; flex-direction: column; gap: 1rem; }
   .loading-overlay.active { display: flex; }
-  .spinner { width: 36px; height: 36px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  .spinner { width: 30px; height: 30px; border: 1.5px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
-  .loading-text { font-size: 13px; color: var(--text-muted); letter-spacing: 0.05em; }
+  .loading-text { font-size: 11px; color: var(--text-muted); letter-spacing: 0.06em; font-family: 'DM Mono', monospace; }
 </style>
 </head>
 <body>
@@ -151,7 +171,7 @@ function buildStblSelector() {
         '<div class="stbl-option-hex">' + inst.instance_hex + '</div>' +
         '<div class="stbl-option-meta">' +
           'group: ' + inst.group_hex +
-          ' &nbsp;<span class="stbl-lang-badge">' + inst.language + '</span>' +
+          ' <span class="stbl-lang-badge">' + inst.language + '</span>' +
         '</div>' +
       '</div>' +
       '<div class="stbl-option-check">' + (idx === selectedIdx ? '✓' : '') + '</div>';
@@ -194,9 +214,22 @@ function updateLangDisplay() {
 }
 
 function selectLang(l) { selectedLang = l; updateLangDisplay(); closeLang(); }
-function openLang() { document.getElementById('lang-dropdown').classList.add('open'); }
-function closeLang() { document.getElementById('lang-dropdown').classList.remove('open'); }
-function closeLangIfOutside(e) { if (e.target === document.getElementById('lang-dropdown')) closeLang(); }
+
+function openLang() {
+  const dd = document.getElementById('lang-dropdown');
+  dd.classList.add('open');
+  requestAnimationFrame(() => requestAnimationFrame(() => dd.classList.add('open-active')));
+}
+
+function closeLang() {
+  const dd = document.getElementById('lang-dropdown');
+  dd.classList.remove('open-active');
+  setTimeout(() => dd.classList.remove('open'), 300);
+}
+
+function closeLangIfOutside(e) {
+  if (e.target === document.getElementById('lang-dropdown')) closeLang();
+}
 
 function goEditor() {
   if (instances.length === 0) return;
@@ -213,4 +246,4 @@ function goEditor() {
 load();
 </script>
 </body>
-</html>
+</html> 
