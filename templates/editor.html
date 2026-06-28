@@ -78,6 +78,20 @@
   .action-btn:active { transform: scale(0.9); }
   .action-btn.note-filled { border-color: var(--accent-dim); color: var(--accent); }
   .action-btn.clear-undo { border-color: #9cb8b2; color: #9cb8b2; }
+  /* Botão ⋮ kebab */
+  .kebab-wrap { position: relative; flex-shrink: 0; }
+  .kebab-btn { width: 26px; height: 26px; border-radius: 50%; background: var(--surface); border: 1px solid var(--border); color: var(--text-muted); display: flex; align-items: center; justify-content: center; cursor: pointer; -webkit-tap-highlight-color: transparent; font-size: 15px; line-height: 1; transition: all 0.2s; }
+  .kebab-btn:active { transform: scale(0.9); }
+  .kebab-menu { display: none; position: absolute; right: 0; top: 30px; background: var(--surface); border: 1px solid var(--border2); border-radius: 10px; z-index: 50; min-width: 148px; overflow: hidden; box-shadow: 0 6px 20px rgba(0,0,0,0.6); }
+  .kebab-menu.open { display: block; }
+  .kebab-item { display: flex; align-items: center; gap: 8px; padding: 9px 12px; font-size: 11px; color: var(--text-muted); cursor: pointer; -webkit-tap-highlight-color: transparent; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  .kebab-item:last-child { border-bottom: none; }
+  .kebab-item:active { background: var(--surface2); }
+  .kebab-item-icon { font-size: 13px; width: 16px; text-align: center; flex-shrink: 0; }
+  .kebab-item.note-filled-item .kebab-item-icon { color: var(--accent); }
+  .kebab-item.clear-undo-item { color: #9cb8b2; }
+  /* Ponto de nota ao lado da estrela */
+  .note-dot { display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: #9cb8b2; position: absolute; top: 2px; left: 16px; z-index: 4; pointer-events: none; }
   .note-row { display: none; padding: 0 0.75rem 8px; }
   .note-row.open { display: block; }
   .note-textarea { width: 100%; background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; padding: 7px 9px; font-size: 11px; color: var(--text); font-family: 'DM Sans', sans-serif; resize: none; min-height: 32px; }
@@ -91,7 +105,7 @@
   .filter-arrow.open { transform: rotate(180deg); }
   .filter-collapsible { display: none; flex-direction: column; gap: 6px; padding-top: 4px; }
   .filter-collapsible.open { display: flex; }
-  .focus-mode .undo-group, .focus-mode .timer-badge, .focus-mode .count-badge,
+  .focus-mode .undo-group, .focus-mode .timer-badge,
   .focus-mode .save-progress-btn, .focus-mode .focus-toggle-btn, .focus-mode .filter-bar,
   .focus-mode .col-headers, .focus-mode .bottom-bar, .focus-mode .copy-btn,
   .focus-mode .fav-btn, .focus-mode .expand-arrow-btn { display: none !important; }
@@ -593,14 +607,24 @@ function renderStrings() {
       '<div class="edit-container">' +
         '<div class="ta-wrap">' +
           '<button class="fav-btn' + (isFav ? ' active' : '') + '" id="fav-btn-' + idx + '" onclick="toggleFavorite(' + idx + ', event)" title="Favoritar">★</button>' +
+          (hasNote ? '<span class="note-dot" id="note-dot-' + idx + '"></span>' : '<span class="note-dot" id="note-dot-' + idx + '" style="display:none"></span>') +
           '<button class="expand-arrow-btn' + (taExpanded ? ' expanded' : '') + '" id="exp-arrow-' + idx + '" onclick="toggleTranslationExpand(' + idx + ', event)" title="Expandir/diminuir">▾</button>' +
           '<textarea class="edit-textarea' + (taExpanded ? '' : ' ta-collapsed') + '" data-idx="' + idx + '" rows="1">' + (item.value || '') + '</textarea>' +
           '<div class="ta-backdrop' + (taExpanded ? '' : ' ta-collapsed') + '" id="ta-backdrop-' + idx + '"></div>' +
         '</div>' +
-        '<div class="edit-actions-col">' +
-          '<div class="translate-btn" data-translate-idx="' + idx + '" onclick="showEngineMenu(' + idx + ', event)" title="Traduzir">◈</div>' +
-          '<div class="action-btn" id="clear-btn-' + idx + '" onclick="clearTranslation(' + idx + ', event)" title="Limpar tradução">🗑</div>' +
-          '<div class="action-btn' + (hasNote ? ' note-filled' : '') + '" id="note-btn-' + idx + '" onclick="toggleNote(' + idx + ', event)" title="Nota">📝</div>' +
+        '<div class="kebab-wrap" id="kebab-wrap-' + idx + '">' +
+          '<div class="kebab-btn" onclick="toggleKebab(' + idx + ', event)" title="Ações">⋮</div>' +
+          '<div class="kebab-menu" id="kebab-menu-' + idx + '">' +
+            '<div class="kebab-item" onclick="closeKebab(' + idx + '); showEngineMenu(' + idx + ', event)" id="kebab-translate-' + idx + '">' +
+              '<span class="kebab-item-icon">◈</span>Selecionar Tradutor' +
+            '</div>' +
+            '<div class="kebab-item' + (hasNote ? ' note-filled-item' : '') + '" id="kebab-note-' + idx + '" onclick="closeKebab(' + idx + '); toggleNote(' + idx + ', event)">' +
+              '<span class="kebab-item-icon">📝</span>Nota' +
+            '</div>' +
+            '<div class="kebab-item" id="clear-btn-' + idx + '" onclick="closeKebab(' + idx + '); clearTranslation(' + idx + ', event)">' +
+              '<span class="kebab-item-icon">🗑</span>Limpar tudo' +
+            '</div>' +
+          '</div>' +
         '</div>' +
       '</div>';
     list.appendChild(row);
@@ -657,8 +681,7 @@ function renderStrings() {
     const noteTa = noteRow.querySelector('textarea');
     noteTa.addEventListener('input', function() {
       stringsData[idx].note = this.value;
-      const btn = document.getElementById('note-btn-' + idx);
-      if (btn) btn.classList.toggle('note-filled', !!this.value);
+      updateNoteDot(idx, !!this.value);
       triggerAutoSave();
     });
   });
@@ -763,10 +786,10 @@ function clearTranslation(idx, event) {
 
   const btn = document.getElementById('clear-btn-' + idx);
   if (btn) {
-    btn.classList.add('clear-undo');
-    btn.innerHTML = '↺';
-    btn.title = 'Desfazer limpeza';
-    btn.onclick = function(e) { if (e) e.stopPropagation(); undoClear(idx); };
+    btn.classList.add('clear-undo-item');
+    btn.querySelector('.kebab-item-icon').textContent = '↺';
+    btn.lastChild.textContent = 'Desfazer limpeza';
+    btn.onclick = function(e) { if (e) e.stopPropagation(); closeKebab(idx); undoClear(idx); };
   }
   clearTimeout(clearUndoTimers[idx]);
   clearUndoTimers[idx] = setTimeout(() => restoreClearBtn(idx), 5000);
@@ -788,10 +811,10 @@ function undoClear(idx) {
 function restoreClearBtn(idx) {
   const btn = document.getElementById('clear-btn-' + idx);
   if (btn) {
-    btn.classList.remove('clear-undo');
-    btn.innerHTML = '🗑';
-    btn.title = 'Limpar tradução';
-    btn.onclick = function(e) { clearTranslation(idx, e); };
+    btn.classList.remove('clear-undo-item');
+    btn.querySelector('.kebab-item-icon').textContent = '🗑';
+    btn.lastChild.textContent = 'Limpar tudo';
+    btn.onclick = function(e) { closeKebab(idx); clearTranslation(idx, e); };
   }
   clearTimeout(clearUndoTimers[idx]);
   delete clearUndoTimers[idx];
@@ -809,6 +832,36 @@ function toggleNote(idx, event) {
     if (ta) ta.focus();
   }
 }
+
+function updateNoteDot(idx, hasNote) {
+  const dot = document.getElementById('note-dot-' + idx);
+  if (dot) dot.style.display = hasNote ? 'inline-block' : 'none';
+  const kebabNote = document.getElementById('kebab-note-' + idx);
+  if (kebabNote) kebabNote.classList.toggle('note-filled-item', hasNote);
+}
+
+// ---- KEBAB MENU ----
+let _openKebab = null;
+
+function toggleKebab(idx, event) {
+  if (event) event.stopPropagation();
+  const menu = document.getElementById('kebab-menu-' + idx);
+  if (!menu) return;
+  const isOpen = menu.classList.contains('open');
+  if (_openKebab !== null && _openKebab !== idx) closeKebab(_openKebab);
+  menu.classList.toggle('open', !isOpen);
+  _openKebab = isOpen ? null : idx;
+}
+
+function closeKebab(idx) {
+  const menu = document.getElementById('kebab-menu-' + idx);
+  if (menu) menu.classList.remove('open');
+  if (_openKebab === idx) _openKebab = null;
+}
+
+document.addEventListener('click', function() {
+  if (_openKebab !== null) closeKebab(_openKebab);
+});
 
 // ---- ACORDEÃO DE FILTRO ----
 function toggleFilterAccordion() {
