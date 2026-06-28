@@ -208,6 +208,68 @@
   .tall-engine-btn { padding: 12px 8px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-muted); font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.05em; cursor: pointer; text-align: center; -webkit-tap-highlight-color: transparent; transition: all 0.15s; }
   .tall-engine-btn.active { border-color: var(--accent-dim); color: var(--accent); background: rgba(156,184,178,0.06); }
   .tall-cancel-btn { width: 100%; padding: 13px; background: transparent; border: 1px solid var(--border2); border-radius: var(--radius-sm); color: var(--text-muted); font-size: 13px; cursor: pointer; text-align: center; -webkit-tap-highlight-color: transparent; }
+  /* ── Botão JSON ── */
+  .json-mode-btn { flex: 0 0 auto; padding: 7px 11px; background: transparent; border: 1px solid var(--accent-dim); border-radius: 8px; color: var(--accent); font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500; letter-spacing: 0.05em; cursor: pointer; -webkit-tap-highlight-color: transparent; white-space: nowrap; transition: all 0.2s; }
+  .json-mode-btn:active { background: rgba(156,184,178,0.1); }
+  /* ── Painel JSON ── */
+  .json-panel { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+  .json-panel.active { display: flex; }
+  .json-toolbar { display: flex; align-items: center; gap: 6px; padding: 6px 0.75rem; border-bottom: 1px solid var(--border); flex-shrink: 0; background: var(--bg); }
+  .json-toolbar-label { font-size: 9px; color: var(--text-dim); letter-spacing: 0.08em; text-transform: uppercase; flex: 1; font-family: 'DM Mono', monospace; }
+  .json-error-msg { font-size: 10px; color: #e07070; font-family: 'DM Mono', monospace; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .json-apply-btn { padding: 5px 10px; background: var(--accent-dim); border: none; border-radius: 6px; color: var(--bg); font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.05em; cursor: pointer; -webkit-tap-highlight-color: transparent; flex-shrink: 0; }
+  .json-apply-btn:active { background: var(--accent); }
+  .json-apply-btn:disabled { opacity: 0.4; pointer-events: none; }
+  .json-editor-wrap { flex: 1; overflow: hidden; position: relative; }
+  .json-textarea { width: 100%; height: 100%; background: var(--bg); border: none; outline: none; color: var(--text); font-family: 'DM Mono', monospace; font-size: 11px; line-height: 1.6; padding: 0.75rem; resize: none; -webkit-overflow-scrolling: touch; caret-color: #9cb8b2; }
+  .json-textarea.has-error { border-left: 2px solid #e07070; }
+  /* Bottom bar em modo JSON */
+  .json-bottom { border-top: 1px solid var(--border); padding: 0.45rem 0.75rem 0.5rem; background: var(--bg); flex-shrink: 0; }
+  .json-bottom .filename-row { display: flex; align-items: center; gap: 6px; margin-bottom: 0.35rem; }
+  .json-bottom-actions { display: flex; gap: 5px; align-items: center; margin-top: 4px; }
+  .json-save-btn { flex: 1; padding: 8px 12px; background: var(--accent-dim); border: none; border-radius: 8px; color: var(--bg); font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; cursor: pointer; -webkit-tap-highlight-color: transparent; white-space: nowrap; }
+  .json-save-btn:active { transform: scale(0.97); background: var(--accent); }
+  .json-save-btn:disabled { opacity: 0.4; pointer-events: none; }
+  .package-return-btn { flex: 0 0 auto; padding: 7px 11px; background: transparent; border: 1px solid var(--border2); border-radius: 8px; color: var(--text-muted); font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.05em; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: all 0.2s; }
+  .package-return-btn:active { background: var(--surface2); color: var(--accent); border-color: var(--accent-dim); }
+
+  /* ── Toast de notificação ── */
+  .toast-wrap { position: fixed; top: 0; left: 0; right: 0; z-index: 9000; display: flex; flex-direction: column; align-items: center; gap: 6px; padding-top: 10px; pointer-events: none; }
+  .toast { background: var(--surface); border: 1px solid var(--border2); border-radius: 12px; padding: 10px 16px; font-size: 12px; color: var(--text); font-family: 'DM Sans', sans-serif; max-width: calc(100vw - 32px); text-align: center; box-shadow: 0 8px 24px rgba(0,0,0,0.7); pointer-events: auto;
+    opacity: 0; transform: translateY(-12px) scale(0.96); filter: blur(4px);
+    transition: opacity 0.22s ease, transform 0.22s ease, filter 0.22s ease; }
+  .toast.show { opacity: 1; transform: translateY(0) scale(1); filter: blur(0px); }
+  .toast.toast-error { border-color: #c0504050; color: #e07070; }
+  .toast.toast-success { border-color: var(--accent-dim); color: var(--accent); }
+  .toast.toast-info { border-color: var(--border2); color: var(--text-muted); }
+
+  /* ── Modal de confirmação ── */
+  .modal-backdrop { position: fixed; inset: 0; z-index: 8000; background: rgba(0,0,0,0); display: none; align-items: flex-end;
+    transition: background 0.28s ease; }
+  .modal-backdrop.open { display: flex; }
+  .modal-backdrop.open-active { background: rgba(0,0,0,0.82); }
+  .modal-inner { width: 100%; background: var(--surface); border-top: 1px solid var(--border); border-radius: 20px 20px 0 0; padding: 1.5rem 1rem 2.5rem;
+    transform: translateY(100%); opacity: 0; filter: blur(6px);
+    transition: transform 0.3s ease, opacity 0.3s ease, filter 0.3s ease; }
+  .modal-backdrop.open-active .modal-inner { transform: translateY(0); opacity: 1; filter: blur(0px); }
+  .modal-icon { font-size: 32px; text-align: center; margin-bottom: 0.6rem; }
+  .modal-title { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; color: var(--text); text-align: center; margin-bottom: 0.4rem; }
+  .modal-msg { font-size: 13px; color: var(--text-muted); text-align: center; line-height: 1.5; margin-bottom: 1.5rem; }
+  .modal-btns { display: flex; flex-direction: column; gap: 8px; }
+  .modal-btn-confirm { width: 100%; padding: 14px; background: var(--accent-dim); border: none; border-radius: var(--radius-sm); color: var(--bg); font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 0.06em; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .modal-btn-confirm:active { background: var(--accent); }
+  .modal-btn-confirm.danger { background: #8b2020; color: #f0ece4; }
+  .modal-btn-confirm.danger:active { background: #b02828; }
+  .modal-btn-cancel { width: 100%; padding: 13px; background: transparent; border: 1px solid var(--border2); border-radius: var(--radius-sm); color: var(--text-muted); font-size: 13px; cursor: pointer; text-align: center; -webkit-tap-highlight-color: transparent; }
+  .modal-btn-cancel:active { background: var(--surface2); }
+
+  /* ── Blur ripple ao toque em botões ── */
+  @keyframes btn-blur-pulse {
+    0%   { filter: blur(0px);   opacity: 1; }
+    35%  { filter: blur(1.5px); opacity: 0.82; }
+    100% { filter: blur(0px);   opacity: 1; }
+  }
+  .btn-tapped { animation: btn-blur-pulse 0.32s ease-out forwards; will-change: filter, opacity; }
 </style>
 </head>
 <body>
@@ -287,7 +349,47 @@
     <div class="bottom-actions">
       <button class="import-btn" onclick="openImportSheet()" title="Carregar traduções de um save">↺</button>
       <button class="import-btn" id="translate-all-btn" onclick="openTranslateAllSheet()" title="Traduzir tudo automaticamente" style="color:var(--accent);border-color:var(--accent-dim);" disabled>◈</button>
+      <button class="json-mode-btn" id="json-mode-btn" onclick="enterJsonMode()" disabled>JSON</button>
       <button class="save-btn" id="save-btn" onclick="save()" disabled>SALVAR PACKAGE</button>
+    </div>
+  </div>
+
+  <!-- Painel JSON (substitui filter-bar + strings-list + bottom-bar quando ativo) -->
+  <div class="json-panel" id="json-panel">
+    <div class="json-toolbar">
+      <span class="json-toolbar-label" id="json-toolbar-label">JSON · edite e aplique</span>
+      <span class="json-error-msg" id="json-error-msg"></span>
+      <button class="json-apply-btn" id="json-apply-btn" onclick="applyJsonEdits()">✓ APLICAR</button>
+    </div>
+    <div class="json-editor-wrap">
+      <textarea class="json-textarea" id="json-textarea" spellcheck="false" autocorrect="off" autocapitalize="off"></textarea>
+    </div>
+    <div class="json-bottom">
+      <div class="filename-row">
+        <span class="filename-label">Nome:</span>
+        <input type="text" class="filename-input" id="json-filename-input" placeholder="output" maxlength="100">
+        <span class="ext-label">.json</span>
+      </div>
+      <div class="json-bottom-actions">
+        <button class="package-return-btn" onclick="exitJsonMode()">PACKAGE</button>
+        <button class="json-save-btn" id="json-save-btn" onclick="saveJson()">SALVAR JSON</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast de notificação -->
+<div class="toast-wrap" id="toast-wrap"></div>
+
+<!-- Modal de confirmação -->
+<div class="modal-backdrop" id="modal-backdrop" onclick="if(event.target===this)_modalReject&&_modalReject()">
+  <div class="modal-inner" id="modal-inner">
+    <div class="modal-icon" id="modal-icon">◈</div>
+    <div class="modal-title" id="modal-title"></div>
+    <div class="modal-msg" id="modal-msg"></div>
+    <div class="modal-btns">
+      <button class="modal-btn-confirm" id="modal-btn-confirm" onclick="_modalResolve&&_modalResolve()"></button>
+      <button class="modal-btn-cancel" id="modal-btn-cancel" onclick="_modalReject&&_modalReject()">Cancelar</button>
     </div>
   </div>
 </div>
@@ -362,6 +464,70 @@
 </div>
 
 <script>
+// ══════════════════════════════════════════════
+// TOAST — notificações bonitas no topo
+// ══════════════════════════════════════════════
+function showToast(msg, type = 'info', duration = 3200) {
+  const wrap = document.getElementById('toast-wrap');
+  const el = document.createElement('div');
+  el.className = 'toast toast-' + type;
+  el.textContent = msg;
+  wrap.appendChild(el);
+  requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('show')));
+  setTimeout(() => {
+    el.classList.remove('show');
+    el.addEventListener('transitionend', () => el.remove(), { once: true });
+  }, duration);
+}
+
+// ══════════════════════════════════════════════
+// MODAL — substitui alert() e confirm()
+// ══════════════════════════════════════════════
+let _modalResolve = null;
+let _modalReject  = null;
+
+function showModal({ icon = '◈', title = '', msg = '', confirmText = 'OK', cancelText = null, danger = false } = {}) {
+  return new Promise((resolve, reject) => {
+    _modalResolve = () => { closeModal(); resolve(true); };
+    _modalReject  = () => { closeModal(); reject(false); };
+
+    document.getElementById('modal-icon').textContent = icon;
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-msg').textContent = msg;
+    const confirmBtn = document.getElementById('modal-btn-confirm');
+    confirmBtn.textContent = confirmText;
+    confirmBtn.className = 'modal-btn-confirm' + (danger ? ' danger' : '');
+    const cancelBtn = document.getElementById('modal-btn-cancel');
+    cancelBtn.style.display = cancelText === null ? 'none' : '';
+    if (cancelText) cancelBtn.textContent = cancelText;
+
+    const backdrop = document.getElementById('modal-backdrop');
+    backdrop.style.display = 'flex';
+    requestAnimationFrame(() => requestAnimationFrame(() => backdrop.classList.add('open', 'open-active')));
+  });
+}
+
+function closeModal() {
+  const backdrop = document.getElementById('modal-backdrop');
+  backdrop.classList.remove('open-active');
+  setTimeout(() => { backdrop.classList.remove('open'); backdrop.style.display = 'none'; }, 320);
+  _modalResolve = null;
+  _modalReject  = null;
+}
+
+// ══════════════════════════════════════════════
+// BLUR PULSE — feedback tátil em todos os botões
+// ══════════════════════════════════════════════
+document.addEventListener('pointerdown', function(e) {
+  const btn = e.target.closest('button, .import-btn, .kebab-btn, .count-badge, .back-btn, .save-progress-btn, .undo-btn, .focus-toggle-btn, .json-mode-btn, .package-return-btn');
+  if (!btn) return;
+  btn.classList.remove('btn-tapped');
+  // forçar reflow para reiniciar animação
+  void btn.offsetWidth;
+  btn.classList.add('btn-tapped');
+  btn.addEventListener('animationend', () => btn.classList.remove('btn-tapped'), { once: true });
+}, { passive: true });
+
 let stringsData = [];
 let instanceStr  = sessionStorage.getItem('selected_instance_str') || '';
 
@@ -501,7 +667,7 @@ async function saveProgressManual() {
     const input = document.getElementById('filename-input');
     input.focus();
     input.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    alert('Dê um nome ao arquivo no campo "Nome do arquivo" antes de salvar o progresso.');
+    showToast('Dê um nome ao arquivo antes de salvar o progresso.', 'error', 4000);
     return;
   }
   btn.classList.add('saving');
@@ -548,9 +714,10 @@ async function load() {
     renderStrings();
     document.getElementById('save-btn').disabled = stringsData.length === 0;
     document.getElementById('translate-all-btn').disabled = stringsData.length === 0;
+    document.getElementById('json-mode-btn').disabled = stringsData.length === 0;
   } catch(e) {
     document.getElementById('loading').classList.remove('active');
-    alert('Erro ao carregar strings: ' + e.message);
+    showToast('Erro ao carregar strings: ' + e.message, 'error', 5000);
   }
 }
 
@@ -1045,13 +1212,13 @@ function closeImportSheet() {
 
 async function loadImportSaves() {
   const listEl = document.getElementById('import-saves-list');
-  listEl.innerHTML = '<div style="font-size:12px;color:var(--text-muted);text-align:center;padding:1rem">Carregando saves...</div>';
+  listEl.innerHTML = '<div class="empty-state"><div class="empty-icon" style="font-size:20px;opacity:0.3">◌</div><div class="empty-text">Carregando saves...</div></div>';
   try {
     const res = await fetch('/api/get_saves');
     const data = await res.json();
     const saves = data.saves || [];
     if (saves.length === 0) {
-      listEl.innerHTML = '<div style="font-size:12px;color:var(--text-muted);text-align:center;padding:1rem">Nenhum save encontrado.</div>';
+      listEl.innerHTML = '<div class="empty-state"><div class="empty-icon" style="font-size:20px;opacity:0.3">💾</div><div class="empty-text">Nenhum save encontrado.</div></div>';
       return;
     }
     listEl.innerHTML = '';
@@ -1065,7 +1232,7 @@ async function loadImportSaves() {
       listEl.appendChild(item);
     });
   } catch(e) {
-    listEl.innerHTML = '<div style="font-size:12px;color:#e07070;text-align:center;padding:1rem">Erro ao carregar saves.</div>';
+    listEl.innerHTML = '<div class="empty-state"><div class="empty-icon" style="font-size:20px;opacity:0.4">✕</div><div class="empty-text" style="color:#e07070">Erro ao carregar saves.</div></div>';
   }
 }
 
@@ -1081,11 +1248,11 @@ async function applyTranslationsFromSave(saveId, saveName) {
     });
     const data = await res.json();
     document.getElementById('loading').classList.remove('active');
-    if (!data.success) { alert('Erro ao importar: ' + (data.error || 'desconhecido')); return; }
+    if (!data.success) { showToast('Erro ao importar: ' + (data.error || 'desconhecido'), 'error', 5000); return; }
     applyTranslationMap(data.translations, saveName);
   } catch(e) {
     document.getElementById('loading').classList.remove('active');
-    alert('Erro de conexão ao importar traduções.');
+    showToast('Erro de conexão ao importar traduções.', 'error', 4000);
   }
 }
 
@@ -1093,7 +1260,7 @@ async function applyTranslationsFromSave(saveId, saveName) {
 document.getElementById('import-package-input').addEventListener('change', async function() {
   const file = this.files[0];
   if (!file) return;
-  if (!file.name.endsWith('.package')) { alert('Selecione um arquivo .package válido.'); return; }
+  if (!file.name.endsWith('.package')) { showToast('Selecione um arquivo .package válido.', 'error', 4000); return; }
   closeImportSheet();
   document.getElementById('loading-text').textContent = 'Lendo arquivo...';
   document.getElementById('loading').classList.add('active');
@@ -1106,11 +1273,11 @@ document.getElementById('import-package-input').addEventListener('change', async
     });
     const data = await res.json();
     document.getElementById('loading').classList.remove('active');
-    if (!data.success) { alert('Erro ao ler arquivo: ' + (data.error || 'desconhecido')); return; }
+    if (!data.success) { showToast('Erro ao ler arquivo: ' + (data.error || 'desconhecido'), 'error', 5000); return; }
     applyTranslationMap(data.translations, file.name);
   } catch(e) {
     document.getElementById('loading').classList.remove('active');
-    alert('Erro de conexão ao ler arquivo.');
+    showToast('Erro de conexão ao ler arquivo.', 'error', 4000);
   }
   this.value = '';
 });
@@ -1128,7 +1295,7 @@ function applyTranslationMap(translationMap, sourceName) {
   renderStrings();
   updateProgressBadge();
   triggerAutoSave();
-  alert(filled + ' traduções carregadas de "' + sourceName + '"!');
+  showToast(filled + ' traduções carregadas de "' + sourceName + '"!', 'success', 3500);
 }
 
 function toggleInstance() {
@@ -1169,7 +1336,7 @@ async function save() {
   const instanceInputEl = document.getElementById('instance-input');
   const customInstanceBase = instanceInputEl ? instanceInputEl.value.trim().toUpperCase() : '';
   if (customInstanceBase && customInstanceBase.length !== 14) {
-    alert('A instância base precisa ter exatamente 14 dígitos hexadecimais.');
+    showToast('A instância base precisa ter exatamente 14 dígitos hexadecimais.', 'error', 4000);
     return;
   }
 
@@ -1202,11 +1369,11 @@ async function save() {
       requestAnimationFrame(() => requestAnimationFrame(() => sheet.classList.add('open-active')));
       await saveProgressToDatabase();
     } else {
-      alert('Erro ao salvar: ' + (data.error || 'desconhecido'));
+      showToast('Erro ao salvar: ' + (data.error || 'desconhecido'), 'error', 5000);
     }
   } catch(e) {
     document.getElementById('loading').classList.remove('active');
-    alert('Erro de conexão ao salvar.');
+    showToast('Erro de conexão ao salvar.', 'error', 4000);
   }
 }
 
@@ -1226,9 +1393,11 @@ function openTranslateAllSheet() {
   tallCancelled = false;
   tallRunning = false;
   document.getElementById('tall-title').textContent = 'Traduzir tudo';
+  document.getElementById('tall-title').style.color = '';
   document.getElementById('tall-sub').textContent = 'Escolha a engine e toque em iniciar. Strings já traduzidas serão ignoradas.';
   document.getElementById('tall-fill').style.width = '0%';
   document.getElementById('tall-status').textContent = 'Aguardando...';
+  document.getElementById('tall-status').style.color = '';
   document.getElementById('tall-start-btn').disabled = false;
   document.getElementById('tall-start-btn').textContent = '▶ INICIAR';
   const sheet = document.getElementById('tall-sheet');
@@ -1292,7 +1461,7 @@ async function startTranslateAll() {
     .filter(({ idx, item }) => !editedIndices.has(idx));
 
   if (pending.length === 0) {
-    document.getElementById('tall-status').textContent = 'Nenhuma string vazia encontrada!';
+    showToast('Nenhuma string sem tradução encontrada!', 'info', 3000);
     return;
   }
 
@@ -1322,8 +1491,9 @@ async function startTranslateAll() {
       else consecutiveErrors = 0;
       const pct = Math.round((done / total) * 100);
       document.getElementById('tall-fill').style.width = pct + '%';
-      document.getElementById('tall-status').textContent =
-        done + '/' + total + ' strings · ' + errors + ' falhas';
+      const statusEl = document.getElementById('tall-status');
+      statusEl.textContent = done + '/' + total + ' strings · ' + errors + ' falhas';
+      statusEl.style.color = errors > 0 ? '#e07070' : 'var(--text-muted)';
     }));
 
     renderStrings();
@@ -1331,8 +1501,9 @@ async function startTranslateAll() {
     triggerAutoSave();
 
     if (consecutiveErrors >= CONSECUTIVE_ERROR_THRESHOLD && !tallCancelled) {
-      document.getElementById('tall-status').textContent =
-        'Muitas falhas seguidas — pausando 5s...';
+      const statusEl = document.getElementById('tall-status');
+      statusEl.textContent = 'Muitas falhas seguidas — pausando 5s...';
+      statusEl.style.color = '#e07070';
       await sleep(PAUSE_ON_MANY_ERRORS);
       consecutiveErrors = 0;
     } else if (i + BATCH < pending.length && !tallCancelled) {
@@ -1341,14 +1512,18 @@ async function startTranslateAll() {
   }
 
   tallRunning = false;
+  const finalStatus = document.getElementById('tall-status');
+  const finalTitle  = document.getElementById('tall-title');
   if (tallCancelled) {
-    document.getElementById('tall-title').textContent = 'Cancelado';
-    document.getElementById('tall-status').textContent =
-      done + ' traduzidas · ' + errors + ' falhas';
+    finalTitle.textContent = 'Cancelado';
+    finalTitle.style.color = 'var(--text-muted)';
+    finalStatus.textContent = done + ' traduzidas · ' + errors + ' falhas';
+    finalStatus.style.color = errors > 0 ? '#e07070' : 'var(--text-muted)';
   } else {
-    document.getElementById('tall-title').textContent = 'Concluído ✦';
-    document.getElementById('tall-status').textContent =
-      (done - errors) + ' traduzidas · ' + errors + ' puladas';
+    finalTitle.textContent = 'Concluído ✦';
+    finalTitle.style.color = 'var(--accent)';
+    finalStatus.textContent = (done - errors) + ' traduzidas · ' + (errors > 0 ? errors + ' puladas' : 'sem erros ✦');
+    finalStatus.style.color = errors > 0 ? '#e07070' : 'var(--accent)';
   }
   document.getElementById('tall-start-btn').textContent = 'Fechar';
   document.getElementById('tall-start-btn').disabled = false;
@@ -1413,9 +1588,182 @@ function toggleUntranslatedFilter() {
 function confirmBack(e) {
   if (editedIndices.size === 0) return; // nada editado, volta normalmente
   e.preventDefault();
-  const ok = confirm('Você tem traduções não salvas. Deseja voltar mesmo assim?');
-  if (ok) window.location.href = '/info';
+  showModal({
+    icon: '↩',
+    title: 'Voltar sem salvar?',
+    msg: 'Você tem traduções não salvas. Se voltar agora, as alterações serão perdidas.',
+    confirmText: 'VOLTAR MESMO ASSIM',
+    cancelText: 'Continuar editando',
+    danger: true
+  }).then(() => { window.location.href = '/info'; }).catch(() => {});
 }
+
+// ──────────────────────────────────────────────
+// MODO JSON
+// ──────────────────────────────────────────────
+let jsonModeActive = false;
+
+function enterJsonMode() {
+  if (stringsData.length === 0) return;
+  jsonModeActive = true;
+
+  // Sincroniza o nome do arquivo com o campo principal
+  const mainName = document.getElementById('filename-input').value.trim();
+  document.getElementById('json-filename-input').value = mainName;
+
+  // Gera o JSON das strings de tradução (apenas key e value)
+  const jsonArr = stringsData.map(item => ({
+    key: item.key_hex || ('0x' + (item.key >>> 0).toString(16).toUpperCase().padStart(8, '0')),
+    value: item.value || ''
+  }));
+  document.getElementById('json-textarea').value = JSON.stringify(jsonArr, null, 2);
+  document.getElementById('json-error-msg').textContent = '';
+  document.getElementById('json-textarea').classList.remove('has-error');
+  document.getElementById('json-toolbar-label').textContent = 'JSON · ' + jsonArr.length + ' strings';
+
+  // Mostra painel JSON, esconde o editor normal
+  document.querySelector('.filter-bar').style.display = 'none';
+  document.querySelector('.col-headers').style.display = 'none';
+  document.querySelector('.strings-list').style.display = 'none';
+  document.querySelector('.bottom-bar').style.display = 'none';
+  document.getElementById('json-panel').classList.add('active');
+
+  // Ajusta a page para usar o painel como flex item
+  document.querySelector('.page').style.overflow = 'hidden';
+}
+
+function exitJsonMode() {
+  const ta = document.getElementById('json-textarea');
+  const currentJson = ta.value;
+
+  // Verifica se o JSON foi editado em relação ao stringsData atual
+  const currentArr = stringsData.map(item => ({
+    key: item.key_hex || ('0x' + (item.key >>> 0).toString(16).toUpperCase().padStart(8, '0')),
+    value: item.value || ''
+  }));
+  const snapshot = JSON.stringify(currentArr, null, 2);
+  const hasUnsaved = currentJson.trim() !== snapshot.trim();
+
+  if (!hasUnsaved) {
+    _doExitJsonMode();
+    return;
+  }
+
+  showModal({
+    icon: '◈',
+    title: 'Aplicar edições do JSON?',
+    msg: 'Você editou o JSON mas não clicou em Aplicar. Deseja aplicar as alterações antes de voltar ao modo Package?',
+    confirmText: 'APLICAR E VOLTAR',
+    cancelText: 'Descartar e voltar',
+  }).then(() => {
+    applyJsonEdits();
+    _doExitJsonMode();
+  }).catch(() => {
+    _doExitJsonMode();
+  });
+}
+
+function _doExitJsonMode() {
+  jsonModeActive = false;
+  document.querySelector('.filter-bar').style.display = '';
+  document.querySelector('.col-headers').style.display = '';
+  document.querySelector('.strings-list').style.display = '';
+  document.querySelector('.bottom-bar').style.display = '';
+  document.getElementById('json-panel').classList.remove('active');
+
+  // Sincroniza de volta o nome caso tenha sido alterado no JSON
+  const jsonName = document.getElementById('json-filename-input').value.trim();
+  if (jsonName) document.getElementById('filename-input').value = jsonName;
+}
+
+function applyJsonEdits() {
+  const ta = document.getElementById('json-textarea');
+  const errEl = document.getElementById('json-error-msg');
+  let parsed;
+  try {
+    parsed = JSON.parse(ta.value);
+  } catch(e) {
+    errEl.textContent = 'JSON inválido: ' + e.message;
+    ta.classList.add('has-error');
+    return;
+  }
+  if (!Array.isArray(parsed)) {
+    errEl.textContent = 'Esperado um array [ { key, value }, ... ]';
+    ta.classList.add('has-error');
+    return;
+  }
+
+  // Constrói mapa key → value
+  const map = {};
+  for (const entry of parsed) {
+    if (entry.key !== undefined && entry.value !== undefined) {
+      // Aceita key como "0xABCD1234" ou número decimal
+      const keyNorm = String(entry.key).toUpperCase();
+      map[keyNorm] = String(entry.value);
+    }
+  }
+
+  // Aplica ao stringsData
+  let applied = 0;
+  stringsData.forEach((item, idx) => {
+    const keyHex = (item.key_hex || '').toUpperCase();
+    const keyDec = String(item.key);
+    if (map[keyHex] !== undefined) {
+      stringsData[idx].value = map[keyHex];
+      editedIndices.add(idx);
+      applied++;
+    } else if (map['0X' + keyDec] !== undefined) {
+      stringsData[idx].value = map['0X' + keyDec];
+      editedIndices.add(idx);
+      applied++;
+    }
+  });
+
+  ta.classList.remove('has-error');
+  errEl.textContent = '';
+  document.getElementById('json-toolbar-label').textContent = '✓ ' + applied + ' strings aplicadas';
+  triggerAutoSave();
+  updateProgressBadge();
+
+  setTimeout(() => {
+    document.getElementById('json-toolbar-label').textContent = 'JSON · ' + stringsData.length + ' strings';
+  }, 2500);
+}
+
+function saveJson() {
+  // Valida o JSON antes de baixar
+  const ta = document.getElementById('json-textarea');
+  const errEl = document.getElementById('json-error-msg');
+  let parsed;
+  try {
+    parsed = JSON.parse(ta.value);
+  } catch(e) {
+    errEl.textContent = 'JSON inválido — corrija antes de salvar.';
+    ta.classList.add('has-error');
+    return;
+  }
+
+  const outputName = (document.getElementById('json-filename-input').value.trim() || 'output') + '.json';
+  const blob = new Blob([JSON.stringify(parsed, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = outputName;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  ta.classList.remove('has-error');
+  errEl.textContent = '';
+  document.getElementById('json-toolbar-label').textContent = '⬇ ' + outputName + ' salvo!';
+  setTimeout(() => {
+    document.getElementById('json-toolbar-label').textContent = 'JSON · ' + (parsed.length || 0) + ' strings';
+  }, 2500);
+}
+
+// Habilita o botão JSON junto com o de salvar
+// (já que ele depende de stringsData estar carregado)
 
 load();
 </script>
