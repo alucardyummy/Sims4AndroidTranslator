@@ -153,6 +153,18 @@
   .github-badge:hover { color: #8a6aad; opacity: 1; }
   .github-badge svg { flex-shrink: 0; }
 
+  /* Topbar seleção: entrar e sair */
+  @keyframes topbarSlideDown {
+    from { opacity: 0; transform: translateY(-10px) scale(0.97); filter: blur(4px); }
+    to   { opacity: 1; transform: translateY(0)     scale(1);    filter: blur(0px); }
+  }
+  @keyframes topbarSlideUp {
+    from { opacity: 1; transform: translateY(0)     scale(1);    filter: blur(0px); }
+    to   { opacity: 0; transform: translateY(-8px)  scale(0.97); filter: blur(3px); }
+  }
+  .select-topbar.topbar-enter { animation: topbarSlideDown 0.32s cubic-bezier(0.22,1,0.36,1) forwards; }
+  .select-topbar.topbar-exit  { animation: topbarSlideUp   0.22s cubic-bezier(0.4,0,0.8,0)  forwards; }
+
   /* Animação de destruição: encolhe e some */
   @keyframes saveDisintegrate {
     0%   { transform: scale(1);    opacity: 1;    filter: blur(0px); }
@@ -757,32 +769,82 @@ setupFileInput('file-input-new');
 function enterSelectMode() {
   selectMode = true;
   selectedIds.clear();
+
+  // Anima topbar de seleção entrando
+  const topbarSelect = document.getElementById('topbar-select');
+  topbarSelect.classList.add('active');
+  topbarSelect.classList.remove('topbar-exit');
+  void topbarSelect.offsetWidth;
+  topbarSelect.classList.add('topbar-enter');
+  topbarSelect.addEventListener('animationend', () => topbarSelect.classList.remove('topbar-enter'), { once: true });
+
   document.getElementById('topbar-normal').style.display = 'none';
-  document.getElementById('topbar-select').classList.add('active');
   document.getElementById('screen').classList.add('select-mode');
   updateSelectCount();
-  // Show circles, hide action buttons — no full re-render
-  document.querySelectorAll('#saves-list .save-item').forEach(el => {
+
+  // Mostra círculos com animação stagger, esconde botões
+  document.querySelectorAll('#saves-list .save-item').forEach((el, i) => {
     const circle = el.querySelector('.sel-circle');
     const actions = el.querySelector('.save-actions');
-    if (circle) circle.style.display = 'flex';
     if (actions) actions.style.display = 'none';
+    if (circle) {
+      circle.style.display = 'flex';
+      circle.style.opacity = '0';
+      circle.style.transform = 'scale(0.5)';
+      setTimeout(() => {
+        circle.style.transition = 'opacity 0.22s ease, transform 0.22s cubic-bezier(0.34,1.56,0.64,1)';
+        circle.style.opacity = '1';
+        circle.style.transform = 'scale(1)';
+      }, i * 40);
+    }
   });
 }
 
 function exitSelectMode() {
   selectMode = false;
   selectedIds.clear();
-  document.getElementById('topbar-normal').style.display = 'flex';
-  document.getElementById('topbar-select').classList.remove('active');
   document.getElementById('screen').classList.remove('select-mode');
-  // Restore action buttons, hide circles — no full re-render
-  document.querySelectorAll('#saves-list .save-item').forEach(el => {
+
+  // Anima topbar saindo
+  const topbarSelect = document.getElementById('topbar-select');
+  topbarSelect.classList.remove('topbar-enter');
+  topbarSelect.classList.add('topbar-exit');
+  topbarSelect.addEventListener('animationend', () => {
+    topbarSelect.classList.remove('active', 'topbar-exit');
+  }, { once: true });
+
+  // Restaura topbar normal com fade in
+  const topbarNormal = document.getElementById('topbar-normal');
+  topbarNormal.style.opacity = '0';
+  topbarNormal.style.display = 'flex';
+  setTimeout(() => {
+    topbarNormal.style.transition = 'opacity 0.25s ease';
+    topbarNormal.style.opacity = '1';
+    setTimeout(() => topbarNormal.style.transition = '', 260);
+  }, 10);
+
+  // Anima círculos saindo e restaura botões com stagger
+  const items = document.querySelectorAll('#saves-list .save-item');
+  items.forEach((el, i) => {
     const circle = el.querySelector('.sel-circle');
     const actions = el.querySelector('.save-actions');
-    if (circle) circle.style.display = 'none';
-    if (actions) actions.style.display = 'flex';
     el.classList.remove('selected');
+
+    if (circle) {
+      circle.style.transition = 'opacity 0.15s ease, transform 0.15s ease';
+      circle.style.opacity = '0';
+      circle.style.transform = 'scale(0.5)';
+      setTimeout(() => { circle.style.display = 'none'; circle.style.transition = ''; circle.style.transform = ''; }, 160);
+    }
+    if (actions) {
+      actions.style.display = 'flex';
+      actions.style.opacity = '0';
+      setTimeout(() => {
+        actions.style.transition = 'opacity 0.2s ease';
+        actions.style.opacity = '1';
+        setTimeout(() => actions.style.transition = '', 220);
+      }, i * 30 + 80);
+    }
   });
 }
 
