@@ -216,21 +216,25 @@
   .auth-tab.active { display: block; }
 
   @keyframes tabBlurIn {
-    0%   { opacity: 0; filter: blur(10px); }
-    55%  { opacity: 1; filter: blur(1.5px); }
-    100% { opacity: 1; filter: blur(0px); }
+    0%   { opacity: 0;    filter: blur(10px); }
+    35%  { opacity: 0.35; filter: blur(3px); }
+    65%  { opacity: 0.75; filter: blur(0.4px); }
+    100% { opacity: 1;    filter: blur(0.01px); }
   }
   @keyframes tabBlurOut {
-    0%   { opacity: 1; filter: blur(0px); }
-    100% { opacity: 0; filter: blur(8px); }
+    0%   { opacity: 1;    filter: blur(0.01px); }
+    35%  { opacity: 0.55; filter: blur(0.5px); }
+    100% { opacity: 0;    filter: blur(8px); }
   }
   .auth-tab.tab-enter {
     display: block;
-    animation: tabBlurIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    will-change: filter, opacity;
+    animation: tabBlurIn 0.5s ease forwards;
   }
   .auth-tab.tab-exit {
     display: block;
-    animation: tabBlurOut 0.25s ease forwards;
+    will-change: filter, opacity;
+    animation: tabBlurOut 0.28s ease forwards;
   }
 
   body::before {
