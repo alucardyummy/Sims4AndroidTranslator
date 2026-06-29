@@ -492,6 +492,58 @@
   html.pre-no-saves #btn-new-wrap { display: none; }
   html.pre-no-saves #skeleton-area { display: none; }
   html.pre-no-saves #mascot-div { display: none; }
+
+  /* ── Custom Select (Pergunta de Segurança) ── */
+  .custom-select { position: relative; width: 100%; }
+
+  .custom-select-btn {
+    width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4);
+    border-radius: 8px; padding: 10px 12px;
+    font-size: 12px; color: var(--text); font-family: 'DM Sans', sans-serif;
+    cursor: pointer; text-align: left; backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: border-color 0.18s, background 0.18s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .custom-select-btn span { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .custom-select-btn:active { background: rgba(255,255,255,0.3); }
+  .custom-select-btn.open { border-color: rgba(255,255,255,0.6); background: rgba(255,255,255,0.28); }
+
+  .cs-arrow { flex-shrink: 0; color: var(--text-muted); transition: transform 0.22s cubic-bezier(0.22,1,0.36,1); }
+  .custom-select-btn.open .cs-arrow { transform: rotate(180deg); }
+
+  .custom-select-drop {
+    position: absolute; left: 0; right: 0; top: calc(100% + 6px);
+    background: rgba(40,46,56,0.82);
+    border: 1px solid rgba(184,156,217,0.3);
+    border-radius: 12px; overflow: hidden;
+    backdrop-filter: blur(24px) saturate(1.5);
+    -webkit-backdrop-filter: blur(24px) saturate(1.5);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+    z-index: 9999;
+    opacity: 0; transform: translateY(-6px) scale(0.98); pointer-events: none;
+    transition: opacity 0.22s cubic-bezier(0.22,1,0.36,1), transform 0.22s cubic-bezier(0.22,1,0.36,1);
+  }
+  .custom-select-drop.open {
+    opacity: 1; transform: translateY(0) scale(1); pointer-events: auto;
+  }
+
+  .cs-option {
+    padding: 12px 14px; font-size: 12px; color: rgba(255,255,255,0.75);
+    font-family: 'DM Sans', sans-serif; cursor: pointer;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    transition: background 0.15s, color 0.15s;
+    -webkit-tap-highlight-color: transparent;
+    line-height: 1.4;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .cs-option svg { flex-shrink: 0; }
+  .cs-option:last-child { border-bottom: none; }
+  .cs-option:active, .cs-option:hover { background: rgba(184,156,217,0.18); color: #fff; }
+  .cs-option.selected { color: #c4aee8; font-weight: 500; }
+  .cs-icon { display: inline-flex; align-items: center; flex-shrink: 0; margin-right: 10px; }
+  .cs-option { display: flex; align-items: center; }
 </style>
 </head>
 <script>
@@ -610,7 +662,7 @@
       <h3 class="modal-title">Entrar na Conta</h3>
       <div class="form-group"><label>Nome de Usuário</label><input type="text" class="form-input" id="login-username" placeholder="Seu usuário"></div>
       <div class="form-group"><label>Senha</label><input type="password" class="form-input" id="login-password" placeholder="••••••••"></div>
-      <button class="modal-btn" onclick="handleLogin()">ENTRAR</button>
+      <button class="modal-btn fx-press" onclick="handleLogin()">ENTRAR</button>
       <p class="modal-switch" onclick="switchTab('forgot')"><span>Esqueceu a senha?</span></p>
       <p class="modal-switch" onclick="switchTab('register')">Não tem conta? <span>Cadastre-se</span></p>
     </div>
@@ -621,34 +673,48 @@
       <div class="form-group"><label>Senha</label><input type="password" class="form-input" id="reg-password" placeholder="Mínimo 6 caracteres"></div>
       <div class="form-group">
         <label>Pergunta de Segurança</label>
-        <select class="form-input" id="reg-question" style="color: var(--text);">
-          <option value="Qual o nome do seu primeiro animal de estimação?">Qual o nome do seu primeiro animal de estimação?</option>
-          <option value="Qual o nome da sua cidade natal?">Qual o nome da sua cidade natal?</option>
-          <option value="Qual era o seu desenho favorito na infância?">Qual era o seu desenho favorito na infância?</option>
-          <option value="Qual o nome da sua primeira escola?">Qual o nome da sua primeira escola?</option>
-        </select>
+        <input type="hidden" id="reg-question" value="Nome do primeiro animalzinho">
+        <div class="custom-select" id="reg-q-wrap">
+          <button type="button" class="custom-select-btn" onclick="toggleDropdown('reg-q-drop', this)">
+            <span id="reg-q-label">Nome do primeiro animalzinho</span>
+            <svg class="cs-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="custom-select-drop" id="reg-q-drop">
+            <div class="cs-option selected" onclick="pickOption('reg-question','reg-q-label','reg-q-drop',this)"><svg class="cs-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><ellipse cx="12" cy="14" rx="7" ry="6" fill="#c4aee8" opacity="0.85"/><ellipse cx="12" cy="14" rx="5" ry="4" fill="#b89cd9" opacity="0.6"/><path d="M8 14 Q7 10 9 8 Q10 6 12 6 Q14 6 15 8 Q17 10 16 14" stroke="#d4bef0" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M9 16 Q7 19 5 20" stroke="#c4aee8" stroke-width="1.2" stroke-linecap="round"/><path d="M11 17 Q10 20 9 22" stroke="#b89cd9" stroke-width="1.2" stroke-linecap="round"/><path d="M13 17 Q14 20 15 22" stroke="#c4aee8" stroke-width="1.2" stroke-linecap="round"/><path d="M15 16 Q17 19 19 20" stroke="#b89cd9" stroke-width="1.2" stroke-linecap="round"/></svg>Nome do primeiro animalzinho</div>
+            <div class="cs-option" onclick="pickOption('reg-question','reg-q-label','reg-q-drop',this)"><svg class="cs-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="8" stroke="#b89cd9" stroke-width="1.4" fill="none"/><circle cx="9" cy="10" r="2.5" fill="#c4aee8" opacity="0.7"/><circle cx="15" cy="14" r="1.8" fill="#d4bef0" opacity="0.6"/><circle cx="8" cy="15" r="1.2" fill="#b89cd9" opacity="0.5"/><circle cx="15.5" cy="8.5" r="1.4" fill="#c4aee8" opacity="0.55"/></svg>Nome da cidade natal</div>
+            <div class="cs-option" onclick="pickOption('reg-question','reg-q-label','reg-q-drop',this)"><svg class="cs-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 8 Q7 5 12 5 Q17 5 18 8 L17 14 Q16 17 12 17 Q8 17 7 14 Z" fill="#c4aee8" opacity="0.85"/><path d="M9 17 Q9 19 10 20 L14 20 Q15 19 15 17" fill="#b89cd9" opacity="0.7"/><rect x="9" y="19.5" width="6" height="1.5" rx="0.75" fill="#b89cd9"/><path d="M8 8 Q9 6.5 12 6.5 Q15 6.5 16 8" stroke="#d4bef0" stroke-width="1" fill="none" stroke-linecap="round"/><path d="M7 5 Q7 3 9 2.5" stroke="#c4aee8" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M17 5 Q17 3 15 2.5" stroke="#c4aee8" stroke-width="1.2" fill="none" stroke-linecap="round"/></svg>Desenho favorito</div>
+            <div class="cs-option" onclick="pickOption('reg-question','reg-q-label','reg-q-drop',this)"><svg class="cs-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="9" stroke="#b89cd9" stroke-width="1.4" fill="none"/><path d="M12 3 Q16 7 16 12 Q16 17 12 21" stroke="#c4aee8" stroke-width="1.1" fill="none" stroke-linecap="round"/><path d="M12 3 Q8 7 8 12 Q8 17 12 21" stroke="#c4aee8" stroke-width="1.1" fill="none" stroke-linecap="round"/><circle cx="12" cy="12" r="3" fill="#d4bef0" opacity="0.7"/><circle cx="12" cy="12" r="1.5" fill="#b89cd9" opacity="0.9"/></svg>Comidinha favorita</div>
+          </div>
+        </div>
       </div>
       <div class="form-group"><label>Resposta Secreta</label><input type="text" class="form-input" id="reg-answer" placeholder="Sua resposta secreta"></div>
-      <button class="modal-btn" onclick="handleRegister()">CRIAR CONTA</button>
+      <button class="modal-btn fx-press" onclick="handleRegister()">CRIAR CONTA</button>
       <p class="modal-switch" onclick="switchTab('login')">Já tem uma conta? <span>Entrar</span></p>
     </div>
 
     <div class="auth-tab" id="tab-forgot">
       <h3 class="modal-title">Recuperar Senha</h3>
-      <p style="font-size:12px;color:var(--text-muted);margin-bottom:1rem;line-height:1.4">Confirme seus dados e responda sua pergunta para redefinir a senha.</p>
+      <p style="font-size:12px;color:#1b1047;margin-bottom:1rem;line-height:1.4;font-weight:500;">Confirme seus dados e responda sua pergunta para redefinir a senha.</p>
       <div class="form-group"><label>Usuário</label><input type="text" class="form-input" id="forgot-username" placeholder="Seu usuário"></div>
       <div class="form-group">
         <label>Selecione a sua Pergunta</label>
-        <select class="form-input" id="forgot-question" style="color: var(--text);">
-          <option value="Qual o nome do seu primeiro animal de estimação?">Qual o nome do seu primeiro animal de estimação?</option>
-          <option value="Qual o nome da sua cidade natal?">Qual o nome da sua cidade natal?</option>
-          <option value="Qual era o seu desenho favorito na infância?">Qual era o seu desenho favorito na infância?</option>
-          <option value="Qual o nome da sua primeira escola?">Qual o nome da sua primeira escola?</option>
-        </select>
+        <input type="hidden" id="forgot-question" value="Nome do primeiro animalzinho">
+        <div class="custom-select" id="forgot-q-wrap">
+          <button type="button" class="custom-select-btn" onclick="toggleDropdown('forgot-q-drop', this)">
+            <span id="forgot-q-label">Nome do primeiro animalzinho</span>
+            <svg class="cs-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="custom-select-drop" id="forgot-q-drop">
+            <div class="cs-option selected" onclick="pickOption('forgot-question','forgot-q-label','forgot-q-drop',this)"><svg class="cs-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><ellipse cx="12" cy="14" rx="7" ry="6" fill="#c4aee8" opacity="0.85"/><ellipse cx="12" cy="14" rx="5" ry="4" fill="#b89cd9" opacity="0.6"/><path d="M8 14 Q7 10 9 8 Q10 6 12 6 Q14 6 15 8 Q17 10 16 14" stroke="#d4bef0" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M9 16 Q7 19 5 20" stroke="#c4aee8" stroke-width="1.2" stroke-linecap="round"/><path d="M11 17 Q10 20 9 22" stroke="#b89cd9" stroke-width="1.2" stroke-linecap="round"/><path d="M13 17 Q14 20 15 22" stroke="#c4aee8" stroke-width="1.2" stroke-linecap="round"/><path d="M15 16 Q17 19 19 20" stroke="#b89cd9" stroke-width="1.2" stroke-linecap="round"/></svg>Nome do primeiro animalzinho</div>
+            <div class="cs-option" onclick="pickOption('forgot-question','forgot-q-label','forgot-q-drop',this)"><svg class="cs-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="8" stroke="#b89cd9" stroke-width="1.4" fill="none"/><circle cx="9" cy="10" r="2.5" fill="#c4aee8" opacity="0.7"/><circle cx="15" cy="14" r="1.8" fill="#d4bef0" opacity="0.6"/><circle cx="8" cy="15" r="1.2" fill="#b89cd9" opacity="0.5"/><circle cx="15.5" cy="8.5" r="1.4" fill="#c4aee8" opacity="0.55"/></svg>Nome da cidade natal</div>
+            <div class="cs-option" onclick="pickOption('forgot-question','forgot-q-label','forgot-q-drop',this)"><svg class="cs-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 8 Q7 5 12 5 Q17 5 18 8 L17 14 Q16 17 12 17 Q8 17 7 14 Z" fill="#c4aee8" opacity="0.85"/><path d="M9 17 Q9 19 10 20 L14 20 Q15 19 15 17" fill="#b89cd9" opacity="0.7"/><rect x="9" y="19.5" width="6" height="1.5" rx="0.75" fill="#b89cd9"/><path d="M8 8 Q9 6.5 12 6.5 Q15 6.5 16 8" stroke="#d4bef0" stroke-width="1" fill="none" stroke-linecap="round"/><path d="M7 5 Q7 3 9 2.5" stroke="#c4aee8" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M17 5 Q17 3 15 2.5" stroke="#c4aee8" stroke-width="1.2" fill="none" stroke-linecap="round"/></svg>Desenho favorito</div>
+            <div class="cs-option" onclick="pickOption('forgot-question','forgot-q-label','forgot-q-drop',this)"><svg class="cs-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="9" stroke="#b89cd9" stroke-width="1.4" fill="none"/><path d="M12 3 Q16 7 16 12 Q16 17 12 21" stroke="#c4aee8" stroke-width="1.1" fill="none" stroke-linecap="round"/><path d="M12 3 Q8 7 8 12 Q8 17 12 21" stroke="#c4aee8" stroke-width="1.1" fill="none" stroke-linecap="round"/><circle cx="12" cy="12" r="3" fill="#d4bef0" opacity="0.7"/><circle cx="12" cy="12" r="1.5" fill="#b89cd9" opacity="0.9"/></svg>Comidinha favorita</div>
+          </div>
+        </div>
       </div>
       <div class="form-group"><label>Resposta Secreta</label><input type="text" class="form-input" id="forgot-answer" placeholder="Digite a resposta cadastrada"></div>
       <div class="form-group"><label>Nova Senha</label><input type="password" class="form-input" id="forgot-new-password" placeholder="Nova senha"></div>
-      <button class="modal-btn" onclick="handleForgotPassword()">ALTERAR SENHA</button>
+      <button class="modal-btn fx-press" onclick="handleForgotPassword()">ALTERAR SENHA</button>
       <p class="modal-switch" onclick="switchTab('login')">Voltar para o <span>Login</span></p>
     </div>
 
@@ -1406,6 +1472,47 @@ async function handleForgotPassword() {
     else alert(data.error || 'Erro ao redefinir.');
   } catch(e) { alert('Erro de conexão.'); }
 }
+
+// ── Custom Select helpers ──────────────────────────────────────────────────
+function toggleDropdown(dropId, btn) {
+  const drop = document.getElementById(dropId);
+  const isOpen = drop.classList.contains('open');
+  // fecha todos os outros abertos
+  document.querySelectorAll('.custom-select-drop.open').forEach(d => {
+    d.classList.remove('open');
+    d.previousElementSibling && d.previousElementSibling.classList && d.previousElementSibling.classList.remove('open');
+  });
+  document.querySelectorAll('.custom-select-btn.open').forEach(b => b.classList.remove('open'));
+  if (!isOpen) {
+    drop.classList.add('open');
+    btn.classList.add('open');
+  }
+}
+
+function pickOption(hiddenId, labelId, dropId, el) {
+  // pega só o texto, ignorando o SVG filho
+  const clone = el.cloneNode(true);
+  clone.querySelectorAll('svg').forEach(s => s.remove());
+  const value = clone.textContent.trim();
+  document.getElementById(hiddenId).value = value;
+  document.getElementById(labelId).textContent = value;
+  // marca selecionado
+  el.closest('.custom-select-drop').querySelectorAll('.cs-option').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  // fecha
+  const drop = document.getElementById(dropId);
+  drop.classList.remove('open');
+  drop.previousElementSibling && drop.previousElementSibling.classList && drop.previousElementSibling.classList.remove('open');
+}
+
+// Fecha dropdown ao clicar fora
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.custom-select')) {
+    document.querySelectorAll('.custom-select-drop.open').forEach(d => d.classList.remove('open'));
+    document.querySelectorAll('.custom-select-btn.open').forEach(b => b.classList.remove('open'));
+  }
+});
+// ───────────────────────────────────────────────────────────────────────────
 
 // INIT
 checkLogin();
