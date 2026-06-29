@@ -212,6 +212,7 @@
   .modal-btn:active { background: var(--accent); }
   .modal-switch { text-align: center; font-size: 12px; color: #1b1047; margin-top: 1rem; cursor: pointer; font-weight: 500; }
   .modal-switch span { color: var(--accent); text-decoration: underline; font-weight: 500; }
+  .auth-tabs-wrap { position: relative; min-height: 0; }
   .auth-tab { display: none; }
   .auth-tab.active { display: block; }
 
@@ -228,6 +229,8 @@
     animation: tabBlurIn 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
   }
   .auth-tab.tab-exit {
+    position: absolute;
+    top: 0; left: 0; right: 0;
     display: block;
     animation: tabBlurOut 0.3s cubic-bezier(0.4, 0, 0.8, 0) forwards;
     pointer-events: none;
@@ -676,6 +679,7 @@
   <div class="modal-box">
     <button class="modal-close" onclick="closeAuthModal()">✕</button>
 
+    <div class="auth-tabs-wrap">
     <div class="auth-tab active" id="tab-login">
       <h3 class="modal-title">Entrar na Conta</h3>
       <div class="form-group"><label>Nome de Usuário</label><input type="text" class="form-input" id="login-username" placeholder="Seu usuário"></div>
@@ -735,6 +739,7 @@
       <button class="modal-btn fx-press" onclick="handleForgotPassword()">ALTERAR SENHA</button>
       <p class="modal-switch" onclick="switchTab('login')">Voltar para o <span>Login</span></p>
     </div>
+    </div><!-- /auth-tabs-wrap -->
 
   </div></div><div class="modal-overlay" id="profile-modal" onclick="if(event.target===this)closeProfileModal()">
   <div class="modal-box">
@@ -1434,24 +1439,32 @@ async function handleLogout() {
   window.location.reload();
 }
 function switchTab(tab) {
+  const wrap = document.querySelector('.auth-tabs-wrap');
   const current = document.querySelector('.auth-tab.active');
   const next = document.getElementById('tab-' + tab);
   if (!next || current === next) return;
 
-  if (current) {
-    current.classList.remove('active');
-    current.classList.add('tab-exit');
-    current.addEventListener('animationend', () => {
-      current.classList.remove('tab-exit');
-    }, { once: true });
-  }
+  // Trava a altura atual do wrapper pra não pular
+  wrap.style.height = wrap.offsetHeight + 'px';
+  wrap.style.overflow = 'hidden';
 
+  // Blur out o atual (position absolute pra não ocupar espaço)
+  current.classList.remove('active');
+  current.classList.add('tab-exit');
+  current.addEventListener('animationend', () => {
+    current.classList.remove('tab-exit');
+  }, { once: true });
+
+  // Blur in o próximo após o out começar
   setTimeout(() => {
     next.classList.add('active', 'tab-enter');
     next.addEventListener('animationend', () => {
       next.classList.remove('tab-enter');
+      // Libera a altura depois que o novo tab entrou
+      wrap.style.height = '';
+      wrap.style.overflow = '';
     }, { once: true });
-  }, 180);
+  }, 150);
 }
 
 async function handleLogin() {
