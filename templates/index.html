@@ -22,7 +22,6 @@
   })();
 </script>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; tap-highlight-color: transparent; }
 
@@ -1515,29 +1514,14 @@ async function handleLogin() {
 }
 
 function handleGoogleLogin() {
-  // Inicializa o Google Identity Services e abre o popup de seleção de conta
-  if (typeof google === 'undefined' || !google.accounts) {
-    alert('Google Identity Services ainda não carregou. Tente novamente em instantes.');
-    return;
-  }
-  google.accounts.id.initialize({
-    client_id: '1018018964497-4hes5133rnes0dlfhogqf83kferh5s6q.apps.googleusercontent.com',
-    callback: async (response) => {
-      try {
-        const res = await fetch('/api/google_login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ credential: response.credential })
-        });
-        const data = await res.json();
-        if (data.success) window.location.reload();
-        else alert(data.error || 'Erro ao entrar com Google.');
-      } catch(e) { alert('Erro de conexão.'); }
-    },
-    auto_select: false,
-    cancel_on_tap_outside: true,
-  });
-  google.accounts.id.prompt();
+  // Usa o redirect flow OAuth padrão — abre a página do Google,
+  // o usuário escolhe a conta e o Google redireciona de volta.
+  // Isso evita o bug do popup do GIS que não reabre após fechar.
+  const clientId = '1018018964497-05rn1eht44o6qn2jhq8b63mm640e7q7b.apps.googleusercontent.com';
+  const redirectUri = encodeURIComponent(window.location.origin + '/api/google_callback');
+  const scope = encodeURIComponent('openid email profile');
+  const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}&prompt=select_account&access_type=offline`;
+  window.location.href = url;
 }
 
 async function handleRegister() {
