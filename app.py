@@ -710,6 +710,10 @@ def google_login():
     c.execute("SELECT id FROM users WHERE google_id = %s", (google_id,))
     user = c.fetchone()
 
+    if user:
+        # Atualiza avatar sempre que logar (pode ter mudado no Google)
+        c.execute("UPDATE users SET avatar_url = %s WHERE id = %s", (avatar_url, user["id"]))
+
     if not user:
         # 2) Tem conta com o mesmo username (email local)?
         c.execute("SELECT id FROM users WHERE username = %s", (name,))
@@ -783,14 +787,10 @@ def google_callback():
             timeout=10,
         )
         token_data = token_resp.json()
-        app.logger.error("[GOOGLE CB] keys: " + str(list(token_data.keys())))
-        app.logger.error("[GOOGLE CB] error: " + str(token_data.get("error")) + " / " + str(token_data.get("error_description")))
     except Exception as e:
-        app.logger.error("[GOOGLE CB] exception: " + str(e))
         return redirect(f"/?google_error=token_request")
 
     if "id_token" not in token_data:
-        app.logger.error("[GOOGLE CB] no id_token: " + str(token_data))
         return redirect("/?google_error=no_id_token")
 
     # Valida o id_token (mesma lógica da rota /api/google_login)
@@ -814,6 +814,10 @@ def google_callback():
     # 1) Já tem conta vinculada ao google_id?
     c.execute("SELECT id FROM users WHERE google_id = %s", (google_id,))
     user = c.fetchone()
+
+    if user:
+        # Atualiza avatar sempre que logar (pode ter mudado no Google)
+        c.execute("UPDATE users SET avatar_url = %s WHERE id = %s", (avatar_url, user["id"]))
 
     if not user:
         # 2) Tem conta com o mesmo username?
