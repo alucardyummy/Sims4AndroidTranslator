@@ -5,3 +5,4 @@ openai
 psycopg2-binary
 supabase
 gunicorn
+google-auth
