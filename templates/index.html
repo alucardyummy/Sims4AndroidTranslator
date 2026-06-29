@@ -158,10 +158,10 @@
   .google-btn {
     width: 100%; padding: 11px 12px;
     display: flex; align-items: center; justify-content: center; gap: 10px;
-    background: rgba(30,50,46,0.38);
-    border: 1px solid #6b5589;
+    background: rgba(5,41,37,0.28);
+    border: 1px solid #1b1047;
     border-radius: 8px;
-    color: #c4aee8;
+    color: #1b1047;
     font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700;
     letter-spacing: 0.05em;
     cursor: pointer;
@@ -170,8 +170,8 @@
     transition: background 0.18s, border-color 0.18s, color 0.18s;
     -webkit-tap-highlight-color: transparent;
   }
-  .google-btn:hover { background: rgba(107,85,137,0.22); border-color: #8a6aad; color: #d4bef0; }
-  .google-btn:active { background: rgba(107,85,137,0.4); }
+  .google-btn:hover { background: rgba(5,41,37,0.42); border-color: #8A7FA6; color: #8A7FA6; }
+  .google-btn:active { background: rgba(5,41,37,0.55); }
   .google-btn svg { flex-shrink: 0; }
   .auth-divider {
     display: flex; align-items: center; gap: 8px;
@@ -705,11 +705,20 @@
       <button class="modal-btn fx-press" onclick="handleLogin()">ENTRAR</button>
       <div class="auth-divider">ou</div>
       <button class="google-btn fx-press" onclick="handleGoogleLogin()">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 5c1.617 0 3.08.573 4.219 1.515l3.154-3.154A10.94 10.94 0 0 0 12 1C7.392 1 3.397 3.602 1.386 7.41l3.668 2.846C6.065 7.246 8.817 5 12 5z" fill="#6b5589"/>
-          <path d="M23 12c0-.714-.065-1.412-.186-2.09H12v4.008h6.19a5.299 5.299 0 0 1-2.297 3.476l3.576 2.778C21.56 18.18 23 15.29 23 12z" fill="#8a6aad"/>
-          <path d="M5.054 14.256A6.985 6.985 0 0 1 4.667 12c0-.79.137-1.551.387-2.256L1.386 6.898A11.02 11.02 0 0 0 1 12c0 1.781.423 3.46 1.169 4.948l3.885-2.692z" fill="#9b7bbf"/>
-          <path d="M12 19c3.183 0 5.857-1.056 7.81-2.838l-3.576-2.778C15.136 14.43 13.643 15 12 15c-3.183 0-5.935-2.246-6.946-5.256L1.169 12.4A10.978 10.978 0 0 0 12 19z" fill="#7a5a9e"/>
+        <svg width="22" height="22" viewBox="-4 -4 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="gg" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#1b1047"/>
+              <stop offset="50%" stop-color="#8A7FA6"/>
+              <stop offset="100%" stop-color="#1b1047"/>
+            </linearGradient>
+          </defs>
+          <path d="M 17.5 3.5 A 10 10 0 1 0 20 10 L 12 10 M 20 10 L 20 16"
+                stroke="#1b1047" stroke-width="5.5" fill="none"
+                stroke-linecap="butt" stroke-linejoin="miter"/>
+          <path d="M 17.5 3.5 A 10 10 0 1 0 20 10 L 12 10 M 20 10 L 20 16"
+                stroke="url(#gg)" stroke-width="3" fill="none"
+                stroke-linecap="butt" stroke-linejoin="miter"/>
         </svg>
         ENTRAR COM GOOGLE
       </button>
