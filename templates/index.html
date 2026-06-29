@@ -1371,18 +1371,25 @@ async function checkLogin() {
       document.getElementById('profile-img').src = src;
       document.getElementById('modal-profile-img').src = src;
       try {
+        localStorage.setItem('is_logged_in', '1');
         if (data.profile_pic) localStorage.setItem('cached_profile_pic', data.profile_pic);
         else localStorage.removeItem('cached_profile_pic');
       } catch (e) {}
     } else {
       // Não logado (ex.: sessão expirou, ou trocou de conta no mesmo aparelho)
       // — não faz sentido continuar mostrando a foto cacheada de outro usuário.
-      try { localStorage.removeItem('cached_profile_pic'); } catch (e) {}
+      try {
+        localStorage.removeItem('is_logged_in');
+        localStorage.removeItem('cached_profile_pic');
+      } catch (e) {}
     }
   } catch(e) {}
 }
 
 document.getElementById('profile-btn').addEventListener('click', () => {
+  // Se currentUser já carregou, usa direto.
+  // Se ainda está carregando mas localStorage indica logado, espera e tenta de novo.
+  const wasLoggedIn = localStorage.getItem('is_logged_in') === '1';
   if (currentUser) {
     document.getElementById('profile-modal').classList.add('active');
     const _box = document.querySelector('#profile-modal .modal-box');
@@ -1397,6 +1404,23 @@ document.getElementById('profile-btn').addEventListener('click', () => {
     try {
       document.getElementById('edit-profile-pic').value = '';
     } catch(e) {}
+  } else if (wasLoggedIn) {
+    // Ainda aguardando /api/me — espera até 2s e reabre
+    const tryOpen = (attempts) => {
+      if (currentUser) {
+        document.getElementById('profile-btn').click();
+      } else if (attempts > 0) {
+        setTimeout(() => tryOpen(attempts - 1), 200);
+      } else {
+        // Tempo esgotado, mostra login
+        document.getElementById('auth-modal').classList.add('active');
+        const _abox = document.querySelector('#auth-modal .modal-box');
+        _abox.classList.remove('animate-out');
+        void _abox.offsetWidth;
+        _abox.classList.add('animate-in');
+      }
+    };
+    tryOpen(10);
   } else {
     document.getElementById('auth-modal').classList.add('active');
     const _abox = document.querySelector('#auth-modal .modal-box');
