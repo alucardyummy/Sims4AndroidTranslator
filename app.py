@@ -13,11 +13,14 @@ import psycopg2.extras
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import timedelta
 from supabase import create_client, Client
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 BUCKET_NAME = "packages"
+GOOGLE_CLIENT_ID = os.environ.get("1018018964497-4hes5133rnes0dlfhogqf83kferh5s6q.apps.googleusercontent.com")
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMPLATE_DIR = os.path.join(BASE_DIR, 'templates')
@@ -72,6 +75,14 @@ def init_db():
             c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS security_answer_hash VARCHAR(255);")
         except Exception as e:
             print("Colunas de segurança já existem ou houve um aviso:", e)
+
+        # Suporte a login com Google
+        try:
+            c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id VARCHAR(255) UNIQUE;")
+            # Permite usuários Google sem senha local
+            c.execute("ALTER TABLE users ALTER COLUMN password_hash DROP NOT NULL;")
+        except Exception as e:
+            print("Colunas google_id já existem ou houve um aviso:", e)
 
         c.execute('''
             CREATE TABLE IF NOT EXISTS saves (
@@ -658,6 +669,79 @@ def login():
 
     conn.close()
     return json.dumps({"success": False, "error": "Usuário ou senha incorretos."}), 401
+
+
+@app.route("/api/google_login", methods=["POST"])
+def google_login():
+    data = request.get_json()
+    credential = data.get("credential", "")
+
+    if not credential:
+        return json.dumps({"success": False, "error": "Token ausente."}), 400
+
+    if not GOOGLE_CLIENT_ID:
+        return json.dumps({"success": False, "error": "Google login não configurado no servidor."}), 500
+
+    try:
+        # Valida o JWT com a API do Google — garante que o token é legítimo
+        id_info = id_token.verify_oauth2_token(
+            credential,
+            google_requests.Request(),
+            GOOGLE_CLIENT_ID
+        )
+    except ValueError as e:
+        return json.dumps({"success": False, "error": f"Token inválido: {e}"}), 401
+
+    google_id = id_info["sub"]          # ID único e permanente do usuário no Google
+    email     = id_info.get("email", "")
+    name      = id_info.get("name", "") or email.split("@")[0]
+
+    conn = get_db()
+    c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    # 1) Já tem conta vinculada ao google_id?
+    c.execute("SELECT id FROM users WHERE google_id = %s", (google_id,))
+    user = c.fetchone()
+
+    if not user:
+        # 2) Tem conta com o mesmo username (email local)?
+        c.execute("SELECT id FROM users WHERE username = %s", (name,))
+        user = c.fetchone()
+        if user:
+            # Vincula o google_id à conta existente
+            c.execute("UPDATE users SET google_id = %s WHERE id = %s", (google_id, user['id']))
+        else:
+            # 3) Usuário novo — cria conta sem senha local
+            # Garante username único se o nome já existir
+            base_name = name
+            suffix = 1
+            while True:
+                c.execute("SELECT id FROM users WHERE username = %s", (name,))
+                if not c.fetchone():
+                    break
+                name = f"{base_name}{suffix}"
+                suffix += 1
+
+            c.execute(
+                "INSERT INTO users (username, password_hash, google_id) VALUES (%s, NULL, %s) RETURNING id",
+                (name, google_id)
+            )
+            user = c.fetchone()
+
+    # Mesma lógica do /api/login: seta sessão e migra saves de convidado
+    session['user_id'] = user['id']
+    session.permanent = True
+
+    guest_id = session.get('guest_session_id')
+    if guest_id:
+        c.execute(
+            "UPDATE saves SET user_id = %s WHERE guest_session_id = %s AND user_id IS NULL",
+            (user['id'], guest_id)
+        )
+
+    conn.commit()
+    conn.close()
+    return json.dumps({"success": True})
 
 
 @app.route("/api/forgot_password", methods=["POST"])
