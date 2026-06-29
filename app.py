@@ -84,6 +84,11 @@ def init_db():
         except Exception as e:
             print("Colunas google_id já existem ou houve um aviso:", e)
 
+        try:
+            c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT;")
+        except Exception as e:
+            print("Coluna avatar_url já existe ou houve um aviso:", e)
+
         c.execute('''
             CREATE TABLE IF NOT EXISTS saves (
                 id SERIAL PRIMARY KEY,
@@ -692,9 +697,10 @@ def google_login():
     except ValueError as e:
         return json.dumps({"success": False, "error": f"Token inválido: {e}"}), 401
 
-    google_id = id_info["sub"]          # ID único e permanente do usuário no Google
+    google_id = id_info["sub"]
     email     = id_info.get("email", "")
     name      = id_info.get("name", "") or email.split("@")[0]
+    avatar_url = id_info.get("picture", "")
 
     conn = get_db()
     c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -708,8 +714,8 @@ def google_login():
         c.execute("SELECT id FROM users WHERE username = %s", (name,))
         user = c.fetchone()
         if user:
-            # Vincula o google_id à conta existente
-            c.execute("UPDATE users SET google_id = %s WHERE id = %s", (google_id, user['id']))
+            # Vincula o google_id à conta existente e atualiza avatar
+            c.execute("UPDATE users SET google_id = %s, avatar_url = %s WHERE id = %s", (google_id, avatar_url, user['id']))
         else:
             # 3) Usuário novo — cria conta sem senha local
             # Garante username único se o nome já existir
@@ -723,8 +729,8 @@ def google_login():
                 suffix += 1
 
             c.execute(
-                "INSERT INTO users (username, password_hash, google_id) VALUES (%s, NULL, %s) RETURNING id",
-                (name, google_id)
+                "INSERT INTO users (username, password_hash, google_id, avatar_url) VALUES (%s, NULL, %s, %s) RETURNING id",
+                (name, google_id, avatar_url)
             )
             user = c.fetchone()
 
@@ -783,7 +789,7 @@ def me():
 
     conn = get_db()
     c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    c.execute("SELECT username, profile_pic FROM users WHERE id = %s", (user_id,))
+    c.execute("SELECT username, profile_pic, avatar_url FROM users WHERE id = %s", (user_id,))
     user = c.fetchone()
     conn.close()
 
@@ -791,7 +797,7 @@ def me():
         return json.dumps({
             "logged_in": True,
             "username": user["username"],
-            "profile_pic": user["profile_pic"]
+            "profile_pic": user["profile_pic"] or user["avatar_url"] or None
         })
     return json.dumps({"logged_in": False})
 
