@@ -1088,6 +1088,160 @@ def api_merge():
                 pass
 
 
+# ---------------------------------------------------------------------------
+#  CRIADOR DE MODS — traços, interações sociais e STBLs
+# ---------------------------------------------------------------------------
+
+@app.route("/create")
+def create_page():
+    """Página de criação de mods (traços + interações sociais)."""
+    return send_file(os.path.join(TEMPLATE_DIR, "create.html"))
+
+
+@app.route("/api/mod/preview", methods=["POST"])
+def api_mod_preview():
+    """
+    Recebe os dados do formulário e devolve um preview dos recursos
+    que serão gerados (hashes, instance IDs, strings) — sem criar arquivo.
+    """
+    from packer.tuning import fnv32, fnv64, TYPE_TRAIT, TYPE_SOCIAL
+
+    data = request.get_json()
+    traits_in  = data.get("traits", [])
+    socials_in = data.get("socials", [])
+
+    preview = {
+        "traits":       [],
+        "socials":      [],
+        "stbl_strings": [],
+        "errors":       [],
+    }
+
+    seen_names = set()
+
+    for t in traits_in:
+        name    = t.get("name", "").strip()
+        display = t.get("display_name", "").strip()
+        desc    = t.get("description", "").strip()
+
+        if not name or not display or not desc:
+            preview["errors"].append("Traço incompleto: preencha nome interno, título e descrição.")
+            continue
+        if ":" not in name:
+            preview["errors"].append(f"Nome '{name}' deve ter namespace (ex: meu_mod:trait_nome).")
+            continue
+        if name in seen_names:
+            preview["errors"].append(f"Nome duplicado: '{name}'.")
+            continue
+        seen_names.add(name)
+
+        dn_hash   = fnv32(display)
+        desc_hash = fnv32(desc)
+        inst_id   = fnv64(name)
+
+        preview["traits"].append({
+            "name":         name,
+            "display_name": display,
+            "description":  desc,
+            "instance_id":  f"0x{inst_id:016X}",
+            "dn_hash":      f"0x{dn_hash:08X}",
+            "desc_hash":    f"0x{desc_hash:08X}",
+            "type_hex":     f"0x{TYPE_TRAIT:08X}",
+        })
+        preview["stbl_strings"].append({"hash": f"0x{dn_hash:08X}",  "text": display})
+        preview["stbl_strings"].append({"hash": f"0x{desc_hash:08X}", "text": desc})
+
+    for s in socials_in:
+        name    = s.get("name", "").strip()
+        display = s.get("display_name", "").strip()
+
+        if not name or not display:
+            preview["errors"].append("Interação incompleta: preencha nome interno e título.")
+            continue
+        if ":" not in name:
+            preview["errors"].append(f"Nome '{name}' deve ter namespace.")
+            continue
+        if name in seen_names:
+            preview["errors"].append(f"Nome duplicado: '{name}'.")
+            continue
+        seen_names.add(name)
+
+        dn_hash = fnv32(display)
+        inst_id = fnv64(name)
+
+        preview["socials"].append({
+            "name":         name,
+            "display_name": display,
+            "instance_id":  f"0x{inst_id:016X}",
+            "dn_hash":      f"0x{dn_hash:08X}",
+            "type_hex":     f"0x{TYPE_SOCIAL:08X}",
+        })
+        preview["stbl_strings"].append({"hash": f"0x{dn_hash:08X}", "text": display})
+
+    return app.response_class(
+        response=json.dumps(preview),
+        mimetype="application/json"
+    )
+
+
+@app.route("/api/mod/build", methods=["POST"])
+def api_mod_build():
+    """
+    Gera o .package completo do mod (XMLs de tuning + STBL) e
+    sobe no Supabase, devolvendo o output_id para download.
+    """
+    from packer.tuning import build_mod_package
+
+    data        = request.get_json()
+    namespace   = data.get("namespace", "mod").strip().lower().replace(" ", "_")
+    target_lang = data.get("target_lang", "POR_BR")
+    traits_in   = data.get("traits", [])
+    socials_in  = data.get("socials", [])
+
+    if not traits_in and not socials_in:
+        return json.dumps({"success": False, "error": "Adicione pelo menos um traço ou interação."}), 400
+
+    for item in traits_in + socials_in:
+        if ":" not in item.get("name", ""):
+            return json.dumps({
+                "success": False,
+                "error": f"Nome '{item.get('name')}' inválido. Use o formato namespace:nome"
+            }), 400
+
+    tmp_out = tempfile.NamedTemporaryFile(delete=False, suffix=".package")
+    tmp_out_path = tmp_out.name
+    tmp_out.close()
+
+    try:
+        build_mod_package(
+            output_path=tmp_out_path,
+            traits=traits_in,
+            socials=socials_in,
+            stbl_strings={},
+            target_lang=target_lang,
+        )
+
+        output_name = f"{namespace}.package"
+        output_id   = f"mod_{uuid.uuid4().hex}.package"
+
+        with open(tmp_out_path, "rb") as f_out:
+            supabase.storage.from_(BUCKET_NAME).upload(output_id, f_out.read())
+
+    except Exception as e:
+        return json.dumps({"success": False, "error": f"Erro ao gerar mod: {str(e)}"}), 500
+    finally:
+        try:
+            os.remove(tmp_out_path)
+        except Exception:
+            pass
+
+    return json.dumps({
+        "success":     True,
+        "output_name": output_name,
+        "output_id":   output_id,
+    })
+
+
 with app.app_context():
     init_db()
 
