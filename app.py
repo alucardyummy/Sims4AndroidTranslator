@@ -783,14 +783,14 @@ def google_callback():
             timeout=10,
         )
         token_data = token_resp.json()
-        print("[GOOGLE CB] token_data keys:", list(token_data.keys()))
-        print("[GOOGLE CB] token_data:", token_data)
+        app.logger.error("[GOOGLE CB] keys: " + str(list(token_data.keys())))
+        app.logger.error("[GOOGLE CB] error: " + str(token_data.get("error")) + " / " + str(token_data.get("error_description")))
     except Exception as e:
-        print("[GOOGLE CB] exception:", e)
+        app.logger.error("[GOOGLE CB] exception: " + str(e))
         return redirect(f"/?google_error=token_request")
 
     if "id_token" not in token_data:
-        print("[GOOGLE CB] no id_token, error:", token_data.get("error"), token_data.get("error_description"))
+        app.logger.error("[GOOGLE CB] no id_token: " + str(token_data))
         return redirect("/?google_error=no_id_token")
 
     # Valida o id_token (mesma lógica da rota /api/google_login)
