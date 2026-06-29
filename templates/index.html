@@ -1618,7 +1618,7 @@ checkLogin();
         body: JSON.stringify({ token })
       });
       const data = await res.json();
-      if (data.success) checkLogin();
+      if (data.success) window.location.reload();
       else alert('Erro ao finalizar login com Google.');
     } catch(e) { alert('Erro de conexão.'); }
   }
