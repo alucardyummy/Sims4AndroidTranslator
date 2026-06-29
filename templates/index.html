@@ -215,6 +215,24 @@
   .auth-tab { display: none; }
   .auth-tab.active { display: block; }
 
+  @keyframes tabBlurIn {
+    from { opacity: 0; filter: blur(8px); transform: scale(0.98); }
+    to   { opacity: 1; filter: blur(0px); transform: scale(1); }
+  }
+  @keyframes tabBlurOut {
+    from { opacity: 1; filter: blur(0px); transform: scale(1); }
+    to   { opacity: 0; filter: blur(8px); transform: scale(0.98); }
+  }
+  .auth-tab.tab-enter {
+    display: block;
+    animation: tabBlurIn 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+  .auth-tab.tab-exit {
+    display: block;
+    animation: tabBlurOut 0.3s cubic-bezier(0.4, 0, 0.8, 0) forwards;
+    pointer-events: none;
+  }
+
   body::before {
     content: '';
     position: fixed;
@@ -1416,8 +1434,24 @@ async function handleLogout() {
   window.location.reload();
 }
 function switchTab(tab) {
-  document.querySelectorAll('.auth-tab').forEach(el => el.classList.remove('active'));
-  document.getElementById('tab-' + tab).classList.add('active');
+  const current = document.querySelector('.auth-tab.active');
+  const next = document.getElementById('tab-' + tab);
+  if (!next || current === next) return;
+
+  if (current) {
+    current.classList.remove('active');
+    current.classList.add('tab-exit');
+    current.addEventListener('animationend', () => {
+      current.classList.remove('tab-exit');
+    }, { once: true });
+  }
+
+  setTimeout(() => {
+    next.classList.add('active', 'tab-enter');
+    next.addEventListener('animationend', () => {
+      next.classList.remove('tab-enter');
+    }, { once: true });
+  }, 180);
 }
 
 async function handleLogin() {
