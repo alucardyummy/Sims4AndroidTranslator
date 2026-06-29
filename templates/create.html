@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0f0f0f">
+<title>Sims 4 · Criar Mod</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0f0f0f; --surface: #1a1a1a; --surface2: #222; --surface3: #191919;
+  --border: #2a2a2a; --border2: #333; --border3: #3a3a3a;
+  --accent: #9cb8b2; --accent-dim: #6a9088; --accent-faint: rgba(156,184,178,0.07);
+  --danger: #b07070; --danger-bg: rgba(176,112,112,0.08); --danger-border: #3a2020;
+  --text: #f0ece4; --text-muted: #7a7570; --text-dim: #4a4a4a;
+  --radius: 16px; --radius-sm: 10px; --radius-xs: 7px;
+}
+html, body { min-height: 100%; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; }
+.page { min-height: 100dvh; display: flex; flex-direction: column; padding: 1.25rem 1rem 6rem; }
+
+/* ── Topbar ── */
+.topbar { display: flex; align-items: center; gap: 12px; margin-bottom: 1.75rem; }
+.back-btn { width: 34px; height: 34px; background: transparent; border: 1px solid transparent; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-muted); text-decoration: none; -webkit-tap-highlight-color: transparent; flex-shrink: 0; transition: color 0.15s; }
+.back-btn:active { color: var(--accent); }
+.back-btn svg { width: 17px; height: 17px; }
+.topbar-title { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 600; letter-spacing: 0.06em; color: var(--text-muted); text-transform: uppercase; }
+
+/* ── Labels e separadores ── */
+.section-label { font-size: 10px; color: var(--text-dim); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.65rem; padding-left: 2px; }
+.separator { height: 1px; background: var(--border); margin: 1.25rem 0; }
+
+/* ── Campos de texto ── */
+.field { margin-bottom: 0.75rem; }
+.field-label { font-size: 10px; color: var(--text-dim); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 5px; padding-left: 2px; }
+.field input, .field textarea, .field select {
+  width: 100%; padding: 11px 13px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  color: var(--text); font-family: 'DM Mono', monospace; font-size: 12px;
+  outline: none; -webkit-appearance: none; resize: none;
+  transition: border-color 0.15s;
+}
+.field input:focus, .field textarea:focus, .field select:focus { border-color: var(--accent-dim); }
+.field input::placeholder, .field textarea::placeholder { color: var(--text-dim); }
+.field select option { background: var(--surface2); color: var(--text); }
+.field textarea { min-height: 64px; line-height: 1.5; }
+
+/* ── Módulo de Namespace global ── */
+.namespace-block {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 14px; margin-bottom: 1.25rem;
+}
+.ns-hint { font-size: 10px; color: var(--text-dim); line-height: 1.6; margin-top: 6px; }
+.ns-preview { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--accent-dim); margin-top: 4px; }
+
+/* ── Cards de Trait / Social ── */
+.card-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 0.75rem; }
+.card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  overflow: hidden; transition: border-color 0.2s;
+  animation: cardIn 0.22s ease;
+}
+@keyframes cardIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.card.expanded { border-color: var(--border2); }
+.card-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 13px 14px; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+.card-header:active { background: rgba(255,255,255,0.02); }
+.card-index { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-dim); flex-shrink: 0; width: 16px; text-align: right; }
+.card-title { flex: 1; font-size: 13px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.card-title.placeholder { color: var(--text-dim); font-style: italic; }
+.card-chevron { font-size: 11px; color: var(--text-dim); transition: transform 0.2s; flex-shrink: 0; }
+.card.expanded .card-chevron { transform: rotate(180deg); }
+.card-remove { width: 26px; height: 26px; background: transparent; border: none; color: var(--text-dim); font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; -webkit-tap-highlight-color: transparent; border-radius: 5px; transition: color 0.15s; }
+.card-remove:active { color: var(--danger); }
+.card-body { padding: 0 14px 14px; display: none; }
+.card.expanded .card-body { display: block; }
+
+/* ── Seletor de opção (chips) ── */
+.chip-group { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.chip {
+  padding: 5px 10px; background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: 20px; font-size: 11px; color: var(--text-muted);
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+  font-family: 'DM Mono', monospace;
+}
+.chip.active { background: var(--accent-faint); border-color: var(--accent-dim); color: var(--accent); }
+.chip:active { background: var(--accent-faint); }
+
+/* ── Toggle ── */
+.toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; }
+.toggle-label { font-size: 12px; color: var(--text-muted); }
+.toggle { position: relative; width: 40px; height: 22px; flex-shrink: 0; }
+.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle-slider {
+  position: absolute; inset: 0; background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: 22px; cursor: pointer; transition: background 0.2s, border-color 0.2s;
+}
+.toggle-slider::before {
+  content: ''; position: absolute; height: 14px; width: 14px;
+  left: 3px; bottom: 3px; background: var(--text-dim);
+  border-radius: 50%; transition: transform 0.2s, background 0.2s;
+}
+.toggle input:checked + .toggle-slider { background: var(--accent-faint); border-color: var(--accent-dim); }
+.toggle input:checked + .toggle-slider::before { transform: translateX(18px); background: var(--accent); }
+
+/* ── Botão de adicionar item ── */
+.add-btn {
+  width: 100%; padding: 12px; background: transparent;
+  border: 1px dashed var(--border2); border-radius: var(--radius-sm);
+  color: var(--text-muted); font-family: 'DM Sans', sans-serif; font-size: 13px;
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.add-btn:active { background: var(--accent-faint); border-color: var(--accent-dim); color: var(--accent); }
+
+/* ── Painel de Preview ── */
+.preview-panel {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  overflow: hidden; margin-top: 1.25rem; display: none;
+}
+.preview-panel.visible { display: block; animation: cardIn 0.2s ease; }
+.preview-header { padding: 12px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.preview-title { font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.08em; color: var(--text-dim); text-transform: uppercase; }
+.preview-count { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--accent-dim); }
+.preview-body { padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; max-height: 280px; overflow-y: auto; }
+.preview-row { display: flex; flex-direction: column; gap: 3px; padding: 8px 10px; background: var(--surface2); border-radius: var(--radius-xs); }
+.preview-row-name { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text); }
+.preview-row-meta { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-dim); display: flex; flex-wrap: wrap; gap: 8px; }
+.preview-row-meta span { color: var(--accent-dim); }
+.preview-tab { display: flex; gap: 0; border-bottom: 1px solid var(--border); }
+.preview-tab-btn { flex: 1; padding: 10px; text-align: center; font-size: 11px; color: var(--text-dim); cursor: pointer; -webkit-tap-highlight-color: transparent; font-family: 'DM Mono', monospace; letter-spacing: 0.05em; border-bottom: 2px solid transparent; transition: color 0.15s, border-color 0.15s; }
+.preview-tab-btn.active { color: var(--accent); border-bottom-color: var(--accent-dim); }
+.preview-section { display: none; }
+.preview-section.active { display: flex; flex-direction: column; gap: 8px; }
+
+/* ── Erros ── */
+.error-block {
+  background: var(--danger-bg); border: 1px solid var(--danger-border);
+  border-radius: var(--radius-sm); padding: 10px 13px;
+  font-size: 12px; color: var(--danger); line-height: 1.6;
+  display: none; margin-top: 0.75rem;
+}
+.error-block.visible { display: block; animation: cardIn 0.2s ease; }
+
+/* ── Barra de ações fixa ── */
+.action-bar {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  padding: 1rem; background: rgba(15,15,15,0.95);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid var(--border); display: flex; gap: 8px; z-index: 10;
+}
+.btn-preview {
+  flex: 0 0 auto; padding: 15px 18px; background: var(--surface2);
+  border: 1px solid var(--border2); border-radius: var(--radius);
+  color: var(--text-muted); font-family: 'Syne', sans-serif; font-size: 12px;
+  font-weight: 600; letter-spacing: 0.08em; cursor: pointer;
+  -webkit-tap-highlight-color: transparent; transition: color 0.15s, border-color 0.15s;
+}
+.btn-preview:active { color: var(--accent); border-color: var(--accent-dim); }
+.btn-build {
+  flex: 1; padding: 15px; background: var(--accent-dim);
+  border: none; border-radius: var(--radius);
+  color: #080808; font-family: 'Syne', sans-serif; font-size: 14px;
+  font-weight: 700; letter-spacing: 0.1em; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s, transform 0.1s, opacity 0.2s;
+}
+.btn-build:active { background: var(--accent); transform: scale(0.97); }
+.btn-build:disabled { opacity: 0.25; pointer-events: none; }
+
+/* ── Loading ── */
+.loading-overlay { display: none; position: fixed; inset: 0; background: rgba(15,15,15,0.92); z-index: 100; align-items: center; justify-content: center; flex-direction: column; gap: 1rem; }
+.loading-overlay.active { display: flex; }
+.spinner { width: 30px; height: 30px; border: 1.5px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { font-size: 11px; color: var(--text-muted); letter-spacing: 0.06em; font-family: 'DM Mono', monospace; }
+
+/* ── Toast ── */
+.toast { position: fixed; bottom: 5.5rem; left: 1rem; right: 1rem; background: var(--surface); border: 1px solid var(--border2); border-radius: var(--radius-sm); padding: 11px 16px; font-size: 12px; color: var(--text-muted); z-index: 200; display: none; text-align: center; letter-spacing: 0.03em; }
+.toast.show { display: block; animation: toastIn 0.22s ease; }
+.toast.success { background: var(--accent-faint); border-color: var(--accent-dim); color: var(--accent); }
+.toast.error { background: var(--danger-bg); border-color: var(--danger-border); color: var(--danger); }
+@keyframes toastIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="topbar">
+    <a href="/" class="back-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M19 12H5M12 5l-7 7 7 7"/>
+      </svg>
+    </a>
+    <div class="topbar-title">Criar Mod</div>
+  </div>
+
+  <!-- Namespace global -->
+  <div class="section-label">Identificação do mod</div>
+  <div class="namespace-block">
+    <div class="field" style="margin-bottom:6px">
+      <div class="field-label">Namespace (prefixo único)</div>
+      <input type="text" id="ns-input" placeholder="ex: meu_mod" oninput="onNsChange()" autocapitalize="none" autocorrect="off" spellcheck="false">
+    </div>
+    <div class="ns-hint">Todos os recursos do mod usam este prefixo. Use só letras, números e _</div>
+    <div class="ns-preview" id="ns-preview">meu_mod:trait_nome · meu_mod:social_nome</div>
+    <div class="separator" style="margin:10px 0 8px"></div>
+    <div class="field" style="margin-bottom:0">
+      <div class="field-label">Idioma das strings</div>
+      <select id="lang-select">
+        <option value="ENG_US">ENG_US — Inglês (padrão)</option>
+        <option value="POR_BR" selected>POR_BR — Português do Brasil</option>
+        <option value="SPA_ES">SPA_ES — Espanhol</option>
+        <option value="FRE_FR">FRE_FR — Francês</option>
+        <option value="GER_DE">GER_DE — Alemão</option>
+        <option value="ITA_IT">ITA_IT — Italiano</option>
+        <option value="CHI_CN">CHI_CN — Chinês simplificado</option>
+        <option value="JPN_JP">JPN_JP — Japonês</option>
+        <option value="KOR_KR">KOR_KR — Coreano</option>
+        <option value="RUS_RU">RUS_RU — Russo</option>
+        <option value="POL_PL">POL_PL — Polonês</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="separator"></div>
+
+  <!-- ── TRAÇOS ── -->
+  <div class="section-label">Traços de personalidade</div>
+  <div class="card-list" id="trait-list"></div>
+  <button class="add-btn" onclick="addTrait()">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+    Adicionar traço
+  </button>
+
+  <div class="separator"></div>
+
+  <!-- ── INTERAÇÕES SOCIAIS ── -->
+  <div class="section-label">Interações sociais (conversas)</div>
+  <div class="card-list" id="social-list"></div>
+  <button class="add-btn" onclick="addSocial()">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+    Adicionar interação
+  </button>
+
+  <!-- Painel de preview -->
+  <div class="error-block" id="error-block"></div>
+  <div class="preview-panel" id="preview-panel">
+    <div class="preview-tab">
+      <div class="preview-tab-btn active" onclick="switchTab('traits')">Traços</div>
+      <div class="preview-tab-btn" onclick="switchTab('socials')">Interações</div>
+      <div class="preview-tab-btn" onclick="switchTab('strings')">STBLs</div>
+    </div>
+    <div class="preview-header">
+      <div class="preview-title">Pré-visualização</div>
+      <div class="preview-count" id="preview-count">—</div>
+    </div>
+    <div class="preview-body">
+      <div class="preview-section active" id="tab-traits"></div>
+      <div class="preview-section" id="tab-socials"></div>
+      <div class="preview-section" id="tab-strings"></div>
+    </div>
+  </div>
+
+</div><!-- .page -->
+
+<!-- Barra de ações -->
+<div class="action-bar">
+  <button class="btn-preview" onclick="doPreview()">Verificar</button>
+  <button class="btn-build" id="build-btn" onclick="doBuild()">GERAR .PACKAGE →</button>
+</div>
+
+<div class="loading-overlay" id="loading">
+  <div class="spinner"></div>
+  <div class="loading-text" id="loading-text">Gerando mod...</div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ─────────────────────────────────────────────
+// Estado
+// ─────────────────────────────────────────────
+let traits  = [];
+let socials = [];
+let traitId = 0;
+let socialId = 0;
+
+// ─────────────────────────────────────────────
+// Namespace helpers
+// ─────────────────────────────────────────────
+function getNs() {
+  return document.getElementById('ns-input').value.trim().replace(/[^a-z0-9_]/gi, '_') || 'meu_mod';
+}
+
+function onNsChange() {
+  const ns = getNs();
+  document.getElementById('ns-preview').textContent =
+    ns + ':trait_nome · ' + ns + ':social_nome';
+  // Atualiza placeholders dos campos de nome nos cards
+  document.querySelectorAll('.name-input').forEach(el => {
+    const base = el.dataset.base || '';
+    el.placeholder = ns + ':' + base;
+  });
+}
+
+// ─────────────────────────────────────────────
+// Trait card
+// ─────────────────────────────────────────────
+const TRAIT_TYPES = [
+  { v: 'personality', l: 'Personalidade' },
+  { v: 'bonus',       l: 'Bônus' },
+  { v: 'social',      l: 'Social' },
+  { v: 'gameplay',    l: 'Gameplay' },
+];
+const AVAILABILITY = [
+  { v: 'teen_up',       l: 'Teen+' },
+  { v: 'young_adult_up', l: 'Young Adult+' },
+  { v: 'adult_up',      l: 'Adult+' },
+  { v: 'all_ages',      l: 'Todas' },
+];
+
+function addTrait() {
+  const id = ++traitId;
+  traits.push({ id, name:'', display_name:'', description:'', trait_type:'personality', availability:'teen_up', buy_price:0 });
+  renderTraits();
+  // Abre o card recém-criado
+  setTimeout(() => toggleCard('trait-card-' + id), 50);
+}
+
+function removeTrait(id) {
+  traits = traits.filter(t => t.id !== id);
+  renderTraits();
+}
+
+function renderTraits() {
+  const ns = getNs();
+  const list = document.getElementById('trait-list');
+  list.innerHTML = '';
+  traits.forEach((t, idx) => {
+    const div = document.createElement('div');
+    div.className = 'card';
+    div.id = 'trait-card-' + t.id;
+    const titleText = t.display_name || 'Traço sem nome';
+    const isPlaceholder = !t.display_name;
+    div.innerHTML = `
+      <div class="card-header" onclick="toggleCard('trait-card-${t.id}')">
+        <span class="card-index">${idx + 1}</span>
+        <span class="card-title${isPlaceholder ? ' placeholder' : ''}">${escHtml(titleText)}</span>
+        <span class="card-chevron">▾</span>
+        <button class="card-remove" onclick="event.stopPropagation(); removeTrait(${t.id})">✕</button>
+      </div>
+      <div class="card-body">
+        <div class="field">
+          <div class="field-label">Nome interno (tuning name)</div>
+          <input class="name-input" type="text" data-id="${t.id}" data-type="trait" data-base="trait_nome"
+            placeholder="${ns}:trait_nome" value="${escHtml(t.name)}"
+            oninput="updateField('trait',${t.id},'name',this.value)"
+            autocapitalize="none" autocorrect="off" spellcheck="false">
+        </div>
+        <div class="field">
+          <div class="field-label">Nome de exibição (aparece no jogo)</div>
+          <input type="text" placeholder="Ex: Criativo"
+            value="${escHtml(t.display_name)}"
+            oninput="updateField('trait',${t.id},'display_name',this.value); refreshCardTitle('trait-card-${t.id}', this.value)">
+        </div>
+        <div class="field">
+          <div class="field-label">Descrição</div>
+          <textarea placeholder="Sims com este traço..."
+            oninput="updateField('trait',${t.id},'description',this.value)">${escHtml(t.description)}</textarea>
+        </div>
+        <div class="field">
+          <div class="field-label">Tipo do traço</div>
+          <div class="chip-group">
+            ${TRAIT_TYPES.map(tp => `<div class="chip${t.trait_type===tp.v?' active':''}" onclick="selectChip(this,'trait',${t.id},'trait_type','${tp.v}')">${tp.l}</div>`).join('')}
+          </div>
+        </div>
+        <div class="field">
+          <div class="field-label">Disponibilidade por idade</div>
+          <div class="chip-group">
+            ${AVAILABILITY.map(a => `<div class="chip${t.availability===a.v?' active':''}" onclick="selectChip(this,'trait',${t.id},'availability','${a.v}')">${a.l}</div>`).join('')}
+          </div>
+        </div>
+        <div class="field">
+          <div class="field-label">Custo em pontos de traço</div>
+          <input type="number" min="0" max="99" value="${t.buy_price}"
+            oninput="updateField('trait',${t.id},'buy_price',parseInt(this.value)||0)">
+        </div>
+      </div>`;
+    list.appendChild(div);
+  });
+}
+
+// ─────────────────────────────────────────────
+// Social card
+// ─────────────────────────────────────────────
+const CATEGORIES = [
+  { v: 'friendly',  l: 'Amigável' },
+  { v: 'funny',     l: 'Engraçado' },
+  { v: 'mean',      l: 'Malvado' },
+  { v: 'romantic',  l: 'Romântico' },
+  { v: 'mischief',  l: 'Travessura' },
+  { v: 'greeting',  l: 'Cumprimento' },
+];
+const RELATIONSHIPS = [
+  { v: 'any',          l: 'Qualquer' },
+  { v: 'acquaintance', l: 'Conhecido' },
+  { v: 'friend',       l: 'Amigo' },
+  { v: 'best_friend',  l: 'Melhor amigo' },
+  { v: 'romantic',     l: 'Romântico' },
+];
+
+function addSocial() {
+  const id = ++socialId;
+  socials.push({ id, name:'', display_name:'', category:'friendly', min_relationship:'any', relationship_change:10, allow_autonomy:true });
+  renderSocials();
+  setTimeout(() => toggleCard('social-card-' + id), 50);
+}
+
+function removeSocial(id) {
+  socials = socials.filter(s => s.id !== id);
+  renderSocials();
+}
+
+function renderSocials() {
+  const ns = getNs();
+  const list = document.getElementById('social-list');
+  list.innerHTML = '';
+  socials.forEach((s, idx) => {
+    const div = document.createElement('div');
+    div.className = 'card';
+    div.id = 'social-card-' + s.id;
+    const titleText = s.display_name || 'Interação sem nome';
+    const isPlaceholder = !s.display_name;
+    div.innerHTML = `
+      <div class="card-header" onclick="toggleCard('social-card-${s.id}')">
+        <span class="card-index">${idx + 1}</span>
+        <span class="card-title${isPlaceholder ? ' placeholder' : ''}">${escHtml(titleText)}</span>
+        <span class="card-chevron">▾</span>
+        <button class="card-remove" onclick="event.stopPropagation(); removeSocial(${s.id})">✕</button>
+      </div>
+      <div class="card-body">
+        <div class="field">
+          <div class="field-label">Nome interno (tuning name)</div>
+          <input class="name-input" type="text" data-id="${s.id}" data-type="social" data-base="social_nome"
+            placeholder="${ns}:social_nome" value="${escHtml(s.name)}"
+            oninput="updateField('social',${s.id},'name',this.value)"
+            autocapitalize="none" autocorrect="off" spellcheck="false">
+        </div>
+        <div class="field">
+          <div class="field-label">Nome de exibição (no menu de interações)</div>
+          <input type="text" placeholder="Ex: Contar Piada Original"
+            value="${escHtml(s.display_name)}"
+            oninput="updateField('social',${s.id},'display_name',this.value); refreshCardTitle('social-card-${s.id}', this.value)">
+        </div>
+        <div class="field">
+          <div class="field-label">Categoria no menu social</div>
+          <div class="chip-group">
+            ${CATEGORIES.map(c => `<div class="chip${s.category===c.v?' active':''}" onclick="selectChip(this,'social',${s.id},'category','${c.v}')">${c.l}</div>`).join('')}
+          </div>
+        </div>
+        <div class="field">
+          <div class="field-label">Relação mínima necessária</div>
+          <div class="chip-group">
+            ${RELATIONSHIPS.map(r => `<div class="chip${s.min_relationship===r.v?' active':''}" onclick="selectChip(this,'social',${s.id},'min_relationship','${r.v}')">${r.l}</div>`).join('')}
+          </div>
+        </div>
+        <div class="field">
+          <div class="field-label">Mudança na relação ao usar</div>
+          <input type="number" min="-100" max="100" value="${s.relationship_change}"
+            oninput="updateField('social',${s.id},'relationship_change',parseInt(this.value)||0)">
+        </div>
+        <div class="toggle-row">
+          <span class="toggle-label">NPCs podem usar autonomamente</span>
+          <label class="toggle">
+            <input type="checkbox" ${s.allow_autonomy?'checked':''} onchange="updateField('social',${s.id},'allow_autonomy',this.checked)">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>`;
+    list.appendChild(div);
+  });
+}
+
+// ─────────────────────────────────────────────
+// Helpers de estado e UI
+// ─────────────────────────────────────────────
+function updateField(type, id, field, value) {
+  if (type === 'trait') {
+    const t = traits.find(x => x.id === id);
+    if (t) t[field] = value;
+  } else {
+    const s = socials.find(x => x.id === id);
+    if (s) s[field] = value;
+  }
+}
+
+function selectChip(el, type, id, field, value) {
+  updateField(type, id, field, value);
+  const group = el.closest('.chip-group');
+  group.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function toggleCard(cardId) {
+  const card = document.getElementById(cardId);
+  if (!card) return;
+  card.classList.toggle('expanded');
+}
+
+function refreshCardTitle(cardId, value) {
+  const card = document.getElementById(cardId);
+  if (!card) return;
+  const titleEl = card.querySelector('.card-title');
+  if (!value.trim()) {
+    titleEl.textContent = cardId.startsWith('trait') ? 'Traço sem nome' : 'Interação sem nome';
+    titleEl.classList.add('placeholder');
+  } else {
+    titleEl.textContent = value;
+    titleEl.classList.remove('placeholder');
+  }
+}
+
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// ─────────────────────────────────────────────
+// Tabs de preview
+// ─────────────────────────────────────────────
+let currentTab = 'traits';
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.preview-tab-btn').forEach((btn, i) => {
+    btn.classList.toggle('active', ['traits','socials','strings'][i] === tab);
+  });
+  document.querySelectorAll('.preview-section').forEach(s => s.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+}
+
+// ─────────────────────────────────────────────
+// Preview
+// ─────────────────────────────────────────────
+async function doPreview() {
+  const payload = buildPayload();
+  const errBlock = document.getElementById('error-block');
+  const panel = document.getElementById('preview-panel');
+
+  try {
+    const res = await fetch('/api/mod/preview', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+
+    errBlock.classList.remove('visible');
+    if (data.errors && data.errors.length) {
+      errBlock.innerHTML = data.errors.map(e => '⚠ ' + escHtml(e)).join('<br>');
+      errBlock.classList.add('visible');
+      panel.classList.remove('visible');
+      return;
+    }
+
+    // Traits tab
+    const tTab = document.getElementById('tab-traits');
+    tTab.innerHTML = data.traits.length
+      ? data.traits.map(t => `
+          <div class="preview-row">
+            <div class="preview-row-name">${escHtml(t.name)}</div>
+            <div class="preview-row-meta">
+              instance <span>${t.instance_id}</span>
+              · type <span>${t.type_hex}</span>
+              · name_hash <span>${t.dn_hash}</span>
+            </div>
+          </div>`).join('')
+      : '<div style="color:var(--text-dim);font-size:12px;text-align:center;padding:1rem">Nenhum traço adicionado</div>';
+
+    // Socials tab
+    const sTab = document.getElementById('tab-socials');
+    sTab.innerHTML = data.socials.length
+      ? data.socials.map(s => `
+          <div class="preview-row">
+            <div class="preview-row-name">${escHtml(s.name)}</div>
+            <div class="preview-row-meta">
+              instance <span>${s.instance_id}</span>
+              · type <span>${s.type_hex}</span>
+              · name_hash <span>${s.dn_hash}</span>
+            </div>
+          </div>`).join('')
+      : '<div style="color:var(--text-dim);font-size:12px;text-align:center;padding:1rem">Nenhuma interação adicionada</div>';
+
+    // Strings tab
+    const strTab = document.getElementById('tab-strings');
+    strTab.innerHTML = data.stbl_strings.length
+      ? data.stbl_strings.map(s => `
+          <div class="preview-row">
+            <div class="preview-row-name">${escHtml(s.text)}</div>
+            <div class="preview-row-meta">hash <span>${s.hash}</span></div>
+          </div>`).join('')
+      : '<div style="color:var(--text-dim);font-size:12px;text-align:center;padding:1rem">Nenhuma string</div>';
+
+    const total = data.traits.length + data.socials.length;
+    document.getElementById('preview-count').textContent =
+      total + ' recurso' + (total !== 1 ? 's' : '') + ' · ' + data.stbl_strings.length + ' strings';
+
+    panel.classList.add('visible');
+    switchTab(currentTab);
+
+  } catch(e) {
+    showToast('Erro ao verificar: ' + e.message, 'error');
+  }
+}
+
+// ─────────────────────────────────────────────
+// Build
+// ─────────────────────────────────────────────
+function buildPayload() {
+  const ns = getNs();
+  return {
+    mod_name:    ns,
+    namespace:   ns,
+    target_lang: document.getElementById('lang-select').value,
+    traits: traits.map(t => ({
+      name:         t.name || (ns + ':trait_' + t.id),
+      display_name: t.display_name,
+      description:  t.description,
+      trait_type:   t.trait_type,
+      availability: t.availability,
+      buy_price:    t.buy_price,
+    })),
+    socials: socials.map(s => ({
+      name:                s.name || (ns + ':social_' + s.id),
+      display_name:        s.display_name,
+      category:            s.category,
+      min_relationship:    s.min_relationship,
+      relationship_change: s.relationship_change,
+      allow_autonomy:      s.allow_autonomy,
+    })),
+  };
+}
+
+async function doBuild() {
+  if (!traits.length && !socials.length) {
+    showToast('Adicione pelo menos um traço ou interação.', 'error');
+    return;
+  }
+
+  const loading = document.getElementById('loading');
+  document.getElementById('loading-text').textContent = 'Gerando .package...';
+  loading.classList.add('active');
+
+  try {
+    const res = await fetch('/api/mod/build', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(buildPayload()),
+    });
+    const data = await res.json();
+    loading.classList.remove('active');
+
+    if (!data.success) {
+      showToast(data.error || 'Erro ao gerar mod.', 'error');
+      return;
+    }
+
+    // Download via rota /download já existente no app.py
+    const url = `/download?file=${encodeURIComponent(data.output_id)}&name=${encodeURIComponent(data.output_name)}`;
+    window.location.href = url;
+    showToast('Mod gerado! Baixando...', 'success');
+
+  } catch(e) {
+    loading.classList.remove('active');
+    showToast('Erro: ' + e.message, 'error');
+  }
+}
+
+// ─────────────────────────────────────────────
+// Toast
+// ─────────────────────────────────────────────
+let toastTimer = null;
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (type ? ' ' + type : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3500);
+}
+</script>
+</body>
+</html>
