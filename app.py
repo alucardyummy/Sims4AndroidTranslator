@@ -767,7 +767,7 @@ def google_callback():
         return redirect("/?google_error=config")
 
     GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
-    redirect_uri = request.host_url.rstrip("/") + "/api/google_callback"
+    redirect_uri = "https://sims4androidtranslator.vercel.app/api/google_callback"
 
     # Troca o authorization code por tokens
     try:
