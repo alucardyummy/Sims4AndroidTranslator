@@ -15,6 +15,7 @@ from datetime import timedelta
 from supabase import create_client, Client
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
+import requests as http_requests
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
@@ -748,6 +749,107 @@ def google_login():
     conn.commit()
     conn.close()
     return json.dumps({"success": True})
+
+
+@app.route("/api/google_callback")
+def google_callback():
+    """
+    Recebe o ?code= do Google após o usuário escolher a conta no redirect flow.
+    Troca o code por tokens, valida o id_token e faz login/cadastro.
+    """
+    code = request.args.get("code")
+    error = request.args.get("error")
+
+    if error or not code:
+        return redirect("/?google_error=cancelled")
+
+    if not GOOGLE_CLIENT_ID:
+        return redirect("/?google_error=config")
+
+    GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
+    redirect_uri = request.host_url.rstrip("/") + "/api/google_callback"
+
+    # Troca o authorization code por tokens
+    try:
+        token_resp = http_requests.post(
+            "https://oauth2.googleapis.com/token",
+            data={
+                "code": code,
+                "client_id": GOOGLE_CLIENT_ID,
+                "client_secret": GOOGLE_CLIENT_SECRET,
+                "redirect_uri": redirect_uri,
+                "grant_type": "authorization_code",
+            },
+            timeout=10,
+        )
+        token_data = token_resp.json()
+    except Exception as e:
+        return redirect(f"/?google_error=token_request")
+
+    if "id_token" not in token_data:
+        return redirect("/?google_error=no_id_token")
+
+    # Valida o id_token (mesma lógica da rota /api/google_login)
+    try:
+        id_info = id_token.verify_oauth2_token(
+            token_data["id_token"],
+            google_requests.Request(),
+            GOOGLE_CLIENT_ID,
+        )
+    except ValueError:
+        return redirect("/?google_error=invalid_token")
+
+    google_id  = id_info["sub"]
+    email      = id_info.get("email", "")
+    name       = id_info.get("name", "") or email.split("@")[0]
+    avatar_url = id_info.get("picture", "")
+
+    conn = get_db()
+    c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    # 1) Já tem conta vinculada ao google_id?
+    c.execute("SELECT id FROM users WHERE google_id = %s", (google_id,))
+    user = c.fetchone()
+
+    if not user:
+        # 2) Tem conta com o mesmo username?
+        c.execute("SELECT id FROM users WHERE username = %s", (name,))
+        user = c.fetchone()
+        if user:
+            c.execute(
+                "UPDATE users SET google_id = %s, avatar_url = %s WHERE id = %s",
+                (google_id, avatar_url, user["id"]),
+            )
+        else:
+            # 3) Cria conta nova sem senha local
+            base_name = name
+            suffix = 1
+            while True:
+                c.execute("SELECT id FROM users WHERE username = %s", (name,))
+                if not c.fetchone():
+                    break
+                name = f"{base_name}{suffix}"
+                suffix += 1
+
+            c.execute(
+                "INSERT INTO users (username, password_hash, google_id, avatar_url) VALUES (%s, NULL, %s, %s) RETURNING id",
+                (name, google_id, avatar_url),
+            )
+            user = c.fetchone()
+
+    session["user_id"] = user["id"]
+    session.permanent = True
+
+    guest_id = session.get("guest_session_id")
+    if guest_id:
+        c.execute(
+            "UPDATE saves SET user_id = %s WHERE guest_session_id = %s AND user_id IS NULL",
+            (user["id"], guest_id),
+        )
+
+    conn.commit()
+    conn.close()
+    return redirect("/")
 
 
 @app.route("/api/forgot_password", methods=["POST"])
