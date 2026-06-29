@@ -212,28 +212,25 @@
   .modal-btn:active { background: var(--accent); }
   .modal-switch { text-align: center; font-size: 12px; color: #1b1047; margin-top: 1rem; cursor: pointer; font-weight: 500; }
   .modal-switch span { color: var(--accent); text-decoration: underline; font-weight: 500; }
-  .auth-tabs-wrap { position: relative; min-height: 0; }
   .auth-tab { display: none; }
   .auth-tab.active { display: block; }
 
   @keyframes tabBlurIn {
-    from { opacity: 0; filter: blur(8px); transform: scale(0.98); }
-    to   { opacity: 1; filter: blur(0px); transform: scale(1); }
+    0%   { opacity: 0; filter: blur(10px); }
+    55%  { opacity: 1; filter: blur(1.5px); }
+    100% { opacity: 1; filter: blur(0px); }
   }
   @keyframes tabBlurOut {
-    from { opacity: 1; filter: blur(0px); transform: scale(1); }
-    to   { opacity: 0; filter: blur(8px); transform: scale(0.98); }
+    0%   { opacity: 1; filter: blur(0px); }
+    100% { opacity: 0; filter: blur(8px); }
   }
   .auth-tab.tab-enter {
     display: block;
-    animation: tabBlurIn 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    animation: tabBlurIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
   }
   .auth-tab.tab-exit {
-    position: absolute;
-    top: 0; left: 0; right: 0;
     display: block;
-    animation: tabBlurOut 0.3s cubic-bezier(0.4, 0, 0.8, 0) forwards;
-    pointer-events: none;
+    animation: tabBlurOut 0.25s ease forwards;
   }
 
   body::before {
@@ -1439,32 +1436,23 @@ async function handleLogout() {
   window.location.reload();
 }
 function switchTab(tab) {
-  const wrap = document.querySelector('.auth-tabs-wrap');
   const current = document.querySelector('.auth-tab.active');
   const next = document.getElementById('tab-' + tab);
   if (!next || current === next) return;
 
-  // Trava a altura atual do wrapper pra não pular
-  wrap.style.height = wrap.offsetHeight + 'px';
-  wrap.style.overflow = 'hidden';
-
-  // Blur out o atual (position absolute pra não ocupar espaço)
   current.classList.remove('active');
   current.classList.add('tab-exit');
-  current.addEventListener('animationend', () => {
-    current.classList.remove('tab-exit');
-  }, { once: true });
 
-  // Blur in o próximo após o out começar
-  setTimeout(() => {
+  current.addEventListener('animationend', function h() {
+    current.removeEventListener('animationend', h);
+    current.classList.remove('tab-exit');
+
     next.classList.add('active', 'tab-enter');
-    next.addEventListener('animationend', () => {
+    next.addEventListener('animationend', function h2() {
+      next.removeEventListener('animationend', h2);
       next.classList.remove('tab-enter');
-      // Libera a altura depois que o novo tab entrou
-      wrap.style.height = '';
-      wrap.style.overflow = '';
     }, { once: true });
-  }, 150);
+  }, { once: true });
 }
 
 async function handleLogin() {
