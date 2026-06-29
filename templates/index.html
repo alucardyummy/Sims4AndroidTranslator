@@ -212,30 +212,14 @@
   .modal-btn:active { background: var(--accent); }
   .modal-switch { text-align: center; font-size: 12px; color: #1b1047; margin-top: 1rem; cursor: pointer; font-weight: 500; }
   .modal-switch span { color: var(--accent); text-decoration: underline; font-weight: 500; }
-  .auth-tab { display: none; }
+  .auth-tab {
+    display: none;
+    opacity: 0;
+    filter: blur(6px);
+    transition: opacity 0.32s ease, filter 0.32s ease;
+  }
   .auth-tab.active { display: block; }
-
-  @keyframes tabBlurIn {
-    0%   { opacity: 0;    filter: blur(10px); }
-    35%  { opacity: 0.35; filter: blur(3px); }
-    65%  { opacity: 0.75; filter: blur(0.4px); }
-    100% { opacity: 1;    filter: blur(0.01px); }
-  }
-  @keyframes tabBlurOut {
-    0%   { opacity: 1;    filter: blur(0.01px); }
-    35%  { opacity: 0.55; filter: blur(0.5px); }
-    100% { opacity: 0;    filter: blur(8px); }
-  }
-  .auth-tab.tab-enter {
-    display: block;
-    will-change: filter, opacity;
-    animation: tabBlurIn 0.5s ease forwards;
-  }
-  .auth-tab.tab-exit {
-    display: block;
-    will-change: filter, opacity;
-    animation: tabBlurOut 0.28s ease forwards;
-  }
+  .auth-tab.active.tab-visible { opacity: 1; filter: blur(0px); }
 
   body::before {
     content: '';
@@ -681,7 +665,7 @@
     <button class="modal-close" onclick="closeAuthModal()">✕</button>
 
     <div class="auth-tabs-wrap">
-    <div class="auth-tab active" id="tab-login">
+    <div class="auth-tab active tab-visible" id="tab-login">
       <h3 class="modal-title">Entrar na Conta</h3>
       <div class="form-group"><label>Nome de Usuário</label><input type="text" class="form-input" id="login-username" placeholder="Seu usuário"></div>
       <div class="form-group"><label>Senha</label><input type="password" class="form-input" id="login-password" placeholder="••••••••"></div>
@@ -1444,19 +1428,23 @@ function switchTab(tab) {
   const next = document.getElementById('tab-' + tab);
   if (!next || current === next) return;
 
-  current.classList.remove('active');
-  current.classList.add('tab-exit');
+  function showNext() {
+    next.classList.add('active');
+    next.offsetHeight; // força reflow antes de ligar a transição
+    next.classList.add('tab-visible');
+  }
 
-  current.addEventListener('animationend', function h() {
-    current.removeEventListener('animationend', h);
-    current.classList.remove('tab-exit');
-
-    next.classList.add('active', 'tab-enter');
-    next.addEventListener('animationend', function h2() {
-      next.removeEventListener('animationend', h2);
-      next.classList.remove('tab-enter');
-    }, { once: true });
-  }, { once: true });
+  if (current) {
+    current.classList.remove('tab-visible');
+    current.addEventListener('transitionend', function h(e) {
+      if (e.propertyName !== 'opacity') return;
+      current.removeEventListener('transitionend', h);
+      current.classList.remove('active');
+      showNext();
+    });
+  } else {
+    showNext();
+  }
 }
 
 async function handleLogin() {
