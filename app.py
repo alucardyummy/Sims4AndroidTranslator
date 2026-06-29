@@ -837,19 +837,57 @@ def google_callback():
             )
             user = c.fetchone()
 
-    session["user_id"] = user["id"]
-    session.permanent = True
+    # Gera token temporário para contornar bloqueio de cookie SameSite=Lax
+    # em redirect cross-site (Google → seu site).
+    login_token = str(uuid.uuid4())
+    user_id = user["id"]
 
     guest_id = session.get("guest_session_id")
     if guest_id:
         c.execute(
             "UPDATE saves SET user_id = %s WHERE guest_session_id = %s AND user_id IS NULL",
-            (user["id"], guest_id),
+            (user_id, guest_id),
         )
+
+    try:
+        c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS login_token VARCHAR(64);")
+    except Exception:
+        pass
+    c.execute("UPDATE users SET login_token = %s WHERE id = %s", (login_token, user_id))
 
     conn.commit()
     conn.close()
-    return redirect("/")
+    return redirect(f"/?login_token={login_token}")
+
+
+@app.route("/api/google_token_login", methods=["POST"])
+def google_token_login():
+    """
+    Consome o token temporário gerado pelo google_callback e seta a session.
+    Chamado pelo JS da home logo após o redirect do Google.
+    """
+    data = request.get_json()
+    token = data.get("token", "").strip()
+    if not token:
+        return json.dumps({"success": False}), 400
+
+    conn = get_db()
+    c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    c.execute("SELECT id FROM users WHERE login_token = %s", (token,))
+    user = c.fetchone()
+
+    if not user:
+        conn.close()
+        return json.dumps({"success": False, "error": "Token inválido ou expirado."}), 401
+
+    # Consome o token (uso único)
+    c.execute("UPDATE users SET login_token = NULL WHERE id = %s", (user["id"],))
+    conn.commit()
+    conn.close()
+
+    session["user_id"] = user["id"]
+    session.permanent = True
+    return json.dumps({"success": True})
 
 
 @app.route("/api/forgot_password", methods=["POST"])
