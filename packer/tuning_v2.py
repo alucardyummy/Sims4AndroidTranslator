@@ -388,6 +388,28 @@ def build_mod_package(
             rid = make_tuning_rid(t['name'], TYPE_TRAIT)
             pkg.put(rid, xml_bytes)
 
+            # SimData pareado (0x545AC67A) — obrigatorio pro jogo exibir o traco no CAS
+            from packer.simdata import build_trait_simdata
+            _AGES_MAP = {
+                'teen_up':        [8, 16, 32, 64],
+                'young_adult_up': [16, 32, 64],
+                'adult_up':       [32, 64],
+                'all_ages':       [2, 4, 8, 16, 32, 64],
+            }
+            sd_bytes = build_trait_simdata(
+                instance_name=t['name'],
+                display_name_hash=t['dn_hash'],
+                description_hash=t['desc_hash'],
+                trait_type=t.get('trait_type', 'personality'),
+                ages=_AGES_MAP.get(t.get('availability', 'teen_up'), [8, 16, 32, 64]),
+            )
+            sd_rid = ResourceID(
+                group=0x0017E896,
+                instance=fnv64(t['name']),
+                type=0x545AC67A,
+            )
+            pkg.put(sd_rid, sd_bytes)
+
         # 2. Escreve cada Social Interaction XML
         for s in processed_socials:
             xml_bytes = build_social_xml(
@@ -422,4 +444,4 @@ def build_mod_package(
             for key_hash, text in all_strings.items():
                 stbl.add(key_hash, text)
 
-            pkg.put(stbl_rid, stbl.binary)
+            pkg.put(stbl_rid, stbl.binary) 
