@@ -245,6 +245,19 @@
   .modal-btn:active { background: var(--accent); }
   .modal-switch { text-align: center; font-size: 12px; color: #1b1047; margin-top: 1rem; cursor: pointer; font-weight: 500; }
   .modal-switch span { color: var(--accent); text-decoration: underline; font-weight: 500; }
+
+  /* Custom Alert (substitui o alert() nativo do navegador) */
+  .alert-overlay { display: flex; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 2000; align-items: center; justify-content: center; padding: 1.5rem; opacity: 0; visibility: hidden; backdrop-filter: blur(0px); -webkit-backdrop-filter: blur(0px); transition: opacity 0.32s ease, visibility 0.32s, backdrop-filter 0.32s ease, -webkit-backdrop-filter 0.32s ease; }
+  .alert-overlay.active { opacity: 1; visibility: visible; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+  .alert-box { width: 100%; max-width: 320px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; position: relative; text-align: center; }
+  .alert-box.animate-in  { animation: modalIn  0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+  .alert-box.animate-out { animation: modalOut 0.38s cubic-bezier(0.4, 0, 0.8, 0) forwards; }
+  .alert-icon { width: 44px; height: 44px; margin: 0 auto 0.85rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
+  .alert-icon.err { background: rgba(180,60,60,0.25); color: #7a1f1f; border: 1px solid rgba(180,60,60,0.4); }
+  .alert-icon.ok  { background: rgba(60,140,100,0.25); color: #1c4a34; border: 1px solid rgba(60,140,100,0.4); }
+  .alert-msg { font-size: 13.5px; line-height: 1.5; color: var(--text); font-family: 'DM Sans', sans-serif; margin-bottom: 1.25rem; }
+  .alert-btn { width: 100%; padding: 12px; background: rgba(30,50,46,0.65); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: #fff; font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 0.05em; cursor: pointer; backdrop-filter: blur(8px); }
+  .alert-btn:active { background: var(--accent); }
   .auth-tab {
     display: none;
     opacity: 0;
@@ -815,12 +828,42 @@
     </div>
     <button class="modal-btn fx-press" onclick="saveProfile()">SALVAR ALTERAÇÕES</button>
     <button class="modal-btn fx-press" style="background:transparent;border:1px solid #b89cd9;color:#413d57;margin-top:10px" onclick="handleLogout()">SAIR DA CONTA</button>
-  </div></div><script>
+  </div></div><div class="alert-overlay" id="custom-alert" onclick="if(event.target===this)closeCustomAlert()">
+  <div class="alert-box">
+    <div class="alert-icon" id="custom-alert-icon">!</div>
+    <p class="alert-msg" id="custom-alert-msg"></p>
+    <button class="alert-btn fx-press" onclick="closeCustomAlert()">OK</button>
+  </div>
+</div><script>
 let currentUser = null;
 let newProfilePicBase64 = null;
 let selectMode = false;
 let selectedIds = new Set();
 let hasSaves = false;
+
+// ── Custom Alert (substitui o alert() nativo) ───────────────────────────────
+function showAlert(msg, type) {
+  const overlay = document.getElementById('custom-alert');
+  const box = overlay.querySelector('.alert-box');
+  const icon = document.getElementById('custom-alert-icon');
+  const msgEl = document.getElementById('custom-alert-msg');
+  msgEl.textContent = msg;
+  icon.textContent = type === 'ok' ? '✓' : '!';
+  icon.className = 'alert-icon ' + (type === 'ok' ? 'ok' : 'err');
+  box.classList.remove('animate-out');
+  box.classList.add('animate-in');
+  overlay.classList.add('active');
+}
+function closeCustomAlert() {
+  const overlay = document.getElementById('custom-alert');
+  const box = overlay.querySelector('.alert-box');
+  box.classList.remove('animate-in');
+  box.classList.add('animate-out');
+  setTimeout(() => {
+    overlay.classList.remove('active');
+    box.classList.remove('animate-out');
+  }, 380);
+}
 
 function checkHasSaves() {
   return localStorage.getItem('has_saves') === '1';
@@ -1279,7 +1322,7 @@ async function editSave(id) {
       sessionStorage.setItem('editing_save', '1');
       window.location.href = '/editor';
     }
-  } catch(e) { alert('Erro ao carregar save.'); }
+  } catch(e) { showAlert('Erro ao carregar save.'); }
 }
 
 // ─── Animação de poeira/fumaça ───────────────────────────────────────────────
@@ -1479,8 +1522,8 @@ async function saveProfile() {
     });
     const data = await res.json();
     if (data.success) window.location.reload();
-    else alert(data.error);
-  } catch(e) { alert('Erro ao salvar perfil.'); }
+    else showAlert(data.error);
+  } catch(e) { showAlert('Erro ao salvar perfil.'); }
 }
 
 function closeAuthModal() {
@@ -1533,7 +1576,7 @@ function switchTab(tab) {
 async function handleLogin() {
   const username = document.getElementById('login-username').value.trim();
   const password = document.getElementById('login-password').value.trim();
-  if (!username || !password) { alert('Preencha todos os campos.'); return; }
+  if (!username || !password) { showAlert('Preencha todos os campos.'); return; }
   try {
     const res = await fetch('/api/login', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -1541,8 +1584,8 @@ async function handleLogin() {
     });
     const data = await res.json();
     if (data.success) window.location.reload();
-    else alert(data.error || 'Erro ao entrar.');
-  } catch(e) { alert('Erro de conexão.'); }
+    else showAlert(data.error || 'Erro ao entrar.');
+  } catch(e) { showAlert('Erro de conexão.'); }
 }
 
 function handleGoogleLogin() {
@@ -1559,7 +1602,7 @@ async function handleRegister() {
   const question = document.getElementById('reg-question').value;
   const answer = document.getElementById('reg-answer').value.trim();
 
-  if (!username || !password || !answer) { alert('Preencha todos os campos.'); return; }
+  if (!username || !password || !answer) { showAlert('Preencha todos os campos.'); return; }
   
   try {
     const res = await fetch('/api/register', {
@@ -1568,8 +1611,8 @@ async function handleRegister() {
     });
     const data = await res.json();
     if (data.success) window.location.reload();
-    else alert(data.error || 'Erro ao criar conta.');
-  } catch(e) { alert('Erro de conexão.'); }
+    else showAlert(data.error || 'Erro ao criar conta.');
+  } catch(e) { showAlert('Erro de conexão.'); }
 }
 
 async function handleForgotPassword() {
@@ -1578,7 +1621,7 @@ async function handleForgotPassword() {
   const answer = document.getElementById('forgot-answer').value.trim();
   const new_password = document.getElementById('forgot-new-password').value.trim();
 
-  if (!username || !answer || !new_password) { alert('Preencha todos os campos.'); return; }
+  if (!username || !answer || !new_password) { showAlert('Preencha todos os campos.'); return; }
   
   try {
     const res = await fetch('/api/forgot_password', {
@@ -1586,9 +1629,9 @@ async function handleForgotPassword() {
       body: JSON.stringify({ username, security_question: question, security_answer: answer, new_password })
     });
     const data = await res.json();
-    if (data.success) { alert('Senha alterada com sucesso!'); switchTab('login'); }
-    else alert(data.error || 'Erro ao redefinir.');
-  } catch(e) { alert('Erro de conexão.'); }
+    if (data.success) { showAlert('Senha alterada com sucesso!', 'ok'); switchTab('login'); }
+    else showAlert(data.error || 'Erro ao redefinir.');
+  } catch(e) { showAlert('Erro de conexão.'); }
 }
 
 // ── Custom Select helpers ──────────────────────────────────────────────────
@@ -1650,8 +1693,8 @@ checkLogin();
       });
       const data = await res.json();
       if (data.success) window.location.reload();
-      else alert('Erro ao finalizar login com Google.');
-    } catch(e) { alert('Erro de conexão.'); }
+      else showAlert('Erro ao finalizar login com Google.');
+    } catch(e) { showAlert('Erro de conexão.'); }
   }
 })();
 
