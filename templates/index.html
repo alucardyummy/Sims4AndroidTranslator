@@ -859,8 +859,8 @@ function closeCustomAlert() {
   const box = overlay.querySelector('.alert-box');
   box.classList.remove('animate-in');
   box.classList.add('animate-out');
+  overlay.classList.remove('active');
   setTimeout(() => {
-    overlay.classList.remove('active');
     box.classList.remove('animate-out');
   }, 380);
 }
