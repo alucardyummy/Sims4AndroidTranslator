@@ -194,6 +194,31 @@ class ByteWriter:
     def patch_u32(self, offset: int, v: int):
         struct.pack_into('<I', self._buf, offset, v & 0xFFFFFFFF)
 
+    def patch_resource_key(self, offset: int, key) -> None:
+        """
+        Escreve um ResourceKey binário de 16 bytes no offset indicado.
+
+        Ordem confirmada no código-fonte aberto do S4TK (@s4tk/models,
+        src/lib/resources/simdata/cells.ts, ResourceKeyCell.encode/decode):
+
+            encoder.uint64(self.instance)
+            encoder.uint32(self.type)
+            encoder.uint32(self.group)
+
+        Ou seja: instance (8 bytes) -> type (4 bytes) -> group (4 bytes),
+        tudo little-endian. Repare que é a ordem OPOSTA da notação textual
+        usada no XML (que mostra "type-group-instance").
+
+        'key' aceita qualquer objeto com atributos .type, .group, .instance
+        — em particular, um packer.resource.ResourceID serve direto.
+        """
+        struct.pack_into(
+            '<QII', self._buf, offset,
+            key.instance & 0xFFFFFFFFFFFFFFFF,
+            key.type & 0xFFFFFFFF,
+            key.group & 0xFFFFFFFF,
+        )
+
     def get_bytes(self) -> bytes:
         return bytes(self._buf)
 
@@ -209,6 +234,9 @@ def build_trait_simdata(
     trait_type: str = 'personality',
     ages: list = None,
     cas_trait_asm_param: str = '',
+    icon=None,
+    cas_selected_icon=None,
+    cas_idle_asm_key=None,
 ) -> bytes:
     """
     Gera o binário SimData (0x545AC67A) para um Trait.
@@ -220,6 +248,14 @@ def build_trait_simdata(
         trait_type          - 'personality'|'bonus'|'gameplay'|'social'
         ages                - lista de idades (padrão: Teen+)
         cas_trait_asm_param - parâmetro de animação CAS (pode ficar vazio)
+        icon                - ResourceID (ou objeto com .type/.group/.instance)
+                               do recurso de imagem (type 0x00B2D882) a usar
+                               como ícone do traço no CAS. None = campo fica
+                               zerado (comportamento antigo, sem ícone customizado).
+        cas_selected_icon   - idem, para o ícone de "já selecionado" no CAS
+                               (opcional, o jogo cai pro 'icon' se ficar None).
+        cas_idle_asm_key    - ResourceID do ASM (type STATEMACHINE) usado pro
+                               idle do CAS. None = campo fica zerado.
 
     Retorna bytes prontos para inserir no .package com type 0x545AC67A.
     """
@@ -550,16 +586,21 @@ def build_trait_simdata(
             patch_u32(field_pos, 0)
 
         elif col_name == 'cas_idle_asm_key':
-            # ResourceKey vazio: 16 bytes zeros (já estão zerados)
-            pass
+            # ResourceKey: 16 bytes zerados se não informado (comportamento antigo)
+            if cas_idle_asm_key is not None:
+                buf.patch_resource_key(field_pos, cas_idle_asm_key)
 
         elif col_name == 'cas_selected_icon':
-            # ResourceKey vazio
-            pass
+            # ResourceKey: 16 bytes zerados se não informado (comportamento antigo)
+            if cas_selected_icon is not None:
+                buf.patch_resource_key(field_pos, cas_selected_icon)
 
         elif col_name == 'icon':
-            # ResourceKey vazio (sem ícone customizado)
-            pass
+            # ResourceKey: 16 bytes zerados se não informado (comportamento antigo,
+            # sem ícone customizado). Se informado, escreve instance+type+group
+            # reais na ordem confirmada pelo S4TK (ver patch_resource_key acima).
+            if icon is not None:
+                buf.patch_resource_key(field_pos, icon)
 
         elif col_name == 'cas_idle_asm_state':
             # String: [int32 offset relativo ao char table]
