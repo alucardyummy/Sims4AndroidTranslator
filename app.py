@@ -1092,6 +1092,53 @@ def api_merge():
 #  CRIADOR DE MODS — traços, interações sociais e STBLs
 # ---------------------------------------------------------------------------
 
+def _parse_resource_key(value):
+    """
+    Converte o valor de um campo de ícone/ResourceKey vindo do JSON do
+    frontend numa instância de packer.resource.ResourceID.
+
+    Aceita duas formas:
+      - dict:   {"type": "0x00B2D882", "group": "0x00000000", "instance": "0xC4EC3E0A..."}
+                (valores podem ser string hex com "0x" ou int puro)
+      - string: "00B2D882-00000000-C4EC3E0A68620978"  (mesmo formato "TYPE-GROUP-INSTANCE"
+                usado no <T n="icon"> do XML e no ResourceKeyCell.toXmlNode do S4TK)
+
+    Retorna None se value for None/vazio. Lança ValueError se o formato
+    for reconhecido mas os dados forem inválidos.
+    """
+    from packer.resource import ResourceID
+
+    if not value:
+        return None
+
+    def _to_int(v):
+        if isinstance(v, int):
+            return v
+        return int(str(v), 16)
+
+    if isinstance(value, dict):
+        return ResourceID(
+            type=_to_int(value.get("type", 0)),
+            group=_to_int(value.get("group", 0)),
+            instance=_to_int(value.get("instance", 0)),
+        )
+
+    if isinstance(value, str):
+        parts = value.strip().split("-")
+        if len(parts) != 3:
+            raise ValueError(
+                f"ResourceKey '{value}' inválido: use o formato TYPE-GROUP-INSTANCE"
+            )
+        type_str, group_str, instance_str = parts
+        return ResourceID(
+            type=int(type_str, 16),
+            group=int(group_str, 16),
+            instance=int(instance_str, 16),
+        )
+
+    raise ValueError(f"Tipo de ResourceKey não suportado: {type(value)}")
+
+
 @app.route("/create")
 def create_page():
     """Página de criação de mods (traços + interações sociais)."""
@@ -1139,6 +1186,17 @@ def api_mod_preview():
         desc_hash = fnv32(desc)
         inst_id   = fnv64(name)
 
+        icon_preview = None
+        icon_value = t.get("icon")
+        if icon_value:
+            try:
+                icon_rid = _parse_resource_key(icon_value)
+                icon_preview = "{:08X}-{:08X}-{:016X}".format(
+                    icon_rid.type, icon_rid.group, icon_rid.instance
+                )
+            except ValueError as e:
+                preview["errors"].append(f"Ícone do traço '{name}': {e}")
+
         preview["traits"].append({
             "name":         name,
             "display_name": display,
@@ -1147,6 +1205,7 @@ def api_mod_preview():
             "dn_hash":      f"0x{dn_hash:08X}",
             "desc_hash":    f"0x{desc_hash:08X}",
             "type_hex":     f"0x{TYPE_TRAIT:08X}",
+            "icon":         icon_preview,
         })
         preview["stbl_strings"].append({"hash": f"0x{dn_hash:08X}",  "text": display})
         preview["stbl_strings"].append({"hash": f"0x{desc_hash:08X}", "text": desc})
@@ -1207,6 +1266,19 @@ def api_mod_build():
                 "success": False,
                 "error": f"Nome '{item.get('name')}' inválido. Use o formato namespace:nome"
             }), 400
+
+    # Converte os campos de ícone/ResourceKey (JSON) em ResourceID reais.
+    # Aceitos por traço: "icon", "cas_selected_icon", "cas_idle_asm_key",
+    # cada um como dict {type,group,instance} ou string "TYPE-GROUP-INSTANCE".
+    # Nenhum é obrigatório — se ausente, o traço sai sem ícone customizado
+    # (mesmo comportamento de antes).
+    try:
+        for t in traits_in:
+            t["icon_rid"] = _parse_resource_key(t.get("icon"))
+            t["cas_selected_icon_rid"] = _parse_resource_key(t.get("cas_selected_icon"))
+            t["cas_idle_asm_key_rid"] = _parse_resource_key(t.get("cas_idle_asm_key"))
+    except ValueError as e:
+        return json.dumps({"success": False, "error": f"Ícone inválido: {e}"}), 400
 
     tmp_out = tempfile.NamedTemporaryFile(delete=False, suffix=".package")
     tmp_out_path = tmp_out.name
