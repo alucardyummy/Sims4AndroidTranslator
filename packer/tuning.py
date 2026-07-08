@@ -117,6 +117,7 @@ def build_trait_xml(
     trait_type: str = 'personality',
     availability: str = 'teen_up',
     buy_price: int = 0,
+    icon_rid=None,
 ) -> bytes:
     """
     Gera o XML de um Trait.
@@ -129,6 +130,10 @@ def build_trait_xml(
         trait_type        - 'personality' | 'bonus' | 'gameplay' | 'social'
         availability      - 'teen_up' | 'young_adult_up' | 'all_ages' | 'adult_up'
         buy_price         - preço em pontos de traço (0 = gratuito)
+        icon_rid          - ResourceID (type 0x00B2D882) do ícone do traço.
+                            None = campo omitido do XML (sem ícone customizado).
+                            Formato escrito: "TYPE-GROUP-INSTANCE" em hex
+                            maiúsculo, igual ao ResourceKeyCell.toXmlNode do S4TK.
 
     Retorna os bytes do XML pronto pra ser inserido no .package.
     """
@@ -166,6 +171,15 @@ def build_trait_xml(
     # Nome de exibição e descrição (referenciados por hash na STBL)
     T(root, 'display_name', f'0x{display_name_hash:08X}')
     T(root, 'trait_description', f'0x{description_hash:08X}')
+
+    # Ícone do traço (ResourceKey). Formato "TYPE-GROUP-INSTANCE" em hex
+    # maiúsculo — mesmo formato que o ResourceKeyCell.toXmlNode do S4TK
+    # escreve, e o mesmo que o S4Studio/s4pe esperam ao ler o XML.
+    if icon_rid is not None:
+        icon_str = '{:08X}-{:08X}-{:016X}'.format(
+            icon_rid.type, icon_rid.group, icon_rid.instance
+        )
+        T(root, 'icon', icon_str)
 
     # Tipo do traço
     T(root, 'trait_type', trait_type_value)
@@ -343,7 +357,24 @@ def build_mod_package(
           'trait_type': 'personality',            # ver TRAIT_TYPES
           'availability': 'teen_up',              # ver AVAILABILITY
           'buy_price': 0,
+          'icon_rid': None,                # opcional: ResourceID (type 0x00B2D882)
+                                            # do ícone do traço no CAS. None = sem
+                                            # ícone customizado (comportamento antigo).
+          'cas_selected_icon_rid': None,   # opcional: ResourceID do ícone de
+                                            # "já selecionado" no CAS (só vai pro
+                                            # SimData, nunca pro XML — ver traits.py
+                                            # do jogo: export_modes=ClientBinary).
+          'cas_idle_asm_key_rid': None,    # opcional: ResourceID (type STATEMACHINE)
+                                            # do ASM usado no idle do CAS.
+          'ages': None,                     # opcional: lista de idades (ver AGE_TEEN_PLUS
+                                            # / AGE_ALL em simdata.py). None = Teen+.
+          'cas_trait_asm_param': '',        # opcional: parâmetro de animação CAS.
         }
+
+    Cada recurso de trait agora gera automaticamente DOIS resources no
+    .package: o XML de tuning (type TYPE_TRAIT) e o SimData companion
+    (type 0x545AC67A). O SimData é obrigatório — sem ele o jogo ignora
+    o traço silenciosamente no CAS.
 
     Estrutura de cada social em 'socials':
         {
@@ -410,10 +441,18 @@ def build_mod_package(
     # Strings extras passadas diretamente (ex: buff texts)
     all_strings.update(stbl_strings)
 
+    # Import local para evitar import circular no topo do módulo
+    # (simdata.py importa fnv32/fnv64 daqui, de tuning.py)
+    from .simdata import build_trait_simdata, make_simdata_rid
+
     with DbpfPackage.write(output_path) as pkg:
 
-        # 1. Escreve cada Trait XML
+        # 1. Escreve cada Trait XML + seu SimData companion (obrigatório)
         for t in processed_traits:
+            icon_rid = t.get('icon_rid')
+            cas_selected_icon_rid = t.get('cas_selected_icon_rid')
+            cas_idle_asm_key_rid = t.get('cas_idle_asm_key_rid')
+
             xml_bytes = build_trait_xml(
                 tuning_name=t['name'],
                 display_name_hash=t['dn_hash'],
@@ -421,9 +460,27 @@ def build_mod_package(
                 trait_type=t.get('trait_type', 'personality'),
                 availability=t.get('availability', 'teen_up'),
                 buy_price=t.get('buy_price', 0),
+                icon_rid=icon_rid,
             )
             rid = make_tuning_rid(t['name'], TYPE_TRAIT)
             pkg.put(rid, xml_bytes)
+
+            # SEM ISSO O JOGO IGNORA O TRAÇO SILENCIOSAMENTE NO CAS.
+            # (achado crítico da sessão anterior — build_trait_simdata()
+            # já existia em simdata.py, só nunca era chamado aqui)
+            simdata_bytes = build_trait_simdata(
+                instance_name=t['name'],
+                display_name_hash=t['dn_hash'],
+                description_hash=t['desc_hash'],
+                trait_type=t.get('trait_type', 'personality'),
+                ages=t.get('ages'),
+                cas_trait_asm_param=t.get('cas_trait_asm_param', ''),
+                icon=icon_rid,
+                cas_selected_icon=cas_selected_icon_rid,
+                cas_idle_asm_key=cas_idle_asm_key_rid,
+            )
+            simdata_rid = make_simdata_rid(t['name'])
+            pkg.put(simdata_rid, simdata_bytes)
 
         # 2. Escreve cada Social Interaction XML
         for s in processed_socials:
