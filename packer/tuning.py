@@ -361,15 +361,33 @@ def build_mod_package(
 
     # Mapeia locale → language code (prefixo hexadecimal do instance ID da STBL)
     # Esses valores vêm do formato interno do jogo
+    # Valores oficiais confirmados pela EA e pelo código-fonte do S4TK
+    # (stbl-locales.ts, enum StringTableLocale). Nomes de chave alinhados
+    # com getLocaleCode() do S4TK para evitar qualquer divergência futura.
     LANG_CODES = {
-        'ENG_US': '0x00', 'ENG_UK': '0x01', 'FRE_FR': '0x02',
-        'GER_DE': '0x03', 'ITA_IT': '0x06', 'SPA_ES': '0x07',
-        'NED_NL': '0x08', 'POR_BR': '0x16', 'CHI_CN': '0x0D',
-        'CHI_TW': '0x0E', 'CZE_CZ': '0x0F', 'DAN_DK': '0x09',
-        'FIN_FI': '0x0B', 'JPN_JP': '0x11', 'KOR_KR': '0x12',
-        'NOR_NO': '0x0C', 'POL_PL': '0x15', 'RUS_RU': '0x17',
-        'SPA_MX': '0x13', 'SWE_SE': '0x0A', 'THA_TH': '0x1A',
+        'ENG_US': '0x00',
+        'CHS_CN': '0x01',  # Chinese Simplified
+        'CHT_CN': '0x02',  # Chinese Traditional
+        'CZE_CZ': '0x03',
+        'DAN_DK': '0x04',
+        'DUT_NL': '0x05',  # Dutch (antes estava como NED_NL)
+        'FIN_FI': '0x06',
+        'FRE_FR': '0x07',
+        'GER_DE': '0x08',
+        'ITA_IT': '0x0B',
+        'JPN_JP': '0x0C',
+        'KOR_KR': '0x0D',
+        'NOR_NO': '0x0E',
+        'POL_PL': '0x0F',
+        'POR_BR': '0x11',
+        'RUS_RU': '0x12',
+        'SPA_EA': '0x13',  # nome mantido conforme S4TK, ainda que seja espanhol da Espanha
+        'SWE_SE': '0x15',
     }
+    # Aliases pra manter compatibilidade com nomes antigos usados no restante do código
+    LANG_CODES['NED_NL'] = LANG_CODES['DUT_NL']
+    LANG_CODES['CHI_CN'] = LANG_CODES['CHS_CN']
+    LANG_CODES['SPA_ES'] = LANG_CODES['SPA_EA']
 
     # Calcula os hashes de todas as strings e monta o dicionário da STBL
     # A STBL do mod vai conter as strings de TODAS as traits e socials
@@ -422,7 +440,7 @@ def build_mod_package(
 
         # 3. Escreve a STBL com todas as strings do mod
         if all_strings:
-            lang_code_hex = LANG_CODES.get(target_lang, '0x16')
+            lang_code_hex = LANG_CODES.get(target_lang, '0x11')  # fallback: POR_BR (0x11, valor correto)
             lang_code_int = int(lang_code_hex, 16)
 
             # Instance ID da STBL: language code (1 byte) + FNV32 das strings concatenadas
