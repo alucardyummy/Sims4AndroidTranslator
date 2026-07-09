@@ -678,16 +678,24 @@ def build_trait_simdata(
 # ResourceID helper para SimData
 # ---------------------------------------------------------------------------
 
-def make_simdata_rid(tuning_name: str, group: int = 0x0017E896):
+def make_simdata_rid(tuning_name: str, group: int = 0x0017E896, instance: int = None):
     """
     Cria um ResourceID para o SimData de um trait.
 
     O group padrão 0x0017E896 é o que o S4TK usa para SimData de Trait
     (SimDataGroup.Trait conforme visto no pacote de exemplo).
-    O instance ID é o mesmo que o do tuning XML correspondente.
+
+    instance - DEVE ser o mesmo valor usado no ResourceID do tuning XML
+               correspondente (ver trait_instance_id() em tuning.py). Se
+               None, cai no comportamento antigo: fnv64(tuning_name) puro,
+               de 64 bits — isso é o que causava o traço não aparecer no
+               CAS quando trait_type='personality' (regra do jogo exige
+               instance de 32 bits pra traits de personalidade). Sempre
+               passe o instance explicitamente ao montar um Trait a partir
+               de build_mod_package().
     """
     from packer.resource import ResourceID
     from packer.tuning import fnv64
-    instance = fnv64(tuning_name)
-    # SimData usa só os 32 bits baixos do instance (sem prefixo de língua)
+    if instance is None:
+        instance = fnv64(tuning_name)
     return ResourceID(group=group, instance=instance, type=0x545AC67A)
