@@ -32,28 +32,59 @@ VERSION = 0x00000101           # versão suportada pelo jogo atual
 # ---------------------------------------------------------------------------
 
 class DT:
-    Boolean          = 0x01
-    Character        = 0x02
-    Int8             = 0x05
-    UInt8            = 0x06
-    Int16            = 0x07
-    UInt16           = 0x08
-    Int32            = 0x09
-    UInt32           = 0x0A
-    TableSetReference= 0x0B
-    Float            = 0x0C
-    LocalizationKey  = 0x0E
-    Int64            = 0x14
-    UInt64           = 0x15
-    Float2           = 0x1A
-    Float3           = 0x1B
-    Float4           = 0x1C
-    ResourceKey      = 0x20
-    String           = 0x22
-    HashedString     = 0x23
-    Object           = 0x25
-    Vector           = 0x26
-    Variant          = 0x27
+    # ------------------------------------------------------------------
+    # ATENÇÃO: os valores abaixo foram corrigidos por comparação byte-a-byte
+    # entre o SimData que este script gerava (bunda_seca.package) e o SimData
+    # REAL de um trait extraído de VampireDoughnut_ClonesAddOn.package
+    # (instance 0xFAAFC01F, schema "Trait"). A tabela antiga inteira estava
+    # errada — não eram os valores do S4TK data-type.ts, e sim outra coisa
+    # (possivelmente uma versão antiga/errada, ou confundida com outro enum).
+    #
+    # Valores marcados [CONFIRMADO] foram vistos diretamente nos bytes do
+    # jogo, em múltiplas colunas/tabelas independentes (ver tabela abaixo).
+    # Valores marcados [NÃO VERIFICADO] são os antigos, mantidos apenas
+    # porque não aparecem no schema "Trait" e não há amostra real para
+    # confirmá-los — NÃO confie neles sem checar contra um binário real
+    # antes de usar em outro schema.
+    #
+    #   campo real e tipo semântico      -> dtype visto no binário
+    #   ------------------------------------------------------------
+    #   _collapsible / display_in_sim_profile (Boolean)     -> 0x00
+    #   char table (strings brutas)     (Character)         -> 0x01
+    #   trait_type / RawTable de Int64   (Int64)             -> 0x08
+    #   cas_trait_asm_param/state (String, ponteiro só)      -> 0x0B
+    #   ages/tags/genders/species/... (Vector)               -> 0x0E
+    #   ObjectTable (linha da instância) (Object)             -> 0x0D
+    #   cas_idle_asm_key/icon/... (ResourceKey)               -> 0x13
+    #   display_name/trait_description/... (LocalizationKey) -> 0x14
+    #   ui_category (Variant)                                -> 0x15
+    #
+    Boolean          = 0x00   # [CONFIRMADO]
+    Character        = 0x01   # [CONFIRMADO]
+    Int8             = 0x02   # [NÃO VERIFICADO]
+    UInt8            = 0x03   # [NÃO VERIFICADO]
+    Int16            = 0x04   # [NÃO VERIFICADO]
+    UInt16           = 0x05   # [NÃO VERIFICADO]
+    Int32            = 0x06   # [NÃO VERIFICADO]
+    UInt32           = 0x07   # [NÃO VERIFICADO]
+    Int64            = 0x08   # [CONFIRMADO]
+    UInt64           = 0x09   # [NÃO VERIFICADO]
+    Float            = 0x0A   # [NÃO VERIFICADO]
+    String           = 0x0B   # [CONFIRMADO]
+    Object           = 0x0D   # [CONFIRMADO]
+    Vector           = 0x0E   # [CONFIRMADO]
+    HashedString     = 0x0F   # [NÃO VERIFICADO]
+    TableSetReference= 0x12   # [ALTA CONFIANÇA, não 100% confirmado — visto em
+                               #  "_parent"/"mood_type", campos que são
+                               #  referências/hashes pra outra linha/instância;
+                               #  a semântica bate com o nome, mas não achei um
+                               #  campo chamado literalmente "TableSetReference"]
+    ResourceKey      = 0x13   # [CONFIRMADO]
+    LocalizationKey  = 0x14   # [CONFIRMADO]
+    Variant          = 0x15   # [CONFIRMADO]
+    Float2           = 0x1A   # [NÃO VERIFICADO]
+    Float3           = 0x1B   # [NÃO VERIFICADO]
+    Float4           = 0x1C   # [NÃO VERIFICADO]
 
 # Tamanho em bytes de cada tipo primitivo
 DT_SIZE = {
@@ -99,7 +130,13 @@ DT_ALIGN = {
     DT.Float2:           8,
     DT.Float3:           4,
     DT.Float4:           4,
-    DT.ResourceKey:      4,
+    # [CONFIRMADO] ResourceKey precisa de alinhamento 8, não 4 — comprovado
+    # comparando os offsets reais das colunas do Trait: com align=4 o campo
+    # 'cas_selected_icon' cairia em offset 44, mas no binário real do jogo
+    # ele está em offset 48 (padding de 4 bytes antes dele). Isso também
+    # bate com o fato de ResourceKey começar com um uint64 (instance),
+    # que naturalmente pede alinhamento de 8.
+    DT.ResourceKey:      8,
     DT.String:           4,
     DT.HashedString:     4,
     DT.Object:           4,
@@ -116,8 +153,22 @@ def get_padding(pos: int, align: int) -> int:
 # Campos na ordem de escrita (ASCII), valores padrão seguros
 # ---------------------------------------------------------------------------
 
-TRAIT_SCHEMA_HASH = 0xDE2EAF66
+# [CONFIRMADO] O hash antigo (0xDE2EAF66) não bate com o schema "Trait" real.
+# Extraído byte-a-byte do SimData do trait real (instance 0xFAAFC01F) dentro
+# de VampireDoughnut_ClonesAddOn.package: campo schema_hash no schema header,
+# offset +8.
+TRAIT_SCHEMA_HASH = 0x53D584C8
 TRAIT_SCHEMA_NAME = "Trait"
+
+# [CONFIRMADO] O nome da ObjectTable (a linha que representa a instância do
+# Trait) NÃO é o nome do tuning — é sempre o literal "Constructor" em TODOS
+# os SimData reais verificados (Trait, Buff, RelationshipBit, PieMenuCategory,
+# RelationshipTrack). Conferido inclusive despejando a string table crua do
+# SimData real: ela contém as colunas, depois "Trait", depois "Constructor" —
+# o nome do tuning/instância não aparece em lugar nenhum do binário. A versão
+# antiga deste código escrevia `instance_name` nesse campo, o que gerava um
+# name_hash errado (fnv32 do nome do tuning em vez de fnv32("Constructor")).
+CONSTRUCTOR_NAME = "Constructor"
 
 # (nome, DataType, flags)
 TRAIT_COLUMNS = [
@@ -286,7 +337,7 @@ def build_trait_simdata(
     # -----------------------------------------------------------------------
     # Ordem importante: colunas primeiro (por hash ascendente), depois schema
     all_names = set()
-    all_names.add(instance_name)
+    all_names.add(CONSTRUCTOR_NAME)
     all_names.add(TRAIT_SCHEMA_NAME)
     for (name, _, _) in TRAIT_COLUMNS:
         all_names.add(name)
@@ -302,13 +353,16 @@ def build_trait_simdata(
         key=lambda x: x[1]
     )
     schema_name_pair = (TRAIT_SCHEMA_NAME, fnv32(TRAIT_SCHEMA_NAME))
-    instance_name_pair = (instance_name, fnv32(instance_name))
+    constructor_name_pair = (CONSTRUCTOR_NAME, fnv32(CONSTRUCTOR_NAME))
     asm_param_pair = (cas_trait_asm_param, fnv32(cas_trait_asm_param))
     empty_pair = ('', fnv32(''))
 
-    # Ordem exata do S4TK: colunas (por hash), depois schema, depois instance
-    ordered_names = [n for (n, _) in col_names_sorted]
-    for extra in [TRAIT_SCHEMA_NAME, instance_name, cas_trait_asm_param, '']:
+    # Conferido no binário real: a string table lista as colunas em ordem
+    # ALFABÉTICA (não por hash — isso só se aplica à tabela de colunas do
+    # schema), seguidas de "Trait" e por último "Constructor". O nome do
+    # tuning/instância nunca aparece no SimData.
+    ordered_names = [name for (name, _, _) in TRAIT_COLUMNS]
+    for extra in [TRAIT_SCHEMA_NAME, cas_trait_asm_param, '', CONSTRUCTOR_NAME]:
         if extra not in ordered_names:
             ordered_names.append(extra)
 
@@ -511,10 +565,12 @@ def build_trait_simdata(
         patch_i32(p+20, row_pos_abs - (p+20))
         patch_u32(p+24, row_count)
 
-    # ObjectTable (Trait instance)
+    # ObjectTable (Trait instance) — nome sempre "Constructor" (ver nota em
+    # CONSTRUCTOR_NAME acima). Antes usava `instance_name`, o que gravava um
+    # name_hash errado (fnv32 do nome do tuning em vez de fnv32("Constructor")).
     write_table_header(
         th_obj,
-        name_str      = instance_name,
+        name_str      = CONSTRUCTOR_NAME,
         schema_off_abs= schema_start,       # offset do schema buffer
         data_type     = DT.Object,
         row_size      = schema_size,
