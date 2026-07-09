@@ -76,6 +76,33 @@ def hash_instance(tuning_name: str) -> int:
     return fnv64(tuning_name)
 
 
+def trait_instance_id(tuning_name: str, trait_type: str = 'personality') -> int:
+    """
+    Calcula o instance ID correto para um Trait, respeitando a regra do jogo:
+
+    Traits do tipo PERSONALITY (os que aparecem na tela de criação de Sim)
+    PRECISAM de um instance ID de 32 bits pra aparecerem corretamente no CAS.
+    Traits de outros tipos (bonus, gameplay, social) podem usar o hash FNV64
+    completo (64 bits) sem problema.
+
+    BUG HISTÓRICO: antes disso, todo trait (inclusive personality) usava
+    hash_instance() -> fnv64() puro, de 64 bits. Isso fazia o traço ficar
+    invisível na tela de CAS mesmo com XML + SimData corretos e casando
+    entre si — o jogo simplesmente não lista traits de personalidade cujo
+    instance não caiba em 32 bits.
+
+    Esta função deve ser chamada UMA VEZ por trait, e o valor retornado
+    reusado em build_trait_xml(), make_tuning_rid() e make_simdata_rid()
+    (via os parâmetros instance_id / instance) — nunca recalculado
+    separadamente em cada lugar, pra evitar divergência entre o XML e o
+    SimData companion.
+    """
+    full_hash = fnv64(tuning_name)
+    if trait_type == 'personality':
+        return full_hash & _MASK32
+    return full_hash
+
+
 # ---------------------------------------------------------------------------
 # Helpers de XML
 # ---------------------------------------------------------------------------
@@ -118,13 +145,15 @@ def build_trait_xml(
     availability: str = 'teen_up',
     buy_price: int = 0,
     icon_rid=None,
+    instance_id: int = None,
 ) -> bytes:
     """
     Gera o XML de um Trait.
 
     Parâmetros:
         tuning_name       - nome completo do tuning, ex: 'meu_mod:trait_criativo'
-                            Será usado como atributo 'n' e pra calcular o instance ID.
+                            Será usado como atributo 'n' e (se instance_id não
+                            for passado) pra calcular o instance ID.
         display_name_hash - FNV32 do nome de exibição (chave na STBL)
         description_hash  - FNV32 da descrição (chave na STBL)
         trait_type        - 'personality' | 'bonus' | 'gameplay' | 'social'
@@ -134,10 +163,16 @@ def build_trait_xml(
                             None = campo omitido do XML (sem ícone customizado).
                             Formato escrito: "TYPE-GROUP-INSTANCE" em hex
                             maiúsculo, igual ao ResourceKeyCell.toXmlNode do S4TK.
+        instance_id       - instance ID já calculado (ex: via trait_instance_id()),
+                            pra garantir que bata exatamente com o ResourceID do
+                            tuning e do SimData companion. Se None, é calculado
+                            aqui mesmo via trait_instance_id(tuning_name, trait_type)
+                            — o que já aplica a regra dos 32 bits pra PERSONALITY.
 
     Retorna os bytes do XML pronto pra ser inserido no .package.
     """
-    instance_id = hash_instance(tuning_name)
+    if instance_id is None:
+        instance_id = trait_instance_id(tuning_name, trait_type)
     trait_type_value = TRAIT_TYPES.get(trait_type, 'PERSONALITY')
     avail_value = AVAILABILITY.get(availability, 2)
 
@@ -313,18 +348,27 @@ def build_social_xml(
 # ResourceID helper para tuning
 # ---------------------------------------------------------------------------
 
-def make_tuning_rid(tuning_name: str, type_id: int, group: int = 0x80000000):
+def make_tuning_rid(tuning_name: str, type_id: int, group: int = 0x80000000, instance: int = None):
     """
     Cria um ResourceID compatível com o DbpfPackage para um recurso de tuning.
 
     O group padrão 0x80000000 é o que o S4Studio e o s4pe usam pra tunings
     personalizados (high-bit group).
 
+    instance - se passado, usa esse valor diretamente (ESSENCIAL pra Traits:
+               deve ser o mesmo valor retornado por trait_instance_id() e
+               usado em build_trait_xml()/make_simdata_rid(), senão o XML,
+               o ResourceID do tuning e o SimData ficam com instances
+               diferentes e o traço é ignorado pelo jogo). Se None, cai no
+               comportamento antigo (hash_instance = FNV64 completo) — OK
+               pra tunings que não são Trait de personalidade (ex: Social).
+
     Retorna uma instância de ResourceID pronta pra usar com DbpfPackage.put().
     """
     # Importação local pra não criar dependência circular
     from packer.resource import ResourceID
-    instance = hash_instance(tuning_name)
+    if instance is None:
+        instance = hash_instance(tuning_name)
     return ResourceID(group=group, instance=instance, type=type_id)
 
 
@@ -452,17 +496,27 @@ def build_mod_package(
             icon_rid = t.get('icon_rid')
             cas_selected_icon_rid = t.get('cas_selected_icon_rid')
             cas_idle_asm_key_rid = t.get('cas_idle_asm_key_rid')
+            trait_type = t.get('trait_type', 'personality')
+
+            # Calculado UMA VEZ e reusado no XML, no ResourceID do tuning e
+            # no ResourceID do SimData. Pra traits PERSONALITY isso já vem
+            # mascarado pra 32 bits (trait_instance_id) — regra obrigatória
+            # do jogo pra aparecer na tela de CAS. Traits bonus/gameplay/
+            # social continuam com o hash FNV64 completo (64 bits), sem
+            # problema pra esses tipos.
+            instance_id = trait_instance_id(t['name'], trait_type)
 
             xml_bytes = build_trait_xml(
                 tuning_name=t['name'],
                 display_name_hash=t['dn_hash'],
                 description_hash=t['desc_hash'],
-                trait_type=t.get('trait_type', 'personality'),
+                trait_type=trait_type,
                 availability=t.get('availability', 'teen_up'),
                 buy_price=t.get('buy_price', 0),
                 icon_rid=icon_rid,
+                instance_id=instance_id,
             )
-            rid = make_tuning_rid(t['name'], TYPE_TRAIT)
+            rid = make_tuning_rid(t['name'], TYPE_TRAIT, instance=instance_id)
             pkg.put(rid, xml_bytes)
 
             # SEM ISSO O JOGO IGNORA O TRAÇO SILENCIOSAMENTE NO CAS.
@@ -472,14 +526,14 @@ def build_mod_package(
                 instance_name=t['name'],
                 display_name_hash=t['dn_hash'],
                 description_hash=t['desc_hash'],
-                trait_type=t.get('trait_type', 'personality'),
+                trait_type=trait_type,
                 ages=t.get('ages'),
                 cas_trait_asm_param=t.get('cas_trait_asm_param', ''),
                 icon=icon_rid,
                 cas_selected_icon=cas_selected_icon_rid,
                 cas_idle_asm_key=cas_idle_asm_key_rid,
             )
-            simdata_rid = make_simdata_rid(t['name'])
+            simdata_rid = make_simdata_rid(t['name'], instance=instance_id)
             pkg.put(simdata_rid, simdata_bytes)
 
         # 2. Escreve cada Social Interaction XML
