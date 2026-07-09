@@ -459,10 +459,23 @@ def build_trait_simdata(
     pos = 0
     patch_bytes(pos, b'DATA');          pos += 4
     patch_u32(pos, VERSION);            pos += 4
-    patch_i32(pos, 24);                 pos += 4   # TABLE_HEADER_OFFSET fixo = 24
+    # tableInfoOffset: relativo à posição do próprio campo (pos, aqui = 8).
+    # A primeira TableInfo sempre começa em HEADER_SIZE (32), então o valor
+    # correto é HEADER_SIZE - pos. Antes era hardcoded como "24", o que só
+    # dava certo por coincidência (HEADER_SIZE=32 e pos=8 nesse ponto fixo).
+    patch_i32(pos, HEADER_SIZE - pos);  pos += 4
     patch_i32(pos, num_tables);         pos += 4
-    # schema_offset: relativo ao tell() depois do int32 = pos+4
-    patch_i32(pos, schema_start - (pos + 4)); pos += 4
+    # schema_offset: relativo à posição do PRÓPRIO campo (pos), não ao tell()
+    # depois de lê-lo. Confirmado byte-a-byte num SimData real extraído do
+    # jogo (SimulationDeltaBuild0.package): o campo tableInfoOffset (na
+    # posição 8 do header) tinha o valor 24, e a TableInfo real ficava em
+    # 8+24=32 — ou seja, relativo ao início do PRÓPRIO campo, igual à
+    # convenção já usada em write_table_header() (name_offset, schema_offset,
+    # row_offset todos calculados como "alvo - posição do campo").
+    # A versão antiga aqui usava "(pos + 4)" (posição DEPOIS do campo),
+    # o que deslocava o schema lido em -4 bytes e corrompia toda a leitura
+    # das colunas — provável causa do traço sumir silenciosamente no CAS.
+    patch_i32(pos, schema_start - pos); pos += 4
     patch_i32(pos, 1);                  pos += 4   # 1 schema
     patch_u32(pos, 0);                  pos += 4   # unused = 0
     # pos agora = 28, faltam 4 bytes de padding até 32
