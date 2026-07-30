@@ -1,0 +1,11 @@
+{
+  "builds": [
+    { "src": "app.py", "use": "@vercel/python" }
+  ],
+  "routes": [
+    { "src": "/(.*)", "dest": "app.py" }
+  ],
+  "crons": [
+    { "path": "/api/admin/cleanup_orphaned_files", "schedule": "0 3 * * *" }
+  ]
+}
