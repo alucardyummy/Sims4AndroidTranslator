@@ -1286,6 +1286,7 @@ document.getElementById('import-package-input').addEventListener('change', async
   try {
     const formData = new FormData();
     formData.append('package', file);
+    formData.append('target_lang', targetLang);
     const res = await fetch('/api/import_from_package', {
       method: 'POST',
       body: formData
