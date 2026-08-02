@@ -599,6 +599,33 @@
   .cs-option.selected { color: #c4aee8; font-weight: 500; }
   .cs-icon { display: inline-flex; align-items: center; flex-shrink: 0; margin-right: 10px; }
   .cs-option { display: flex; align-items: center; }
+
+  /* Aviso de "tradução recente não salva" (estilo GitHub: fica na tela até
+     o usuário clicar em Descartar ou Recuperar, não some sozinho). */
+  .draft-banner {
+    width: 100%; max-width: 340px; box-sizing: border-box; position: relative; z-index: 1;
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm);
+    padding: 0.8rem 0.9rem; margin: 0 0 0.85rem; display: none; flex-direction: column; gap: 0.65rem;
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.22);
+    opacity: 0; transform: translateY(-10px);
+    transition: opacity 0.32s ease, transform 0.32s ease;
+  }
+  .draft-banner.show { display: flex; }
+  .draft-banner.show.active { opacity: 1; transform: translateY(0); }
+  .draft-banner-text { font-size: 12.5px; line-height: 1.45; color: var(--text); }
+  .draft-banner-text strong { font-family: 'Syne', sans-serif; }
+  .draft-banner-actions { display: flex; gap: 8px; }
+  .draft-banner-btn {
+    flex: 1; padding: 9px 10px; border-radius: 8px; font-family: 'Syne', sans-serif;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.04em; cursor: pointer;
+    -webkit-tap-highlight-color: transparent; border: 1px solid var(--border);
+    background: transparent; color: var(--text-muted); transition: transform 0.15s ease;
+  }
+  .draft-banner-btn:active { transform: scale(0.96); }
+  .draft-banner-btn.discard:active { border-color: #e07070; color: #e07070; }
+  .draft-banner-btn.recover { background: rgba(30,50,46,0.65); border-color: rgba(255,255,255,0.2); color: #fff; }
+  .draft-banner-btn.recover:active { background: var(--accent); }
 </style>
 </head>
 <script>
@@ -646,6 +673,14 @@
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
       Apagar
     </button>
+  </div>
+
+  <div class="draft-banner" id="draft-banner">
+    <div class="draft-banner-text">Você tem uma <strong>tradução recente não salva.</strong></div>
+    <div class="draft-banner-actions">
+      <button class="draft-banner-btn discard" onclick="discardLocalDraft()">Descartar</button>
+      <button class="draft-banner-btn recover" onclick="recoverLocalDraft()">Recuperar</button>
+    </div>
   </div>
 
   <div class="logo-area">
@@ -1724,6 +1759,60 @@ document.addEventListener('click', (e) => {
 if (localStorage.getItem('has_saves') === '1') {
   document.getElementById('skeleton-area').style.display = 'block';
 }
+
+// ---- AVISO DE TRADUÇÃO RECENTE NÃO SALVA ----
+// Lê o rascunho que o editor grava no localStorage a cada edição (ver
+// DRAFT_KEY em editor.html). Se existir e tiver algo realmente editado,
+// mostra o aviso — que só some quando "Descartar" ou "Recuperar" é clicado.
+const DRAFT_KEY = 's4t_unsaved_draft';
+
+function getLocalDraft() {
+  try {
+    const raw = localStorage.getItem(DRAFT_KEY);
+    if (!raw) return null;
+    const draft = JSON.parse(raw);
+    if (!draft || !Array.isArray(draft.strings) || draft.strings.length === 0) return null;
+    const hasEdits = draft.strings.some(s => s && s.value && s.value !== s.original);
+    return hasEdits ? draft : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function showDraftBannerIfNeeded() {
+  const banner = document.getElementById('draft-banner');
+  if (!banner) return;
+  if (getLocalDraft()) {
+    banner.classList.add('show');
+    requestAnimationFrame(() => requestAnimationFrame(() => banner.classList.add('active')));
+  }
+}
+
+function discardLocalDraft() {
+  try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
+  const banner = document.getElementById('draft-banner');
+  banner.classList.remove('active');
+  setTimeout(() => banner.classList.remove('show'), 320);
+}
+
+function recoverLocalDraft() {
+  const draft = getLocalDraft();
+  const banner = document.getElementById('draft-banner');
+  if (!draft) {
+    banner.classList.remove('active');
+    setTimeout(() => banner.classList.remove('show'), 320);
+    return;
+  }
+  sessionStorage.setItem('selected_instance_str', draft.instanceStr || '');
+  sessionStorage.setItem('target_lang', draft.target_lang || 'POR_BR');
+  sessionStorage.setItem('original_lang', draft.original_lang || 'ENG_US');
+  sessionStorage.setItem('package_id', draft.package_id || '');
+  sessionStorage.setItem('original_name', draft.original_name || '');
+  sessionStorage.setItem('recover_draft', '1');
+  window.location.href = '/editor?recover=1';
+}
+
+showDraftBannerIfNeeded();
 
 loadSaves();
 
