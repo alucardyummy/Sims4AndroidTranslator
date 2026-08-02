@@ -70,6 +70,10 @@
   .ta-backdrop.ta-collapsed { height: 38px !important; }
   .ta-backdrop .ph { color: #9cb8b2; }
   .ta-backdrop .ph.blurred { color: #b89cd9; }
+  /* Chave "{" ou "}" sem o par correspondente: enquanto o campo está em
+     foco fica com a cor normal do texto (sem chamar atenção); ao sair da
+     caixinha (.blurred), acende em amarelo pra avisar que falta fechar. */
+  .ta-backdrop .ph-unclosed.blurred { color: #c9c965; }
   .fav-btn { position: absolute; top: 2px; left: 4px; z-index: 3; font-size: 12px; color: var(--text-dim); background: transparent; border: none; cursor: pointer; -webkit-tap-highlight-color: transparent; line-height: 1; padding: 2px; }
   .fav-btn.active { color: #9cb8b2; }
   .fav-star-float { position: absolute; pointer-events: none; z-index: 99; font-size: 12px; color: #9cb8b2; animation: starFloat 0.7s ease-out forwards; }
@@ -572,10 +576,15 @@ let targetLang   = sessionStorage.getItem('target_lang') || 'POR_BR';
 let originalLang = sessionStorage.getItem('original_lang') || 'ENG_US';
 let currentIdx = null;
 let autoSaveTimer = null;
+let draftSaveTimer = null;
 let progressSaved = false;
 let editedIndices = new Set();
 let editSnapshots = {}; // idx -> valor de antes da edição atual (1 nível de undo)
 let lastEdit = null;     // { idx, previousValue } da última alteração feita
+
+// Chave usada pro "rascunho de recuperação" no localStorage. É lida também
+// pela home (index.html) pra mostrar o aviso de "tradução recente não salva".
+const DRAFT_KEY = 's4t_unsaved_draft';
 
 function autoResize(el) {
   el.style.height = 'auto';
@@ -641,6 +650,39 @@ async function processTranslation(engine) {
 function triggerAutoSave() {
   clearTimeout(autoSaveTimer);
   autoSaveTimer = setTimeout(() => { saveProgressToDatabase(); }, 2000);
+  triggerDraftSave();
+}
+
+// ---- RASCUNHO DE RECUPERAÇÃO (localStorage) ----
+// Funciona independente do autosave no banco (que só roda se o usuário já
+// deu um nome ao arquivo). Guarda um "instantâneo" leve de tudo que foi
+// editado nesta sessão, pra dar pra recuperar mesmo que a página feche/perca
+// a sessão do servidor antes do autosave de verdade rolar.
+function triggerDraftSave() {
+  clearTimeout(draftSaveTimer);
+  draftSaveTimer = setTimeout(saveDraftToLocalStorage, 500);
+}
+
+function saveDraftToLocalStorage() {
+  if (stringsData.length === 0 || editedIndices.size === 0) return;
+  try {
+    const draft = {
+      instanceStr: instanceStr,
+      target_lang: targetLang,
+      original_lang: originalLang,
+      package_id: sessionStorage.getItem('package_id') || '',
+      original_name: getProjectBaseName(),
+      strings: stringsData,
+      timestamp: Date.now()
+    };
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+  } catch (e) {
+    console.error('Erro ao salvar rascunho local', e);
+  }
+}
+
+function clearLocalDraft() {
+  try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
 }
 
 // Nome do projeto agora vem do campo "Nome do arquivo" (#filename-input),
@@ -676,6 +718,9 @@ async function saveProgressToDatabase() {
     btn.classList.remove('saving');
     progressSaved = true;
     localStorage.setItem('has_saves', '1');
+    // Já está salvo de verdade no banco com um nome — o rascunho local de
+    // recuperação não é mais necessário.
+    clearLocalDraft();
   } catch(e) {
     btn.classList.remove('saving');
     console.error("Erro no auto-save", e);
@@ -703,6 +748,10 @@ async function saveProgressManual() {
 
 window.addEventListener('beforeunload', () => {
   clearTimeout(autoSaveTimer); // evita disparar autosave junto com o sendBeacon abaixo
+  clearTimeout(draftSaveTimer);
+  // Grava o rascunho local na hora, sem esperar o debounce — é a última
+  // chance antes da página sumir (com ou sem nome de arquivo definido).
+  saveDraftToLocalStorage();
   const baseName = getProjectBaseName();
   if (stringsData.length > 0 && baseName) {
     const projectName = baseName + ' (' + instanceStr + ')';
@@ -719,11 +768,46 @@ window.addEventListener('beforeunload', () => {
   }
 });
 
+// Se viemos do botão "Recuperar" na home, os dados não vêm do servidor —
+// vêm direto do rascunho salvo no localStorage nesse mesmo navegador. Isso
+// funciona mesmo que a sessão do servidor já tenha expirado, porque a
+// tradução inteira (com as edições) já está guardada no aparelho.
+function loadFromLocalDraft() {
+  const recovering = sessionStorage.getItem('recover_draft') === '1';
+  sessionStorage.removeItem('recover_draft');
+  if (!recovering) return false;
+  try {
+    const raw = localStorage.getItem(DRAFT_KEY);
+    if (!raw) return false;
+    const draft = JSON.parse(raw);
+    if (!draft || !Array.isArray(draft.strings) || draft.instanceStr !== instanceStr) return false;
+    stringsData = draft.strings;
+    // "original" já vem certo dentro do rascunho (foi congelado no load()
+    // original, antes de qualquer edição) — não sobrescrever aqui.
+    document.getElementById('count-badge').textContent = stringsData.length + ' strings';
+    updateProgressBadge();
+    document.getElementById('loading').classList.remove('active');
+    renderStrings();
+    document.getElementById('save-btn').disabled = stringsData.length === 0;
+    document.getElementById('translate-all-btn').disabled = stringsData.length === 0;
+    document.getElementById('json-mode-btn').disabled = stringsData.length === 0;
+    editedIndices = new Set(stringsData.map((item, idx) => idx).filter(idx => stringsData[idx].value !== stringsData[idx].original));
+    const filenameInput = document.getElementById('filename-input');
+    if (filenameInput && draft.original_name) filenameInput.value = draft.original_name;
+    showToast('Tradução recuperada com sucesso.', 'success', 3500);
+    return true;
+  } catch (e) {
+    console.error('Erro ao recuperar rascunho local', e);
+    return false;
+  }
+}
+
 async function load() {
   if (!instanceStr) { window.location.href = '/'; return; }
   document.getElementById('top-sub').textContent = originalLang + ' → ' + targetLang;
   document.getElementById('loading-text').textContent = 'Carregando strings...';
   document.getElementById('loading').classList.add('active');
+  if (loadFromLocalDraft()) return;
   try {
     const res = await fetch('/api/strings?instance=' + encodeURIComponent(instanceStr));
     const data = await res.json();
@@ -751,11 +835,43 @@ function escapeHtml(str) {
 }
 
 // Envolve {placeholders} tipo {M0.ele} / {0.SimFirstName} num span colorido.
+// Placeholders bem-formados (com "{" e "}" fechando) ganham a classe "ph"
+// de sempre. Trechos com chave aberta/fechada sem o par correspondente
+// (ex.: "{M0.ele" sem fechar, ou um "}" perdido) ganham "ph-unclosed" —
+// só recebem cor de aviso quando "blurred" (fora da caixinha de edição);
+// enquanto o campo está em foco, ficam com a cor normal do texto.
 function highlightPlaceholdersHtml(rawText, blurred) {
-  const escaped = escapeHtml(rawText || '');
-  return escaped.replace(/\{[^{}]+\}/g, function(m) {
-    return '<span class="ph' + (blurred ? ' blurred' : '') + '">' + m + '</span>';
-  });
+  const text = rawText || '';
+  const n = text.length;
+  const cls = blurred ? ' blurred' : '';
+  let html = '';
+  let i = 0;
+  while (i < n) {
+    const ch = text[i];
+    if (ch === '{') {
+      let j = i + 1;
+      while (j < n && text[j] !== '{' && text[j] !== '}') j++;
+      if (j < n && text[j] === '}') {
+        // Par completo: {...}
+        html += '<span class="ph' + cls + '">' + escapeHtml(text.slice(i, j + 1)) + '</span>';
+        i = j + 1;
+      } else {
+        // Chave aberta sem fechar até o fim da string ou até outra "{"
+        html += '<span class="ph-unclosed' + cls + '">' + escapeHtml(text.slice(i, j)) + '</span>';
+        i = j;
+      }
+    } else if (ch === '}') {
+      // "}" solto, sem "{" correspondente antes
+      html += '<span class="ph-unclosed' + cls + '">' + escapeHtml(ch) + '</span>';
+      i++;
+    } else {
+      let j = i;
+      while (j < n && text[j] !== '{' && text[j] !== '}') j++;
+      html += escapeHtml(text.slice(i, j));
+      i = j;
+    }
+  }
+  return html;
 }
 
 // Decide se uma string passa pelo filtro de busca + "não traduzidas" + "favoritas".
