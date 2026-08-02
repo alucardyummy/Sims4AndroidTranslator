@@ -431,7 +431,11 @@ def api_instances():
 def editor():
     if not session.get("package_id"):
         return redirect("/")
-    return send_file(os.path.join(TEMPLATE_DIR, "editor.html"))
+    response = send_file(os.path.join(TEMPLATE_DIR, "editor.html"))
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    return response
 
 
 @app.route("/api/strings")
