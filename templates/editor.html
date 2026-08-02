@@ -235,6 +235,8 @@
   .json-save-btn:disabled { opacity: 0.4; pointer-events: none; }
   .package-return-btn { flex: 0 0 auto; padding: 7px 11px; background: transparent; border: 1px solid var(--border2); border-radius: 8px; color: var(--text-muted); font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.05em; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: all 0.2s; }
   .package-return-btn:active { background: var(--surface2); color: var(--accent); border-color: var(--accent-dim); }
+  .json-import-btn { flex: 0 0 auto; padding: 7px 11px; background: transparent; border: 1px solid var(--accent-dim); border-radius: 8px; color: var(--accent); font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.05em; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: all 0.2s; white-space: nowrap; }
+  .json-import-btn:active { background: rgba(156,184,178,0.1); }
 
   /* ── Toast de notificação ── */
   .toast-wrap { position: fixed; top: 0; left: 0; right: 0; z-index: 9000; display: flex; flex-direction: column; align-items: center; gap: 6px; padding-top: 10px; pointer-events: none; }
@@ -380,8 +382,10 @@
       </div>
       <div class="json-bottom-actions">
         <button class="package-return-btn" onclick="exitJsonMode()">PACKAGE</button>
+        <button class="json-import-btn" onclick="triggerImportJson()" title="Importar traduções de um arquivo .json">⇪ IMPORTAR</button>
         <button class="json-save-btn" id="json-save-btn" onclick="saveJson()">SALVAR JSON</button>
       </div>
+      <input type="file" id="import-json-input" accept=".json,application/json" style="display:none">
     </div>
   </div>
 </div>
@@ -1734,6 +1738,37 @@ function _doExitJsonMode() {
   if (jsonName) document.getElementById('filename-input').value = jsonName;
 }
 
+// Aplica um array [{key, value}, ...] ao stringsData e retorna quantas
+// entradas foram efetivamente casadas por key. Usado tanto pelo "APLICAR"
+// do textarea do modo JSON quanto pelo "IMPORTAR JSON" (arquivo externo),
+// para garantir o mesmo comportamento nos dois casos.
+function mergeJsonArrayIntoStrings(parsed) {
+  const map = {};
+  for (const entry of parsed) {
+    if (entry && entry.key !== undefined && entry.value !== undefined) {
+      // Aceita key como "0xABCD1234" ou número decimal
+      const keyNorm = String(entry.key).toUpperCase();
+      map[keyNorm] = String(entry.value);
+    }
+  }
+
+  let applied = 0;
+  stringsData.forEach((item, idx) => {
+    const keyHex = (item.key_hex || '').toUpperCase();
+    const keyDec = String(item.key);
+    if (map[keyHex] !== undefined) {
+      stringsData[idx].value = map[keyHex];
+      editedIndices.add(idx);
+      applied++;
+    } else if (map['0X' + keyDec] !== undefined) {
+      stringsData[idx].value = map['0X' + keyDec];
+      editedIndices.add(idx);
+      applied++;
+    }
+  });
+  return applied;
+}
+
 function applyJsonEdits() {
   const ta = document.getElementById('json-textarea');
   const errEl = document.getElementById('json-error-msg');
@@ -1751,35 +1786,14 @@ function applyJsonEdits() {
     return;
   }
 
-  // Constrói mapa key → value
-  const map = {};
-  for (const entry of parsed) {
-    if (entry.key !== undefined && entry.value !== undefined) {
-      // Aceita key como "0xABCD1234" ou número decimal
-      const keyNorm = String(entry.key).toUpperCase();
-      map[keyNorm] = String(entry.value);
-    }
-  }
-
-  // Aplica ao stringsData
-  let applied = 0;
-  stringsData.forEach((item, idx) => {
-    const keyHex = (item.key_hex || '').toUpperCase();
-    const keyDec = String(item.key);
-    if (map[keyHex] !== undefined) {
-      stringsData[idx].value = map[keyHex];
-      editedIndices.add(idx);
-      applied++;
-    } else if (map['0X' + keyDec] !== undefined) {
-      stringsData[idx].value = map['0X' + keyDec];
-      editedIndices.add(idx);
-      applied++;
-    }
-  });
+  const applied = mergeJsonArrayIntoStrings(parsed);
 
   ta.classList.remove('has-error');
   errEl.textContent = '';
   document.getElementById('json-toolbar-label').textContent = '✓ ' + applied + ' strings aplicadas';
+  // Igual ao "Carregar traduções": os dados do modo package precisam ser
+  // redesenhados agora, não só quando algo mais disparar renderStrings().
+  renderStrings();
   triggerAutoSave();
   updateProgressBadge();
 
@@ -1787,6 +1801,66 @@ function applyJsonEdits() {
     document.getElementById('json-toolbar-label').textContent = 'JSON · ' + stringsData.length + ' strings';
   }, 2500);
 }
+
+// ---- IMPORTAR JSON (arquivo local) ----
+// O site não gera .json diretamente nos saves (só .package), então esse
+// fluxo é sempre a partir de um arquivo no dispositivo do usuário — por
+// exemplo um .json exportado antes via "SALVAR JSON" e editado externamente.
+function triggerImportJson() {
+  document.getElementById('import-json-input').click();
+}
+
+document.getElementById('import-json-input').addEventListener('change', function() {
+  const file = this.files[0];
+  if (!file) return;
+  if (!file.name.toLowerCase().endsWith('.json')) {
+    showToast('Selecione um arquivo .json válido.', 'error', 4000);
+    this.value = '';
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    let parsed;
+    try {
+      parsed = JSON.parse(e.target.result);
+    } catch(err) {
+      showToast('JSON inválido: ' + err.message, 'error', 5000);
+      return;
+    }
+    if (!Array.isArray(parsed)) {
+      showToast('Esperado um array [ { key, value }, ... ] no arquivo.', 'error', 5000);
+      return;
+    }
+
+    const applied = mergeJsonArrayIntoStrings(parsed);
+
+    // Se estivermos dentro do modo JSON, o textarea também precisa refletir
+    // o resultado do import — senão fica com o conteúdo antigo em tela.
+    if (jsonModeActive) {
+      const jsonArr = stringsData.map(item => ({
+        key: item.key_hex || ('0x' + (item.key >>> 0).toString(16).toUpperCase().padStart(8, '0')),
+        value: item.value || ''
+      }));
+      const ta = document.getElementById('json-textarea');
+      ta.value = JSON.stringify(jsonArr, null, 2);
+      ta.classList.remove('has-error');
+      document.getElementById('json-error-msg').textContent = '';
+      document.getElementById('json-toolbar-label').textContent = 'JSON · ' + jsonArr.length + ' strings';
+    }
+
+    renderStrings();
+    updateProgressBadge();
+    triggerAutoSave();
+
+    showToast(applied + ' traduções importadas de "' + file.name + '"!', 'success', 3500);
+  };
+  reader.onerror = function() {
+    showToast('Erro ao ler o arquivo.', 'error', 4000);
+  };
+  reader.readAsText(file);
+  this.value = '';
+});
 
 function saveJson() {
   // Valida o JSON antes de baixar
