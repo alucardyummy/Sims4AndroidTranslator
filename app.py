@@ -1258,7 +1258,17 @@ def import_from_package():
     if not f.filename.endswith(".package"):
         return json.dumps({"success": False, "error": "Arquivo inválido"}), 400
 
+    # Idioma de destino do projeto atual (ex: "POR_BR"), enviado pelo front-end.
+    # Sem isso, um .package com várias tabelas de string (uma por idioma) faz
+    # a última tabela processada sobrescrever as anteriores na hora de montar
+    # o dicionário de traduções — e se essa última for a tabela em inglês (ou
+    # outro idioma que não o de destino), a "tradução" aplicada acaba sendo
+    # só o texto original, sem avisar ninguém (a contagem bate igual, porque
+    # as chaves são as mesmas em todas as tabelas de idioma).
+    target_lang = (request.form.get("target_lang") or "").strip().upper()
+
     strings = {}
+    strings_by_lang = {}  # lang -> {key: value}, só usado se target_lang não vier/não bater
     with tempfile.NamedTemporaryFile(delete=False, suffix=".package") as tmp:
         f.save(tmp.name)
         tmp_path = tmp.name
@@ -1267,11 +1277,35 @@ def import_from_package():
         with DbpfPackage.read(tmp_path) as pkg:
             for rid in pkg.search_stbl():
                 stbl = load_stbl(pkg, rid)
+                lang = rid.language  # ex: "POR_BR", "ENG_US", ou None se não reconhecido
+                bucket = strings_by_lang.setdefault(lang, {})
                 for key, value in stbl._strings.items():
                     if value:
-                        strings[str(key)] = value
+                        bucket[str(key)] = value
     finally:
         os.remove(tmp_path)
+
+    if target_lang and target_lang in strings_by_lang:
+        # Achou a tabela exata do idioma de destino do projeto: usa só ela.
+        strings = strings_by_lang[target_lang]
+    elif len(strings_by_lang) == 1:
+        # Só tinha uma tabela de string no pacote (comum em packages simples
+        # já filtrados por idioma) — usa ela mesmo sem confirmação de idioma.
+        strings = next(iter(strings_by_lang.values()))
+    elif target_lang:
+        # Tinha várias tabelas de idioma, mas nenhuma bate com o idioma de
+        # destino do projeto. Evita misturar idiomas silenciosamente.
+        found_langs = sorted(l for l in strings_by_lang if l)
+        return json.dumps({
+            "success": False,
+            "error": "O arquivo não tem uma tabela de strings para " + target_lang +
+                      (". Idiomas encontrados no arquivo: " + ", ".join(found_langs) if found_langs else ".")
+        }), 400
+    else:
+        # Não recebemos target_lang do front-end (chamada antiga/sem esse
+        # campo) — mantém o comportamento anterior como último recurso.
+        for bucket in strings_by_lang.values():
+            strings.update(bucket)
 
     return json.dumps({"success": True, "translations": strings})
 
