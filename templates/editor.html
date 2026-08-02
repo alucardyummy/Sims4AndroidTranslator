@@ -1314,7 +1314,25 @@ function applyTranslationMap(translationMap, sourceName) {
   renderStrings();
   updateProgressBadge();
   triggerAutoSave();
-  showToast(filled + ' traduções carregadas de "' + sourceName + '"!', 'success', 3500);
+
+  // O toast usa "filter: blur()" na animação de entrada (ver .toast/.toast.show
+  // no CSS). Se ele dispara no mesmo instante em que acabamos de reconstruir
+  // a lista inteira (renderStrings), o navegador pode priorizar a composição
+  // GPU do blur do toast e "esquecer" de repintar a lista até algo forçar um
+  // reflow completo (ex: sair da página e voltar) — o que bate exatamente com
+  // o comportamento visto: os dados já estão certos, só não aparecem na hora.
+  // O alert() antigo não tinha esse problema por ser bloqueante e sem CSS
+  // animado. Aqui garantimos que a lista já teve a chance de pintar (2 RAFs,
+  // mesma técnica usada dentro do próprio showToast) antes de começar a
+  // animação do toast.
+  const list = document.getElementById('strings-list');
+  void list.offsetHeight;
+  requestAnimationFrame(() => {
+    void list.offsetHeight;
+    requestAnimationFrame(() => {
+      showToast(filled + ' traduções carregadas de "' + sourceName + '"!', 'success', 3500);
+    });
+  });
 }
 
 function toggleInstance() {
