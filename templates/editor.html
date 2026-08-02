@@ -74,6 +74,18 @@
      foco fica com a cor normal do texto (sem chamar atenção); ao sair da
      caixinha (.blurred), acende em amarelo pra avisar que falta fechar. */
   .ta-backdrop .ph-unclosed.blurred { color: #c9c965; }
+
+  /* Aviso de "tradução recente não salva" dentro do próprio editor (cobre
+     o caso de dar F5 direto na tela, sem passar pela home). Só some
+     quando Descartar ou Recuperar é clicado. */
+  .editor-draft-banner { display: none; flex-direction: column; gap: 8px; padding: 10px 0.75rem; background: var(--surface2); border-bottom: 1px solid var(--border2); flex-shrink: 0; }
+  .editor-draft-banner.show { display: flex; }
+  .editor-draft-banner-text { font-size: 11.5px; color: var(--text); line-height: 1.4; }
+  .editor-draft-banner-actions { display: flex; gap: 8px; }
+  .editor-draft-banner-btn { flex: 1; padding: 7px 8px; border-radius: 7px; font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 500; cursor: pointer; -webkit-tap-highlight-color: transparent; border: 1px solid var(--border2); background: transparent; color: var(--text-muted); transition: transform 0.15s ease; }
+  .editor-draft-banner-btn:active { transform: scale(0.96); }
+  .editor-draft-banner-btn.discard:active { border-color: #e07070; color: #e07070; }
+  .editor-draft-banner-btn.recover { background: rgba(156,184,178,0.14); border-color: var(--accent-dim); color: var(--accent); }
   .fav-btn { position: absolute; top: 2px; left: 4px; z-index: 3; font-size: 12px; color: var(--text-dim); background: transparent; border: none; cursor: pointer; -webkit-tap-highlight-color: transparent; line-height: 1; padding: 2px; }
   .fav-btn.active { color: #9cb8b2; }
   .fav-star-float { position: absolute; pointer-events: none; z-index: 99; font-size: 12px; color: #9cb8b2; animation: starFloat 0.7s ease-out forwards; }
@@ -307,6 +319,13 @@
       <div class="timer-badge" id="timer-badge">0:00</div>
       <div class="count-badge" id="count-badge" onclick="toggleUntranslatedFilter()" title="Clique para filtrar não traduzidas">—</div>
       <button class="save-progress-btn" id="save-progress-btn" onclick="saveProgressManual()" title="Salvar progresso">✓</button>
+    </div>
+  </div>
+  <div class="editor-draft-banner" id="editor-draft-banner">
+    <div class="editor-draft-banner-text">Você tem uma tradução recente não salva para este pacote.</div>
+    <div class="editor-draft-banner-actions">
+      <button class="editor-draft-banner-btn discard" onclick="discardEditorDraft()">Descartar</button>
+      <button class="editor-draft-banner-btn recover" onclick="recoverEditorDraft()">Recuperar</button>
     </div>
   </div>
   <div class="filter-bar">
@@ -824,10 +843,53 @@ async function load() {
     document.getElementById('save-btn').disabled = stringsData.length === 0;
     document.getElementById('translate-all-btn').disabled = stringsData.length === 0;
     document.getElementById('json-mode-btn').disabled = stringsData.length === 0;
+    // Cobre o caso de dar F5 direto no editor (sem passar pela home): se
+    // sobrou um rascunho local desta MESMA instância com algo editado que
+    // não veio no fetch acima (porque nunca foi salvo no servidor), avisa
+    // aqui dentro, sem precisar voltar pra home pra ver o aviso.
+    checkForLeftoverDraft();
   } catch(e) {
     document.getElementById('loading').classList.remove('active');
     showToast('Erro ao carregar strings: ' + e.message, 'error', 5000);
   }
+}
+
+// ---- AVISO DE RASCUNHO DENTRO DO PRÓPRIO EDITOR (caso de reload/F5) ----
+let pendingRecoverDraft = null;
+
+function checkForLeftoverDraft() {
+  try {
+    const raw = localStorage.getItem(DRAFT_KEY);
+    if (!raw) return;
+    const draft = JSON.parse(raw);
+    if (!draft || !Array.isArray(draft.strings) || draft.instanceStr !== instanceStr) return;
+    const hasEdits = draft.strings.some(s => s && s.value && s.value !== s.original);
+    if (!hasEdits) return;
+    pendingRecoverDraft = draft;
+    document.getElementById('editor-draft-banner').classList.add('show');
+  } catch (e) {
+    console.error('Erro ao checar rascunho pendente', e);
+  }
+}
+
+function discardEditorDraft() {
+  clearLocalDraft();
+  pendingRecoverDraft = null;
+  document.getElementById('editor-draft-banner').classList.remove('show');
+}
+
+function recoverEditorDraft() {
+  if (!pendingRecoverDraft) return;
+  stringsData = pendingRecoverDraft.strings;
+  document.getElementById('count-badge').textContent = stringsData.length + ' strings';
+  editedIndices = new Set(stringsData.map((item, idx) => idx).filter(idx => stringsData[idx].value !== stringsData[idx].original));
+  updateProgressBadge();
+  renderStrings();
+  const filenameInput = document.getElementById('filename-input');
+  if (filenameInput && pendingRecoverDraft.original_name) filenameInput.value = pendingRecoverDraft.original_name;
+  document.getElementById('editor-draft-banner').classList.remove('show');
+  showToast('Tradução recuperada com sucesso.', 'success', 3500);
+  pendingRecoverDraft = null;
 }
 
 function escapeHtml(str) {
