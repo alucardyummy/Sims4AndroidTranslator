@@ -318,6 +318,7 @@
       </button>
       <div class="timer-badge" id="timer-badge">0:00</div>
       <div class="count-badge" id="count-badge" onclick="toggleUntranslatedFilter()" title="Clique para filtrar não traduzidas">—</div>
+      <button class="save-progress-btn" id="reload-btn" onclick="manualReload()" title="Recarregar">↻</button>
       <button class="save-progress-btn" id="save-progress-btn" onclick="saveProgressManual()" title="Salvar progresso">✓</button>
     </div>
   </div>
@@ -851,6 +852,10 @@ async function load() {
   } catch(e) {
     document.getElementById('loading').classList.remove('active');
     showToast('Erro ao carregar strings: ' + e.message, 'error', 5000);
+    // É EXATAMENTE nesse caso (falha ao buscar do servidor — sessão perdida,
+    // .package não encontrado, etc.) que a recuperação local é mais importante.
+    // Sem essa checagem aqui, o aviso nunca aparecia quando o fetch falhava.
+    checkForLeftoverDraft();
   }
 }
 
@@ -890,6 +895,14 @@ function recoverEditorDraft() {
   document.getElementById('editor-draft-banner').classList.remove('show');
   showToast('Tradução recuperada com sucesso.', 'success', 3500);
   pendingRecoverDraft = null;
+}
+
+// O CSS do editor desliga o "puxar pra atualizar" do navegador de propósito
+// (overscroll-behavior: none), pra não recarregar sem querer no meio da
+// rolagem da lista. Esse botão é a forma manual de recarregar no lugar do
+// gesto — o beforeunload já cuida de salvar o rascunho local antes de sair.
+function manualReload() {
+  window.location.reload();
 }
 
 function escapeHtml(str) {
