@@ -429,7 +429,13 @@ def api_instances():
 
 @app.route("/editor")
 def editor():
-    if not session.get("package_id"):
+    # "recover=1" é usado pelo botão "Recuperar" da home quando existe um
+    # rascunho de tradução salvo no localStorage do navegador. Nesse caso o
+    # editor carrega os dados direto do rascunho (client-side), então não
+    # depende da sessão do servidor ainda ter o package_id — o que é
+    # justamente o cenário que pode ter se perdido (sessão expirada, muito
+    # tempo fora do site, etc).
+    if not session.get("package_id") and request.args.get("recover") != "1":
         return redirect("/")
     response = send_file(os.path.join(TEMPLATE_DIR, "editor.html"))
     response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
