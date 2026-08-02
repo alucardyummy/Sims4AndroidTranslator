@@ -381,6 +381,7 @@
       <div class="instance-hint" id="instance-hint">Deixe vazio para manter a instância original. O locale (2 dígitos) é prefixado automaticamente.</div>
     </div>
     <div class="bottom-actions">
+      <button class="import-btn" onclick="openReplaceSheet()" title="Substituir palavra em todas as strings">⇄</button>
       <button class="import-btn" onclick="openImportSheet()" title="Carregar traduções de um save">↺</button>
       <button class="import-btn" id="translate-all-btn" onclick="openTranslateAllSheet()" title="Traduzir tudo automaticamente" style="color:var(--accent);border-color:var(--accent-dim);" disabled>◈</button>
       <button class="json-mode-btn" id="json-mode-btn" onclick="enterJsonMode()" disabled>JSON</button>
@@ -466,6 +467,37 @@
     <div class="tall-status" id="tall-status">Aguardando...</div>
     <button class="translate-all-btn" id="tall-start-btn" onclick="startTranslateAll()" style="margin-bottom:0.75rem">▶ INICIAR</button>
     <button class="tall-cancel-btn" id="tall-cancel-btn" onclick="cancelTranslateAll()">Cancelar</button>
+  </div>
+</div>
+
+<!-- Sheet de substituir palavra em todas as strings -->
+<div class="tall-sheet" id="replace-sheet" onclick="if(event.target===this) closeReplaceSheet();">
+  <div class="tall-sheet-inner">
+    <div class="tall-title" id="replace-title">Substituir em todas as strings</div>
+    <div class="tall-sub" id="replace-sub">Troca um trecho de texto em todas as traduções já escritas. Não mexe nas strings vazias.</div>
+
+    <div style="margin-bottom:0.6rem;">
+      <label style="display:block;font-size:11px;color:var(--text-muted);margin-bottom:3px;">Buscar</label>
+      <input type="text" id="replace-find-input" class="search-input" placeholder="ex: aroma" oninput="updateReplacePreview()">
+    </div>
+    <div style="margin-bottom:0.6rem;">
+      <label style="display:block;font-size:11px;color:var(--text-muted);margin-bottom:3px;">Substituir por</label>
+      <input type="text" id="replace-with-input" class="search-input" placeholder="ex: cheiro" oninput="updateReplacePreview()">
+    </div>
+    <label class="filter-checkbox-label" style="margin-bottom:0.4rem;">
+      <input type="checkbox" id="replace-ignore-case" onchange="updateReplacePreview()">
+      Ignorar maiúsculas/minúsculas
+    </label>
+    <label class="filter-checkbox-label" style="margin-bottom:0.75rem;">
+      <input type="checkbox" id="replace-whole-word" onchange="updateReplacePreview()">
+      Só palavra inteira (evita pegar pedaço de outra palavra)
+    </label>
+
+    <div class="tall-status" id="replace-preview" style="margin-bottom:0.75rem;">Digite algo pra buscar...</div>
+
+    <button class="translate-all-btn" id="replace-apply-btn" onclick="applyReplaceAll()" style="margin-bottom:0.75rem" disabled>APLICAR SUBSTITUIÇÃO</button>
+    <button class="tall-cancel-btn" id="replace-undo-btn" onclick="undoLastReplaceAll()" style="display:none;margin-top:0.5rem;">↩ Desfazer última substituição</button>
+    <button class="tall-cancel-btn" onclick="closeReplaceSheet()">Cancelar</button>
   </div>
 </div>
 
@@ -1631,6 +1663,156 @@ function closeSuccessSheet() {
 let tallEngine = 'google';
 let tallCancelled = false;
 let tallRunning = false;
+
+// ──────────────────────────────────────────────
+// SUBSTITUIR EM TODAS AS STRINGS
+// ──────────────────────────────────────────────
+function escapeRegExp(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// Snapshot da última substituição em massa, pra permitir desfazer.
+// Guarda só os valores originais dos índices afetados (não o array todo).
+let lastReplaceSnapshot = null; // { entries: [{idx, previousValue}], findText, withText }
+
+// Borda de "palavra inteira" que funciona com acentos (á, ã, ç etc.), já que
+// \b do regex JS só entende [A-Za-z0-9_] e ignoraria letras acentuadas.
+const WORD_CHAR = 'A-Za-zÀ-ÖØ-öø-ÿ0-9_';
+function buildReplaceRegex(findText, ignoreCase, wholeWord) {
+  const flags = ignoreCase ? 'gi' : 'g';
+  const escaped = escapeRegExp(findText);
+  const pattern = wholeWord
+    ? '(?<![' + WORD_CHAR + '])(' + escaped + ')(?![' + WORD_CHAR + '])'
+    : escaped;
+  return new RegExp(pattern, flags);
+}
+
+function openReplaceSheet() {
+  if (stringsData.length === 0) return;
+  document.getElementById('replace-find-input').value = '';
+  document.getElementById('replace-with-input').value = '';
+  document.getElementById('replace-ignore-case').checked = false;
+  document.getElementById('replace-whole-word').checked = false;
+  document.getElementById('replace-preview').textContent = 'Digite algo pra buscar...';
+  document.getElementById('replace-preview').style.color = '';
+  document.getElementById('replace-apply-btn').disabled = true;
+  document.getElementById('replace-undo-btn').style.display = lastReplaceSnapshot ? '' : 'none';
+  const sheet = document.getElementById('replace-sheet');
+  sheet.classList.add('open');
+  requestAnimationFrame(() => requestAnimationFrame(() => sheet.classList.add('open-active')));
+  setTimeout(() => document.getElementById('replace-find-input').focus(), 300);
+}
+
+function closeReplaceSheet() {
+  const sheet = document.getElementById('replace-sheet');
+  sheet.classList.remove('open-active');
+  setTimeout(() => sheet.classList.remove('open'), 300);
+}
+
+// Conta quantas ocorrências e em quantas strings, sem alterar nada ainda.
+function computeReplaceMatches(findText, ignoreCase, wholeWord) {
+  let totalOccurrences = 0;
+  let affectedStrings = 0;
+  stringsData.forEach(item => {
+    if (!item.value) return;
+    const re = buildReplaceRegex(findText, ignoreCase, wholeWord);
+    const matches = item.value.match(re);
+    if (matches && matches.length > 0) {
+      totalOccurrences += matches.length;
+      affectedStrings++;
+    }
+  });
+  return { totalOccurrences, affectedStrings };
+}
+
+function updateReplacePreview() {
+  const findText = document.getElementById('replace-find-input').value;
+  const ignoreCase = document.getElementById('replace-ignore-case').checked;
+  const wholeWord = document.getElementById('replace-whole-word').checked;
+  const preview = document.getElementById('replace-preview');
+  const applyBtn = document.getElementById('replace-apply-btn');
+
+  if (!findText) {
+    preview.textContent = 'Digite algo pra buscar...';
+    preview.style.color = '';
+    applyBtn.disabled = true;
+    return;
+  }
+
+  const { totalOccurrences, affectedStrings } = computeReplaceMatches(findText, ignoreCase, wholeWord);
+  if (totalOccurrences === 0) {
+    preview.textContent = 'Nenhuma ocorrência encontrada nas traduções.';
+    preview.style.color = '#e07070';
+    applyBtn.disabled = true;
+  } else {
+    preview.textContent = totalOccurrences + ' ocorrência(s) em ' + affectedStrings + ' string(s) serão trocadas.';
+    preview.style.color = 'var(--accent)';
+    applyBtn.disabled = false;
+  }
+}
+
+function applyReplaceAll() {
+  const findText = document.getElementById('replace-find-input').value;
+  const withText = document.getElementById('replace-with-input').value;
+  const ignoreCase = document.getElementById('replace-ignore-case').checked;
+  const wholeWord = document.getElementById('replace-whole-word').checked;
+  if (!findText) return;
+
+  const { totalOccurrences, affectedStrings } = computeReplaceMatches(findText, ignoreCase, wholeWord);
+  if (totalOccurrences === 0) return;
+
+  showModal({
+    icon: '⇄',
+    title: 'Confirmar substituição?',
+    msg: totalOccurrences + ' ocorrência(s) em ' + affectedStrings + ' string(s) vão trocar "' + findText + '" por "' + (withText || '(vazio)') + '".',
+    confirmText: 'SUBSTITUIR',
+    cancelText: 'Cancelar',
+    danger: false
+  }).then(() => {
+    const snapshotEntries = [];
+    stringsData.forEach((item, idx) => {
+      if (!item.value) return;
+      const re = buildReplaceRegex(findText, ignoreCase, wholeWord);
+      if (re.test(item.value)) {
+        snapshotEntries.push({ idx, previousValue: item.value });
+        const re2 = buildReplaceRegex(findText, ignoreCase, wholeWord);
+        item.value = item.value.replace(re2, withText);
+        editedIndices.add(idx);
+      }
+    });
+    lastReplaceSnapshot = { entries: snapshotEntries, findText, withText };
+    renderStrings();
+    updateProgressBadge();
+    triggerAutoSave();
+    document.getElementById('replace-undo-btn').style.display = '';
+    closeReplaceSheet();
+    showToast(totalOccurrences + ' ocorrência(s) substituídas em ' + affectedStrings + ' string(s).', 'success', 3500);
+  }).catch(() => {});
+}
+
+function undoLastReplaceAll() {
+  if (!lastReplaceSnapshot) return;
+  const { entries, findText, withText } = lastReplaceSnapshot;
+  showModal({
+    icon: '↩',
+    title: 'Desfazer substituição?',
+    msg: 'Vai restaurar o texto de ' + entries.length + ' string(s) para como estava antes de trocar "' + findText + '" por "' + (withText || '(vazio)') + '".',
+    confirmText: 'DESFAZER',
+    cancelText: 'Cancelar',
+    danger: false
+  }).then(() => {
+    entries.forEach(({ idx, previousValue }) => {
+      stringsData[idx].value = previousValue;
+      editedIndices.add(idx);
+    });
+    lastReplaceSnapshot = null;
+    renderStrings();
+    updateProgressBadge();
+    triggerAutoSave();
+    document.getElementById('replace-undo-btn').style.display = 'none';
+    showToast('Substituição desfeita em ' + entries.length + ' string(s).', 'info', 3000);
+  }).catch(() => {});
+}
 
 function openTranslateAllSheet() {
   if (stringsData.length === 0) return;
