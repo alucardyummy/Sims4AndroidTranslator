@@ -1446,6 +1446,15 @@ function updateSelectionToolbar() {
     count + (count === 1 ? ' selecionada' : ' selecionadas');
 }
 
+// Uma string só conta como "já traduzida" se o valor existir E for
+// diferente do original — muitas strings chegam com o value já pré-
+// preenchido igual ao original (ainda não traduzido de fato), então só
+// checar se está vazio dava falso-positivo.
+function isReallyTranslated(idx) {
+  const item = stringsData[idx];
+  return !!item.value && item.value !== item.original;
+}
+
 // Toque em "Traduzir" na toolbar: se alguma das selecionadas já tem
 // tradução, pergunta antes (sobrescrever ou pular); senão, já abre
 // o seletor de engine direto.
@@ -1454,7 +1463,7 @@ let _selectionOverwritePending = null;
 function requestTranslateSelected() {
   const indices = Array.from(selectedIndices);
   if (indices.length === 0) return;
-  const alreadyTranslated = indices.filter(idx => (stringsData[idx].value || '').trim()).length;
+  const alreadyTranslated = indices.filter(idx => isReallyTranslated(idx)).length;
   if (alreadyTranslated > 0) {
     _selectionOverwritePending = indices;
     document.getElementById('selection-overwrite-sub').textContent =
@@ -1481,7 +1490,7 @@ function resolveSelectionOverwrite(choice) {
   if (choice === 'overwrite') {
     openTranslateAllSheet(indices);
   } else {
-    const untranslated = indices.filter(idx => !(stringsData[idx].value || '').trim());
+    const untranslated = indices.filter(idx => !isReallyTranslated(idx));
     if (untranslated.length === 0) {
       showToast('Todas as selecionadas já têm tradução.', 'info', 2500);
       return;
