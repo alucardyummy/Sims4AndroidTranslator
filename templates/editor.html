@@ -10,7 +10,7 @@
 <title>Sims 4 Translator · Editor</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; tap-highlight-color: transparent; }
   :root {
     --bg: #0f0f0f; --surface: #1a1a1a; --surface2: #222;
     --border: #2a2a2a; --border2: #333;
@@ -683,12 +683,13 @@ async function processTranslation(engine) {
   document.getElementById('engine-menu').classList.remove('open');
   if (currentIdx === null) return;
   const idx = currentIdx;
-  const btn = document.querySelector('[data-translate-idx="' + idx + '"]');
   const textarea = document.querySelector('[data-idx="' + idx + '"]');
-  const originalText = stringsData[idx].value;
-  if (!originalText) return;
-  btn.classList.add('loading');
-  btn.innerHTML = '◌';
+  const originalText = stringsData[idx].original;
+  if (!originalText || !originalText.trim()) {
+    showToast('Esta string não tem texto original para traduzir.', 'info', 2500);
+    return;
+  }
+  const engineLabel = engine === 'google' ? 'Google' : 'Groq';
   try {
     const res = await fetch('/api/translate', {
       method: 'POST',
@@ -697,22 +698,20 @@ async function processTranslation(engine) {
     });
     const data = await res.json();
     if (data.success && data.translated) {
-      textarea.value = data.translated;
+      if (textarea) {
+        textarea.value = data.translated;
+        autoResize(textarea);
+      }
       stringsData[idx].value = data.translated;
-      autoResize(textarea);
       triggerAutoSave();
       editedIndices.add(idx);
       updateProgressBadge();
-      btn.classList.remove('loading');
-      btn.innerHTML = '◈';
+      showToast('Traduzido com ' + engineLabel + '!', 'success', 2000);
     } else {
       throw new Error(data.error || 'Erro na tradução');
     }
   } catch(e) {
-    btn.classList.remove('loading');
-    btn.classList.add('error');
-    btn.innerHTML = '✕';
-    setTimeout(() => { btn.classList.remove('error'); btn.innerHTML = '◈'; }, 2000);
+    showToast('Erro ao traduzir com ' + engineLabel + ': ' + e.message, 'error', 3200);
   }
 }
 
@@ -1161,6 +1160,12 @@ function renderStrings() {
             '<div class="kebab-item" id="clear-btn-' + idx + '" onclick="closeKebab(' + idx + '); clearTranslation(' + idx + ', event)">' +
               '<span class="kebab-item-icon">⌫</span>Limpar tradução' +
             '</div>' +
+            '<div class="kebab-item" onclick="closeKebab(' + idx + '); expandBoxes(' + idx + ')">' +
+              '<span class="kebab-item-icon">⤢</span>Expandir esta caixa' +
+            '</div>' +
+            '<div class="kebab-item" onclick="closeKebab(' + idx + '); expandAllBoxes()">' +
+              '<span class="kebab-item-icon">⤢</span>Expandir todas' +
+            '</div>' +
           '</div>' +
         '</div>' +
       '</div>';
@@ -1272,6 +1277,33 @@ function toggleTranslationExpand(idx, event) {
     if (arrow) arrow.classList.add('expanded');
     autoResize(ta);
   }
+}
+
+// ---- EXPANDIR CAIXAS (original + tradução) ----
+// Força a expansão (não alterna) de uma linha específica.
+function expandBoxes(idx) {
+  const inner = document.getElementById('orig-inner-' + idx);
+  if (inner) {
+    expandedOriginal.add(idx);
+    inner.classList.remove('clamped');
+  }
+  const ta = document.querySelector('[data-idx="' + idx + '"]');
+  if (ta) {
+    expandedTranslation.add(idx);
+    ta.classList.remove('ta-collapsed');
+    const backdrop = document.getElementById('ta-backdrop-' + idx);
+    if (backdrop) backdrop.classList.remove('ta-collapsed');
+    const arrow = document.getElementById('exp-arrow-' + idx);
+    if (arrow) arrow.classList.add('expanded');
+    autoResize(ta);
+  }
+}
+
+// Expande todas as linhas, incluindo as que não estão visíveis no momento
+// (o estado fica salvo em expandedOriginal/expandedTranslation e é aplicado
+// quando a linha for renderizada, ex: ao trocar de filtro).
+function expandAllBoxes() {
+  stringsData.forEach((_, idx) => expandBoxes(idx));
 }
 
 // ---- COPIAR ORIGINAL ----
