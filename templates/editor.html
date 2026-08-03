@@ -53,6 +53,7 @@
   .col-header { font-size: 9px; color: var(--text-dim); letter-spacing: 0.08em; text-transform: uppercase; text-align: center; }
   .strings-list { flex: 1; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; padding-bottom: 80px; }
   .string-row { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 6px 0.75rem; border-bottom: 1px solid var(--border); align-items: start; }
+  .string-row .original-text { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
   .string-row.row-selected { background: rgba(156,184,178,0.14); box-shadow: inset 3px 0 0 var(--accent); }
   .strings-list.selection-mode .string-row { cursor: pointer; grid-template-columns: 22px 1fr 1fr; }
   .strings-list.selection-mode .fav-btn,
@@ -1317,6 +1318,12 @@ function attachSelectionHandlers(row, idx) {
       if (e.type === 'mousedown') e.preventDefault();
       return;
     }
+    // O long-press pra entrar no modo seleção só é iniciado quando o toque
+    // começa em cima da caixa do texto ORIGINAL — assim não conflita com os
+    // botões (favoritar, menu ⋮, copiar, expandir) nem com a caixa de
+    // tradução, que precisa ficar livre pro gesto nativo de selecionar e
+    // copiar/recortar texto.
+    if (!e.target.closest('.original-text')) return;
     _longPressFired = false;
     clearTimeout(_longPressTimer);
     _longPressTimer = setTimeout(() => {
