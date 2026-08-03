@@ -355,6 +355,10 @@
         <input type="checkbox" id="filter-notes">
         Com notas
       </label>
+      <label class="filter-checkbox-label">
+        <input type="checkbox" id="filter-case-sensitive">
+        Diferenciar maiúsculas/minúsculas
+      </label>
     </div>
   </div>
   <div class="col-headers">
@@ -1079,16 +1083,17 @@ function highlightPlaceholdersHtml(rawText, blurred) {
 
 // Decide se uma string passa pelo filtro de busca + "não traduzidas" + "favoritas".
 // Não toca em stringsData, só decide o que aparece na tela.
-function matchesFilters(item, term, onlyUntranslated, onlyFavorite, onlyNotes) {
+function matchesFilters(item, term, onlyUntranslated, onlyFavorite, onlyNotes, caseSensitive) {
   if (onlyUntranslated && item.value) return false;
   if (onlyFavorite && !item.favorite) return false;
   if (onlyNotes && !item.note) return false;
   if (!term) return true;
-  const t = term.toLowerCase();
-  return (item.key_hex || '').toLowerCase().includes(t) ||
-         String(item.key ?? '').toLowerCase().includes(t) ||
-         (item.original || '').toLowerCase().includes(t) ||
-         (item.value || '').toLowerCase().includes(t);
+  const norm = caseSensitive ? (s) => s : (s) => s.toLowerCase();
+  const t = norm(term);
+  return norm(item.key_hex || '').includes(t) ||
+         norm(String(item.key ?? '')).includes(t) ||
+         norm(item.original || '').includes(t) ||
+         norm(item.value || '').includes(t);
 }
 
 let expandedOriginal = new Set();
@@ -1105,9 +1110,10 @@ function renderStrings() {
   const onlyUntranslated = document.getElementById('filter-untranslated')?.checked || false;
   const onlyFavorite = document.getElementById('filter-favorite')?.checked || false;
   const onlyNotes = document.getElementById('filter-notes')?.checked || false;
+  const caseSensitive = document.getElementById('filter-case-sensitive')?.checked || false;
   const visibleIndices = [];
   stringsData.forEach((item, idx) => {
-    if (matchesFilters(item, term, onlyUntranslated, onlyFavorite, onlyNotes)) visibleIndices.push(idx);
+    if (matchesFilters(item, term, onlyUntranslated, onlyFavorite, onlyNotes, caseSensitive)) visibleIndices.push(idx);
   });
 
   if (visibleIndices.length === 0) {
@@ -1516,6 +1522,7 @@ document.getElementById('search-input').addEventListener('input', renderStrings)
 document.getElementById('filter-untranslated').addEventListener('change', renderStrings);
 document.getElementById('filter-favorite').addEventListener('change', renderStrings);
 document.getElementById('filter-notes').addEventListener('change', renderStrings);
+document.getElementById('filter-case-sensitive').addEventListener('change', renderStrings);
 
 function updateProgressBadge() {
   const translatedCount = stringsData.filter((item, idx) =>
