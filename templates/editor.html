@@ -1290,15 +1290,31 @@ function renderStrings() {
 
 // ---- SELEÇÃO MÚLTIPLA (segurar a caixa pra entrar no modo seleção) ----
 // Anexa os handlers de long-press (entra no modo seleção) e, quando o modo
-// já está ativo, intercepta cliques/toques na linha inteira (fase de
-// captura) pra virar "selecionar/desselecionar" em vez do comportamento
-// normal (expandir, favoritar, editar, abrir menu ⋮ etc.)
+// já está ativo, distingue um TOQUE de verdade (dedo praticamente parado)
+// de uma ROLAGEM (dedo se move bastante) — só o toque vira "selecionar/
+// desselecionar esta linha"; a rolagem continua funcionando normalmente,
+// mesmo com o modo seleção ligado.
 function attachSelectionHandlers(row, idx) {
+  let startX = 0, startY = 0;
+  const TAP_MOVE_THRESHOLD = 10; // px — abaixo disso conta como toque, não rolagem
+
+  function point(e) {
+    return e.touches ? e.touches[0] : (e.changedTouches ? e.changedTouches[0] : e);
+  }
+  function movedPastThreshold(e) {
+    const p = point(e);
+    return Math.abs(p.clientX - startX) > TAP_MOVE_THRESHOLD || Math.abs(p.clientY - startY) > TAP_MOVE_THRESHOLD;
+  }
+
   function pointerDown(e) {
+    const p = point(e);
+    startX = p.clientX; startY = p.clientY;
     if (selectionMode) {
-      // impede foco/clique nos elementos internos (textarea, botões...)
-      e.preventDefault();
-      e.stopPropagation();
+      // No mouse, o foco no textarea acontece já no mousedown (antes de
+      // sabermos se virou toque ou arrasto) — bloqueia só nesse caso.
+      // No toque, o navegador só foca depois de confirmar que não é
+      // rolagem, então não precisa (e não deve) travar aqui.
+      if (e.type === 'mousedown') e.preventDefault();
       return;
     }
     _longPressFired = false;
@@ -1310,23 +1326,31 @@ function attachSelectionHandlers(row, idx) {
       if (navigator.vibrate) navigator.vibrate(15);
     }, LONG_PRESS_MS);
   }
-  function pointerCancel() {
+  function pointerMove(e) {
+    if (selectionMode) return; // rolagem normal cuida disso sozinha
+    if (movedPastThreshold(e)) clearTimeout(_longPressTimer); // moveu = é rolagem, cancela o long-press
+  }
+  function pointerUp(e) {
     clearTimeout(_longPressTimer);
+    if (!selectionMode) return;
+    if (_longPressFired) { _longPressFired = false; return; } // já tratado pelo long-press/drag-select
+    if (!movedPastThreshold(e)) toggleRowSelection(idx); // só alterna se foi um toque parado, não uma rolagem
   }
   function clickIntercept(e) {
     if (!selectionMode) return;
-    if (_longPressFired) { _longPressFired = false; return; } // já tratado pelo long-press
+    // Bloqueia sempre a ação padrão da linha (expandir, favoritar, editar,
+    // abrir menu ⋮...) enquanto em modo seleção — quem decide selecionar
+    // é o pointerUp acima, não o clique em si.
     e.preventDefault();
     e.stopPropagation();
-    toggleRowSelection(idx);
   }
 
   row.addEventListener('mousedown', pointerDown, true);
-  row.addEventListener('touchstart', pointerDown, { capture: true, passive: false });
-  row.addEventListener('mouseup', pointerCancel, true);
-  row.addEventListener('mouseleave', pointerCancel, true);
-  row.addEventListener('touchend', pointerCancel, true);
-  row.addEventListener('touchmove', pointerCancel, true);
+  row.addEventListener('touchstart', pointerDown, { capture: true, passive: true });
+  row.addEventListener('mousemove', pointerMove, true);
+  row.addEventListener('touchmove', pointerMove, { capture: true, passive: true });
+  row.addEventListener('mouseup', pointerUp, true);
+  row.addEventListener('touchend', pointerUp, true);
   row.addEventListener('click', clickIntercept, true);
 }
 
@@ -1347,17 +1371,20 @@ function startDragSelect(idx) {
   dragSelectVisited = new Set([idx]);
   document.addEventListener('touchmove', handleDragSelectMove, { passive: false });
   document.addEventListener('mousemove', handleDragSelectMove);
-  document.addEventListener('touchend', endDragSelect, { once: true });
-  document.addEventListener('mouseup', endDragSelect, { once: true });
+  document.addEventListener('touchend', endDragSelect);
+  document.addEventListener('touchcancel', endDragSelect);
+  document.addEventListener('mouseup', endDragSelect);
 }
 
 function handleDragSelectMove(e) {
   if (!isDragSelecting) return;
   const point = e.touches ? e.touches[0] : e;
   if (!point) return;
-  e.preventDefault(); // trava o scroll da lista enquanto arrasta selecionando
   const el = document.elementFromPoint(point.clientX, point.clientY);
   const rowEl = el && el.closest ? el.closest('.string-row') : null;
+  // Só trava o scroll quando o dedo está de fato em cima de uma linha da
+  // lista — fora dela (cabeçalho, barra inferior etc.) deixa rolar normal.
+  if (rowEl) e.preventDefault();
   if (!rowEl || !rowEl.id) return;
   const idx = parseInt(rowEl.id.replace('srow-', ''), 10);
   if (isNaN(idx) || dragSelectVisited.has(idx)) return;
@@ -1374,6 +1401,9 @@ function endDragSelect() {
   dragSelectVisited.clear();
   document.removeEventListener('touchmove', handleDragSelectMove);
   document.removeEventListener('mousemove', handleDragSelectMove);
+  document.removeEventListener('touchend', endDragSelect);
+  document.removeEventListener('touchcancel', endDragSelect);
+  document.removeEventListener('mouseup', endDragSelect);
 }
 
 function exitSelectionMode() {
