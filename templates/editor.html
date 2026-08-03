@@ -49,9 +49,26 @@
   .search-input:focus { outline: none; border-color: var(--accent-dim); }
   .filter-checkbox-label { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-muted); cursor: pointer; -webkit-tap-highlight-color: transparent; }
   .col-headers { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 4px 0.75rem; border-bottom: 1px solid var(--border); flex-shrink: 0; background: var(--bg); }
+  body:has(.strings-list.selection-mode) .col-headers { grid-template-columns: 22px 1fr 1fr; }
   .col-header { font-size: 9px; color: var(--text-dim); letter-spacing: 0.08em; text-transform: uppercase; text-align: center; }
   .strings-list { flex: 1; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; padding-bottom: 80px; }
-  .string-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 6px 0.75rem; border-bottom: 1px solid var(--border); align-items: start; }
+  .string-row { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 6px 0.75rem; border-bottom: 1px solid var(--border); align-items: start; }
+  .string-row.row-selected { background: rgba(156,184,178,0.14); box-shadow: inset 3px 0 0 var(--accent); }
+  .strings-list.selection-mode .string-row { cursor: pointer; grid-template-columns: 22px 1fr 1fr; }
+  .strings-list.selection-mode .fav-btn,
+  .strings-list.selection-mode .kebab-wrap,
+  .strings-list.selection-mode .expand-arrow-btn,
+  .strings-list.selection-mode .copy-btn,
+  .strings-list.selection-mode .note-textarea { pointer-events: none; }
+  .selection-check { display: none; width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid var(--border2); background: var(--surface2); align-self: center; justify-self: center; font-size: 11px; color: var(--bg); align-items: center; justify-content: center; }
+  .strings-list.selection-mode .selection-check { display: flex; }
+  .string-row.row-selected .selection-check { background: var(--accent); border-color: var(--accent); }
+  .string-row.row-selected .selection-check::after { content: '✓'; }
+  .selection-toolbar { display: none; position: fixed; left: 0; right: 0; bottom: 0; z-index: 350; background: var(--surface); border-top: 1px solid var(--border); padding: 10px 0.9rem calc(10px + env(safe-area-inset-bottom)); align-items: center; gap: 10px; box-shadow: 0 -6px 20px rgba(0,0,0,0.4); }
+  .selection-toolbar.open { display: flex; }
+  .selection-toolbar-close { flex: 0 0 auto; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--border2); background: var(--surface2); color: var(--text-muted); font-size: 15px; }
+  .selection-toolbar-count { flex: 1; font-size: 13px; color: var(--text); }
+  .selection-toolbar-translate { flex: 0 0 auto; background: var(--accent); color: #10231f; border: none; border-radius: 10px; padding: 9px 16px; font-weight: 600; font-size: 13px; }
   .key-hex { font-family: 'DM Mono', monospace; font-size: 8px; color: var(--text-dim); letter-spacing: 0.03em; margin-bottom: 3px; text-align: center; }
   .original-text { position: relative; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 7px 26px 7px 9px; font-size: 12px; color: var(--text-muted); line-height: 1.5; word-break: break-word; font-style: italic; min-height: 36px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
   .original-text-inner { display: block; }
@@ -374,6 +391,11 @@
       <div class="empty-text">Carregando strings...</div>
     </div>
   </div>
+  <div class="selection-toolbar" id="selection-toolbar">
+    <button class="selection-toolbar-close" onclick="exitSelectionMode()" title="Cancelar seleção">✕</button>
+    <div class="selection-toolbar-count" id="selection-toolbar-count">1 selecionada</div>
+    <button class="selection-toolbar-translate" onclick="requestTranslateSelected()">◈ Traduzir</button>
+  </div>
   <div class="bottom-bar">
     <div class="filename-row">
       <span class="filename-label">Nome:</span>
@@ -478,6 +500,17 @@
     <div class="tall-status" id="tall-status">Aguardando...</div>
     <button class="translate-all-btn" id="tall-start-btn" onclick="startTranslateAll()" style="margin-bottom:0.75rem">▶ INICIAR</button>
     <button class="tall-cancel-btn" id="tall-cancel-btn" onclick="cancelTranslateAll()">Cancelar</button>
+  </div>
+</div>
+
+<!-- Sheet de confirmação: sobrescrever ou pular já-traduzidas de uma seleção -->
+<div class="tall-sheet" id="selection-overwrite-sheet" onclick="if(event.target===this) closeSelectionOverwriteSheet();">
+  <div class="tall-sheet-inner">
+    <div class="tall-title">Algumas já têm tradução</div>
+    <div class="tall-sub" id="selection-overwrite-sub"></div>
+    <button class="translate-all-btn" id="selection-overwrite-btn" style="margin-bottom:0.6rem" onclick="resolveSelectionOverwrite('overwrite')">Sobrescrever todas</button>
+    <button class="translate-all-btn" style="margin-bottom:0.75rem" onclick="resolveSelectionOverwrite('skip')">Pular já traduzidas</button>
+    <button class="tall-cancel-btn" onclick="closeSelectionOverwriteSheet()">Cancelar</button>
   </div>
 </div>
 
@@ -700,7 +733,8 @@ async function processTranslation(engine) {
     if (data.success && data.translated) {
       if (textarea) {
         textarea.value = data.translated;
-        autoResize(textarea);
+        updateBackdrop(idx, document.activeElement !== textarea);
+        if (expandedTranslation.has(idx)) autoResize(textarea);
       }
       stringsData[idx].value = data.translated;
       triggerAutoSave();
@@ -1098,6 +1132,15 @@ function matchesFilters(item, term, onlyUntranslated, onlyFavorite, onlyNotes, c
 let expandedOriginal = new Set();
 let expandedTranslation = new Set();
 
+// ---- SELEÇÃO MÚLTIPLA (segurar a caixa pra selecionar, traduzir a seleção) ----
+let selectionMode = false;
+let selectedIndices = new Set();
+let _longPressTimer = null;
+let _longPressFired = false;
+const LONG_PRESS_MS = 480;
+let isDragSelecting = false;
+let dragSelectVisited = new Set();
+
 function renderStrings() {
   const list = document.getElementById('strings-list');
   if (stringsData.length === 0) {
@@ -1121,16 +1164,20 @@ function renderStrings() {
   }
 
   list.innerHTML = '';
+  const allBoxesExpandedNow = areAllBoxesExpanded();
   visibleIndices.forEach(idx => {
     const item = stringsData[idx];
     const isFav = !!item.favorite;
     const hasNote = !!item.note;
     const origExpanded = expandedOriginal.has(idx);
     const taExpanded = expandedTranslation.has(idx);
+    const rowExpanded = isRowFullyExpanded(idx);
 
     const row = document.createElement('div');
-    row.className = 'string-row';
+    row.className = 'string-row' + (selectedIndices.has(idx) ? ' row-selected' : '');
+    row.id = 'srow-' + idx;
     row.innerHTML =
+      '<div class="selection-check"></div>' +
       '<div>' +
         '<div class="key-hex">' + item.key_hex + '</div>' +
         '<div class="original-text" id="orig-box-' + idx + '" onclick="toggleOriginalExpand(' + idx + ', event)">' +
@@ -1160,16 +1207,19 @@ function renderStrings() {
             '<div class="kebab-item" id="clear-btn-' + idx + '" onclick="closeKebab(' + idx + '); clearTranslation(' + idx + ', event)">' +
               '<span class="kebab-item-icon">⌫</span>Limpar tradução' +
             '</div>' +
-            '<div class="kebab-item" onclick="closeKebab(' + idx + '); expandBoxes(' + idx + ')">' +
-              '<span class="kebab-item-icon">⤢</span>Expandir esta caixa' +
+            '<div class="kebab-item" id="kebab-expand-' + idx + '" onclick="closeKebab(' + idx + '); toggleRowBoxes(' + idx + ')">' +
+              '<span class="kebab-item-icon">' + (rowExpanded ? '⤡' : '⤢') + '</span>' +
+              '<span class="kebab-expand-label">' + (rowExpanded ? 'Reduzir esta caixa' : 'Expandir esta caixa') + '</span>' +
             '</div>' +
-            '<div class="kebab-item" onclick="closeKebab(' + idx + '); expandAllBoxes()">' +
-              '<span class="kebab-item-icon">⤢</span>Expandir todas' +
+            '<div class="kebab-item kebab-expandall-item" onclick="closeKebab(' + idx + '); toggleAllBoxes()">' +
+              '<span class="kebab-item-icon">' + (allBoxesExpandedNow ? '⤡' : '⤢') + '</span>' +
+              '<span class="kebab-expandall-label">' + (allBoxesExpandedNow ? 'Reduzir todas' : 'Expandir todas') + '</span>' +
             '</div>' +
           '</div>' +
         '</div>' +
       '</div>';
     list.appendChild(row);
+    attachSelectionHandlers(row, idx);
 
     const noteRow = document.createElement('div');
     noteRow.className = 'note-row';
@@ -1238,6 +1288,172 @@ function renderStrings() {
   });
 }
 
+// ---- SELEÇÃO MÚLTIPLA (segurar a caixa pra entrar no modo seleção) ----
+// Anexa os handlers de long-press (entra no modo seleção) e, quando o modo
+// já está ativo, intercepta cliques/toques na linha inteira (fase de
+// captura) pra virar "selecionar/desselecionar" em vez do comportamento
+// normal (expandir, favoritar, editar, abrir menu ⋮ etc.)
+function attachSelectionHandlers(row, idx) {
+  function pointerDown(e) {
+    if (selectionMode) {
+      // impede foco/clique nos elementos internos (textarea, botões...)
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+    _longPressFired = false;
+    clearTimeout(_longPressTimer);
+    _longPressTimer = setTimeout(() => {
+      _longPressFired = true;
+      enterSelectionMode(idx);
+      startDragSelect(idx);
+      if (navigator.vibrate) navigator.vibrate(15);
+    }, LONG_PRESS_MS);
+  }
+  function pointerCancel() {
+    clearTimeout(_longPressTimer);
+  }
+  function clickIntercept(e) {
+    if (!selectionMode) return;
+    if (_longPressFired) { _longPressFired = false; return; } // já tratado pelo long-press
+    e.preventDefault();
+    e.stopPropagation();
+    toggleRowSelection(idx);
+  }
+
+  row.addEventListener('mousedown', pointerDown, true);
+  row.addEventListener('touchstart', pointerDown, { capture: true, passive: false });
+  row.addEventListener('mouseup', pointerCancel, true);
+  row.addEventListener('mouseleave', pointerCancel, true);
+  row.addEventListener('touchend', pointerCancel, true);
+  row.addEventListener('touchmove', pointerCancel, true);
+  row.addEventListener('click', clickIntercept, true);
+}
+
+function enterSelectionMode(idx) {
+  selectionMode = true;
+  selectedIndices.add(idx);
+  document.getElementById('strings-list').classList.add('selection-mode');
+  const row = document.getElementById('srow-' + idx);
+  if (row) row.classList.add('row-selected');
+  updateSelectionToolbar();
+}
+
+// ---- DRAG-SELECT: arrastar o dedo/mouse depois do long-press "pinta" a
+// seleção nas linhas por onde passa, sem precisar soltar e segurar de novo
+// em cada uma. Nunca desmarca — só adiciona à seleção.
+function startDragSelect(idx) {
+  isDragSelecting = true;
+  dragSelectVisited = new Set([idx]);
+  document.addEventListener('touchmove', handleDragSelectMove, { passive: false });
+  document.addEventListener('mousemove', handleDragSelectMove);
+  document.addEventListener('touchend', endDragSelect, { once: true });
+  document.addEventListener('mouseup', endDragSelect, { once: true });
+}
+
+function handleDragSelectMove(e) {
+  if (!isDragSelecting) return;
+  const point = e.touches ? e.touches[0] : e;
+  if (!point) return;
+  e.preventDefault(); // trava o scroll da lista enquanto arrasta selecionando
+  const el = document.elementFromPoint(point.clientX, point.clientY);
+  const rowEl = el && el.closest ? el.closest('.string-row') : null;
+  if (!rowEl || !rowEl.id) return;
+  const idx = parseInt(rowEl.id.replace('srow-', ''), 10);
+  if (isNaN(idx) || dragSelectVisited.has(idx)) return;
+  dragSelectVisited.add(idx);
+  if (!selectedIndices.has(idx)) {
+    selectedIndices.add(idx);
+    rowEl.classList.add('row-selected');
+    updateSelectionToolbar();
+  }
+}
+
+function endDragSelect() {
+  isDragSelecting = false;
+  dragSelectVisited.clear();
+  document.removeEventListener('touchmove', handleDragSelectMove);
+  document.removeEventListener('mousemove', handleDragSelectMove);
+}
+
+function exitSelectionMode() {
+  selectionMode = false;
+  selectedIndices.clear();
+  endDragSelect();
+  document.getElementById('strings-list').classList.remove('selection-mode');
+  document.querySelectorAll('.string-row.row-selected').forEach(r => r.classList.remove('row-selected'));
+  document.getElementById('selection-toolbar').classList.remove('open');
+}
+
+function toggleRowSelection(idx) {
+  const row = document.getElementById('srow-' + idx);
+  if (selectedIndices.has(idx)) {
+    selectedIndices.delete(idx);
+    if (row) row.classList.remove('row-selected');
+  } else {
+    selectedIndices.add(idx);
+    if (row) row.classList.add('row-selected');
+  }
+  if (selectedIndices.size === 0) {
+    exitSelectionMode();
+  } else {
+    updateSelectionToolbar();
+  }
+}
+
+function updateSelectionToolbar() {
+  const bar = document.getElementById('selection-toolbar');
+  const count = selectedIndices.size;
+  bar.classList.toggle('open', count > 0);
+  document.getElementById('selection-toolbar-count').textContent =
+    count + (count === 1 ? ' selecionada' : ' selecionadas');
+}
+
+// Toque em "Traduzir" na toolbar: se alguma das selecionadas já tem
+// tradução, pergunta antes (sobrescrever ou pular); senão, já abre
+// o seletor de engine direto.
+let _selectionOverwritePending = null;
+
+function requestTranslateSelected() {
+  const indices = Array.from(selectedIndices);
+  if (indices.length === 0) return;
+  const alreadyTranslated = indices.filter(idx => (stringsData[idx].value || '').trim()).length;
+  if (alreadyTranslated > 0) {
+    _selectionOverwritePending = indices;
+    document.getElementById('selection-overwrite-sub').textContent =
+      alreadyTranslated + ' de ' + indices.length + ' string(s) selecionada(s) já têm tradução. O que fazer com elas?';
+    const sheet = document.getElementById('selection-overwrite-sheet');
+    sheet.classList.add('open');
+    requestAnimationFrame(() => requestAnimationFrame(() => sheet.classList.add('open-active')));
+  } else {
+    openTranslateAllSheet(indices);
+  }
+}
+
+function closeSelectionOverwriteSheet() {
+  const sheet = document.getElementById('selection-overwrite-sheet');
+  sheet.classList.remove('open-active');
+  setTimeout(() => sheet.classList.remove('open'), 300);
+  _selectionOverwritePending = null;
+}
+
+function resolveSelectionOverwrite(choice) {
+  const indices = _selectionOverwritePending;
+  closeSelectionOverwriteSheet();
+  if (!indices) return;
+  if (choice === 'overwrite') {
+    openTranslateAllSheet(indices);
+  } else {
+    const untranslated = indices.filter(idx => !(stringsData[idx].value || '').trim());
+    if (untranslated.length === 0) {
+      showToast('Todas as selecionadas já têm tradução.', 'info', 2500);
+      return;
+    }
+    openTranslateAllSheet(untranslated);
+  }
+}
+
+
 function updateBackdrop(idx, blurred) {
   const backdrop = document.getElementById('ta-backdrop-' + idx);
   const ta = document.querySelector('[data-idx="' + idx + '"]');
@@ -1257,6 +1473,7 @@ function toggleOriginalExpand(idx, event) {
     expandedOriginal.add(idx);
     inner.classList.remove('clamped');
   }
+  refreshExpandKebabLabels();
 }
 
 function toggleTranslationExpand(idx, event) {
@@ -1277,6 +1494,7 @@ function toggleTranslationExpand(idx, event) {
     if (arrow) arrow.classList.add('expanded');
     autoResize(ta);
   }
+  refreshExpandKebabLabels();
 }
 
 // ---- EXPANDIR CAIXAS (original + tradução) ----
@@ -1304,6 +1522,82 @@ function expandBoxes(idx) {
 // quando a linha for renderizada, ex: ao trocar de filtro).
 function expandAllBoxes() {
   stringsData.forEach((_, idx) => expandBoxes(idx));
+}
+
+// Volta uma linha específica ao tamanho padrão (oposto de expandBoxes).
+function collapseBoxes(idx) {
+  const inner = document.getElementById('orig-inner-' + idx);
+  if (inner) {
+    expandedOriginal.delete(idx);
+    inner.classList.add('clamped');
+  }
+  const ta = document.querySelector('[data-idx="' + idx + '"]');
+  if (ta) {
+    expandedTranslation.delete(idx);
+    ta.classList.add('ta-collapsed');
+    const backdrop = document.getElementById('ta-backdrop-' + idx);
+    if (backdrop) backdrop.classList.add('ta-collapsed');
+    const arrow = document.getElementById('exp-arrow-' + idx);
+    if (arrow) arrow.classList.remove('expanded');
+  }
+}
+
+// Volta todas as linhas ao tamanho padrão de quando entramos no editor.
+function collapseAllBoxes() {
+  stringsData.forEach((_, idx) => collapseBoxes(idx));
+}
+
+// Uma linha é considerada "totalmente expandida" (pro texto do menu ⋮)
+// só quando original E tradução estão expandidos.
+function isRowFullyExpanded(idx) {
+  return expandedOriginal.has(idx) && expandedTranslation.has(idx);
+}
+
+function areAllBoxesExpanded() {
+  return stringsData.length > 0 &&
+    expandedOriginal.size === stringsData.length &&
+    expandedTranslation.size === stringsData.length;
+}
+
+// "Expandir esta caixa" <-> "Reduzir esta caixa"
+function toggleRowBoxes(idx) {
+  if (isRowFullyExpanded(idx)) {
+    collapseBoxes(idx);
+  } else {
+    expandBoxes(idx);
+  }
+  refreshExpandKebabLabels();
+}
+
+// "Expandir todas" <-> "Reduzir todas"
+function toggleAllBoxes() {
+  if (areAllBoxesExpanded()) {
+    collapseAllBoxes();
+  } else {
+    expandAllBoxes();
+  }
+  refreshExpandKebabLabels();
+}
+
+// Atualiza os textos/ícones dos itens do menu ⋮ de todas as linhas
+// já renderizadas, sem precisar refazer a lista inteira.
+function refreshExpandKebabLabels() {
+  document.querySelectorAll('.kebab-expand-label').forEach(el => {
+    const item = el.closest('.kebab-item');
+    const idx = item ? parseInt(item.id.replace('kebab-expand-', ''), 10) : NaN;
+    if (isNaN(idx)) return;
+    const expanded = isRowFullyExpanded(idx);
+    el.textContent = expanded ? 'Reduzir esta caixa' : 'Expandir esta caixa';
+    const icon = item.querySelector('.kebab-item-icon');
+    if (icon) icon.textContent = expanded ? '⤡' : '⤢';
+  });
+  const allExpanded = areAllBoxesExpanded();
+  document.querySelectorAll('.kebab-expandall-item').forEach(item => {
+    const label = item.querySelector('.kebab-expandall-label');
+    if (label) label.textContent = allExpanded ? 'Reduzir todas' : 'Expandir todas';
+    const icon = item.querySelector('.kebab-item-icon');
+    if (icon) icon.textContent = allExpanded ? '⤡' : '⤢';
+  });
 }
 
 // ---- COPIAR ORIGINAL ----
@@ -1796,6 +2090,8 @@ function closeSuccessSheet() {
 
 // ---- TRADUZIR TUDO ----
 let tallEngine = 'google';
+let tallTargetIndices = null; // null = modo "traduzir tudo (pendentes)"; array = tradução de uma seleção específica
+let tallStartedThisSession = false; // true assim que INICIAR é apertado (usado pra saber se sai do modo seleção ao fechar)
 let tallCancelled = false;
 let tallRunning = false;
 
@@ -1949,18 +2245,24 @@ function undoLastReplaceAll() {
   }).catch(() => {});
 }
 
-function openTranslateAllSheet() {
+function openTranslateAllSheet(targetIndices) {
   if (stringsData.length === 0) return;
+  tallTargetIndices = targetIndices && targetIndices.length ? targetIndices : null;
+  tallStartedThisSession = false;
   tallCancelled = false;
   tallRunning = false;
-  document.getElementById('tall-title').textContent = 'Traduzir tudo';
+  const isSelection = !!tallTargetIndices;
+  document.getElementById('tall-title').textContent = isSelection ? 'Traduzir selecionadas' : 'Traduzir tudo';
   document.getElementById('tall-title').style.color = '';
-  document.getElementById('tall-sub').textContent = 'Escolha a engine e toque em iniciar. Strings já traduzidas serão ignoradas.';
+  document.getElementById('tall-sub').textContent = isSelection
+    ? tallTargetIndices.length + ' string(s) selecionada(s) serão traduzidas.'
+    : 'Escolha a engine e toque em iniciar. Strings já traduzidas serão ignoradas.';
   document.getElementById('tall-fill').style.width = '0%';
   document.getElementById('tall-status').textContent = 'Aguardando...';
   document.getElementById('tall-status').style.color = '';
   document.getElementById('tall-start-btn').disabled = false;
   document.getElementById('tall-start-btn').textContent = '▶ INICIAR';
+  document.getElementById('tall-start-btn').onclick = () => startTranslateAll();
   const sheet = document.getElementById('tall-sheet');
   sheet.classList.add('open');
   requestAnimationFrame(() => requestAnimationFrame(() => sheet.classList.add('open-active')));
@@ -1970,6 +2272,13 @@ function closeTallSheet() {
   const sheet = document.getElementById('tall-sheet');
   sheet.classList.remove('open-active');
   setTimeout(() => sheet.classList.remove('open'), 300);
+  // Se a tradução era de uma seleção e chegou a rodar (concluída ou
+  // cancelada no meio), sai do modo seleção. Se o usuário só abriu o sheet
+  // e desistiu antes de apertar INICIAR, mantém a seleção como estava.
+  if (tallTargetIndices && tallStartedThisSession) {
+    exitSelectionMode();
+  }
+  tallTargetIndices = null;
 }
 
 function selectTallEngine(engine) {
@@ -2017,15 +2326,18 @@ async function translateSingleWithRetry(idx, engine, maxRetries = 2) {
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 async function startTranslateAll() {
-  const pending = stringsData
-    .map((item, idx) => ({ idx, item }))
-    .filter(({ idx, item }) => !editedIndices.has(idx));
+  const pending = tallTargetIndices
+    ? tallTargetIndices.map(idx => ({ idx, item: stringsData[idx] }))
+    : stringsData
+        .map((item, idx) => ({ idx, item }))
+        .filter(({ idx, item }) => !editedIndices.has(idx));
 
   if (pending.length === 0) {
     showToast('Nenhuma string sem tradução encontrada!', 'info', 3000);
     return;
   }
 
+  tallStartedThisSession = true;
   tallRunning = true;
   tallCancelled = false;
   document.getElementById('tall-start-btn').disabled = true;
@@ -2057,7 +2369,6 @@ async function startTranslateAll() {
       statusEl.style.color = errors > 0 ? '#e07070' : 'var(--text-muted)';
     }));
 
-    renderStrings();
     updateProgressBadge();
     triggerAutoSave();
 
@@ -2071,6 +2382,14 @@ async function startTranslateAll() {
       await sleep(DELAY_BETWEEN_BATCHES);
     }
   }
+
+  // A lista fica escondida atrás do overlay quase opaco do modal durante toda
+  // a tradução em massa, então não há motivo pra redesenhar ela (custosa,
+  // reconstrói o DOM inteiro) a cada lote de 5 strings — isso é O(n²/5) e
+  // deixava o app engasgando em pacotes grandes. Redesenha só uma vez aqui,
+  // depois que o loop termina (seja por conclusão ou cancelamento), quando
+  // o usuário está prestes a ver a lista de novo.
+  renderStrings();
 
   tallRunning = false;
   const finalStatus = document.getElementById('tall-status');
