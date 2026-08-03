@@ -329,6 +329,13 @@
       <button class="editor-draft-banner-btn recover" onclick="recoverEditorDraft()">Recuperar</button>
     </div>
   </div>
+  <div class="editor-draft-banner" id="json-draft-banner">
+    <div class="editor-draft-banner-text">Você tinha edições no modo JSON não aplicadas quando a página recarregou.</div>
+    <div class="editor-draft-banner-actions">
+      <button class="editor-draft-banner-btn discard" onclick="discardJsonDraft()">Descartar</button>
+      <button class="editor-draft-banner-btn recover" onclick="recoverJsonDraft()">Recuperar JSON</button>
+    </div>
+  </div>
   <div class="filter-bar">
     <input type="text" id="search-input" class="search-input" placeholder="Buscar por key, original ou tradução...">
     <div class="filter-toggle-row" onclick="toggleFilterAccordion()">
@@ -397,7 +404,7 @@
       <button class="json-apply-btn" id="json-apply-btn" onclick="applyJsonEdits()">✓ APLICAR</button>
     </div>
     <div class="json-editor-wrap">
-      <textarea class="json-textarea" id="json-textarea" spellcheck="false" autocorrect="off" autocapitalize="off"></textarea>
+      <textarea class="json-textarea" id="json-textarea" spellcheck="false" autocorrect="off" autocapitalize="off" oninput="scheduleJsonDraftSave()"></textarea>
     </div>
     <div class="json-bottom">
       <div class="filename-row">
@@ -631,12 +638,18 @@ let autoSaveTimer = null;
 let draftSaveTimer = null;
 let progressSaved = false;
 let editedIndices = new Set();
+// editedIndices só CRESCE (nunca é limpo depois de salvar) porque também é
+// usado pelo "Traduzir tudo" pra pular strings já traduzidas — não serve
+// pra saber se existe algo "não salvo agora". hasUnsavedChanges é isso: fica
+// true a cada edição e só volta a false quando salva de verdade no banco.
+let hasUnsavedChanges = false;
 let editSnapshots = {}; // idx -> valor de antes da edição atual (1 nível de undo)
 let lastEdit = null;     // { idx, previousValue } da última alteração feita
 
 // Chave usada pro "rascunho de recuperação" no localStorage. É lida também
 // pela home (index.html) pra mostrar o aviso de "tradução recente não salva".
 const DRAFT_KEY = 's4t_unsaved_draft';
+const JSON_DRAFT_KEY = 's4t_json_draft'; // rascunho separado: texto CRU do textarea JSON, ainda não aplicado
 
 function autoResize(el) {
   el.style.height = 'auto';
@@ -700,6 +713,7 @@ async function processTranslation(engine) {
 }
 
 function triggerAutoSave() {
+  hasUnsavedChanges = true;
   clearTimeout(autoSaveTimer);
   autoSaveTimer = setTimeout(() => { saveProgressToDatabase(); }, 2000);
   triggerDraftSave();
@@ -716,7 +730,7 @@ function triggerDraftSave() {
 }
 
 function saveDraftToLocalStorage() {
-  if (stringsData.length === 0 || editedIndices.size === 0) return;
+  if (stringsData.length === 0 || !hasUnsavedChanges) return;
   try {
     const draft = {
       instanceStr: instanceStr,
@@ -735,6 +749,42 @@ function saveDraftToLocalStorage() {
 
 function clearLocalDraft() {
   try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
+}
+
+// Salva o texto CRU do textarea JSON — diferente do rascunho normal, que só
+// guarda stringsData já processado. Isso cobre o caso de a página recarregar
+// sozinha (ex: Android descartando a aba em segundo plano por falta de
+// memória) enquanto o usuário editou o JSON mas ainda não clicou em
+// "Aplicar" — nesse ponto a edição só existe no texto do textarea, em
+// nenhum outro lugar, e o beforeunload normal não teria como capturá-la.
+function saveJsonDraftToLocalStorage() {
+  if (!jsonModeActive) return;
+  try {
+    const ta = document.getElementById('json-textarea');
+    if (!ta) return;
+    localStorage.setItem(JSON_DRAFT_KEY, JSON.stringify({
+      instanceStr: instanceStr,
+      value: ta.value,
+      timestamp: Date.now()
+    }));
+  } catch (e) {
+    console.error('Erro ao salvar rascunho do JSON', e);
+  }
+}
+
+function clearJsonDraft() {
+  try { localStorage.removeItem(JSON_DRAFT_KEY); } catch (e) {}
+}
+
+// Debounce curto (800ms): salva o rascunho cru do JSON continuamente
+// enquanto o usuário digita — não só no beforeunload. Isso é o que
+// realmente protege contra a página recarregar sozinha (ex: Android
+// descartando a aba em segundo plano), já que nesse caso o beforeunload
+// pode simplesmente não disparar — o processo é morto direto pelo sistema.
+let jsonDraftSaveTimer = null;
+function scheduleJsonDraftSave() {
+  clearTimeout(jsonDraftSaveTimer);
+  jsonDraftSaveTimer = setTimeout(saveJsonDraftToLocalStorage, 800);
 }
 
 // Nome do projeto agora vem do campo "Nome do arquivo" (#filename-input),
@@ -769,6 +819,7 @@ async function saveProgressToDatabase() {
     });
     btn.classList.remove('saving');
     progressSaved = true;
+    hasUnsavedChanges = false; // salvo de verdade agora — nada de mostrar aviso de "não salvo" na home
     localStorage.setItem('has_saves', '1');
     // Já está salvo de verdade no banco com um nome — o rascunho local de
     // recuperação não é mais necessário.
@@ -801,6 +852,9 @@ async function saveProgressManual() {
 window.addEventListener('beforeunload', () => {
   clearTimeout(autoSaveTimer); // evita disparar autosave junto com o sendBeacon abaixo
   clearTimeout(draftSaveTimer);
+  // Salva o texto cru do JSON imediatamente (sem esperar o debounce) — é a
+  // última chance antes da página sumir, igual ao rascunho normal abaixo.
+  saveJsonDraftToLocalStorage();
   // Grava o rascunho local na hora, sem esperar o debounce — é a última
   // chance antes da página sumir (com ou sem nome de arquivo definido).
   saveDraftToLocalStorage();
@@ -844,9 +898,11 @@ function loadFromLocalDraft() {
     document.getElementById('translate-all-btn').disabled = stringsData.length === 0;
     document.getElementById('json-mode-btn').disabled = stringsData.length === 0;
     editedIndices = new Set(stringsData.map((item, idx) => idx).filter(idx => stringsData[idx].value !== stringsData[idx].original));
+    hasUnsavedChanges = true; // recuperado do rascunho local, ainda não confirmado no banco
     const filenameInput = document.getElementById('filename-input');
     if (filenameInput && draft.original_name) filenameInput.value = draft.original_name;
     showToast('Tradução recuperada com sucesso.', 'success', 3500);
+    checkForLeftoverJsonDraft();
     return true;
   } catch (e) {
     console.error('Erro ao recuperar rascunho local', e);
@@ -881,6 +937,7 @@ async function load() {
     // não veio no fetch acima (porque nunca foi salvo no servidor), avisa
     // aqui dentro, sem precisar voltar pra home pra ver o aviso.
     checkForLeftoverDraft();
+    checkForLeftoverJsonDraft();
   } catch(e) {
     document.getElementById('loading').classList.remove('active');
     showToast('Erro ao carregar strings: ' + e.message, 'error', 5000);
@@ -888,6 +945,7 @@ async function load() {
     // .package não encontrado, etc.) que a recuperação local é mais importante.
     // Sem essa checagem aqui, o aviso nunca aparecia quando o fetch falhava.
     checkForLeftoverDraft();
+    checkForLeftoverJsonDraft();
   }
 }
 
@@ -920,6 +978,7 @@ function recoverEditorDraft() {
   stringsData = pendingRecoverDraft.strings;
   document.getElementById('count-badge').textContent = stringsData.length + ' strings';
   editedIndices = new Set(stringsData.map((item, idx) => idx).filter(idx => stringsData[idx].value !== stringsData[idx].original));
+  hasUnsavedChanges = true; // recuperado do rascunho local, ainda não confirmado no banco
   updateProgressBadge();
   renderStrings();
   const filenameInput = document.getElementById('filename-input');
@@ -927,6 +986,43 @@ function recoverEditorDraft() {
   document.getElementById('editor-draft-banner').classList.remove('show');
   showToast('Tradução recuperada com sucesso.', 'success', 3500);
   pendingRecoverDraft = null;
+}
+
+// ---- AVISO DE RASCUNHO DE JSON NÃO APLICADO (caso de reload sozinho) ----
+let pendingJsonDraft = null;
+
+function checkForLeftoverJsonDraft() {
+  try {
+    const raw = localStorage.getItem(JSON_DRAFT_KEY);
+    if (!raw) return;
+    const draft = JSON.parse(raw);
+    if (!draft || typeof draft.value !== 'string' || draft.instanceStr !== instanceStr) return;
+    if (!draft.value.trim()) return;
+    pendingJsonDraft = draft;
+    document.getElementById('json-draft-banner').classList.add('show');
+  } catch (e) {
+    console.error('Erro ao checar rascunho pendente do JSON', e);
+  }
+}
+
+function discardJsonDraft() {
+  clearJsonDraft();
+  pendingJsonDraft = null;
+  document.getElementById('json-draft-banner').classList.remove('show');
+}
+
+function recoverJsonDraft() {
+  if (!pendingJsonDraft) return;
+  if (stringsData.length === 0) { showToast('Carregue as strings primeiro.', 'error', 3000); return; }
+  enterJsonMode(); // gera o JSON "oficial" a partir de stringsData...
+  document.getElementById('json-textarea').value = pendingJsonDraft.value; // ...e sobrescreve com o rascunho recuperado
+  document.getElementById('json-toolbar-label').textContent = 'JSON · edição recuperada, não aplicada ainda';
+  document.getElementById('json-draft-banner').classList.remove('show');
+  showToast('Edição do JSON recuperada — revise e clique em Aplicar.', 'success', 4000);
+  pendingJsonDraft = null;
+  // Mantém a chave no localStorage até o usuário aplicar ou descartar de
+  // propósito — se a página cair nesse meio-tempo de novo, ainda dá pra
+  // recuperar outra vez.
 }
 
 // O CSS do editor desliga o "puxar pra atualizar" do navegador de propósito
@@ -2018,7 +2114,7 @@ function confirmBack(e) {
     exitJsonMode();
     return;
   }
-  if (editedIndices.size === 0) return; // nada editado, volta normalmente
+  if (!hasUnsavedChanges) return; // já está tudo salvo, volta normalmente
   e.preventDefault();
   showModal({
     icon: '↩',
@@ -2094,6 +2190,7 @@ function exitJsonMode() {
     applyJsonEdits();
     _doExitJsonMode();
   }).catch(() => {
+    clearJsonDraft(); // usuário escolheu descartar de propósito
     _doExitJsonMode();
   });
 }
@@ -2163,6 +2260,7 @@ function applyJsonEdits() {
 
   ta.classList.remove('has-error');
   errEl.textContent = '';
+  clearJsonDraft(); // já foi aplicado de verdade, não precisa mais do rascunho cru
   document.getElementById('json-toolbar-label').textContent = '✓ ' + applied + ' strings aplicadas';
   // Igual ao "Carregar traduções": os dados do modo package precisam ser
   // redesenhados agora, não só quando algo mais disparar renderStrings().
