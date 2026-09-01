@@ -1,0 +1,257 @@
+ <!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0f0f0f">
+<title>Sims 4 Translator · Mesclar</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0f0f0f; --surface: #1a1a1a; --surface2: #222;
+    --border: #2a2a2a; --border2: #333;
+    --accent: #9cb8b2; --accent-dim: #6a9088;
+    --text: #f0ece4; --text-muted: #7a7570; --text-dim: #4a4a4a;
+    --radius: 16px; --radius-sm: 10px;
+  }
+  html, body { min-height: 100%; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; }
+  .page { min-height: 100dvh; display: flex; flex-direction: column; padding: 1.25rem 1rem 2rem; }
+
+  .topbar { display: flex; align-items: center; gap: 12px; margin-bottom: 1.75rem; }
+  .back-btn { width: 34px; height: 34px; background: transparent; border: 1px solid transparent; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-muted); text-decoration: none; -webkit-tap-highlight-color: transparent; flex-shrink: 0; transition: color 0.15s; }
+  .back-btn:active { color: var(--accent); }
+  .back-btn svg { width: 17px; height: 17px; }
+  .topbar-title { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 600; letter-spacing: 0.06em; color: var(--text-muted); text-transform: uppercase; }
+
+  .section-label { font-size: 10px; color: var(--text-dim); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.75rem; padding-left: 2px; }
+  .separator { height: 1px; background: var(--border); margin: 1.25rem 0; }
+
+  /* Drop zone */
+  .drop-zone { border: 1.5px dashed var(--border2); border-radius: var(--radius); padding: 2.25rem 1rem; display: flex; flex-direction: column; align-items: center; gap: 0.65rem; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: border-color 0.25s, background 0.25s; margin-bottom: 1.25rem; position: relative; overflow: hidden; }
+  .drop-zone::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at center, rgba(156,184,178,0.05) 0%, transparent 70%); opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+  .drop-zone.has-files { border-color: var(--accent-dim); }
+  .drop-zone.has-files::before { opacity: 1; }
+  .drop-zone:active { background: rgba(156,184,178,0.03); }
+  .drop-zone-icon { font-size: 22px; color: var(--text-dim); transition: color 0.25s, transform 0.3s; }
+  .drop-zone.has-files .drop-zone-icon { color: var(--accent); transform: scale(1.15); }
+  .drop-zone-label { font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.08em; color: var(--text-muted); text-transform: uppercase; }
+  .drop-zone-sub { font-size: 11px; color: var(--text-dim); text-align: center; line-height: 1.6; }
+  #file-input { display: none; }
+
+  /* Lista de arquivos */
+  .file-list { display: flex; flex-direction: column; gap: 5px; margin-bottom: 1rem; }
+  .file-item { display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); transition: border-color 0.15s; animation: itemIn 0.22s ease; }
+  @keyframes itemIn { from { opacity: 0; transform: translateX(12px); } to { opacity: 1; transform: translateX(0); } }
+  .file-item-index { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text-dim); flex-shrink: 0; width: 14px; text-align: right; font-variant-numeric: tabular-nums; }
+  .file-item-name { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .file-item-size { font-size: 10px; color: var(--text-dim); white-space: nowrap; flex-shrink: 0; font-family: 'DM Mono', monospace; font-variant-numeric: tabular-nums; }
+  .file-item-remove { width: 22px; height: 22px; background: transparent; border: none; color: var(--text-dim); font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; -webkit-tap-highlight-color: transparent; border-radius: 4px; transition: color 0.15s; }
+  .file-item-remove:active { color: #c08080; }
+
+  .file-count { font-size: 10px; color: var(--text-dim); text-align: center; margin-bottom: 0.5rem; font-family: 'DM Mono', monospace; font-variant-numeric: tabular-nums; letter-spacing: 0.04em; }
+
+  /* Botão mesclar */
+  .merge-btn { width: 100%; padding: 17px; background: var(--accent-dim); border: none; border-radius: var(--radius); color: #080808; font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 0.1em; cursor: pointer; -webkit-tap-highlight-color: transparent; margin-top: auto; transition: background 0.15s, transform 0.1s, opacity 0.2s; }
+  .merge-btn:active { background: var(--accent); transform: scale(0.97); }
+  .merge-btn:disabled { opacity: 0.2; pointer-events: none; }
+
+  /* Loading */
+  .loading-overlay { display: none; position: fixed; inset: 0; background: rgba(15,15,15,0.92); z-index: 100; align-items: center; justify-content: center; flex-direction: column; gap: 1rem; }
+  .loading-overlay.active { display: flex; }
+  .spinner { width: 30px; height: 30px; border: 1.5px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { font-size: 11px; color: var(--text-muted); letter-spacing: 0.06em; font-family: 'DM Mono', monospace; }
+
+  /* Toast */
+  .toast { position: fixed; bottom: 2rem; left: 1rem; right: 1rem; background: #1c1212; border: 1px solid #3a2020; border-radius: var(--radius-sm); padding: 11px 16px; font-size: 12px; color: #b07070; z-index: 200; display: none; text-align: center; letter-spacing: 0.03em; }
+  .toast.show { display: block; animation: fadeInUp 0.22s ease; }
+  @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* Busca */
+  .search-wrap { position: relative; margin-bottom: 0.65rem; display: none; }
+  .search-wrap.visible { display: block; animation: fadeInUp 0.2s ease; }
+  .search-input { width: 100%; padding: 9px 12px 9px 33px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-family: 'DM Mono', monospace; font-size: 11px; outline: none; -webkit-appearance: none; transition: border-color 0.15s; }
+  .search-input::placeholder { color: var(--text-dim); }
+  .search-input:focus { border-color: var(--border2); }
+  .search-icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--text-dim); font-size: 12px; pointer-events: none; }
+  .search-count { font-size: 10px; color: var(--text-dim); text-align: right; margin-top: -0.4rem; margin-bottom: 0.5rem; display: none; font-family: 'DM Mono', monospace; }
+  .search-count.visible { display: block; }
+  .file-item.hidden { display: none; }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="topbar">
+    <a href="/" class="back-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M19 12H5M12 5l-7 7 7 7"/>
+      </svg>
+    </a>
+    <div class="topbar-title">Mesclar .packages</div>
+  </div>
+
+  <div class="section-label">Arquivos selecionados</div>
+
+  <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+    <div class="drop-zone-icon">◈</div>
+    <div class="drop-zone-label">Selecionar arquivos</div>
+    <div class="drop-zone-sub">Toque para escolher os .package<br>que deseja juntar num só</div>
+  </div>
+  <input type="file" id="file-input" accept=".package" multiple>
+
+  <div class="search-wrap" id="search-wrap">
+    <span class="search-icon">◎</span>
+    <input class="search-input" id="search-input" type="text" placeholder="Buscar arquivo..." oninput="filterList()">
+  </div>
+  <div class="search-count" id="search-count"></div>
+  <div class="file-list" id="file-list"></div>
+  <div class="file-count" id="file-count"></div>
+
+  <div class="separator"></div>
+
+  <button class="merge-btn" id="merge-btn" onclick="doMerge()" disabled>MESCLAR E BAIXAR</button>
+</div>
+
+<div class="loading-overlay" id="loading">
+  <div class="spinner"></div>
+  <div class="loading-text" id="loading-text">Mesclando...</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let selectedFiles = [];
+
+document.getElementById('file-input').addEventListener('change', function() {
+  addFiles(Array.from(this.files));
+  this.value = '';
+});
+
+function addFiles(newFiles) {
+  for (const f of newFiles) {
+    if (!f.name.endsWith('.package')) {
+      showToast('Apenas arquivos .package são aceitos.');
+      continue;
+    }
+    const already = selectedFiles.some(x => x.name === f.name && x.size === f.size);
+    if (!already) selectedFiles.push(f);
+  }
+  renderList();
+}
+
+function removeFile(idx) {
+  selectedFiles.splice(idx, 1);
+  renderList();
+}
+
+function formatSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' kB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
+function renderList() {
+  const list = document.getElementById('file-list');
+  const count = document.getElementById('file-count');
+  const btn = document.getElementById('merge-btn');
+  const drop = document.getElementById('drop-zone');
+
+  list.innerHTML = '';
+  selectedFiles.forEach((f, idx) => {
+    const item = document.createElement('div');
+    item.className = 'file-item';
+    item.innerHTML =
+      '<span class="file-item-index">' + (idx + 1) + '</span>' +
+      '<span class="file-item-name">' + f.name + '</span>' +
+      '<span class="file-item-size">' + formatSize(f.size) + '</span>' +
+      '<button class="file-item-remove" onclick="removeFile(' + idx + ')">✕</button>';
+    list.appendChild(item);
+  });
+
+  const n = selectedFiles.length;
+  const totalBytes = selectedFiles.reduce((acc, f) => acc + f.size, 0);
+  const totalStr = totalBytes < 1024 * 1024
+    ? (totalBytes / 1024).toFixed(1) + ' kB'
+    : (totalBytes / (1024 * 1024)).toFixed(2) + ' MB';
+  count.textContent = n > 0 ? n + ' arquivo' + (n !== 1 ? 's' : '') + ' · ~' + totalStr : '';
+  btn.disabled = n < 2;
+  drop.classList.toggle('has-files', n > 0);
+
+  const sub = document.querySelector('.drop-zone-sub');
+  sub.textContent = n > 0 ? 'Toque para adicionar mais arquivos' : 'Toque para escolher os .package\nque deseja juntar num só';
+
+  document.getElementById('search-wrap').classList.toggle('visible', n > 0);
+  if (n === 0) {
+    document.getElementById('search-input').value = '';
+    document.getElementById('search-count').classList.remove('visible');
+  }
+}
+
+async function doMerge() {
+  if (selectedFiles.length < 2) return;
+
+  const loading = document.getElementById('loading');
+  const loadingText = document.getElementById('loading-text');
+  loading.classList.add('active');
+  loadingText.textContent = 'Mesclando ' + selectedFiles.length + ' arquivos...';
+
+  try {
+    const formData = new FormData();
+    selectedFiles.forEach(f => formData.append('packages', f));
+
+    const res = await fetch('/api/merge', { method: 'POST', body: formData });
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error || 'Erro ao mesclar');
+    }
+
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'merged.package';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    loading.classList.remove('active');
+  } catch(e) {
+    loading.classList.remove('active');
+    showToast(e.message || 'Erro ao mesclar os arquivos.');
+  }
+}
+
+function filterList() {
+  const q = document.getElementById('search-input').value.toLowerCase().trim();
+  const items = document.querySelectorAll('.file-item');
+  let visible = 0;
+  items.forEach(item => {
+    const name = item.querySelector('.file-item-name').textContent.toLowerCase();
+    const match = !q || name.includes(q);
+    item.classList.toggle('hidden', !match);
+    if (match) visible++;
+  });
+  const countEl = document.getElementById('search-count');
+  if (q) {
+    countEl.textContent = visible + ' de ' + selectedFiles.length + ' arquivo' + (selectedFiles.length !== 1 ? 's' : '');
+    countEl.classList.add('visible');
+  } else {
+    countEl.classList.remove('visible');
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+</script>
+</body>
+</html> 

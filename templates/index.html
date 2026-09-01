@@ -1,0 +1,1833 @@
+ <!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<link rel="apple-touch-icon" href="/img/icon-pf.webp">
+<meta name="theme-color" content="#9cb8b2">
+<title>Sims 4 Translator</title>
+<link rel="icon" type="image/png" href="/img/favicon.png">
+<link rel="manifest" href="./manifest.json">
+<link rel="preload" href="/img/icon-pf.webp" as="image">
+<script>
+  // Anti-FOUC: decide o estado visual ANTES do CSS/HTML do body pintar.
+  // Roda de forma síncrona e bloqueante no <head>, então o navegador
+  // nunca chega a desenhar o estado "errado" (import vs +, skeleton vs lista).
+  (function() {
+    try {
+      var hasSaves = localStorage.getItem('has_saves') === '1';
+      document.documentElement.classList.add(hasSaves ? 'pre-has-saves' : 'pre-no-saves');
+    } catch (e) {
+      document.documentElement.classList.add('pre-no-saves');
+    }
+  })();
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; tap-highlight-color: transparent; }
+
+  /* Cor de seleção de texto (highlight ao arrastar/selecionar palavras),
+     trocando o azul padrão do navegador pelo tom da marca. */
+  ::selection { background: #837991; color: #fff; }
+  ::-moz-selection { background: #837991; color: #fff; }
+  :root {
+    --bg: #9cb8b2; 
+    --surface: rgba(255,255,255,0.22); 
+    --border: rgba(255,255,255,0.35); 
+    --border2: rgba(255,255,255,0.22);
+    --accent: #111111; 
+    --accent-dim: #222222;
+    --text: #1a1a1a; 
+    --text-muted: #3a4a47; 
+    --radius: 16px; --radius-sm: 10px;
+  }
+  html, body { min-height: 100%; color: var(--text); font-family: 'DM Sans', sans-serif; }
+  body {
+    background:
+      radial-gradient(ellipse at 15% 12%, #9cb8b2 0%, transparent 45%),
+      radial-gradient(ellipse at 80% 8%,  #b4cec9 0%, transparent 40%),
+      radial-gradient(ellipse at 65% 50%, #7a9e97 0%, transparent 42%),
+      radial-gradient(ellipse at 18% 72%, #9cb8b2 0%, transparent 40%),
+      radial-gradient(ellipse at 88% 82%, #8aada7 0%, transparent 38%),
+      radial-gradient(ellipse at 45% 35%, #adc8c2 0%, transparent 48%),
+      linear-gradient(160deg, #9cb8b2 0%, #3f524e 100%);
+    background-attachment: fixed;
+  }
+  .screen { min-height: 100dvh; display: flex; flex-direction: column; align-items: center; padding: 0 1rem 2rem; position: relative; }
+
+  /* TOPBAR */
+  .topbar { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 0 0; position: relative; z-index: 10; }
+  .profile-circle { width: 36px; height: 36px; border-radius: 50%; overflow: hidden; cursor: pointer; border: 1px solid var(--border); background: var(--surface); -webkit-tap-highlight-color: transparent; flex-shrink: 0; }
+  .profile-circle img { width: 100%; height: 100%; object-fit: cover; }
+  .select-topbar { display: none; width: 100%; align-items: center; justify-content: space-between; padding: 0.5rem 0.75rem; position: relative; z-index: 10; }
+  .select-topbar.active { display: flex; }
+  .select-cancel { background: none; border: none; color: var(--text-muted); font-size: 13px; cursor: pointer; padding: 4px 8px; -webkit-tap-highlight-color: transparent; }
+  .select-count { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 600; color: var(--text); text-align: center; flex: 1; min-width: 0; line-height: 1.25; }
+  .select-delete { background: none; border: none; color: #6b5f8a; font-size: 13px; font-weight: 700; cursor: pointer; padding: 4px 8px; -webkit-tap-highlight-color: transparent; display: flex; align-items: center; gap: 6px; }
+
+  /* LOGO */
+  .logo-area { text-align: center; margin: 1.5rem 0 1.25rem; position: relative; z-index: 1; }
+  .title { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; letter-spacing: 0.05em; color: var(--text); margin-bottom: 0.35rem; }
+  .subtitle { font-size: 12px; color: var(--text-muted); }
+
+  /* IMPORT AREA */
+  .import-area { position: relative; z-index: 1; width: 100%; max-width: 340px; }
+
+  /* Botão IMPORTAR — aparece só na primeira vez */
+  .btn-import { width: 100%; padding: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--accent); font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 600; letter-spacing: 0.08em; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; -webkit-tap-highlight-color: transparent; position: relative; overflow: hidden; }
+  .btn-import::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 60%); }
+  .btn-import:active { }
+  .btn-import svg { width: 18px; height: 18px; flex-shrink: 0; }
+  .hint { text-align: center; font-size: 11px; color: var(--text-muted); margin-top: 0.75rem; }
+  .btn-merge { width: 100%; padding: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--accent); font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; cursor: pointer; display: flex; align-items: center; justify-content: center; -webkit-tap-highlight-color: transparent; margin-top: 0.75rem; }
+  .btn-merge:active { background: rgba(0,0,0,0.1); }
+  .btn-create { width: 100%; padding: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--accent); font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 7px; -webkit-tap-highlight-color: transparent; margin-top: 0.5rem; }
+  .btn-create:active { background: rgba(0,0,0,0.1); }
+  #file-input { display: none; }
+
+  /* Botão + — aparece após primeiro save */
+  .btn-new { width: 100%; padding: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--accent); font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 300; cursor: pointer; display: flex; align-items: center; justify-content: center; -webkit-tap-highlight-color: transparent; }
+  .btn-new:active { background: rgba(0,0,0,0.1); }
+
+  /* MASCOTE DIVISOR */
+  .mascot-divider { display: flex; justify-content: center; margin: 1rem 0 0.75rem; }
+  .mascot-divider img { width: 73px; height: 73px; object-fit: contain; opacity: 0.85; }
+
+  /* SAVES LIST */
+  .saves-label { font-size: 9px; color: var(--text-muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px; padding-left: 2px; width: 100%; }
+  .saves-list { width: 100%; display: flex; flex-direction: column; gap: 8px; }
+
+  .save-item {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 14px 14px;
+    display: flex; align-items: center; gap: 10px;
+    cursor: pointer; -webkit-tap-highlight-color: transparent;
+    transition: border-color 0.15s;
+    position: relative;
+  }
+  .save-item:active { background: rgba(0,0,0,0.05); }
+
+  /* Círculo de seleção (estilo BlackNote) */
+  .sel-circle {
+    width: 20px; height: 20px; border-radius: 50%;
+    border: 1.5px solid var(--border2);
+    flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+  .sel-circle.checked { background: var(--accent-dim); border-color: var(--accent-dim); }
+  .sel-circle.checked::after { content: '✓'; font-size: 11px; color: #fff; }
+
+  .save-info { flex: 1; overflow: hidden; }
+  .save-title { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .save-meta { font-size: 10px; color: var(--accent); margin-top: 3px; }
+  .save-actions { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
+  .btn-icon { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 12px; padding: 4px 6px; -webkit-tap-highlight-color: transparent; }
+  .btn-icon.delete { color: var(--text-muted); }
+
+  /* Estado seleção ativa */
+  .select-mode .save-item { cursor: default; }
+  .save-item.selected { border-color: var(--accent-dim); background: rgba(0,0,0,0.08); }
+
+  /* Error */
+  .error-msg { display: none; background: rgba(184,156,217,0.15); border: 1px solid rgba(184,156,217,0.4); border-radius: 10px; padding: 12px 16px; font-size: 13px; color: #8a7fa6; margin-top: 1rem; text-align: center; width: 100%; }
+  .error-msg.active { display: block; }
+
+  /* Loading */
+  .loading-overlay { display: none; position: fixed; inset: 0; background: rgba(15,15,15,0.9); z-index: 100; align-items: center; justify-content: center; flex-direction: column; gap: 1rem; }
+  .loading-overlay.active { display: flex; }
+  .spinner { width: 40px; height: 40px; border: 2px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { font-size: 13px; color: rgba(255,255,255,0.7); letter-spacing: 0.05em; }
+
+  /* Version */
+  .version { font-size: 11px; color: var(--text-muted); opacity: 0.6; letter-spacing: 0.05em; margin-top: 2rem; position: relative; z-index: 1; }
+
+  /* GitHub badge */
+  .github-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    margin-top: 0.55rem;
+    color: #6b5589;
+    text-decoration: none;
+    position: relative; z-index: 1;
+    transition: color 0.2s, opacity 0.2s;
+    -webkit-tap-highlight-color: transparent;
+    opacity: 0.78;
+  }
+  .github-badge:hover { color: #8a6aad; opacity: 1; }
+  .github-badge svg { flex-shrink: 0; }
+
+  /* Google Login button */
+  .google-btn {
+    width: 100%; padding: 11px 12px;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    background: rgba(5,41,37,0.28);
+    border: 1px solid #1b1047;
+    border-radius: 8px;
+    color: #1b1047;
+    font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    margin-top: 0.75rem;
+    backdrop-filter: blur(8px);
+    transition: background 0.18s, border-color 0.18s, color 0.18s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .google-btn:hover { background: rgba(5,41,37,0.42); border-color: #8A7FA6; color: #8A7FA6; }
+  .google-btn:active { background: rgba(5,41,37,0.55); }
+  .google-btn svg { flex-shrink: 0; }
+  .auth-divider {
+    display: flex; align-items: center; gap: 8px;
+    margin: 0.85rem 0 0;
+    color: #1b1047; font-size: 11px; font-weight: 500;
+    letter-spacing: 0.04em;
+  }
+  .auth-divider::before, .auth-divider::after {
+    content: ''; flex: 1; height: 1px; background: rgba(27,16,71,0.35);
+  }
+
+  /* Topbar seleção: entrar e sair */
+  @keyframes topbarSlideDown {
+    from { opacity: 0; transform: translateY(-10px) scale(0.97); filter: blur(4px); }
+    to   { opacity: 1; transform: translateY(0)     scale(1);    filter: blur(0px); }
+  }
+  @keyframes topbarSlideUp {
+    from { opacity: 1; transform: translateY(0)     scale(1);    filter: blur(0px); }
+    to   { opacity: 0; transform: translateY(-8px)  scale(0.97); filter: blur(3px); }
+  }
+  .select-topbar.topbar-enter { animation: topbarSlideDown 0.32s cubic-bezier(0.22,1,0.36,1) forwards; }
+  .select-topbar.topbar-exit  { animation: topbarSlideUp   0.22s cubic-bezier(0.4,0,0.8,0)  forwards; }
+
+  /* Animação de destruição: encolhe e some */
+  @keyframes saveDisintegrate {
+    0%   { transform: scale(1);    opacity: 1;    filter: blur(0px); }
+    30%  { transform: scale(0.96); opacity: 0.85; filter: blur(1px); }
+    70%  { transform: scale(0.90); opacity: 0.4;  filter: blur(3px); }
+    100% { transform: scale(0.82); opacity: 0;    filter: blur(6px); max-height: 0; padding: 0; margin: 0; }
+  }
+  .save-item.disintegrating {
+    animation: saveDisintegrate 1.1s cubic-bezier(0.4, 0, 0.8, 0) forwards;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  /* Canvas de partículas */
+  .dust-canvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* Modals */
+  .modal-overlay { display: flex; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; align-items: center; justify-content: center; padding: 1.5rem; opacity: 0; visibility: hidden; backdrop-filter: blur(0px); -webkit-backdrop-filter: blur(0px); transition: opacity 0.32s ease, visibility 0.32s, backdrop-filter 0.32s ease, -webkit-backdrop-filter 0.32s ease; }
+  @keyframes modalIn {
+    0%   { opacity: 0; transform: scale(0.97) translateY(16px); filter: blur(8px); }
+    60%  { opacity: 1; filter: blur(1px); }
+    100% { opacity: 1; transform: scale(1)    translateY(0);    filter: blur(0px); }
+  }
+  @keyframes modalOut {
+    0%   { opacity: 1; transform: scale(1)    translateY(0);    filter: blur(0px); }
+    100% { opacity: 0; transform: scale(0.97) translateY(10px); filter: blur(6px); }
+  }
+  .modal-box.animate-in  { animation: modalIn  0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+  .modal-box.animate-out { animation: modalOut 0.38s cubic-bezier(0.4, 0, 0.8, 0) forwards; }
+  .modal-overlay.active { opacity: 1; visibility: visible; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+  .modal-box { width: 100%; max-width: 340px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; position: relative; }
+  .modal-close { position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: var(--text-muted); font-size: 18px; cursor: pointer; }
+  .modal-title { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; color: var(--accent); margin-bottom: 1.25rem; }
+  .form-group { margin-bottom: 1rem; display: flex; flex-direction: column; gap: 6px; }
+  .form-group label { font-size: 11px; color: rgba(255,255,255,0.9); text-transform: uppercase; letter-spacing: 0.05em; text-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+  .form-input { background: rgba(255,255,255,0.3); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; font-size: 13px; color: var(--text); font-family: 'DM Sans', sans-serif; }
+  .form-input:focus { outline: none; border-color: var(--accent-dim); background: rgba(255,255,255,0.5); }
+  .modal-btn { width: 100%; padding: 12px; background: rgba(30,50,46,0.65); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: #fff; font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 0.05em; cursor: pointer; margin-top: 0.5rem; backdrop-filter: blur(8px); }
+  .modal-btn:active { background: var(--accent); }
+  .modal-switch { text-align: center; font-size: 12px; color: #1b1047; margin-top: 1rem; cursor: pointer; font-weight: 500; }
+  .modal-switch span { color: var(--accent); text-decoration: underline; font-weight: 500; }
+
+  /* Custom Alert (substitui o alert() nativo do navegador) */
+  .alert-overlay { display: flex; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 2000; align-items: center; justify-content: center; padding: 1.5rem; opacity: 0; visibility: hidden; backdrop-filter: blur(0px); -webkit-backdrop-filter: blur(0px); transition: opacity 0.32s ease, visibility 0.32s, backdrop-filter 0.32s ease, -webkit-backdrop-filter 0.32s ease; }
+  .alert-overlay.active { opacity: 1; visibility: visible; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+  .alert-box { width: 100%; max-width: 320px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; position: relative; text-align: center; }
+  .alert-box.animate-in  { animation: modalIn  0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+  .alert-box.animate-out { animation: modalOut 0.38s cubic-bezier(0.4, 0, 0.8, 0) forwards; }
+  .alert-icon { width: 44px; height: 44px; margin: 0 auto 0.85rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
+  .alert-icon.err { background: rgba(180,60,60,0.25); color: #7a1f1f; border: 1px solid rgba(180,60,60,0.4); }
+  .alert-icon.ok  { background: rgba(60,140,100,0.25); color: #1c4a34; border: 1px solid rgba(60,140,100,0.4); }
+  .alert-msg { font-size: 13.5px; line-height: 1.5; color: var(--text); font-family: 'DM Sans', sans-serif; margin-bottom: 1.25rem; }
+  .alert-btn { width: 100%; padding: 12px; background: rgba(30,50,46,0.65); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: #fff; font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 0.05em; cursor: pointer; backdrop-filter: blur(8px); }
+  .alert-btn:active { background: var(--accent); }
+  .auth-tab {
+    display: none;
+    opacity: 0;
+    filter: blur(6px);
+    transition: opacity 0.32s ease, filter 0.32s ease;
+  }
+  .auth-tab.active { display: block; }
+  .auth-tab.active.tab-visible { opacity: 1; filter: blur(0px); }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: 
+      radial-gradient(ellipse at 25% 20%, rgba(180,210,205,0.3) 0%, transparent 45%),
+      radial-gradient(ellipse at 78% 60%, rgba(63,82,78,0.35) 0%, transparent 42%),
+      radial-gradient(ellipse at 12% 82%, rgba(156,184,178,0.25) 0%, transparent 40%);
+    pointer-events: none;
+    z-index: 0;
+    animation: bgPulse 7s ease-in-out infinite alternate;
+  }
+  @keyframes bgPulse { 0% { opacity: 0.6; } 100% { opacity: 1; } }
+
+  body::after {
+    content: '✦  ✧  ✦  ✧  ✦  ✧';
+    position: fixed;
+    top: 6px;
+    left: 0; right: 0;
+    text-align: center;
+    font-size: 8px;
+    color: rgba(184,156,217,0.35);
+    letter-spacing: 12px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Animação ao segurar (touch down) */
+  .save-item.press-down {
+    transform: scale(0.97);
+    filter: blur(1px);
+    opacity: 0.85;
+    transition: transform 0.12s ease, filter 0.12s ease, opacity 0.12s ease;
+  }
+
+  /* Blur in/out ao selecionar item */
+  @keyframes selectBlurIn {
+    0%   { filter: blur(0px);   opacity: 1;    transform: scale(1); }
+    40%  { filter: blur(3px);   opacity: 0.7;  transform: scale(0.975); }
+    100% { filter: blur(0px);   opacity: 1;    transform: scale(1); }
+  }
+  .save-item.select-pulse {
+    animation: selectBlurIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+
+  /* Animação completa ao confirmar toque */
+  @keyframes savePressBlur {
+    0%   { transform: scale(0.97); filter: blur(1px);   opacity: 0.85; }
+    45%  { transform: scale(0.94); filter: blur(2.5px); opacity: 0.7;  }
+    75%  { transform: scale(0.98); filter: blur(0.5px); opacity: 0.92; }
+    100% { transform: scale(1);    filter: blur(0px);   opacity: 1;    }
+  }
+  .save-item.pressing {
+    animation: savePressBlur 0.52s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    pointer-events: none;
+  }
+
+  /* Animação de entrada dos cards (stagger) */
+  @keyframes cardSlideIn {
+    from { opacity: 0; transform: translateY(10px) scale(0.985); filter: blur(3px); }
+    to   { opacity: 1; transform: translateY(0)    scale(1);     filter: blur(0px); }
+  }
+  .save-item {
+    opacity: 0;
+  }
+  .save-item.visible {
+    animation: cardSlideIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+
+  /* Save item glassmorphism real */
+  .save-item {
+    background: rgba(255,255,255,0.14) !important;
+    border: 1px solid rgba(255,255,255,0.45) !important;
+    backdrop-filter: blur(18px) saturate(1.4);
+    -webkit-backdrop-filter: blur(18px) saturate(1.4);
+    box-shadow: 0 4px 24px rgba(100,80,140,0.12), inset 0 1px 0 rgba(255,255,255,0.5);
+    transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+  }
+  .save-item:hover {
+    background: rgba(255,255,255,0.2) !important;
+    border-color: rgba(184,156,217,0.7) !important;
+    box-shadow: 0 6px 30px rgba(138,127,166,0.2), inset 0 1px 0 rgba(255,255,255,0.6);
+  }
+  .save-item.selected {
+    border-color: rgba(184,156,217,0.8) !important;
+    background: rgba(184,156,217,0.18) !important;
+  }
+
+  /* Círculo seleção roxo */
+  .sel-circle.checked { background: #8a7fa6 !important; border-color: #8a7fa6 !important; }
+
+  /* Botão selecionar tudo */
+  .select-all-group { display: flex; align-items: center; gap: 2px; }
+  .select-all-btn {
+    background: none; border: none; color: #6b5f8a; font-size: 13px; font-weight: 700;
+    cursor: pointer; padding: 4px 8px; -webkit-tap-highlight-color: transparent;
+    font-family: 'DM Sans', sans-serif; transition: opacity 0.15s;
+  }
+  .select-all-btn:active { opacity: 0.6; }
+
+  /* Topbar seleção redesenhada */
+  .select-topbar {
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(184,156,217,0.25);
+    border-radius: var(--radius);
+    backdrop-filter: blur(8px);
+  }
+
+  /* Saves label decorativa */
+  .saves-label {
+    display: flex !important; align-items: center; gap: 8px;
+  }
+  .saves-label::before, .saves-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #405e54, transparent);
+  }
+
+  /* Modal com glass */
+  .modal-box {
+    background: rgba(255,255,255,0.16) !important;
+    border: 1px solid rgba(255,255,255,0.45) !important;
+    box-shadow: 0 24px 60px rgba(30,50,46,0.3), inset 0 1px 0 rgba(255,255,255,0.55);
+    backdrop-filter: blur(28px) saturate(1.6);
+    -webkit-backdrop-filter: blur(28px) saturate(1.6);
+  }
+
+  /* Inputs dentro do modal também com glass */
+  .form-input {
+    background: rgba(255,255,255,0.2) !important;
+    border: 1px solid rgba(255,255,255,0.4) !important;
+    color: var(--text);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  .form-input:focus {
+    background: rgba(255,255,255,0.3) !important;
+    border-color: rgba(255,255,255,0.6) !important;
+    outline: none;
+  }
+  .form-input::placeholder {
+    color: rgba(26,26,26,0.55);
+  }
+  
+  /* Modal overlay mais suave */
+  .modal-overlay {
+    background: rgba(20,35,32,0.55) !important;
+  }
+  .modal-overlay.active {
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+
+  /* Versão badge */
+  .version {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(184,156,217,0.25);
+    border-radius: 20px;
+    padding: 5px 14px;
+    backdrop-filter: blur(6px);
+  }
+
+  /* Título gradiente */
+  .title {
+    background: linear-gradient(135deg, #1a1a1a 0%, #4a3a5c 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Mascote flutuante */
+  .mascot-divider img {
+    filter: drop-shadow(0 0 8px rgba(184,156,217,0.4));
+    animation: mascotFloat 3s ease-in-out infinite;
+  }
+  @keyframes mascotFloat {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-4px); }
+  }
+
+  /* Botões com glass */
+  .btn-import, .btn-new, .btn-merge, .btn-create {
+    background: rgba(255,255,255,0.14) !important;
+    border: 1px solid rgba(255,255,255,0.45) !important;
+    backdrop-filter: blur(18px) saturate(1.4);
+    -webkit-backdrop-filter: blur(18px) saturate(1.4);
+    box-shadow: 0 4px 24px rgba(100,80,140,0.1), inset 0 1px 0 rgba(255,255,255,0.5);
+    transition: transform 0.15s, box-shadow 0.15s;
+    /* Força camada de composição própria — corrige um bug conhecido do
+       Chrome Android onde o texto dentro de elementos com
+       backdrop-filter às vezes não é repintado até outro evento de
+       toque/scroll acontecer (ficando "invisível" em repouso). */
+    isolation: isolate;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+  }
+  .btn-import:hover, .btn-new:hover {
+    background: rgba(255,255,255,0.22) !important;
+  }
+
+  /* Efeito "afundar + blur in/out" — usado em: IMPORTAR, +, Mesclar,
+     SALVAR ALTERAÇÕES e SAIR DA CONTA. Ao pressionar (:active), o botão
+     encolhe e ganha um leve blur (blur in); ao soltar, a mesma transição
+     CSS desfaz tudo suavemente (blur out) — sem precisar de JS. */
+  .fx-press {
+    transition: transform 0.15s ease-out, filter 0.15s ease-out, background 0.15s, color 0.15s, border-color 0.15s !important;
+  }
+  .fx-press:active {
+    transform: translateZ(0) scale(0.97);
+    filter: blur(1.5px);
+  }
+
+  /* ── Skeleton loader ── */
+  @keyframes skeletonShimmer {
+    0%   { background-position: -200% center; }
+    100% { background-position:  200% center; }
+  }
+  .skeleton-item {
+    border-radius: var(--radius-sm);
+    padding: 14px 14px;
+    display: flex; align-items: center; gap: 12px;
+    background: rgba(255,255,255,0.13);
+    border: 1px solid rgba(255,255,255,0.3);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    overflow: hidden;
+    position: relative;
+  }
+  .skeleton-item::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      105deg,
+      transparent 30%,
+      rgba(255,255,255,0.18) 50%,
+      transparent 70%
+    );
+    background-size: 200% 100%;
+    animation: skeletonShimmer 1.6s ease-in-out infinite;
+  }
+  .sk-circle {
+    width: 20px; height: 20px; border-radius: 50%;
+    background: rgba(255,255,255,0.22);
+    flex-shrink: 0;
+  }
+  .sk-lines { flex: 1; display: flex; flex-direction: column; gap: 7px; }
+  .sk-line {
+    height: 10px; border-radius: 6px;
+    background: rgba(255,255,255,0.22);
+  }
+  .sk-line.short { width: 45%; height: 8px; }
+
+  /* ── Anti-FOUC ──
+     Por padrão (sem JS, ou antes da classe ser aplicada), a página fica
+     com opacidade 0. O <head> aplica .pre-has-saves ou .pre-no-saves
+     de forma síncrona e bloqueante antes do primeiro paint, então o
+     navegador já pinta direto no estado certo — sem flash de "import"
+     trocando pra "+" ou vice-versa.
+  */
+  body { opacity: 0; }
+  #btn-new-wrap, #skeleton-area, #mascot-div { display: none; }
+  html.pre-has-saves body,
+  html.pre-no-saves body {
+    opacity: 1;
+    transition: opacity 0.18s ease-out;
+  }
+
+  /* Estado: usuário JÁ tem saves (mostra skeleton + botão "+", esconde IMPORTAR) */
+  html.pre-has-saves #btn-import-wrap { display: none; }
+  html.pre-has-saves #btn-new-wrap { display: block; }
+  html.pre-has-saves #skeleton-area { display: block; }
+  html.pre-has-saves #mascot-div { display: flex; }
+
+  /* Estado: sem saves (mostra IMPORTAR, esconde "+", sem skeleton) */
+  html.pre-no-saves #btn-import-wrap { display: block; }
+  html.pre-no-saves #btn-new-wrap { display: none; }
+  html.pre-no-saves #skeleton-area { display: none; }
+  html.pre-no-saves #mascot-div { display: none; }
+
+  /* ── Custom Select (Pergunta de Segurança) ── */
+  .custom-select { position: relative; width: 100%; }
+
+  .custom-select-btn {
+    width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4);
+    border-radius: 8px; padding: 10px 12px;
+    font-size: 12px; color: var(--text); font-family: 'DM Sans', sans-serif;
+    cursor: pointer; text-align: left; backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: border-color 0.18s, background 0.18s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .custom-select-btn span { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .custom-select-btn:active { background: rgba(255,255,255,0.3); }
+  .custom-select-btn.open { border-color: rgba(255,255,255,0.6); background: rgba(255,255,255,0.28); }
+
+  .cs-arrow { flex-shrink: 0; color: var(--text-muted); transition: transform 0.22s cubic-bezier(0.22,1,0.36,1); }
+  .custom-select-btn.open .cs-arrow { transform: rotate(180deg); }
+
+  .custom-select-drop {
+    position: absolute; left: 0; right: 0; top: calc(100% + 6px);
+    background: rgba(40,46,56,0.82);
+    border: 1px solid rgba(184,156,217,0.3);
+    border-radius: 12px; overflow: hidden;
+    backdrop-filter: blur(24px) saturate(1.5);
+    -webkit-backdrop-filter: blur(24px) saturate(1.5);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+    z-index: 9999;
+    opacity: 0; transform: translateY(-6px) scale(0.98); pointer-events: none;
+    transition: opacity 0.22s cubic-bezier(0.22,1,0.36,1), transform 0.22s cubic-bezier(0.22,1,0.36,1);
+  }
+  .custom-select-drop.open {
+    opacity: 1; transform: translateY(0) scale(1); pointer-events: auto;
+  }
+
+  .cs-option {
+    padding: 12px 14px; font-size: 12px; color: rgba(255,255,255,0.75);
+    font-family: 'DM Sans', sans-serif; cursor: pointer;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    transition: background 0.15s, color 0.15s;
+    -webkit-tap-highlight-color: transparent;
+    line-height: 1.4;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .cs-option svg { flex-shrink: 0; }
+  .cs-option:last-child { border-bottom: none; }
+  .cs-option:active, .cs-option:hover { background: rgba(184,156,217,0.18); color: #fff; }
+  .cs-option.selected { color: #c4aee8; font-weight: 500; }
+  .cs-icon { display: inline-flex; align-items: center; flex-shrink: 0; margin-right: 10px; }
+  .cs-option { display: flex; align-items: center; }
+
+  /* Aviso de "tradução recente não salva" (estilo GitHub: fica na tela até
+     o usuário clicar em Descartar ou Recuperar, não some sozinho). */
+  .draft-banner {
+    width: 100%; max-width: 340px; box-sizing: border-box; position: relative; z-index: 1;
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm);
+    padding: 0.8rem 0.9rem; margin: 0 0 0.85rem; display: none; flex-direction: column; gap: 0.65rem;
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.22);
+    opacity: 0; transform: translateY(-10px);
+    transition: opacity 0.32s ease, transform 0.32s ease;
+  }
+  .draft-banner.show { display: flex; }
+  .draft-banner.show.active { opacity: 1; transform: translateY(0); }
+  .draft-banner-text { font-size: 12.5px; line-height: 1.45; color: var(--text); }
+  .draft-banner-text strong { font-family: 'Syne', sans-serif; }
+  .draft-banner-actions { display: flex; gap: 8px; }
+  .draft-banner-btn {
+    flex: 1; padding: 9px 10px; border-radius: 8px; font-family: 'Syne', sans-serif;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.04em; cursor: pointer;
+    -webkit-tap-highlight-color: transparent; border: 1px solid var(--border);
+    background: transparent; color: var(--text-muted); transition: transform 0.15s ease;
+  }
+  .draft-banner-btn:active { transform: scale(0.96); }
+  .draft-banner-btn.discard:active { border-color: #e07070; color: #e07070; }
+  .draft-banner-btn.recover { background: rgba(30,50,46,0.65); border-color: rgba(255,255,255,0.2); color: #fff; }
+  .draft-banner-btn.recover:active { background: var(--accent); }
+</style>
+</head>
+<script>
+  // Failsafe: se por algum motivo o script principal nunca rodar (erro,
+  // bloqueio de localStorage, etc.), garante que a página não fique
+  // escondida pra sempre — revela no estado "sem saves" depois de 1.2s.
+  setTimeout(function() {
+    var html = document.documentElement;
+    if (!html.classList.contains('pre-has-saves') && !html.classList.contains('pre-no-saves')) {
+      html.classList.add('pre-no-saves');
+    }
+  }, 1200);
+</script>
+<body>
+<link rel="manifest" href="/manifest.json">
+
+<div class="screen" id="screen">
+  
+  <div class="topbar" id="topbar-normal">
+    <div class="profile-circle" id="profile-btn">
+      <img src="/img/icon-pf.webp" alt="Perfil" id="profile-img">
+      <script>
+        // Aplica a foto de perfil guardada em cache local IMEDIATAMENTE, antes
+        // mesmo do checkLogin() ir buscar no servidor. Sem isso, todo reload
+        // mostra o ícone genérico por um instante até a rede responder.
+        (function() {
+          try {
+            const cached = localStorage.getItem('cached_profile_pic');
+            if (cached) document.getElementById('profile-img').src = cached;
+          } catch (e) {}
+        })();
+      </script>
+    </div>
+    <div style="width:36px"></div>
+  </div>
+
+  <div class="select-topbar" id="topbar-select">
+    <button class="select-cancel" onclick="exitSelectMode()">Cancelar</button>
+    <span class="select-count" id="select-count">0 selecionados</span>
+    <div class="select-all-group">
+      <button class="select-all-btn" onclick="selectAll()">Tudo</button>
+      <button class="select-all-btn" onclick="deselectAll()">Desmarcar</button>
+    </div>
+    <button class="select-delete" onclick="deleteSelected()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+      Apagar
+    </button>
+  </div>
+
+  <div class="draft-banner" id="draft-banner">
+    <div class="draft-banner-text">Você tem uma <strong>tradução recente não salva.</strong></div>
+    <div class="draft-banner-actions">
+      <button class="draft-banner-btn discard" onclick="discardLocalDraft()">Descartar</button>
+      <button class="draft-banner-btn recover" onclick="recoverLocalDraft()">Recuperar</button>
+    </div>
+  </div>
+
+  <div class="logo-area">
+    <div class="title">beta SIMS 4 TRANSLATOR</div>
+    <div class="subtitle">Tradução de mods .package</div>
+  </div>
+
+  <div class="import-area" id="import-area">
+    <div id="btn-import-wrap">
+      <input type="file" id="file-input" accept=".package">
+      <button class="btn-import fx-press" onclick="document.getElementById('file-input').click()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/>
+          <line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+        IMPORTAR
+      </button>
+      <p class="hint">Selecione um arquivo .package do seu celular</p>
+    </div>
+    <div id="btn-new-wrap">
+      <button class="btn-new fx-press" onclick="document.getElementById('file-input-new').click()">+</button>
+      <input type="file" id="file-input-new" accept=".package" style="display:none">
+    </div>
+    <button class="btn-merge fx-press" onclick="window.location.href='/merge'">◈ Mesclar vários .packages em um</button>
+    <button class="btn-create fx-press" onclick="window.location.href='/create'">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      Criar mod do zero
+    </button>
+    <div class="error-msg" id="error-msg"></div>
+  </div>
+
+  <div class="mascot-divider" id="mascot-div">
+    <img src="/img/sillyblumbob.webp" alt="">
+  </div>
+
+  <div id="saves-area" style="display:none;width:100%;max-width:340px;position:relative;z-index:1;">
+    <div class="saves-label">Traduções salvas</div>
+    <div class="saves-list" id="saves-list"></div>
+  </div>
+
+  <!-- Skeleton placeholder (visível enquanto carrega) -->
+  <div id="skeleton-area" style="width:100%;max-width:340px;position:relative;z-index:1;">
+    <div class="saves-label">Traduções salvas</div>
+    <div class="saves-list" style="display:flex;flex-direction:column;gap:8px;">
+      <div class="skeleton-item"><div class="sk-circle"></div><div class="sk-lines"><div class="sk-line"></div><div class="sk-line short"></div></div></div>
+      <div class="skeleton-item"><div class="sk-circle"></div><div class="sk-lines"><div class="sk-line" style="width:80%"></div><div class="sk-line short"></div></div></div>
+      <div class="skeleton-item"><div class="sk-circle"></div><div class="sk-lines"><div class="sk-line" style="width:65%"></div><div class="sk-line short" style="width:35%"></div></div></div>
+    </div>
+  </div>
+
+  <div class="version">v1.0 · MIT · Voky1 • Remake by AlucardYummy</div>
+
+  <a href="https://github.com/alucardyummy/Sims4AndroidTranslator" target="_blank" rel="noopener" class="github-badge" aria-label="Ver repositório no GitHub">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path fill="currentColor" d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.009-.868-.013-1.703-2.782.604-3.369-1.342-3.369-1.342-.454-1.154-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0 1 12 6.836a9.59 9.59 0 0 1 2.504.337c1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"/>
+    </svg>
+  </a>
+</div>
+
+<div class="loading-overlay" id="loading">
+  <div class="spinner"></div>
+  <div class="loading-text">Lendo arquivo...</div>
+</div>
+
+<!-- form legado removido: upload agora é direto Frontend → Supabase -->
+
+<div class="modal-overlay" id="auth-modal" onclick="if(event.target===this)closeAuthModal()">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeAuthModal()">✕</button>
+
+    <div class="auth-tabs-wrap">
+    <div class="auth-tab active tab-visible" id="tab-login">
+      <h3 class="modal-title">Entrar na Conta</h3>
+      <div class="form-group"><label>Nome de Usuário</label><input type="text" class="form-input" id="login-username" placeholder="Seu usuário"></div>
+      <div class="form-group"><label>Senha</label><input type="password" class="form-input" id="login-password" placeholder="••••••••"></div>
+      <button class="modal-btn fx-press" onclick="handleLogin()">ENTRAR</button>
+      <div class="auth-divider">ou</div>
+      <button class="google-btn fx-press" onclick="handleGoogleLogin()">
+        <svg width="22" height="22" viewBox="-4 -4 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="gg" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#1b1047"/>
+              <stop offset="50%" stop-color="#8A7FA6"/>
+              <stop offset="100%" stop-color="#1b1047"/>
+            </linearGradient>
+          </defs>
+          <path d="M 17.5 3.5 A 10 10 0 1 0 20 10 L 12 10 M 20 10 L 20 16"
+                stroke="#1b1047" stroke-width="5.5" fill="none"
+                stroke-linecap="butt" stroke-linejoin="miter"/>
+          <path d="M 17.5 3.5 A 10 10 0 1 0 20 10 L 12 10 M 20 10 L 20 16"
+                stroke="url(#gg)" stroke-width="3" fill="none"
+                stroke-linecap="butt" stroke-linejoin="miter"/>
+        </svg>
+        ENTRAR COM GOOGLE
+      </button>
+      <p class="modal-switch" onclick="switchTab('forgot')"><span>Esqueceu a senha?</span></p>
+      <p class="modal-switch" onclick="switchTab('register')">Não tem conta? <span>Cadastre-se</span></p>
+    </div>
+
+    <div class="auth-tab" id="tab-register">
+      <h3 class="modal-title">Criar Conta</h3>
+      <div class="form-group"><label>Nome de Usuário</label><input type="text" class="form-input" id="reg-username" placeholder="Ex: Alucard"></div>
+      <div class="form-group"><label>Senha</label><input type="password" class="form-input" id="reg-password" placeholder="Mínimo 6 caracteres"></div>
+      <div class="form-group">
+        <label>Pergunta de Segurança</label>
+        <input type="hidden" id="reg-question" value="Nome do primeiro animalzinho">
+        <div class="custom-select" id="reg-q-wrap">
+          <button type="button" class="custom-select-btn" onclick="toggleDropdown('reg-q-drop', this)">
+            <span id="reg-q-label">Nome do primeiro animalzinho</span>
+            <svg class="cs-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="custom-select-drop" id="reg-q-drop">
+            <div class="cs-option selected" onclick="pickOption('reg-question','reg-q-label','reg-q-drop',this)"><svg class="cs-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><ellipse cx="12" cy="14" rx="7" ry="6" fill="#c4aee8" opacity="0.85"/><ellipse cx="12" cy="14" rx="5" ry="4" fill="#b89cd9" opacity="0.6"/><path d="M8 14 Q7 10 9 8 Q10 6 12 6 Q14 6 15 8 Q17 10 16 14" stroke="#d4bef0" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M9 16 Q7 19 5 20" stroke="#c4aee8" stroke-width="1.2" stroke-linecap="round"/><path d="M11 17 Q10 20 9 22" stroke="#b89cd9" stroke-width="1.2" stroke-linecap="round"/><path d="M13 17 Q14 20 15 22" stroke="#c4aee8" stroke-width="1.2" stroke-linecap="round"/><path d="M15 16 Q17 19 19 20" stroke="#b89cd9" stroke-width="1.2" stroke-linecap="round"/></svg>Nome do primeiro animalzinho</div>
+            <div class="cs-option" onclick="pickOption('reg-question','reg-q-label','reg-q-drop',this)"><svg class="cs-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="8" cy="14" r="7" fill="#c4aee8"/><circle cx="6" cy="12" r="1.8" fill="white" opacity="0.5"/><circle cx="17" cy="10" r="4.5" fill="#d4bef0"/><circle cx="15.5" cy="8.5" r="1.1" fill="white" opacity="0.5"/><circle cx="21" cy="17" r="2.5" fill="#b89cd9"/><circle cx="20.2" cy="16.2" r="0.6" fill="white" opacity="0.55"/></svg>Nome da cidade natal</div>
+            <div class="cs-option" onclick="pickOption('reg-question','reg-q-label','reg-q-drop',this)"><svg class="cs-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 8 Q7 5 12 5 Q17 5 18 8 L17 14 Q16 17 12 17 Q8 17 7 14 Z" fill="#c4aee8" opacity="0.85"/><path d="M9 17 Q9 19 10 20 L14 20 Q15 19 15 17" fill="#b89cd9" opacity="0.7"/><rect x="9" y="19.5" width="6" height="1.5" rx="0.75" fill="#b89cd9"/><path d="M8 8 Q9 6.5 12 6.5 Q15 6.5 16 8" stroke="#d4bef0" stroke-width="1" fill="none" stroke-linecap="round"/><path d="M7 5 Q7 3 9 2.5" stroke="#c4aee8" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M17 5 Q17 3 15 2.5" stroke="#c4aee8" stroke-width="1.2" fill="none" stroke-linecap="round"/></svg>Desenho favorito</div>
+            <div class="cs-option" onclick="pickOption('reg-question','reg-q-label','reg-q-drop',this)"><svg class="cs-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><polyline transform="translate(12,12)" stroke="#b89cd9" stroke-width="1.1" fill="none" stroke-linecap="round" stroke-linejoin="round" points="0.1,0.3 0.6,-0.3 0.4,-1.0 -0.2,-1.4 -0.9,-1.3 -1.5,-0.7 -1.6,0.1 -1.3,0.9 -0.6,1.6 0.3,2.0 1.3,2.1 2.3,1.7 3.0,0.8 3.3,-0.3 3.1,-1.5 2.4,-2.6 1.3,-3.4 -0.1,-3.9 -1.6,-4.0 -3.0,-3.6 -4.2,-2.7 -5.0,-1.4 -5.3,0.1 -5.1,1.8 -4.3,3.3 -3.0,4.5 -1.3,5.3 0.6,5.6 2.6,5.3 4.4,4.5 5.8,3.1 6.7,1.4 7.0,-0.6 6.7,-2.6 5.8,-4.4 4.4,-5.9 2.5,-6.9 0.3,-7.4 -2.0,-7.3 -4.2,-6.6 -6.0,-5.3 -7.3,-3.6 -8.1,-1.5 -8.2,0.7 -7.7,2.9 -6.6,4.8 -5.0,6.3 -3.0,7.3 -0.7,7.8 1.7,7.6"/></polyline></svg>Comidinha favorita</div>
+          </div>
+        </div>
+      </div>
+      <div class="form-group"><label>Resposta Secreta</label><input type="text" class="form-input" id="reg-answer" placeholder="Sua resposta secreta"></div>
+      <button class="modal-btn fx-press" onclick="handleRegister()">CRIAR CONTA</button>
+      <p class="modal-switch" onclick="switchTab('login')">Já tem uma conta? <span>Entrar</span></p>
+    </div>
+
+    <div class="auth-tab" id="tab-forgot">
+      <h3 class="modal-title">Recuperar Senha</h3>
+      <p style="font-size:12px;color:#1b1047;margin-bottom:1rem;line-height:1.4;font-weight:500;">Confirme seus dados e responda sua pergunta para redefinir a senha.</p>
+      <div class="form-group"><label>Usuário</label><input type="text" class="form-input" id="forgot-username" placeholder="Seu usuário"></div>
+      <div class="form-group">
+        <label>Selecione a sua Pergunta</label>
+        <input type="hidden" id="forgot-question" value="Nome do primeiro animalzinho">
+        <div class="custom-select" id="forgot-q-wrap">
+          <button type="button" class="custom-select-btn" onclick="toggleDropdown('forgot-q-drop', this)">
+            <span id="forgot-q-label">Nome do primeiro animalzinho</span>
+            <svg class="cs-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="custom-select-drop" id="forgot-q-drop">
+            <div class="cs-option selected" onclick="pickOption('forgot-question','forgot-q-label','forgot-q-drop',this)"><svg class="cs-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><ellipse cx="12" cy="14" rx="7" ry="6" fill="#c4aee8" opacity="0.85"/><ellipse cx="12" cy="14" rx="5" ry="4" fill="#b89cd9" opacity="0.6"/><path d="M8 14 Q7 10 9 8 Q10 6 12 6 Q14 6 15 8 Q17 10 16 14" stroke="#d4bef0" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M9 16 Q7 19 5 20" stroke="#c4aee8" stroke-width="1.2" stroke-linecap="round"/><path d="M11 17 Q10 20 9 22" stroke="#b89cd9" stroke-width="1.2" stroke-linecap="round"/><path d="M13 17 Q14 20 15 22" stroke="#c4aee8" stroke-width="1.2" stroke-linecap="round"/><path d="M15 16 Q17 19 19 20" stroke="#b89cd9" stroke-width="1.2" stroke-linecap="round"/></svg>Nome do primeiro animalzinho</div>
+            <div class="cs-option" onclick="pickOption('forgot-question','forgot-q-label','forgot-q-drop',this)"><svg class="cs-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="8" cy="14" r="7" fill="#c4aee8"/><circle cx="6" cy="12" r="1.8" fill="white" opacity="0.5"/><circle cx="17" cy="10" r="4.5" fill="#d4bef0"/><circle cx="15.5" cy="8.5" r="1.1" fill="white" opacity="0.5"/><circle cx="21" cy="17" r="2.5" fill="#b89cd9"/><circle cx="20.2" cy="16.2" r="0.6" fill="white" opacity="0.55"/></svg>Nome da cidade natal</div>
+            <div class="cs-option" onclick="pickOption('forgot-question','forgot-q-label','forgot-q-drop',this)"><svg class="cs-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 8 Q7 5 12 5 Q17 5 18 8 L17 14 Q16 17 12 17 Q8 17 7 14 Z" fill="#c4aee8" opacity="0.85"/><path d="M9 17 Q9 19 10 20 L14 20 Q15 19 15 17" fill="#b89cd9" opacity="0.7"/><rect x="9" y="19.5" width="6" height="1.5" rx="0.75" fill="#b89cd9"/><path d="M8 8 Q9 6.5 12 6.5 Q15 6.5 16 8" stroke="#d4bef0" stroke-width="1" fill="none" stroke-linecap="round"/><path d="M7 5 Q7 3 9 2.5" stroke="#c4aee8" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M17 5 Q17 3 15 2.5" stroke="#c4aee8" stroke-width="1.2" fill="none" stroke-linecap="round"/></svg>Desenho favorito</div>
+            <div class="cs-option" onclick="pickOption('forgot-question','forgot-q-label','forgot-q-drop',this)"><svg class="cs-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><polyline transform="translate(12,12)" stroke="#b89cd9" stroke-width="1.1" fill="none" stroke-linecap="round" stroke-linejoin="round" points="0.1,0.3 0.6,-0.3 0.4,-1.0 -0.2,-1.4 -0.9,-1.3 -1.5,-0.7 -1.6,0.1 -1.3,0.9 -0.6,1.6 0.3,2.0 1.3,2.1 2.3,1.7 3.0,0.8 3.3,-0.3 3.1,-1.5 2.4,-2.6 1.3,-3.4 -0.1,-3.9 -1.6,-4.0 -3.0,-3.6 -4.2,-2.7 -5.0,-1.4 -5.3,0.1 -5.1,1.8 -4.3,3.3 -3.0,4.5 -1.3,5.3 0.6,5.6 2.6,5.3 4.4,4.5 5.8,3.1 6.7,1.4 7.0,-0.6 6.7,-2.6 5.8,-4.4 4.4,-5.9 2.5,-6.9 0.3,-7.4 -2.0,-7.3 -4.2,-6.6 -6.0,-5.3 -7.3,-3.6 -8.1,-1.5 -8.2,0.7 -7.7,2.9 -6.6,4.8 -5.0,6.3 -3.0,7.3 -0.7,7.8 1.7,7.6"/></polyline></svg>Comidinha favorita</div>
+          </div>
+        </div>
+      </div>
+      <div class="form-group"><label>Resposta Secreta</label><input type="text" class="form-input" id="forgot-answer" placeholder="Digite a resposta cadastrada"></div>
+      <div class="form-group"><label>Nova Senha</label><input type="password" class="form-input" id="forgot-new-password" placeholder="Nova senha"></div>
+      <button class="modal-btn fx-press" onclick="handleForgotPassword()">ALTERAR SENHA</button>
+      <p class="modal-switch" onclick="switchTab('login')">Voltar para o <span>Login</span></p>
+    </div>
+    </div><!-- /auth-tabs-wrap -->
+
+  </div></div><div class="modal-overlay" id="profile-modal" onclick="if(event.target===this)closeProfileModal()">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeProfileModal()">✕</button>
+    <h3 class="modal-title">Meu Perfil</h3>
+    <div style="text-align:center;margin-bottom:1rem">
+      
+      <label for="edit-profile-pic" style="position:relative; display:inline-block; margin:0 auto 10px; cursor:pointer;" title="Trocar foto">
+        
+        <div style="width:64px;height:64px;border-radius:50%;overflow:hidden;border:1px solid var(--border);">
+          <img src="/img/icon-pf.webp" id="modal-profile-img" draggable="false" oncontextmenu="return false;" style="width:100%;height:100%;object-fit:cover; pointer-events:none; -webkit-touch-callout:none; user-select:none;">
+        </div>
+
+        <div style="position:absolute; bottom:0; right:-4px; background:#5a4d80; border:2px solid var(--surface); width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; box-shadow:0 1px 3px rgba(0,0,0,0.3);">
+         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="color:#fff">
+           <path d="M9 3.5C8.6 3.5 8.23 3.7 8.02 4.04L7.2 5.5H4.5C3.4 5.5 2.5 6.4 2.5 7.5V17.5C2.5 18.6 3.4 19.5 4.5 19.5H19.5C20.6 19.5 21.5 18.6 21.5 17.5V7.5C21.5 6.4 20.6 5.5 19.5 5.5H16.8L15.98 4.04C15.77 3.7 15.4 3.5 15 3.5H9Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+           <circle cx="12" cy="12.5" r="3.6" stroke="currentColor" stroke-width="1.8"/>
+         </svg>
+        </div>
+
+      </label>
+      
+    </div>
+    <div class="form-group"><label>Nome de Usuário</label><input type="text" class="form-input" id="edit-username"></div>
+    <div class="form-group">
+      <label>Foto de Perfil</label>
+      <input type="file" id="edit-profile-pic" accept="image/*" style="display:none">
+      <button type="button" class="form-input" style="cursor:pointer;text-align:center;" onclick="document.getElementById('edit-profile-pic').click()">Escolher imagem :3</button>
+    </div>
+    <button class="modal-btn fx-press" onclick="saveProfile()">SALVAR ALTERAÇÕES</button>
+    <button class="modal-btn fx-press" style="background:transparent;border:1px solid #b89cd9;color:#413d57;margin-top:10px" onclick="handleLogout()">SAIR DA CONTA</button>
+  </div></div><div class="alert-overlay" id="custom-alert" onclick="if(event.target===this)closeCustomAlert()">
+  <div class="alert-box">
+    <div class="alert-icon" id="custom-alert-icon">!</div>
+    <p class="alert-msg" id="custom-alert-msg"></p>
+    <button class="alert-btn fx-press" onclick="closeCustomAlert()">OK</button>
+  </div>
+</div><script>
+let currentUser = null;
+let newProfilePicBase64 = null;
+let selectMode = false;
+let selectedIds = new Set();
+let hasSaves = false;
+
+// ── Custom Alert (substitui o alert() nativo) ───────────────────────────────
+function showAlert(msg, type) {
+  const overlay = document.getElementById('custom-alert');
+  const box = overlay.querySelector('.alert-box');
+  const icon = document.getElementById('custom-alert-icon');
+  const msgEl = document.getElementById('custom-alert-msg');
+  msgEl.textContent = msg;
+  icon.textContent = type === 'ok' ? '✓' : '!';
+  icon.className = 'alert-icon ' + (type === 'ok' ? 'ok' : 'err');
+  box.classList.remove('animate-out');
+  box.classList.add('animate-in');
+  overlay.classList.add('active');
+}
+function closeCustomAlert() {
+  const overlay = document.getElementById('custom-alert');
+  const box = overlay.querySelector('.alert-box');
+  box.classList.remove('animate-in');
+  box.classList.add('animate-out');
+  overlay.classList.remove('active');
+  setTimeout(() => {
+    box.classList.remove('animate-out');
+  }, 380);
+}
+
+function checkHasSaves() {
+  return localStorage.getItem('has_saves') === '1';
+}
+
+function updateImportUI() {
+  const hasSavesNow = hasSaves || checkHasSaves();
+  if (hasSavesNow) {
+    document.getElementById('btn-import-wrap').style.display = 'none';
+    document.getElementById('btn-new-wrap').style.display = 'block';
+  } else {
+    document.getElementById('btn-import-wrap').style.display = 'block';
+    document.getElementById('btn-new-wrap').style.display = 'none';
+  }
+}
+
+function setLoadingText(msg) {
+  document.querySelector('.loading-text').textContent = msg;
+}
+
+async function handleUpload(file) {
+  if (!file.name.endsWith('.package')) {
+    document.getElementById('error-msg').textContent = 'Arquivo inválido. Selecione um arquivo .package';
+    document.getElementById('error-msg').classList.add('active');
+    return;
+  }
+
+  document.getElementById('error-msg').classList.remove('active');
+  document.getElementById('loading').classList.add('active');
+
+  try {
+    // 1. Pede a signed URL ao Flask
+    setLoadingText('Preparando upload...');
+    const urlRes = await fetch('/api/upload_url', { method: 'POST' });
+    if (!urlRes.ok) throw new Error('Erro ao obter URL de upload');
+    const { file_id, signed_url } = await urlRes.json();
+
+    // 2. Faz o upload DIRETO para o Supabase Storage (sem passar pelo Flask)
+    setLoadingText('Enviando arquivo...');
+    const uploadRes = await fetch(signed_url, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/octet-stream' },
+      body: file,
+    });
+    if (!uploadRes.ok) throw new Error('Erro no upload: ' + uploadRes.statusText);
+
+    // 3. Avisa o Flask para processar o arquivo
+    setLoadingText('Processando...');
+    const confirmRes = await fetch('/upload/confirm', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ file_id, original_name: file.name }),
+    });
+    const result = await confirmRes.json();
+
+    if (result.success) {
+      window.location.href = result.redirect;
+    } else {
+      throw new Error(result.error || 'Erro ao processar arquivo');
+    }
+  } catch (e) {
+    document.getElementById('loading').classList.remove('active');
+    document.getElementById('error-msg').textContent = e.message || 'Erro desconhecido';
+    document.getElementById('error-msg').classList.add('active');
+    setLoadingText('Lendo arquivo...');
+  }
+}
+
+function setupFileInput(inputId) {
+  document.getElementById(inputId).addEventListener('change', function() {
+    const file = this.files[0];
+    if (file) handleUpload(file);
+  });
+}
+setupFileInput('file-input');
+setupFileInput('file-input-new');
+
+function enterSelectMode() {
+  selectMode = true;
+  selectedIds.clear();
+
+  // Anima topbar de seleção entrando
+  const topbarSelect = document.getElementById('topbar-select');
+  topbarSelect.classList.add('active');
+  topbarSelect.classList.remove('topbar-exit');
+  void topbarSelect.offsetWidth;
+  topbarSelect.classList.add('topbar-enter');
+  topbarSelect.addEventListener('animationend', () => topbarSelect.classList.remove('topbar-enter'), { once: true });
+
+  document.getElementById('topbar-normal').style.display = 'none';
+  document.getElementById('screen').classList.add('select-mode');
+  updateSelectCount();
+
+  // Mostra círculos com animação stagger, esconde botões
+  document.querySelectorAll('#saves-list .save-item').forEach((el, i) => {
+    const circle = el.querySelector('.sel-circle');
+    const actions = el.querySelector('.save-actions');
+    if (actions) actions.style.display = 'none';
+    if (circle) {
+      circle.style.display = 'flex';
+      circle.style.opacity = '0';
+      circle.style.transform = 'scale(0.5)';
+      setTimeout(() => {
+        circle.style.transition = 'opacity 0.22s ease, transform 0.22s cubic-bezier(0.34,1.56,0.64,1)';
+        circle.style.opacity = '1';
+        circle.style.transform = 'scale(1)';
+      }, i * 40);
+    }
+  });
+}
+
+function exitSelectMode() {
+  selectMode = false;
+  selectedIds.clear();
+  document.getElementById('screen').classList.remove('select-mode');
+
+  // Anima topbar saindo — mantém no layout até animação terminar
+  const topbarSelect = document.getElementById('topbar-select');
+  topbarSelect.classList.remove('topbar-enter');
+  topbarSelect.style.display = 'flex'; // mantém visível durante animação
+  topbarSelect.classList.add('topbar-exit');
+
+  // Esconde topbar normal até a animação de saída terminar, para não empurrar o layout
+  const topbarNormal = document.getElementById('topbar-normal');
+  topbarNormal.style.display = 'none';
+
+  topbarSelect.addEventListener('animationend', () => {
+    topbarSelect.style.display = '';
+    topbarSelect.classList.remove('active', 'topbar-exit');
+    // Só mostra a topbar normal após a outra sair
+    topbarNormal.style.opacity = '0';
+    topbarNormal.style.filter = 'blur(6px)';
+    topbarNormal.style.display = 'flex';
+    requestAnimationFrame(() => {
+      topbarNormal.style.transition = 'opacity 0.32s ease, filter 0.32s ease';
+      topbarNormal.style.opacity = '1';
+      topbarNormal.style.filter = 'blur(0px)';
+      setTimeout(() => {
+        topbarNormal.style.transition = '';
+        topbarNormal.style.filter = '';
+      }, 340);
+    });
+  }, { once: true });
+
+  // Anima círculos saindo e restaura botões com stagger
+  const items = document.querySelectorAll('#saves-list .save-item');
+  items.forEach((el, i) => {
+    const circle = el.querySelector('.sel-circle');
+    const actions = el.querySelector('.save-actions');
+    el.classList.remove('selected');
+
+    if (circle) {
+      circle.style.transition = 'opacity 0.15s ease, transform 0.15s ease';
+      circle.style.opacity = '0';
+      circle.style.transform = 'scale(0.5)';
+      setTimeout(() => { circle.style.display = 'none'; circle.style.transition = ''; circle.style.transform = ''; }, 160);
+    }
+    if (actions) {
+      actions.style.display = 'flex';
+      actions.style.opacity = '0';
+      setTimeout(() => {
+        actions.style.transition = 'opacity 0.2s ease';
+        actions.style.opacity = '1';
+        setTimeout(() => actions.style.transition = '', 220);
+      }, i * 30 + 80);
+    }
+  });
+}
+
+function toggleSelect(id) {
+  if (selectedIds.has(id)) {
+    selectedIds.delete(id);
+  } else {
+    selectedIds.add(id);
+  }
+  updateSelectCount();
+  // Just update the visual state of the clicked item without re-rendering
+  updateSelectVisuals(id);
+}
+
+function updateSelectVisuals(pulseId) {
+  const items = document.querySelectorAll('#saves-list .save-item');
+  items.forEach((el, i) => {
+    const save = savesData[i];
+    if (!save) return;
+    const isSelected = selectedIds.has(save.id);
+    el.classList.toggle('selected', isSelected);
+    const circle = el.querySelector('.sel-circle');
+    if (circle) circle.classList.toggle('checked', isSelected);
+    // blur pulse only on the touched item
+    if (save.id === pulseId) {
+      el.classList.remove('select-pulse');
+      void el.offsetWidth;
+      el.classList.add('select-pulse');
+      el.addEventListener('animationend', () => el.classList.remove('select-pulse'), { once: true });
+    }
+  });
+}
+
+function selectAll() {
+  savesData.forEach(s => selectedIds.add(s.id));
+  updateSelectCount();
+  renderSaves(true); // animate on selectAll as requested
+}
+
+function deselectAll() {
+  selectedIds.clear();
+  updateSelectCount();
+  renderSaves(true); // mesma animação do "Tudo", agora ao desmarcar
+}
+
+function updateSelectCount() {
+  document.getElementById('select-count').textContent = selectedIds.size + ' selecionado' + (selectedIds.size !== 1 ? 's' : '');
+}
+
+async function deleteSelected() {
+  if (selectedIds.size === 0) return;
+  const toDelete = new Set(selectedIds);
+
+  // Coleta os elementos DOM dos selecionados antes de sair do modo seleção
+  const items = document.querySelectorAll('#saves-list .save-item');
+  const selectedEls = [];
+  items.forEach((el, i) => {
+    if (savesData[i] && toDelete.has(savesData[i].id)) selectedEls.push(el);
+  });
+
+  // Anima todos em paralelo; aguarda o mais lento (900ms) e então faz cleanup
+  selectedEls.forEach(el => {
+    const rect = el.getBoundingClientRect();
+    spawnDustParticles(rect);
+    el.classList.add('disintegrating');
+  });
+
+  setTimeout(() => {
+    savesData = savesData.filter(s => !toDelete.has(s.id));
+    hasSaves = savesData.length > 0;
+    if (!hasSaves) {
+      localStorage.removeItem('has_saves');
+      document.getElementById('saves-area').style.display = 'none';
+      document.getElementById('mascot-div').style.display = 'none';
+    }
+    updateImportUI();
+    exitSelectMode();
+  }, 900);
+
+  // Confirma com o servidor em segundo plano
+  for (const id of toDelete) {
+    fetch('/api/delete_save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id })
+    });
+  }
+}
+
+let savesData = [];
+
+async function loadSaves() {
+  let shownFromCache = false;
+
+  // Mostra cache COM animação imediatamente — sem esperar rede
+  try {
+    const cached = localStorage.getItem('cached_saves');
+    if (cached) {
+      savesData = JSON.parse(cached);
+      hasSaves = savesData.length > 0;
+      const area = document.getElementById('saves-area');
+      const mascot = document.getElementById('mascot-div');
+      if (hasSaves) { area.style.display = 'block'; mascot.style.display = 'flex'; }
+      updateImportUI();
+      renderSaves(true); // anima do cache já
+      shownFromCache = true;
+    }
+  } catch(e) {}
+
+  try {
+    const res = await fetch('/api/get_saves');
+    const data = await res.json();
+    const freshSaves = data.saves || [];
+
+    // Só re-renderiza se os dados mudaram (sem animação pra não repetir)
+    const changed = JSON.stringify(freshSaves) !== JSON.stringify(savesData);
+    savesData = freshSaves;
+    hasSaves = savesData.length > 0;
+
+    if (hasSaves) {
+      localStorage.setItem('has_saves', '1');
+      localStorage.setItem('cached_saves', JSON.stringify(savesData));
+    } else {
+      localStorage.removeItem('has_saves');
+      localStorage.removeItem('cached_saves');
+    }
+
+    const area = document.getElementById('saves-area');
+    const mascot = document.getElementById('mascot-div');
+
+    if (savesData.length > 0) {
+      area.style.display = 'block';
+      mascot.style.display = 'flex';
+    } else {
+      area.style.display = 'none';
+      mascot.style.display = 'none';
+    }
+
+    updateImportUI();
+    // Se mudou, re-renderiza sem animação. Se não tinha cache, anima agora.
+    renderSaves(changed ? false : !shownFromCache);
+  } catch(e) {
+    console.error('Erro ao carregar saves', e);
+    // Se falhou a rede mas tinha cache, já está mostrando — tudo bem
+  }
+}
+
+function renderSaves(animate = false) {
+  // Hide skeleton, show real area
+  document.getElementById('skeleton-area').style.display = 'none';
+  if (savesData.length > 0) {
+    document.getElementById('saves-area').style.display = 'block';
+  }
+  const list = document.getElementById('saves-list');
+  list.innerHTML = '';
+  savesData.forEach(save => {
+    const item = document.createElement('div');
+    item.className = 'save-item' + (selectedIds.has(save.id) ? ' selected' : '');
+
+    const circle = document.createElement('div');
+    circle.className = 'sel-circle' + (selectedIds.has(save.id) ? ' checked' : '');
+    circle.style.display = selectMode ? 'flex' : 'none';
+
+    const info = document.createElement('div');
+    info.className = 'save-info';
+    info.innerHTML =
+      '<div class="save-title">' + save.project_name + '</div>' +
+      '<div class="save-meta">' + save.source_lang + ' → ' + save.target_lang + '</div>';
+
+    const actions = document.createElement('div');
+    actions.className = 'save-actions';
+    actions.style.display = selectMode ? 'none' : 'flex';
+    actions.innerHTML =
+      '<button class="btn-icon" onclick="editSave(' + save.id + ');event.stopPropagation()">editar</button>' +
+      '<button class="btn-icon delete" onclick="deleteSingleSave(' + save.id + ');event.stopPropagation()">✕</button>';
+
+    item.appendChild(circle);
+    item.appendChild(info);
+    item.appendChild(actions);
+
+    // Toque longo entra no modo seleção
+    let pressTimer;
+    item.addEventListener('touchstart', () => {
+      pressTimer = setTimeout(() => {
+        didLongPress = true;
+        if (!selectMode) enterSelectMode();
+        toggleSelect(save.id);
+      }, 500);
+    }, { passive: true });
+    item.addEventListener('touchend', () => clearTimeout(pressTimer));
+    item.addEventListener('touchmove', () => clearTimeout(pressTimer));
+
+    // Toque/click: animação de pressionar
+    let didLongPress = false;
+
+    item.addEventListener('touchstart', (e) => {
+      if (selectMode) return;
+      item.classList.add('press-down');
+    }, { passive: true });
+
+    item.addEventListener('touchend', () => {
+      item.classList.remove('press-down');
+    });
+
+    item.addEventListener('click', () => {
+      if (selectMode) {
+        toggleSelect(save.id);
+        return;
+      }
+      if (didLongPress) { didLongPress = false; return; }
+      item.classList.remove('press-down');
+      item.classList.add('pressing');
+      item.addEventListener('animationend', () => {
+        item.classList.remove('pressing');
+        editSave(save.id);
+      }, { once: true });
+    });
+
+    list.appendChild(item);
+  });
+
+  // Stagger entrance only on first real load
+  const items = list.querySelectorAll('.save-item');
+  if (animate) {
+    items.forEach((el, i) => {
+      el.classList.remove('visible');
+      void el.offsetWidth;
+      setTimeout(() => el.classList.add('visible'), i * 90);
+    });
+  } else {
+    // show immediately, no animation
+    items.forEach(el => {
+      el.style.opacity = '1';
+      el.style.transform = 'none';
+      el.style.filter = 'none';
+    });
+  }
+}
+
+async function deleteSingleSave(id) {
+  // Encontra o elemento do save para animar
+  const items = document.querySelectorAll('#saves-list .save-item');
+  let targetEl = null;
+  items.forEach((el, i) => {
+    if (savesData[i] && savesData[i].id === id) targetEl = el;
+  });
+
+  const doDelete = () => {
+    savesData = savesData.filter(s => s.id !== id);
+    hasSaves = savesData.length > 0;
+    if (!hasSaves) {
+      localStorage.removeItem('has_saves');
+      document.getElementById('saves-area').style.display = 'none';
+      document.getElementById('mascot-div').style.display = 'none';
+    }
+    updateImportUI();
+    renderSaves();
+  };
+
+  if (targetEl) {
+    animateDeleteItem(targetEl, doDelete);
+  } else {
+    doDelete();
+  }
+
+  // Confirma com o servidor em segundo plano
+  fetch('/api/delete_save', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id })
+  });
+}
+
+async function editSave(id) {
+  try {
+    const res = await fetch('/api/load_save/' + id);
+    const data = await res.json();
+    if (data.success) {
+      // Extrai o instance real do sufixo "(numero)" do project_name.
+      // Antes isso usava data.translation_data[0].key por engano, que é a key
+      // de uma string individual (não o instance da STBL) — isso fazia o
+      // /api/save_progress achar que era um projeto novo a cada reabertura,
+      // criando "duplicatas" com números diferentes do mesmo save.
+      const match = data.project_name.match(/\(([^)]+)\)\s*$/);
+      const instanceFromName = match ? match[1] : '';
+      sessionStorage.setItem('selected_instance_str', instanceFromName);
+      sessionStorage.setItem('target_lang', data.target_lang);
+      sessionStorage.setItem('original_lang', data.source_lang);
+      sessionStorage.setItem('package_id', data.package_id || '');
+      sessionStorage.setItem('original_name', data.project_name.split(' (')[0]);
+      sessionStorage.setItem('editing_save', '1');
+      window.location.href = '/editor';
+    }
+  } catch(e) { showAlert('Erro ao carregar save.'); }
+}
+
+// ─── Animação de poeira/fumaça ───────────────────────────────────────────────
+function spawnDustParticles(rect) {
+  const canvas = document.createElement('canvas');
+  canvas.className = 'dust-canvas';
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  document.body.appendChild(canvas);
+  const ctx = canvas.getContext('2d');
+
+  const cx = rect.left + rect.width / 2;
+  const cy = rect.top  + rect.height / 2;
+
+  // Partículas de poeira (#a89fb3)
+  const dustParticles = Array.from({ length: 22 }, () => ({
+    x: cx + (Math.random() - 0.5) * rect.width * 0.8,
+    y: cy + (Math.random() - 0.5) * rect.height * 0.8,
+    r: 1.5 + Math.random() * 3.5,
+    vx: (Math.random() - 0.5) * 2.8,
+    vy: -0.6 - Math.random() * 2.2,
+    life: 1,
+    decay: 0.008 + Math.random() * 0.012,
+    type: 'dust'
+  }));
+
+  // Partículas de fumaça (#282e38) — maiores, mais lentas
+  const smokeParticles = Array.from({ length: 10 }, () => ({
+    x: cx + (Math.random() - 0.5) * rect.width * 0.5,
+    y: cy + (Math.random() - 0.5) * rect.height * 0.3,
+    r: 6 + Math.random() * 10,
+    vx: (Math.random() - 0.5) * 0.9,
+    vy: -0.25 - Math.random() * 0.6,
+    life: 1,
+    decay: 0.004 + Math.random() * 0.006,
+    type: 'smoke'
+  }));
+
+  const all = [...dustParticles, ...smokeParticles];
+  let running = true;
+
+  function tick() {
+    if (!running) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    let alive = false;
+    for (const p of all) {
+      if (p.life <= 0) continue;
+      alive = true;
+      p.x  += p.vx;
+      p.y  += p.vy;
+      p.vy += 0.018; // queda leve
+      p.vx *= 0.985;
+      p.r  += p.type === 'smoke' ? 0.18 : -0.01;
+      p.life -= p.decay;
+
+      const alpha = Math.max(0, p.life);
+      ctx.save();
+      ctx.globalAlpha = alpha * (p.type === 'smoke' ? 0.22 : 0.72);
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, Math.max(0.1, p.r), 0, Math.PI * 2);
+      ctx.fillStyle = p.type === 'smoke' ? '#282e38' : '#a89fb3';
+      ctx.fill();
+      ctx.restore();
+    }
+
+    if (alive) {
+      requestAnimationFrame(tick);
+    } else {
+      running = false;
+      canvas.remove();
+    }
+  }
+  requestAnimationFrame(tick);
+}
+
+// Anima um save-item antes de removê-lo do DOM, depois chama o callback
+function animateDeleteItem(el, callback) {
+  const rect = el.getBoundingClientRect();
+  spawnDustParticles(rect);
+  el.classList.add('disintegrating');
+  setTimeout(() => {
+    callback();
+  }, 900);
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function checkLogin() {
+  try {
+    const res = await fetch('/api/me');
+    const data = await res.json();
+    if (data.logged_in) {
+      currentUser = data;
+      const src = data.profile_pic || '/img/icon-pf.webp';
+      document.getElementById('profile-img').src = src;
+      document.getElementById('modal-profile-img').src = src;
+      try {
+        localStorage.setItem('is_logged_in', '1');
+        if (data.profile_pic) localStorage.setItem('cached_profile_pic', data.profile_pic);
+        else localStorage.removeItem('cached_profile_pic');
+      } catch (e) {}
+    } else {
+      // Não logado (ex.: sessão expirou, ou trocou de conta no mesmo aparelho)
+      // — não faz sentido continuar mostrando a foto cacheada de outro usuário.
+      try {
+        localStorage.removeItem('is_logged_in');
+        localStorage.removeItem('cached_profile_pic');
+      } catch (e) {}
+    }
+  } catch(e) {}
+}
+
+document.getElementById('profile-btn').addEventListener('click', () => {
+  // Se currentUser já carregou, usa direto.
+  // Se ainda está carregando mas localStorage indica logado, espera e tenta de novo.
+  const wasLoggedIn = localStorage.getItem('is_logged_in') === '1';
+  if (currentUser) {
+    document.getElementById('profile-modal').classList.add('active');
+    const _box = document.querySelector('#profile-modal .modal-box');
+    _box.classList.remove('animate-out');
+    void _box.offsetWidth;
+    _box.classList.add('animate-in');
+    
+    document.getElementById('edit-username').value = currentUser.username || '';
+    document.getElementById('modal-profile-img').src = currentUser.profile_pic || '/img/icon-pf.webp';
+    newProfilePicBase64 = null;
+    
+    try {
+      document.getElementById('edit-profile-pic').value = '';
+    } catch(e) {}
+  } else if (wasLoggedIn) {
+    // Ainda aguardando /api/me — espera até 2s e reabre
+    const tryOpen = (attempts) => {
+      if (currentUser) {
+        document.getElementById('profile-btn').click();
+      } else if (attempts > 0) {
+        setTimeout(() => tryOpen(attempts - 1), 200);
+      } else {
+        // Tempo esgotado, mostra login
+        document.getElementById('auth-modal').classList.add('active');
+        const _abox = document.querySelector('#auth-modal .modal-box');
+        _abox.classList.remove('animate-out');
+        void _abox.offsetWidth;
+        _abox.classList.add('animate-in');
+      }
+    };
+    tryOpen(10);
+  } else {
+    document.getElementById('auth-modal').classList.add('active');
+    const _abox = document.querySelector('#auth-modal .modal-box');
+    _abox.classList.remove('animate-out');
+    void _abox.offsetWidth;
+    _abox.classList.add('animate-in');
+  }
+});
+
+document.getElementById('edit-profile-pic').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const MAX_SIZE = 256;
+      let width = img.width;
+      let height = img.height;
+
+      if (width > height) {
+        if (width > MAX_SIZE) { height *= MAX_SIZE / width; width = MAX_SIZE; }
+      } else {
+        if (height > MAX_SIZE) { width *= MAX_SIZE / height; height = MAX_SIZE; }
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+
+      newProfilePicBase64 = canvas.toDataURL('image/jpeg', 0.7);
+      document.getElementById('modal-profile-img').src = newProfilePicBase64;
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+});
+
+async function saveProfile() {
+  const newName = document.getElementById('edit-username').value.trim();
+  const newPic = newProfilePicBase64 || (currentUser ? currentUser.profile_pic : '') || '';
+  try {
+    const res = await fetch('/api/update_profile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: newName, profile_pic: newPic })
+    });
+    const data = await res.json();
+    if (data.success) window.location.reload();
+    else showAlert(data.error);
+  } catch(e) { showAlert('Erro ao salvar perfil.'); }
+}
+
+function closeAuthModal() {
+  const box = document.querySelector('#auth-modal .modal-box');
+  box.classList.remove('animate-in');
+  box.classList.add('animate-out');
+  document.getElementById('auth-modal').classList.remove('active');
+  setTimeout(() => {
+    box.classList.remove('animate-out');
+  }, 380);
+}
+function closeProfileModal() {
+  const box = document.querySelector('#profile-modal .modal-box');
+  box.classList.remove('animate-in');
+  box.classList.add('animate-out');
+  document.getElementById('profile-modal').classList.remove('active');
+  setTimeout(() => {
+    box.classList.remove('animate-out');
+  }, 380);
+}
+async function handleLogout() {
+  await fetch('/api/logout', { method: 'POST' });
+  try { localStorage.removeItem('cached_profile_pic'); } catch (e) {}
+  window.location.reload();
+}
+function switchTab(tab) {
+  const current = document.querySelector('.auth-tab.active');
+  const next = document.getElementById('tab-' + tab);
+  if (!next || current === next) return;
+
+  function showNext() {
+    next.classList.add('active');
+    next.offsetHeight; // força reflow antes de ligar a transição
+    next.classList.add('tab-visible');
+  }
+
+  if (current) {
+    current.classList.remove('tab-visible');
+    current.addEventListener('transitionend', function h(e) {
+      if (e.propertyName !== 'opacity') return;
+      current.removeEventListener('transitionend', h);
+      current.classList.remove('active');
+      showNext();
+    });
+  } else {
+    showNext();
+  }
+}
+
+async function handleLogin() {
+  const username = document.getElementById('login-username').value.trim();
+  const password = document.getElementById('login-password').value.trim();
+  if (!username || !password) { showAlert('Preencha todos os campos.'); return; }
+  try {
+    const res = await fetch('/api/login', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+    const data = await res.json();
+    if (data.success) window.location.reload();
+    else showAlert(data.error || 'Erro ao entrar.');
+  } catch(e) { showAlert('Erro de conexão.'); }
+}
+
+function handleGoogleLogin() {
+  const clientId = '1018018964497-05rn1eht44o6qn2jhq8b63mm640e7q7b.apps.googleusercontent.com';
+  const redirectUri = encodeURIComponent(window.location.origin + '/api/google_callback');
+  const scope = encodeURIComponent('openid email profile');
+  const url = 'https://accounts.google.com/o/oauth2/v2/auth?client_id=' + clientId + '&redirect_uri=' + redirectUri + '&response_type=code&scope=' + scope + '&prompt=select_account&access_type=offline';
+  window.location.href = url;
+}
+
+async function handleRegister() {
+  const username = document.getElementById('reg-username').value.trim();
+  const password = document.getElementById('reg-password').value.trim();
+  const question = document.getElementById('reg-question').value;
+  const answer = document.getElementById('reg-answer').value.trim();
+
+  if (!username || !password || !answer) { showAlert('Preencha todos os campos.'); return; }
+  
+  try {
+    const res = await fetch('/api/register', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password, security_question: question, security_answer: answer })
+    });
+    const data = await res.json();
+    if (data.success) window.location.reload();
+    else showAlert(data.error || 'Erro ao criar conta.');
+  } catch(e) { showAlert('Erro de conexão.'); }
+}
+
+async function handleForgotPassword() {
+  const username = document.getElementById('forgot-username').value.trim();
+  const question = document.getElementById('forgot-question').value;
+  const answer = document.getElementById('forgot-answer').value.trim();
+  const new_password = document.getElementById('forgot-new-password').value.trim();
+
+  if (!username || !answer || !new_password) { showAlert('Preencha todos os campos.'); return; }
+  
+  try {
+    const res = await fetch('/api/forgot_password', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, security_question: question, security_answer: answer, new_password })
+    });
+    const data = await res.json();
+    if (data.success) { showAlert('Senha alterada com sucesso!', 'ok'); switchTab('login'); }
+    else showAlert(data.error || 'Erro ao redefinir.');
+  } catch(e) { showAlert('Erro de conexão.'); }
+}
+
+// ── Custom Select helpers ──────────────────────────────────────────────────
+function toggleDropdown(dropId, btn) {
+  const drop = document.getElementById(dropId);
+  const isOpen = drop.classList.contains('open');
+  // fecha todos os outros abertos
+  document.querySelectorAll('.custom-select-drop.open').forEach(d => {
+    d.classList.remove('open');
+    d.previousElementSibling && d.previousElementSibling.classList && d.previousElementSibling.classList.remove('open');
+  });
+  document.querySelectorAll('.custom-select-btn.open').forEach(b => b.classList.remove('open'));
+  if (!isOpen) {
+    drop.classList.add('open');
+    btn.classList.add('open');
+  }
+}
+
+function pickOption(hiddenId, labelId, dropId, el) {
+  // pega só o texto, ignorando o SVG filho
+  const clone = el.cloneNode(true);
+  clone.querySelectorAll('svg').forEach(s => s.remove());
+  const value = clone.textContent.trim();
+  document.getElementById(hiddenId).value = value;
+  document.getElementById(labelId).textContent = value;
+  // marca selecionado
+  el.closest('.custom-select-drop').querySelectorAll('.cs-option').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  // fecha
+  const drop = document.getElementById(dropId);
+  drop.classList.remove('open');
+  drop.previousElementSibling && drop.previousElementSibling.classList && drop.previousElementSibling.classList.remove('open');
+}
+
+// Fecha dropdown ao clicar fora
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.custom-select')) {
+    document.querySelectorAll('.custom-select-drop.open').forEach(d => d.classList.remove('open'));
+    document.querySelectorAll('.custom-select-btn.open').forEach(b => b.classList.remove('open'));
+  }
+});
+// ───────────────────────────────────────────────────────────────────────────
+
+// INIT
+checkLogin();
+
+// Consome token temporário do Google OAuth redirect
+(async () => {
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get('login_token');
+  if (token) {
+    // Remove o token da URL sem recarregar a página
+    window.history.replaceState({}, '', '/');
+    try {
+      const res = await fetch('/api/google_token_login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token })
+      });
+      const data = await res.json();
+      if (data.success) window.location.reload();
+      else showAlert('Erro ao finalizar login com Google.');
+    } catch(e) { showAlert('Erro de conexão.'); }
+  }
+})();
+
+// Clique fora dos saves sai do modo seleção
+document.addEventListener('click', (e) => {
+  if (!selectMode) return;
+  if (
+    e.target.closest('.save-item') ||
+    e.target.closest('#topbar-select') ||
+    e.target.closest('.select-topbar')
+  ) return;
+  exitSelectMode();
+});
+
+// Clique fora dos saves sai do modo seleção
+document.addEventListener('click', (e) => {
+  if (!selectMode) return;
+  if (
+    e.target.closest('.save-item') ||
+    e.target.closest('#topbar-select') ||
+    e.target.closest('.select-topbar')
+  ) return;
+  exitSelectMode();
+});
+
+// Mostra skeleton imediatamente se houve saves antes
+if (localStorage.getItem('has_saves') === '1') {
+  document.getElementById('skeleton-area').style.display = 'block';
+}
+
+// ---- AVISO DE TRADUÇÃO RECENTE NÃO SALVA ----
+// Lê o rascunho que o editor grava no localStorage a cada edição (ver
+// DRAFT_KEY em editor.html). Se existir e tiver algo realmente editado,
+// mostra o aviso — que só some quando "Descartar" ou "Recuperar" é clicado.
+const DRAFT_KEY = 's4t_unsaved_draft';
+
+function getLocalDraft() {
+  try {
+    const raw = localStorage.getItem(DRAFT_KEY);
+    if (!raw) return null;
+    const draft = JSON.parse(raw);
+    if (!draft || !Array.isArray(draft.strings) || draft.strings.length === 0) return null;
+    const hasEdits = draft.strings.some(s => s && s.value && s.value !== s.original);
+    return hasEdits ? draft : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function showDraftBannerIfNeeded() {
+  const banner = document.getElementById('draft-banner');
+  if (!banner) return;
+  if (getLocalDraft()) {
+    banner.classList.add('show');
+    requestAnimationFrame(() => requestAnimationFrame(() => banner.classList.add('active')));
+  }
+}
+
+function discardLocalDraft() {
+  try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
+  const banner = document.getElementById('draft-banner');
+  banner.classList.remove('active');
+  setTimeout(() => banner.classList.remove('show'), 320);
+}
+
+function recoverLocalDraft() {
+  const draft = getLocalDraft();
+  const banner = document.getElementById('draft-banner');
+  if (!draft) {
+    banner.classList.remove('active');
+    setTimeout(() => banner.classList.remove('show'), 320);
+    return;
+  }
+  sessionStorage.setItem('selected_instance_str', draft.instanceStr || '');
+  sessionStorage.setItem('target_lang', draft.target_lang || 'POR_BR');
+  sessionStorage.setItem('original_lang', draft.original_lang || 'ENG_US');
+  sessionStorage.setItem('package_id', draft.package_id || '');
+  sessionStorage.setItem('original_name', draft.original_name || '');
+  sessionStorage.setItem('recover_draft', '1');
+  window.location.href = '/editor?recover=1';
+}
+
+showDraftBannerIfNeeded();
+
+loadSaves();
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(registration => {
+        console.log('Service Worker registrado com sucesso!');
+      })
+      .catch(err => {
+        console.log('Falha ao registrar o Service Worker:', err);
+      });
+  });
+}
+</script>
+</body>
+</html> 

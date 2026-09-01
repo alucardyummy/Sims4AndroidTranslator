@@ -1,0 +1,42 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+.env
+.venv
+env/
+venv/
+
+# IDE
+.vscode/
+.idea/
+
+build/
+dist/
+dictionary/
+prefs/config.xml
+prefs/interface/sync.py
+setup.py
+
+*.bat
+*.dct
+*.svg
+.buildozer/
+
+.env.local
+.env.production
+certs/
+*.pem
+database.db
+*.db
+*.sqlite
+__pycache__/
+*.pyc
+.vercel/
+.claude/settings.json
+.vercel/README.txt
+.vercel/project.json
+0
+{

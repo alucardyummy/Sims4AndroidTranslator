@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.alucardyummy.sims4translator",
+      "sha256_cert_fingerprints": [
+        "80:58:C3:78:77:B4:C2:72:BE:91:8A:6A:2E:94:9A:3A:35:B1:51:AA:A1:9E:3B:9D:66:BF:28:E6:D3:C0:0A:CB"
+      ]
+    }
+  }
+]

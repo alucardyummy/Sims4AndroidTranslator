@@ -1,0 +1,8 @@
+flask
+requests
+python-dotenv
+openai
+psycopg2-binary
+supabase
+gunicorn
+google-auth

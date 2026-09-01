@@ -1,0 +1,3007 @@
+ <!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0f0f0f">
+<title>Sims 4 Translator · Editor</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; tap-highlight-color: transparent; }
+  :root {
+    --bg: #0f0f0f; --surface: #1a1a1a; --surface2: #222;
+    --border: #2a2a2a; --border2: #333;
+    --accent: #9cb8b2; --accent-dim: #6a9088;
+    --text: #f0ece4; --text-muted: #7a7570; --text-dim: #4a4540;
+    --radius: 16px; --radius-sm: 10px;
+  }
+  * { caret-color: #9cb8b2; accent-color: #9cb8b2; }
+  ::selection { background: rgba(156,184,178,0.4); }
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; overscroll-behavior: none; }
+  .page { display: flex; flex-direction: column; height: 100dvh; }
+  .topbar { display: flex; align-items: center; gap: 8px; padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border); flex-shrink: 0; background: var(--bg); }
+  .back-btn { width: 30px; height: 30px; background: transparent; border: 1px solid transparent; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-muted); text-decoration: none; flex-shrink: 0; -webkit-tap-highlight-color: transparent; }
+  .back-btn svg { width: 15px; height: 15px; }
+  .topbar-info { flex: 1; overflow: hidden; }
+  .topbar-title { font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .topbar-sub { font-size: 10px; color: var(--text-muted); font-family: 'DM Mono', monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .topbar-right { display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
+  .count-badge { font-size: 9px; background: transparent; border: 1px solid transparent; border-radius: 6px; padding: 3px 6px; color: var(--text-dim); font-family: 'DM Mono', monospace; cursor: pointer; -webkit-tap-highlight-color: transparent; user-select: none; white-space: nowrap; flex-shrink: 0; }
+  .count-badge:active { border-color: var(--accent-dim); color: var(--accent); }
+  .count-badge.filter-active { border-color: var(--accent-dim); color: var(--accent); background: rgba(156,184,178,0.08); }
+  .timer-badge { font-size: 9px; background: transparent; border: 1px solid transparent; border-radius: 6px; padding: 3px 0; color: var(--text-dim); font-family: 'DM Mono', monospace; font-variant-numeric: tabular-nums; width: 38px; text-align: center; flex-shrink: 0; transition: font-size 0.2s; }
+  .save-progress-btn { width: 26px; height: 26px; border-radius: 50%; background: transparent; border: 1px solid transparent; color: var(--text-dim); font-size: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: all 0.2s; flex-shrink: 0; }
+  .save-progress-btn.saved { border-color: #9cb8b2; color: #9cb8b2; background: rgba(156,184,178,0.1); }
+  .save-progress-btn.saving { border-color: var(--accent-dim); color: var(--accent); animation: pulse 0.8s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  /* Undo/Redo agrupados num pill */
+  .undo-group { display: flex; align-items: center; background: transparent; border: 1px solid transparent; border-radius: 7px; overflow: hidden; flex-shrink: 0; }
+  .undo-btn { width: 26px; height: 26px; background: transparent; border: none; color: var(--text-dim); font-size: 14px; display: flex; align-items: center; justify-content: center; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: all 0.2s; }
+  .undo-btn + .undo-btn { border-left: 1px solid transparent; }
+  .undo-btn:disabled { opacity: 0.3; pointer-events: none; }
+  .undo-btn:active { color: #9cb8b2; }
+  .undo-btn.has-history { color: #9cb8b2; }
+  .filter-bar { display: flex; flex-direction: column; gap: 5px; padding: 0.45rem 0.75rem; border-bottom: 1px solid var(--border); flex-shrink: 0; background: var(--bg); }
+  .search-input { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 7px; padding: 6px 9px; font-size: 12px; color: var(--text); font-family: 'DM Sans', sans-serif; }
+  .search-input:focus { outline: none; border-color: var(--accent-dim); }
+  .filter-checkbox-label { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-muted); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .col-headers { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 4px 0.75rem; border-bottom: 1px solid var(--border); flex-shrink: 0; background: var(--bg); }
+  body:has(.strings-list.selection-mode) .col-headers { grid-template-columns: 22px 1fr 1fr; }
+  .col-header { font-size: 9px; color: var(--text-dim); letter-spacing: 0.08em; text-transform: uppercase; text-align: center; }
+  .strings-list { flex: 1; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; padding-bottom: 80px; }
+  .string-row { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 6px 0.75rem; border-bottom: 1px solid var(--border); align-items: start; content-visibility: auto; contain-intrinsic-size: auto 96px; }
+  .string-row .original-text { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  .string-row.row-selected { background: rgba(156,184,178,0.14); box-shadow: inset 3px 0 0 var(--accent); }
+  .strings-list.selection-mode .string-row { cursor: pointer; grid-template-columns: 22px 1fr 1fr; }
+  .strings-list.selection-mode .fav-btn,
+  .strings-list.selection-mode .kebab-wrap,
+  .strings-list.selection-mode .expand-arrow-btn,
+  .strings-list.selection-mode .copy-btn,
+  .strings-list.selection-mode .note-textarea { pointer-events: none; }
+  .selection-check { display: none; width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid var(--border2); background: var(--surface2); align-self: center; justify-self: center; font-size: 11px; color: var(--bg); align-items: center; justify-content: center; }
+  .strings-list.selection-mode .selection-check { display: flex; }
+  .string-row.row-selected .selection-check { background: var(--accent); border-color: var(--accent); }
+  .string-row.row-selected .selection-check::after { content: '✓'; }
+  .selection-toolbar { display: none; position: fixed; left: 0; right: 0; bottom: 0; z-index: 350; background: var(--surface); border-top: 1px solid var(--border); padding: 10px 0.9rem calc(10px + env(safe-area-inset-bottom)); align-items: center; gap: 10px; box-shadow: 0 -6px 20px rgba(0,0,0,0.4); }
+  .selection-toolbar.open { display: flex; }
+  .selection-toolbar-close { flex: 0 0 auto; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--border2); background: var(--surface2); color: var(--text-muted); font-size: 15px; }
+  .selection-toolbar-count { flex: 1; font-size: 13px; color: var(--text); }
+  .selection-toolbar-translate { flex: 0 0 auto; background: var(--accent); color: #10231f; border: none; border-radius: 10px; padding: 9px 16px; font-weight: 600; font-size: 13px; }
+  .key-hex { font-family: 'DM Mono', monospace; font-size: 8px; color: var(--text-dim); letter-spacing: 0.03em; margin-bottom: 3px; text-align: center; }
+  .original-text { position: relative; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 7px 26px 7px 9px; font-size: 12px; color: var(--text-muted); line-height: 1.5; word-break: break-word; font-style: italic; min-height: 36px; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+  .original-text-inner { display: block; }
+  .original-text-inner.clamped { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .original-text .ph { color: #9cb8b2; font-style: normal; }
+  .copy-btn { position: absolute; top: 4px; right: 4px; width: 18px; height: 18px; border-radius: 5px; background: var(--surface2); border: 1px solid var(--border2); color: var(--text-muted); font-size: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; -webkit-tap-highlight-color: transparent; z-index: 2; line-height: 1; }
+  .copy-btn:active { transform: scale(0.9); border-color: #9cb8b2; color: #9cb8b2; }
+  .copy-btn.copied { color: #9cb8b2; border-color: #9cb8b2; }
+  .edit-container { display: flex; gap: 5px; align-items: center; margin-top: 14px; }
+  .edit-actions-col { display: flex; flex-direction: column; gap: 5px; flex-shrink: 0; }
+  .ta-wrap { position: relative; flex: 1; min-width: 0; }
+  .edit-textarea { position: relative; z-index: 1; background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; padding: 18px 9px 7px 9px; font-size: 12px; color: transparent; caret-color: #f0ece4; line-height: 1.5; width: 100%; resize: none; font-family: 'DM Sans', sans-serif; min-height: 36px; overflow: hidden; }
+  .edit-textarea:focus { outline: none; border-color: var(--accent-dim); }
+  .edit-textarea.ta-collapsed { height: 38px !important; overflow-y: auto; }
+  .ta-backdrop { position: absolute; top: 0; left: 0; right: 0; bottom: 0; padding: 18px 9px 7px 9px; font-size: 12px; line-height: 1.5; font-family: 'DM Sans', sans-serif; white-space: pre-wrap; word-break: break-word; overflow: hidden; pointer-events: none; color: var(--text); z-index: 2; border-radius: 8px; }
+  .ta-backdrop.ta-collapsed { height: 38px !important; }
+  .ta-backdrop .ph { color: #9cb8b2; }
+  .ta-backdrop .ph.blurred { color: #b89cd9; }
+  /* Chave "{" ou "}" sem o par correspondente: enquanto o campo está em
+     foco fica com a cor normal do texto (sem chamar atenção); ao sair da
+     caixinha (.blurred), acende em amarelo pra avisar que falta fechar. */
+  .ta-backdrop .ph-unclosed.blurred { color: #c9c965; }
+
+  /* Aviso de "tradução recente não salva" dentro do próprio editor (cobre
+     o caso de dar F5 direto na tela, sem passar pela home). Só some
+     quando Descartar ou Recuperar é clicado. */
+  .editor-draft-banner { display: none; flex-direction: column; gap: 8px; padding: 10px 0.75rem; background: var(--surface2); border-bottom: 1px solid var(--border2); flex-shrink: 0; }
+  .editor-draft-banner.show { display: flex; }
+  .editor-draft-banner-text { font-size: 11.5px; color: var(--text); line-height: 1.4; }
+  .editor-draft-banner-actions { display: flex; gap: 8px; }
+  .editor-draft-banner-btn { flex: 1; padding: 7px 8px; border-radius: 7px; font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 500; cursor: pointer; -webkit-tap-highlight-color: transparent; border: 1px solid var(--border2); background: transparent; color: var(--text-muted); transition: transform 0.15s ease; }
+  .editor-draft-banner-btn:active { transform: scale(0.96); }
+  .editor-draft-banner-btn.discard:active { border-color: #e07070; color: #e07070; }
+  .editor-draft-banner-btn.recover { background: rgba(156,184,178,0.14); border-color: var(--accent-dim); color: var(--accent); }
+  .fav-btn { position: absolute; top: 2px; left: 4px; z-index: 3; font-size: 12px; color: var(--text-dim); background: transparent; border: none; cursor: pointer; -webkit-tap-highlight-color: transparent; line-height: 1; padding: 2px; }
+  .fav-btn.active { color: #9cb8b2; }
+  .fav-star-float { position: absolute; pointer-events: none; z-index: 99; font-size: 12px; color: #9cb8b2; animation: starFloat 0.7s ease-out forwards; }
+  @keyframes starFloat { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-22px) scale(0.7); } }
+  .expand-arrow-btn { position: absolute; top: 2px; right: 4px; z-index: 3; font-size: 11px; color: var(--text-dim); background: transparent; border: none; cursor: pointer; -webkit-tap-highlight-color: transparent; line-height: 1; padding: 2px; transition: transform 0.15s, color 0.15s; }
+  .expand-arrow-btn.expanded { transform: rotate(180deg); color: var(--accent); }
+  .action-btn { width: 26px; height: 26px; border-radius: 50%; background: var(--surface); border: 1px solid var(--border); color: var(--text-muted); display: flex; align-items: center; justify-content: center; cursor: pointer; -webkit-tap-highlight-color: transparent; font-size: 12px; flex-shrink: 0; transition: all 0.2s; }
+  .action-btn:active { transform: scale(0.9); }
+  .action-btn.note-filled { border-color: var(--accent-dim); color: var(--accent); }
+  .action-btn.clear-undo { border-color: #9cb8b2; color: #9cb8b2; }
+  /* Botão ⋮ kebab */
+  .kebab-wrap { position: relative; flex-shrink: 0; }
+  .kebab-btn { width: 26px; height: 26px; border-radius: 50%; background: transparent; border: 1px solid transparent; color: var(--text-dim); display: flex; align-items: center; justify-content: center; cursor: pointer; -webkit-tap-highlight-color: transparent; font-size: 15px; line-height: 1; transition: color 0.15s; }
+  .kebab-btn:active, .kebab-btn.open { color: #9cb8b2; }
+  .kebab-btn:active { transform: scale(0.9); }
+  .kebab-menu { position: fixed; background: var(--surface); border: 1px solid var(--border2); border-radius: 10px; z-index: 200; min-width: 148px; overflow: hidden; box-shadow: 0 6px 20px rgba(0,0,0,0.6); transform: translateX(16px); opacity: 0; filter: blur(4px); pointer-events: none; transition: transform 0.28s ease, opacity 0.28s ease, filter 0.28s ease; }
+  .kebab-menu.open { transform: translateX(0); opacity: 1; filter: blur(0px); pointer-events: auto; }
+  .kebab-item { display: flex; align-items: center; gap: 8px; padding: 9px 12px; font-size: 11px; color: var(--text-muted); cursor: pointer; -webkit-tap-highlight-color: transparent; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  .kebab-item:last-child { border-bottom: none; }
+  .kebab-item:active { background: var(--surface2); }
+  .kebab-item-icon { font-size: 13px; width: 16px; text-align: center; flex-shrink: 0; }
+  .kebab-item.note-filled-item .kebab-item-icon { color: var(--accent); }
+  .kebab-item.clear-undo-item { color: #9cb8b2; }
+  /* Ponto de nota ao lado da estrela */
+  .note-dot { display: inline-block; width: 3px; height: 3px; border-radius: 50%; background: #9cb8b2; position: absolute; top: 9px; left: 19px; z-index: 4; pointer-events: none; }
+  .note-row { display: none; padding: 0 0.75rem 8px; }
+  .note-row.open { display: block; }
+  .note-textarea { width: 100%; background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; padding: 7px 9px; font-size: 11px; color: var(--text); font-family: 'DM Sans', sans-serif; resize: none; min-height: 32px; }
+  .note-textarea:focus { outline: none; border-color: #9cb8b2; }
+  .note-hint { font-size: 9px; color: var(--text-dim); margin-top: 3px; }
+  .focus-toggle-btn { width: 26px; height: 26px; border-radius: 50%; background: var(--accent-dim); border: none; color: var(--bg); font-size: 11px; display: flex; align-items: center; justify-content: center; cursor: pointer; -webkit-tap-highlight-color: transparent; flex-shrink: 0; transition: background 0.2s; }
+  .focus-toggle-btn:active { transform: scale(0.92); background: var(--accent); }
+  .focus-toggle-btn.focus-on { background: var(--text-muted); }
+  .filter-toggle-row { display: flex; align-items: center; gap: 6px; padding: 2px 0; cursor: pointer; -webkit-tap-highlight-color: transparent; user-select: none; }
+  .filter-toggle-label { font-size: 11px; color: var(--text-muted); flex: 1; }
+  .filter-arrow { font-size: 9px; color: var(--text-muted); transition: transform 0.2s; display: inline-block; }
+  .filter-arrow.open { transform: rotate(180deg); }
+  .filter-collapsible { display: none; flex-direction: column; gap: 6px; padding-top: 4px; }
+  .filter-collapsible.open { display: flex; }
+  .focus-mode .undo-group, .focus-mode .timer-badge,
+  .focus-mode .save-progress-btn, .focus-mode .focus-toggle-btn, .focus-mode .filter-bar,
+  .focus-mode .col-headers, .focus-mode .bottom-bar, .focus-mode .copy-btn,
+  .focus-mode .fav-btn, .focus-mode .expand-arrow-btn { display: none !important; }
+  .translate-btn { width: 26px; height: 26px; border-radius: 50%; background: var(--surface); border: 1px solid var(--accent-dim); color: var(--accent); display: flex; align-items: center; justify-content: center; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: all 0.2s; flex-shrink: 0; font-size: 13px; }
+  .translate-btn:active { transform: scale(0.9); }
+  .translate-btn.loading { animation: spin 1s linear infinite; }
+  .translate-btn.success { background: rgba(76,175,80,0.2); border-color: #4caf50; color: #4caf50; }
+  .translate-btn.error { background: rgba(244,67,54,0.2); border-color: #f44336; color: #f44336; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .bottom-bar { border-top: 1px solid var(--border); padding: 0.45rem 0.75rem 0.5rem; background: var(--bg); flex-shrink: 0; }
+  .filename-row { display: flex; align-items: center; gap: 6px; margin-bottom: 0.35rem; }
+  .filename-label { font-size: 11px; color: var(--text-muted); flex-shrink: 0; }
+  .filename-input { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 7px; padding: 5px 9px; font-size: 12px; color: var(--text); font-family: 'DM Mono', monospace; min-width: 0; transition: border-color 0.2s; }
+  .filename-input:focus { outline: none; border-color: var(--accent-dim); }
+  .filename-input.empty-error { border-color: #e07070 !important; animation: shake 0.3s ease; }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-4px)} 75%{transform:translateX(4px)} }
+  .ext-label { font-size: 12px; color: var(--text-muted); font-family: 'DM Mono', monospace; flex-shrink: 0; }
+  .bottom-actions { display: flex; gap: 5px; align-items: center; margin-top: 4px; }
+  .import-btn { flex: 0 0 auto; padding: 7px 11px; background: transparent; border: 1px solid var(--border2); border-radius: 8px; color: var(--text-muted); font-size: 14px; line-height: 1; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .import-btn:active { background: var(--surface2); }
+  .save-btn { flex: 1; padding: 8px 12px; background: var(--accent-dim); border: none; border-radius: 8px; color: var(--bg); font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; cursor: pointer; -webkit-tap-highlight-color: transparent; white-space: nowrap; }
+  .save-btn:active { transform: scale(0.97); background: var(--accent); }
+  .save-btn:disabled { opacity: 0.4; pointer-events: none; }
+  .loading-overlay { display: none; position: fixed; inset: 0; background: rgba(15,15,15,0.92); z-index: 100; align-items: center; justify-content: center; flex-direction: column; gap: 1rem; }
+  .loading-overlay.active { display: flex; }
+  .spinner { width: 36px; height: 36px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  .loading-text { font-size: 13px; color: var(--text-muted); letter-spacing: 0.04em; text-align: center; }
+  .success-sheet { display: none; position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,0); align-items: flex-end; transition: background 0.32s ease; }
+  .success-sheet.open { display: flex; }
+  .success-sheet.open-active { background: rgba(0,0,0,0.8); }
+  .success-inner { width: 100%; background: var(--surface); border-top: 1px solid var(--border); border-radius: 20px 20px 0 0; padding: 1.5rem 1rem 2.5rem; transform: translateX(60px); opacity: 0; filter: blur(6px); transition: transform 0.32s ease, opacity 0.32s ease, filter 0.32s ease; }
+  .success-sheet.open-active .success-inner { transform: translateX(0); opacity: 1; filter: blur(0px); }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .success-icon { font-size: 40px; text-align: center; margin-bottom: 0.75rem; }
+  .success-title { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; color: var(--accent); text-align: center; margin-bottom: 0.25rem; }
+  .success-sub { font-size: 13px; color: var(--text-muted); text-align: center; margin-bottom: 0.5rem; }
+  .success-downloads-note { font-size: 12px; color: var(--accent); text-align: center; padding: 6px 0 1.25rem; font-weight: 500; }
+  .instance-input { flex: 1; padding: 10px 0 10px 0; background: transparent; border: none; border-bottom: 1px solid var(--border); border-radius: 0; color: var(--text); font-family: 'DM Mono', monospace; font-size: 12px; outline: none; text-transform: uppercase; letter-spacing: 0.05em; -webkit-appearance: none; }
+  .instance-input:focus { border-bottom-color: var(--border2); }
+  .instance-input.valid { border-bottom-color: #4caf50; }
+  .instance-input.invalid { border-bottom-color: #e05555; }
+  .instance-hint { font-size: 10px; color: var(--text-muted); margin-top: 4px; }
+  .instance-toggle-row { display: flex; align-items: center; gap: 6px; margin-bottom: 0; padding: 4px 0; cursor: pointer; -webkit-tap-highlight-color: transparent; user-select: none; }
+  .instance-toggle-label { font-size: 11px; color: var(--text-muted); flex: 1; }
+  .instance-toggle-arrow { font-size: 9px; color: var(--text-muted); transition: transform 0.2s; display: inline-block; }
+  .instance-toggle-arrow.open { transform: rotate(180deg); }
+  .instance-collapsible { display: none; padding-bottom: 0.5rem; }
+  .instance-collapsible.open { display: block; }
+  .instance-prefix { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--accent-dim); padding-bottom: 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  .instance-row { display: flex; align-items: flex-end; gap: 6px; }
+  .success-new { display: block; width: 100%; padding: 15px; background: var(--accent-dim); border: none; border-radius: var(--radius-sm); color: var(--bg); font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 0.06em; cursor: pointer; text-align: center; margin-bottom: 10px; -webkit-tap-highlight-color: transparent; text-decoration: none; }
+  .success-new:active { background: var(--accent); }
+  .success-back { display: block; width: 100%; padding: 13px; background: transparent; border: 1px solid var(--border2); border-radius: var(--radius-sm); color: var(--text-muted); font-size: 13px; cursor: pointer; text-align: center; -webkit-tap-highlight-color: transparent; }
+  .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 3rem 2rem; gap: 0.75rem; }
+  .empty-icon { font-size: 32px; opacity: 0.3; }
+  .empty-text { font-size: 13px; color: var(--text-muted); text-align: center; }
+  .engine-menu { position: fixed; top: 50%; left: 50%; background: var(--surface); border: 1px solid var(--accent-dim); border-radius: 12px; z-index: 500; box-shadow: 0 10px 30px rgba(0,0,0,0.8); min-width: 180px; overflow: hidden; opacity: 0; transform: translate(-50%, -50%) translateX(20px); filter: blur(4px); pointer-events: none; transition: opacity 0.32s ease, transform 0.32s ease, filter 0.32s ease; }
+  .engine-menu.open { opacity: 1; transform: translate(-50%, -50%) translateX(0); filter: blur(0px); pointer-events: auto; }
+  .engine-option { padding: 12px 16px; color: var(--text); font-size: 13px; cursor: pointer; border-bottom: 1px solid var(--border); }
+  .engine-option:last-child { border-bottom: none; }
+  .engine-option:active { background: var(--surface2); }
+  .engine-menu-empty { padding: 14px 16px; color: var(--text-dim); font-size: 12px; text-align: center; }
+
+  /* Modal "modelo indisponível" */
+  .confirm-modal { position: fixed; inset: 0; z-index: 700; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0); pointer-events: none; opacity: 0; transition: opacity 0.28s ease, background 0.28s ease; }
+  .confirm-modal.open { background: rgba(0,0,0,0.55); pointer-events: auto; opacity: 1; }
+  .confirm-modal-inner { background: var(--surface); border: 1px solid var(--border2); border-radius: 14px; padding: 20px; max-width: 300px; width: 86%; box-shadow: 0 10px 30px rgba(0,0,0,0.8); transform: translateY(10px) scale(0.96); filter: blur(4px); opacity: 0; transition: transform 0.3s ease, filter 0.3s ease, opacity 0.3s ease; }
+  .confirm-modal.open .confirm-modal-inner { transform: translateY(0) scale(1); filter: blur(0px); opacity: 1; }
+  .confirm-modal-text { color: var(--text); font-size: 13.5px; line-height: 1.55; text-align: center; margin-bottom: 16px; }
+  .confirm-modal-actions { display: flex; gap: 8px; }
+  .confirm-modal-btn { flex: 1; padding: 10px 8px; border-radius: 9px; font-size: 12.5px; font-weight: 500; cursor: pointer; border: 1px solid var(--border2); background: transparent; color: var(--text-muted); -webkit-tap-highlight-color: transparent; transition: transform 0.15s ease; }
+  .confirm-modal-btn:active { transform: scale(0.96); }
+  .confirm-modal-btn-switch { background: var(--accent); color: #06110e; border-color: var(--accent); font-weight: 600; }
+  .import-sheet { display: none; position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,0); align-items: flex-end; transition: background 0.28s ease; }
+  .import-sheet.open { display: flex; }
+  .import-sheet.open-active { background: rgba(0,0,0,0.85); }
+  .import-sheet-inner { width: 100%; background: var(--surface); border-top: 1px solid var(--border); border-radius: 20px 20px 0 0; padding: 1.5rem 1rem 2.5rem; max-height: 75dvh; overflow-y: auto; transform: translateX(60px); opacity: 0; filter: blur(6px); transition: transform 0.32s ease, opacity 0.32s ease, filter 0.32s ease; }
+  .import-sheet.open-active .import-sheet-inner { transform: translateX(0); opacity: 1; filter: blur(0px); }
+  .import-sheet-title { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; color: var(--accent); margin-bottom: 0.25rem; }
+  .import-sheet-sub { font-size: 12px; color: var(--text-muted); margin-bottom: 1.25rem; line-height: 1.5; }
+  .import-source-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 1.25rem; }
+  .import-source-btn { padding: 12px 8px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-muted); font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.05em; cursor: pointer; text-align: center; -webkit-tap-highlight-color: transparent; transition: all 0.15s; }
+  .import-source-btn.active { border-color: var(--accent-dim); color: var(--accent); background: rgba(156,184,178,0.06); }
+  .import-source-btn:active { background: var(--surface2); }
+  .import-section { display: none; }
+  .import-section.active { display: block; }
+  .import-save-item { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 8px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .import-save-item:active { border-color: var(--accent-dim); }
+  .import-save-name { font-size: 12px; color: var(--text); font-family: 'DM Mono', monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .import-save-meta { font-size: 10px; color: var(--text-muted); margin-top: 3px; }
+  .import-file-area { border: 1px dashed var(--border2); border-radius: var(--radius-sm); padding: 2rem 1rem; text-align: center; cursor: pointer; -webkit-tap-highlight-color: transparent; margin-bottom: 8px; }
+  .import-file-area:active { background: var(--surface2); }
+  .import-file-icon { font-size: 28px; margin-bottom: 0.5rem; opacity: 0.5; }
+  .import-file-label { font-size: 13px; color: var(--text-muted); }
+  .import-file-hint { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
+  .import-cancel { width: 100%; padding: 13px; background: transparent; border: 1px solid var(--border2); border-radius: var(--radius-sm); color: var(--text-muted); font-size: 13px; cursor: pointer; text-align: center; margin-top: 8px; -webkit-tap-highlight-color: transparent; }
+  .translate-all-btn { width: 100%; padding: 13px; background: transparent; border: 1px solid var(--accent-dim); border-radius: var(--radius); color: var(--accent); font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.06em; cursor: pointer; -webkit-tap-highlight-color: transparent; margin-bottom: 0.75rem; transition: all 0.2s; }
+  .translate-all-btn:active { background: rgba(156,184,178,0.08); }
+  .translate-all-btn:disabled { opacity: 0.35; pointer-events: none; }
+  .tall-sheet { display: none; position: fixed; inset: 0; z-index: 400; background: rgba(0,0,0,0); align-items: flex-end; transition: background 0.28s ease; }
+  .tall-sheet.open { display: flex; }
+  .tall-sheet.open-active { background: rgba(0,0,0,0.85); }
+  .tall-sheet-inner { width: 100%; background: var(--surface); border-top: 1px solid var(--border); border-radius: 20px 20px 0 0; padding: 1.5rem 1rem 2.5rem; transform: translateX(60px); opacity: 0; filter: blur(6px); transition: transform 0.32s ease, opacity 0.32s ease, filter 0.32s ease; }
+  .tall-sheet.open-active .tall-sheet-inner { transform: translateX(0); opacity: 1; filter: blur(0px); }
+  .tall-title { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; color: var(--accent); margin-bottom: 0.25rem; }
+  .tall-sub { font-size: 12px; color: var(--text-muted); margin-bottom: 1.25rem; line-height: 1.5; }
+  .tall-progress-track { width: 100%; height: 6px; background: var(--border); border-radius: 99px; overflow: hidden; margin-bottom: 0.75rem; }
+  .tall-progress-fill { height: 100%; background: var(--accent-dim); border-radius: 99px; width: 0%; transition: width 0.3s ease; }
+  .tall-status { font-size: 12px; color: var(--text-muted); font-family: 'DM Mono', monospace; margin-bottom: 1.5rem; min-height: 18px; }
+  .tall-engine-row { margin-bottom: 1.25rem; }
+  .tall-engine-btn { width: 100%; padding: 12px 8px; background: var(--surface2); border: 1px solid var(--accent-dim); border-radius: var(--radius-sm); color: var(--accent); font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.05em; cursor: pointer; text-align: center; -webkit-tap-highlight-color: transparent; transition: all 0.15s; background: rgba(156,184,178,0.06); }
+  .tall-engine-btn:active { transform: scale(0.98); }
+  .tall-cancel-btn { width: 100%; padding: 13px; background: transparent; border: 1px solid var(--border2); border-radius: var(--radius-sm); color: var(--text-muted); font-size: 13px; cursor: pointer; text-align: center; -webkit-tap-highlight-color: transparent; }
+  /* ── Botão JSON ── */
+  .json-mode-btn { flex: 0 0 auto; padding: 7px 11px; background: transparent; border: 1px solid var(--accent-dim); border-radius: 8px; color: var(--accent); font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500; letter-spacing: 0.05em; cursor: pointer; -webkit-tap-highlight-color: transparent; white-space: nowrap; transition: all 0.2s; }
+  .json-mode-btn:active { background: rgba(156,184,178,0.1); }
+  /* ── Painel JSON ── */
+  .json-panel { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+  .json-panel.active { display: flex; }
+  .json-toolbar { display: flex; align-items: center; gap: 6px; padding: 6px 0.75rem; border-bottom: 1px solid var(--border); flex-shrink: 0; background: var(--bg); }
+  .json-toolbar-label { font-size: 9px; color: var(--text-dim); letter-spacing: 0.08em; text-transform: uppercase; flex: 1; font-family: 'DM Mono', monospace; }
+  .json-error-msg { font-size: 10px; color: #e07070; font-family: 'DM Mono', monospace; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .json-apply-btn { padding: 5px 10px; background: var(--accent-dim); border: none; border-radius: 6px; color: var(--bg); font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.05em; cursor: pointer; -webkit-tap-highlight-color: transparent; flex-shrink: 0; }
+  .json-apply-btn:active { background: var(--accent); }
+  .json-apply-btn:disabled { opacity: 0.4; pointer-events: none; }
+  .json-editor-wrap { flex: 1; overflow: hidden; position: relative; }
+  .json-textarea { width: 100%; height: 100%; background: var(--bg); border: none; outline: none; color: var(--text); font-family: 'DM Mono', monospace; font-size: 11px; line-height: 1.6; padding: 0.75rem; resize: none; -webkit-overflow-scrolling: touch; caret-color: #9cb8b2; }
+  .json-textarea.has-error { border-left: 2px solid #e07070; }
+  /* Bottom bar em modo JSON */
+  .json-bottom { border-top: 1px solid var(--border); padding: 0.45rem 0.75rem 0.5rem; background: var(--bg); flex-shrink: 0; }
+  .json-bottom .filename-row { display: flex; align-items: center; gap: 6px; margin-bottom: 0.35rem; }
+  .json-bottom-actions { display: flex; gap: 5px; align-items: center; margin-top: 4px; }
+  .json-save-btn { flex: 1; padding: 8px 12px; background: var(--accent-dim); border: none; border-radius: 8px; color: var(--bg); font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; cursor: pointer; -webkit-tap-highlight-color: transparent; white-space: nowrap; }
+  .json-save-btn:active { transform: scale(0.97); background: var(--accent); }
+  .json-save-btn:disabled { opacity: 0.4; pointer-events: none; }
+  .package-return-btn { flex: 0 0 auto; padding: 7px 11px; background: transparent; border: 1px solid var(--border2); border-radius: 8px; color: var(--text-muted); font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.05em; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: all 0.2s; }
+  .package-return-btn:active { background: var(--surface2); color: var(--accent); border-color: var(--accent-dim); }
+  .json-import-btn { flex: 0 0 auto; padding: 7px 11px; background: transparent; border: 1px solid var(--accent-dim); border-radius: 8px; color: var(--accent); font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.05em; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: all 0.2s; white-space: nowrap; }
+  .json-import-btn:active { background: rgba(156,184,178,0.1); }
+
+  /* ── Toast de notificação ── */
+  .toast-wrap { position: fixed; top: 0; left: 0; right: 0; z-index: 9000; display: flex; flex-direction: column; align-items: center; gap: 6px; padding-top: 10px; pointer-events: none; }
+  .toast { background: var(--surface); border: 1px solid var(--border2); border-radius: 12px; padding: 10px 16px; font-size: 12px; color: var(--text); font-family: 'DM Sans', sans-serif; max-width: calc(100vw - 32px); text-align: center; box-shadow: 0 8px 24px rgba(0,0,0,0.7); pointer-events: auto;
+    opacity: 0; transform: translateY(-12px) scale(0.96); filter: blur(4px);
+    transition: opacity 0.22s ease, transform 0.22s ease, filter 0.22s ease; }
+  .toast.show { opacity: 1; transform: translateY(0) scale(1); filter: blur(0px); }
+  .toast.toast-error { border-color: #c0504050; color: #e07070; }
+  .toast.toast-success { border-color: var(--accent-dim); color: var(--accent); }
+  .toast.toast-info { border-color: var(--border2); color: var(--text-muted); }
+
+  /* ── Modal de confirmação ── */
+  .modal-backdrop { position: fixed; inset: 0; z-index: 8000; background: rgba(0,0,0,0); display: none; align-items: flex-end;
+    transition: background 0.28s ease; }
+  .modal-backdrop.open { display: flex; }
+  .modal-backdrop.open-active { background: rgba(0,0,0,0.82); }
+  .modal-inner { width: 100%; background: var(--surface); border-top: 1px solid var(--border); border-radius: 20px 20px 0 0; padding: 1.5rem 1rem 2.5rem;
+    transform: translateY(100%); opacity: 0; filter: blur(6px);
+    transition: transform 0.3s ease, opacity 0.3s ease, filter 0.3s ease; }
+  .modal-backdrop.open-active .modal-inner { transform: translateY(0); opacity: 1; filter: blur(0px); }
+  .modal-icon { font-size: 32px; text-align: center; margin-bottom: 0.6rem; }
+  .modal-title { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; color: var(--text); text-align: center; margin-bottom: 0.4rem; }
+  .modal-msg { font-size: 13px; color: var(--text-muted); text-align: center; line-height: 1.5; margin-bottom: 1.5rem; }
+  .modal-btns { display: flex; flex-direction: column; gap: 8px; }
+  .modal-btn-confirm { width: 100%; padding: 14px; background: var(--accent-dim); border: none; border-radius: var(--radius-sm); color: var(--bg); font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 0.06em; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .modal-btn-confirm:active { background: var(--accent); }
+  .modal-btn-confirm.danger { background: #8b2020; color: #f0ece4; }
+  .modal-btn-confirm.danger:active { background: #b02828; }
+  .modal-btn-cancel { width: 100%; padding: 13px; background: transparent; border: 1px solid var(--border2); border-radius: var(--radius-sm); color: var(--text-muted); font-size: 13px; cursor: pointer; text-align: center; -webkit-tap-highlight-color: transparent; }
+  .modal-btn-cancel:active { background: var(--surface2); }
+
+  /* ── Blur ripple ao toque em botões ── */
+  @keyframes btn-blur-pulse {
+    0%   { filter: blur(0px);   opacity: 1; }
+    35%  { filter: blur(1.5px); opacity: 0.82; }
+    100% { filter: blur(0px);   opacity: 1; }
+  }
+  .btn-tapped { animation: btn-blur-pulse 0.32s ease-out forwards; will-change: filter, opacity; }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="topbar">
+    <a href="/info" class="back-btn" id="back-btn" onclick="confirmBack(event)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M19 12H5M12 5l-7 7 7 7"/>
+      </svg>
+    </a>
+    <div class="topbar-info">
+      <div class="topbar-title" id="top-title">Editor</div>
+      <div class="topbar-sub" id="top-sub">—</div>
+    </div>
+    <div class="topbar-right">
+      <div class="undo-group">
+        <button class="undo-btn" id="undo-btn" onclick="undoNative()" title="Desfazer (↶)">↶</button>
+        <button class="undo-btn" id="redo-btn" onclick="redoNative()" title="Refazer (↷)">↷</button>
+      </div>
+      <button class="focus-toggle-btn" id="focus-btn" onclick="toggleFocusMode()" title="Modo foco">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+          <circle cx="12" cy="12" r="3"/>
+        </svg>
+      </button>
+      <div class="timer-badge" id="timer-badge">0:00</div>
+      <div class="count-badge" id="count-badge" onclick="toggleUntranslatedFilter()" title="Clique para filtrar não traduzidas">—</div>
+      <button class="save-progress-btn" id="reload-btn" onclick="manualReload()" title="Recarregar">↻</button>
+      <button class="save-progress-btn" id="save-progress-btn" onclick="saveProgressManual()" title="Salvar progresso">✓</button>
+    </div>
+  </div>
+  <div class="editor-draft-banner" id="editor-draft-banner">
+    <div class="editor-draft-banner-text">Você tem uma tradução recente não salva para este pacote.</div>
+    <div class="editor-draft-banner-actions">
+      <button class="editor-draft-banner-btn discard" onclick="discardEditorDraft()">Descartar</button>
+      <button class="editor-draft-banner-btn recover" onclick="recoverEditorDraft()">Recuperar</button>
+    </div>
+  </div>
+  <div class="editor-draft-banner" id="json-draft-banner">
+    <div class="editor-draft-banner-text">Você tinha edições no modo JSON não aplicadas quando a página recarregou.</div>
+    <div class="editor-draft-banner-actions">
+      <button class="editor-draft-banner-btn discard" onclick="discardJsonDraft()">Descartar</button>
+      <button class="editor-draft-banner-btn recover" onclick="recoverJsonDraft()">Recuperar JSON</button>
+    </div>
+  </div>
+  <div class="filter-bar">
+    <input type="text" id="search-input" class="search-input" placeholder="Buscar por key, original ou tradução...">
+    <div class="filter-toggle-row" onclick="toggleFilterAccordion()">
+      <span class="filter-toggle-label">Filtrar por</span>
+      <span class="filter-arrow" id="filter-arrow">▼</span>
+    </div>
+    <div class="filter-collapsible" id="filter-collapsible">
+      <label class="filter-checkbox-label">
+        <input type="checkbox" id="filter-untranslated">
+        Não traduzidas
+      </label>
+      <label class="filter-checkbox-label">
+        <input type="checkbox" id="filter-favorite">
+        Favoritas
+      </label>
+      <label class="filter-checkbox-label">
+        <input type="checkbox" id="filter-notes">
+        Com notas
+      </label>
+      <label class="filter-checkbox-label">
+        <input type="checkbox" id="filter-case-sensitive">
+        Diferenciar maiúsculas/minúsculas
+      </label>
+    </div>
+  </div>
+  <div class="col-headers">
+    <div class="col-header">Original</div>
+    <div class="col-header" style="display:flex;align-items:center;justify-content:center;gap:5px;">
+      <span>Tradução</span>
+      <span style="width:26px;flex-shrink:0;"></span>
+    </div>
+  </div>
+  <div class="strings-list" id="strings-list">
+    <div class="empty-state">
+      <div class="empty-icon">◌</div>
+      <div class="empty-text">Carregando strings...</div>
+    </div>
+  </div>
+  <div class="selection-toolbar" id="selection-toolbar">
+    <button class="selection-toolbar-close" onclick="exitSelectionMode()" title="Cancelar seleção">✕</button>
+    <div class="selection-toolbar-count" id="selection-toolbar-count">1 selecionada</div>
+    <button class="selection-toolbar-translate" onclick="requestTranslateSelected()">◈ Traduzir</button>
+  </div>
+  <div class="bottom-bar">
+    <div class="filename-row">
+      <span class="filename-label">Nome:</span>
+      <input type="text" class="filename-input" id="filename-input" placeholder="output" maxlength="100">
+      <span class="ext-label">.package</span>
+    </div>
+    <div class="instance-toggle-row" onclick="toggleInstance()">
+      <span class="instance-toggle-label">⚙ Alterar instância base</span>
+      <span class="instance-toggle-arrow" id="instance-arrow">▼</span>
+    </div>
+    <div class="instance-collapsible" id="instance-collapsible">
+      <div class="instance-row">
+        <span class="instance-prefix" id="instance-prefix-display">XX</span>
+        <input class="instance-input" id="instance-input" type="text" maxlength="14" placeholder="14 dígitos hex — base da instância" oninput="validateInstanceInput(this)" autocomplete="off" autocorrect="off" spellcheck="false">
+      </div>
+      <div class="instance-hint" id="instance-hint">Deixe vazio para manter a instância original. O locale (2 dígitos) é prefixado automaticamente.</div>
+    </div>
+    <div class="bottom-actions">
+      <button class="import-btn" onclick="openReplaceSheet()" title="Substituir palavra em todas as strings">⇄</button>
+      <button class="import-btn" onclick="openImportSheet()" title="Carregar traduções de um save">↺</button>
+      <button class="import-btn" id="translate-all-btn" onclick="openTranslateAllSheet()" title="Traduzir tudo automaticamente" style="color:var(--accent);border-color:var(--accent-dim);" disabled>◈</button>
+      <button class="json-mode-btn" id="json-mode-btn" onclick="enterJsonMode()" disabled>JSON</button>
+      <button class="save-btn" id="save-btn" onclick="save()" disabled>SALVAR PACKAGE</button>
+    </div>
+  </div>
+
+  <!-- Painel JSON (substitui filter-bar + strings-list + bottom-bar quando ativo) -->
+  <div class="json-panel" id="json-panel">
+    <div class="json-toolbar">
+      <span class="json-toolbar-label" id="json-toolbar-label">JSON · edite e aplique</span>
+      <span class="json-error-msg" id="json-error-msg"></span>
+      <button class="json-apply-btn" id="json-apply-btn" onclick="applyJsonEdits()">✓ APLICAR</button>
+    </div>
+    <div class="json-editor-wrap">
+      <textarea class="json-textarea" id="json-textarea" spellcheck="false" autocorrect="off" autocapitalize="off" oninput="scheduleJsonDraftSave()"></textarea>
+    </div>
+    <div class="json-bottom">
+      <div class="filename-row">
+        <span class="filename-label">Nome:</span>
+        <input type="text" class="filename-input" id="json-filename-input" placeholder="output" maxlength="100">
+        <span class="ext-label">.json</span>
+      </div>
+      <div class="json-bottom-actions">
+        <button class="package-return-btn" onclick="exitJsonMode()">PACKAGE</button>
+        <button class="json-import-btn" onclick="triggerImportJson()" title="Importar traduções de um arquivo .json">⇪ IMPORTAR</button>
+        <button class="json-save-btn" id="json-save-btn" onclick="saveJson()">SALVAR JSON</button>
+      </div>
+      <input type="file" id="import-json-input" accept=".json,application/json" style="display:none">
+    </div>
+  </div>
+</div>
+
+<!-- Toast de notificação -->
+<div class="toast-wrap" id="toast-wrap"></div>
+
+<!-- Modal de confirmação -->
+<div class="modal-backdrop" id="modal-backdrop" onclick="if(event.target===this)_modalReject&&_modalReject()">
+  <div class="modal-inner" id="modal-inner">
+    <div class="modal-icon" id="modal-icon">◈</div>
+    <div class="modal-title" id="modal-title"></div>
+    <div class="modal-msg" id="modal-msg"></div>
+    <div class="modal-btns">
+      <button class="modal-btn-confirm" id="modal-btn-confirm" onclick="_modalResolve&&_modalResolve()"></button>
+      <button class="modal-btn-cancel" id="modal-btn-cancel" onclick="_modalReject&&_modalReject()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div class="loading-overlay" id="loading">
+  <div class="spinner"></div>
+  <div class="loading-text" id="loading-text">Carregando...</div>
+</div>
+
+<div class="success-sheet" id="success-sheet" onclick="if(event.target===this) closeSuccessSheet();">
+  <div class="success-inner">
+    <div class="success-icon">✦</div>
+    <div class="success-sub" id="success-sub">—</div>
+    <div class="success-title">⬇ Clique Abaixo para Salvar sua Tradução!</div>
+    <div class="success-downloads-note" id="downloads-note"></div>
+    <a id="download-link" href="#" class="success-new">BAIXAR ARQUIVO</a>
+
+    <button class="success-new" onclick="window.location.href='/'" style="background:transparent; border:1px solid var(--border2); color:var(--text-muted);">Ver minhas traduções</button>
+    <button class="success-back" onclick="closeSuccessSheet()">Continuar editando</button>
+  </div>
+</div>
+
+<div class="engine-menu" id="engine-menu">
+  <div class="engine-menu-empty">Carregando modelos...</div>
+</div>
+
+<!-- Menu ⋮ — um único elemento pra todas as linhas (evita ser cortado pelo
+     content-visibility:auto das linhas e evita duplicar isso 2500x no DOM).
+     É reposicionado via JS em toggleKebab() e seu conteúdo é recalculado
+     em refreshKebabMenuContent() toda vez que abre. -->
+<div class="kebab-menu" id="kebab-menu-shared">
+  <div class="kebab-item" id="kebab-translate-shared" onclick="kebabAction('translate')">
+    <span class="kebab-item-icon">◈</span>Selecionar Tradutor
+  </div>
+  <div class="kebab-item" id="kebab-note-shared" onclick="kebabAction('note')">
+    <span class="kebab-item-icon">⎙ˊ˗</span>Nota
+  </div>
+  <div class="kebab-item" id="kebab-clear-shared" onclick="kebabAction('clear')">
+    <span class="kebab-item-icon">⌫</span><span class="kebab-clear-label">Limpar tradução</span>
+  </div>
+  <div class="kebab-item" id="kebab-expand-shared" onclick="kebabAction('expand')">
+    <span class="kebab-item-icon">⤢</span><span class="kebab-expand-label">Expandir esta caixa</span>
+  </div>
+  <div class="kebab-item kebab-expandall-item" id="kebab-expandall-shared" onclick="kebabAction('expandall')">
+    <span class="kebab-item-icon">⤢</span><span class="kebab-expandall-label">Expandir todas</span>
+  </div>
+</div>
+
+<!-- Modal "modelo indisponível" -->
+<div class="confirm-modal" id="confirm-modal">
+  <div class="confirm-modal-inner">
+    <div class="confirm-modal-text" id="confirm-modal-text">O modelo escolhido não está disponível no momento. Deseja alterar?</div>
+    <div class="confirm-modal-actions">
+      <button class="confirm-modal-btn confirm-modal-btn-cancel" onclick="closeConfirmModal(false)">Cancelar</button>
+      <button class="confirm-modal-btn confirm-modal-btn-switch" onclick="closeConfirmModal(true)">Trocar Modelo</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sheet de traduzir tudo -->
+<div class="tall-sheet" id="tall-sheet" onclick="if(event.target===this) closeTallSheet();">
+  <div class="tall-sheet-inner">
+    <div class="tall-title" id="tall-title">Traduzir tudo</div>
+    <div class="tall-sub" id="tall-sub">Escolha a engine e toque em iniciar. Strings já traduzidas serão ignoradas.</div>
+    <div class="tall-engine-row">
+      <button class="tall-engine-btn" id="tall-engine-picker-btn" onclick="showEngineMenu(null, event)">🌐 Google ▾</button>
+    </div>
+    <div class="tall-progress-track"><div class="tall-progress-fill" id="tall-fill"></div></div>
+    <div class="tall-status" id="tall-status">Aguardando...</div>
+    <button class="translate-all-btn" id="tall-start-btn" onclick="startTranslateAll()" style="margin-bottom:0.75rem">▶ INICIAR</button>
+    <button class="tall-cancel-btn" id="tall-cancel-btn" onclick="cancelTranslateAll()">Cancelar</button>
+  </div>
+</div>
+
+<!-- Sheet de confirmação: sobrescrever ou pular já-traduzidas de uma seleção -->
+<div class="tall-sheet" id="selection-overwrite-sheet" onclick="if(event.target===this) closeSelectionOverwriteSheet();">
+  <div class="tall-sheet-inner">
+    <div class="tall-title">Algumas já têm tradução</div>
+    <div class="tall-sub" id="selection-overwrite-sub"></div>
+    <button class="translate-all-btn" id="selection-overwrite-btn" style="margin-bottom:0.6rem" onclick="resolveSelectionOverwrite('overwrite')">Sobrescrever todas</button>
+    <button class="translate-all-btn" style="margin-bottom:0.75rem" onclick="resolveSelectionOverwrite('skip')">Pular já traduzidas</button>
+    <button class="tall-cancel-btn" onclick="closeSelectionOverwriteSheet()">Cancelar</button>
+  </div>
+</div>
+
+<!-- Sheet de substituir palavra em todas as strings -->
+<div class="tall-sheet" id="replace-sheet" onclick="if(event.target===this) closeReplaceSheet();">
+  <div class="tall-sheet-inner">
+    <div class="tall-title" id="replace-title">Substituir em todas as strings</div>
+    <div class="tall-sub" id="replace-sub">Troca um trecho de texto em todas as traduções já escritas. Não mexe nas strings vazias.</div>
+
+    <div style="margin-bottom:0.6rem;">
+      <label style="display:block;font-size:11px;color:var(--text-muted);margin-bottom:3px;">Buscar</label>
+      <input type="text" id="replace-find-input" class="search-input" placeholder="ex: aroma" oninput="updateReplacePreview()">
+    </div>
+    <div style="margin-bottom:0.6rem;">
+      <label style="display:block;font-size:11px;color:var(--text-muted);margin-bottom:3px;">Substituir por</label>
+      <input type="text" id="replace-with-input" class="search-input" placeholder="ex: cheiro" oninput="updateReplacePreview()">
+    </div>
+    <label class="filter-checkbox-label" style="margin-bottom:0.4rem;">
+      <input type="checkbox" id="replace-ignore-case" onchange="updateReplacePreview()">
+      Ignorar maiúsculas/minúsculas
+    </label>
+    <label class="filter-checkbox-label" style="margin-bottom:0.75rem;">
+      <input type="checkbox" id="replace-whole-word" onchange="updateReplacePreview()">
+      Só palavra inteira (evita pegar pedaço de outra palavra)
+    </label>
+
+    <div class="tall-status" id="replace-preview" style="margin-bottom:0.75rem;">Digite algo pra buscar...</div>
+
+    <button class="translate-all-btn" id="replace-apply-btn" onclick="applyReplaceAll()" style="margin-bottom:0.75rem" disabled>APLICAR SUBSTITUIÇÃO</button>
+    <button class="tall-cancel-btn" id="replace-undo-btn" onclick="undoLastReplaceAll()" style="display:none;margin-top:0.5rem;">↩ Desfazer última substituição</button>
+    <button class="tall-cancel-btn" onclick="closeReplaceSheet()">Cancelar</button>
+  </div>
+</div>
+
+<!-- Sheet de importar traduções -->
+<div class="import-sheet" id="import-sheet" onclick="if(event.target===this) closeImportSheet();">
+  <div class="import-sheet-inner">
+    <div class="import-sheet-title">Carregar traduções</div>
+    <div class="import-sheet-sub">Escolha de onde importar as traduções para preencher o editor automaticamente.</div>
+
+    <div class="import-source-btns">
+      <button class="import-source-btn active" id="btn-source-saves" onclick="switchImportSource('saves')">💾 De um save</button>
+      <button class="import-source-btn" id="btn-source-file" onclick="switchImportSource('file')">📦 De um .package</button>
+    </div>
+
+    <!-- Seção: saves -->
+    <div class="import-section active" id="section-saves">
+      <div id="import-saves-list"></div>
+    </div>
+
+    <!-- Seção: arquivo -->
+    <div class="import-section" id="section-file">
+      <div class="import-file-area" onclick="document.getElementById('import-package-input').click()">
+        <div class="import-file-icon">📦</div>
+        <div class="import-file-label">Toque para selecionar um .package</div>
+        <div class="import-file-hint">O arquivo será lido localmente e as traduções extraídas</div>
+      </div>
+      <input type="file" id="import-package-input" accept=".package" style="display:none">
+    </div>
+
+    <button class="import-cancel" onclick="closeImportSheet()">Cancelar</button>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+// TOAST — notificações bonitas no topo
+// ══════════════════════════════════════════════
+function showToast(msg, type = 'info', duration = 3200) {
+  const wrap = document.getElementById('toast-wrap');
+  const el = document.createElement('div');
+  el.className = 'toast toast-' + type;
+  el.textContent = msg;
+  wrap.appendChild(el);
+  requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('show')));
+  setTimeout(() => {
+    el.classList.remove('show');
+    el.addEventListener('transitionend', () => el.remove(), { once: true });
+  }, duration);
+}
+
+// ══════════════════════════════════════════════
+// MODAL — substitui alert() e confirm()
+// ══════════════════════════════════════════════
+let _modalResolve = null;
+let _modalReject  = null;
+
+function showModal({ icon = '◈', title = '', msg = '', confirmText = 'OK', cancelText = null, danger = false } = {}) {
+  return new Promise((resolve, reject) => {
+    _modalResolve = () => { closeModal(); resolve(true); };
+    _modalReject  = () => { closeModal(); reject(false); };
+
+    document.getElementById('modal-icon').textContent = icon;
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-msg').textContent = msg;
+    const confirmBtn = document.getElementById('modal-btn-confirm');
+    confirmBtn.textContent = confirmText;
+    confirmBtn.className = 'modal-btn-confirm' + (danger ? ' danger' : '');
+    const cancelBtn = document.getElementById('modal-btn-cancel');
+    cancelBtn.style.display = cancelText === null ? 'none' : '';
+    if (cancelText) cancelBtn.textContent = cancelText;
+
+    const backdrop = document.getElementById('modal-backdrop');
+    backdrop.style.display = 'flex';
+    requestAnimationFrame(() => requestAnimationFrame(() => backdrop.classList.add('open', 'open-active')));
+  });
+}
+
+function closeModal() {
+  const backdrop = document.getElementById('modal-backdrop');
+  backdrop.classList.remove('open-active');
+  setTimeout(() => { backdrop.classList.remove('open'); backdrop.style.display = 'none'; }, 320);
+  _modalResolve = null;
+  _modalReject  = null;
+}
+
+// ══════════════════════════════════════════════
+// BLUR PULSE — feedback tátil em todos os botões
+// ══════════════════════════════════════════════
+document.addEventListener('pointerdown', function(e) {
+  const btn = e.target.closest('button, .import-btn, .kebab-btn, .count-badge, .back-btn, .save-progress-btn, .undo-btn, .focus-toggle-btn, .json-mode-btn, .package-return-btn');
+  if (!btn) return;
+  btn.classList.remove('btn-tapped');
+  // forçar reflow para reiniciar animação
+  void btn.offsetWidth;
+  btn.classList.add('btn-tapped');
+  btn.addEventListener('animationend', () => btn.classList.remove('btn-tapped'), { once: true });
+}, { passive: true });
+
+let stringsData = [];
+let instanceStr  = sessionStorage.getItem('selected_instance_str') || '';
+
+// Se estamos reabrindo um save existente, original_name já vem preenchido
+// (pelo index.html via editSave). Pré-preenche o campo de nome só nesse caso.
+// Para novos uploads (redirect do Flask), original_name NÃO vem via sessionStorage
+// — vem via query param ou simplesmente não existe — então limpamos aqui para
+// garantir que o campo fique vazio e o usuário nomeie do zero.
+(function prefillFilename() {
+  // Se veio de um editSave, o index.html seta 'editing_save' como flag.
+  // Caso contrário, é um novo upload e limpamos o nome anterior.
+  const editingSave = sessionStorage.getItem('editing_save');
+  if (editingSave) {
+    sessionStorage.removeItem('editing_save');
+    const existingName = sessionStorage.getItem('original_name');
+    if (existingName) {
+      document.addEventListener('DOMContentLoaded', () => {
+        const input = document.getElementById('filename-input');
+        if (input && !input.value) input.value = existingName.replace(/\.package$/i, '');
+      });
+    }
+  } else {
+    // Novo upload — descarta qualquer nome de sessão anterior
+    sessionStorage.removeItem('original_name');
+  }
+})();
+
+document.addEventListener('DOMContentLoaded', updateInstancePrefix);
+let targetLang   = sessionStorage.getItem('target_lang') || 'POR_BR';
+let originalLang = sessionStorage.getItem('original_lang') || 'ENG_US';
+let currentIdx = null;
+let availableEngines = [];   // preenchido por fetchAvailableEngines(), a partir de /api/engines
+let _enginePickerMode = 'single'; // 'single' (uma string) ou 'bulk' (tela de Traduzir tudo)
+let autoSaveTimer = null;
+let draftSaveTimer = null;
+let progressSaved = false;
+let editedIndices = new Set();
+// editedIndices só CRESCE (nunca é limpo depois de salvar) porque também é
+// usado pelo "Traduzir tudo" pra pular strings já traduzidas — não serve
+// pra saber se existe algo "não salvo agora". hasUnsavedChanges é isso: fica
+// true a cada edição e só volta a false quando salva de verdade no banco.
+let hasUnsavedChanges = false;
+let editSnapshots = {}; // idx -> valor de antes da edição atual (1 nível de undo)
+let lastEdit = null;     // { idx, previousValue } da última alteração feita
+
+// Chave usada pro "rascunho de recuperação" no localStorage. É lida também
+// pela home (index.html) pra mostrar o aviso de "tradução recente não salva".
+const DRAFT_KEY = 's4t_unsaved_draft';
+const JSON_DRAFT_KEY = 's4t_json_draft'; // rascunho separado: texto CRU do textarea JSON, ainda não aplicado
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
+}
+
+// ---- LISTA DE ENGINES (dinâmica, vem do backend) ----
+async function fetchAvailableEngines() {
+  try {
+    const res = await fetch('/api/engines');
+    const list = await res.json();
+    availableEngines = Array.isArray(list) && list.length ? list : [{ id: 'google', label: 'Google Translate' }];
+  } catch (e) {
+    availableEngines = [{ id: 'google', label: 'Google Translate' }];
+  }
+  renderEngineMenu();
+}
+
+function renderEngineMenu() {
+  const menu = document.getElementById('engine-menu');
+  if (!availableEngines.length) {
+    menu.innerHTML = '<div class="engine-menu-empty">Nenhum modelo disponível</div>';
+    return;
+  }
+  menu.innerHTML = availableEngines.map(e =>
+    '<div class="engine-option" onclick="selectEngine(\'' + e.id + '\')">' + e.label + '</div>'
+  ).join('');
+}
+
+function engineLabelFor(engineId) {
+  const found = availableEngines.find(e => e.id === engineId);
+  return found ? found.label : engineId;
+}
+
+// idx === null abre o seletor no modo "Traduzir tudo" (bulk); um idx
+// específico abre no modo "traduzir esta string" (single).
+function showEngineMenu(idx, event) {
+  if (event) event.stopPropagation();
+  _enginePickerMode = (idx === null) ? 'bulk' : 'single';
+  const menu = document.getElementById('engine-menu');
+  const alreadyOpenForSame = menu.classList.contains('open') && (idx === null || currentIdx === idx);
+  if (alreadyOpenForSame) {
+    menu.classList.remove('open');
+    return;
+  }
+  currentIdx = idx;
+  menu.classList.add('open');
+  setTimeout(() => {
+    document.addEventListener('click', function closeMenu(e) {
+      if (!menu.contains(e.target)) {
+        menu.classList.remove('open');
+        document.removeEventListener('click', closeMenu);
+      }
+    });
+  }, 50);
+}
+
+function selectEngine(engineId) {
+  document.getElementById('engine-menu').classList.remove('open');
+  if (_enginePickerMode === 'bulk') {
+    tallEngine = engineId;
+    const btn = document.getElementById('tall-engine-picker-btn');
+    if (btn) btn.textContent = engineLabelFor(engineId) + ' ▾';
+  } else {
+    processTranslation(engineId);
+  }
+}
+
+// ---- MODAL "MODELO INDISPONÍVEL" ----
+let _confirmModalResolve = null;
+
+function showModelUnavailableModal(customText) {
+  return new Promise(resolve => {
+    _confirmModalResolve = resolve;
+    document.getElementById('confirm-modal-text').textContent =
+      customText || 'O modelo escolhido não está disponível no momento. Deseja alterar?';
+    document.getElementById('confirm-modal').classList.add('open');
+  });
+}
+
+function closeConfirmModal(wantsSwitch) {
+  document.getElementById('confirm-modal').classList.remove('open');
+  if (_confirmModalResolve) {
+    const resolve = _confirmModalResolve;
+    _confirmModalResolve = null;
+    resolve(wantsSwitch);
+  }
+}
+
+async function processTranslation(engine) {
+  document.getElementById('engine-menu').classList.remove('open');
+  if (currentIdx === null) return;
+  const idx = currentIdx;
+  const textarea = document.querySelector('[data-idx="' + idx + '"]');
+  const originalText = stringsData[idx].original;
+  if (!originalText || !originalText.trim()) {
+    showToast('Esta string não tem texto original para traduzir.', 'info', 2500);
+    return;
+  }
+  const engineLabel = engineLabelFor(engine);
+  let ok = false;
+  try {
+    const res = await fetch('/api/translate', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ text: originalText, engine: engine, source_lang: originalLang, target_lang: targetLang })
+    });
+    const data = await res.json();
+    if (data.success && data.translated) {
+      if (textarea) {
+        textarea.value = data.translated;
+        updateBackdrop(idx, document.activeElement !== textarea);
+        if (expandedTranslation.has(idx)) autoResize(textarea);
+      }
+      stringsData[idx].value = data.translated;
+      triggerAutoSave();
+      editedIndices.add(idx);
+      updateProgressBadge();
+      showToast('Traduzido com ' + engineLabel + '!', 'success', 2000);
+      ok = true;
+    }
+  } catch (e) { /* cai no fluxo de indisponível abaixo */ }
+
+  if (!ok) {
+    // Nenhuma string foi alterada até aqui — só mostra a opção de trocar.
+    const wantsSwitch = await showModelUnavailableModal();
+    if (wantsSwitch) {
+      currentIdx = idx;
+      showEngineMenu(idx, null);
+    }
+  }
+}
+
+function triggerAutoSave() {
+  hasUnsavedChanges = true;
+  clearTimeout(autoSaveTimer);
+  autoSaveTimer = setTimeout(() => { saveProgressToDatabase(); }, 2000);
+  triggerDraftSave();
+}
+
+// ---- RASCUNHO DE RECUPERAÇÃO (localStorage) ----
+// Funciona independente do autosave no banco (que só roda se o usuário já
+// deu um nome ao arquivo). Guarda um "instantâneo" leve de tudo que foi
+// editado nesta sessão, pra dar pra recuperar mesmo que a página feche/perca
+// a sessão do servidor antes do autosave de verdade rolar.
+function triggerDraftSave() {
+  clearTimeout(draftSaveTimer);
+  draftSaveTimer = setTimeout(saveDraftToLocalStorage, 500);
+}
+
+function saveDraftToLocalStorage() {
+  if (stringsData.length === 0 || !hasUnsavedChanges) return;
+  try {
+    const draft = {
+      instanceStr: instanceStr,
+      target_lang: targetLang,
+      original_lang: originalLang,
+      package_id: sessionStorage.getItem('package_id') || '',
+      original_name: getProjectBaseName(),
+      strings: stringsData,
+      timestamp: Date.now()
+    };
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+  } catch (e) {
+    console.error('Erro ao salvar rascunho local', e);
+  }
+}
+
+function clearLocalDraft() {
+  try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
+}
+
+// Salva o texto CRU do textarea JSON — diferente do rascunho normal, que só
+// guarda stringsData já processado. Isso cobre o caso de a página recarregar
+// sozinha (ex: Android descartando a aba em segundo plano por falta de
+// memória) enquanto o usuário editou o JSON mas ainda não clicou em
+// "Aplicar" — nesse ponto a edição só existe no texto do textarea, em
+// nenhum outro lugar, e o beforeunload normal não teria como capturá-la.
+function saveJsonDraftToLocalStorage() {
+  if (!jsonModeActive) return;
+  try {
+    const ta = document.getElementById('json-textarea');
+    if (!ta) return;
+    localStorage.setItem(JSON_DRAFT_KEY, JSON.stringify({
+      instanceStr: instanceStr,
+      value: ta.value,
+      timestamp: Date.now()
+    }));
+  } catch (e) {
+    console.error('Erro ao salvar rascunho do JSON', e);
+  }
+}
+
+function clearJsonDraft() {
+  try { localStorage.removeItem(JSON_DRAFT_KEY); } catch (e) {}
+}
+
+// Debounce curto (800ms): salva o rascunho cru do JSON continuamente
+// enquanto o usuário digita — não só no beforeunload. Isso é o que
+// realmente protege contra a página recarregar sozinha (ex: Android
+// descartando a aba em segundo plano), já que nesse caso o beforeunload
+// pode simplesmente não disparar — o processo é morto direto pelo sistema.
+let jsonDraftSaveTimer = null;
+function scheduleJsonDraftSave() {
+  clearTimeout(jsonDraftSaveTimer);
+  jsonDraftSaveTimer = setTimeout(saveJsonDraftToLocalStorage, 800);
+}
+
+// Nome do projeto agora vem do campo "Nome do arquivo" (#filename-input),
+// que é a mesma caixa usada pra exportar o .package. Sem nome ali, não
+// salva na lista — em vez de cair no genérico "arquivo.package" que
+// bagunçava a lista de saves.
+function getProjectBaseName() {
+  const input = document.getElementById('filename-input');
+  return (input?.value || '').trim().replace(/\.package$/i, '');
+}
+
+async function saveProgressToDatabase() {
+  if (stringsData.length === 0) return;
+  const baseName = getProjectBaseName();
+  if (!baseName) return; // autosave fica em espera até o usuário dar um nome
+  sessionStorage.setItem('original_name', baseName);
+  const projectName = baseName + ' (' + instanceStr + ')';
+  const packageId = sessionStorage.getItem('package_id') || '';
+  const payload = {
+    project_name: projectName,
+    source_lang: originalLang,
+    target_lang: targetLang,
+    strings: stringsData,
+    package_id: packageId
+  };
+  const btn = document.getElementById('save-progress-btn');
+  try {
+    await fetch('/api/save_progress', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    btn.classList.remove('saving');
+    progressSaved = true;
+    hasUnsavedChanges = false; // salvo de verdade agora — nada de mostrar aviso de "não salvo" na home
+    localStorage.setItem('has_saves', '1');
+    // Já está salvo de verdade no banco com um nome — o rascunho local de
+    // recuperação não é mais necessário.
+    clearLocalDraft();
+  } catch(e) {
+    btn.classList.remove('saving');
+    console.error("Erro no auto-save", e);
+  }
+}
+
+async function saveProgressManual() {
+  clearTimeout(autoSaveTimer); // evita o autosave pendente disparar em duplicidade
+  const btn = document.getElementById('save-progress-btn');
+  if (stringsData.length === 0) return;
+  if (!getProjectBaseName()) {
+    const input = document.getElementById('filename-input');
+    input.classList.add('empty-error');
+    input.addEventListener('input', () => input.classList.remove('empty-error'), { once: true });
+    input.focus();
+    input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    showToast('Dê um nome ao arquivo antes de salvar o progresso.', 'error', 4000);
+    return;
+  }
+  btn.classList.add('saving');
+  btn.classList.add('saved');
+  await saveProgressToDatabase();
+  window.location.href = '/';
+}
+
+window.addEventListener('beforeunload', () => {
+  clearTimeout(autoSaveTimer); // evita disparar autosave junto com o sendBeacon abaixo
+  clearTimeout(draftSaveTimer);
+  // Salva o texto cru do JSON imediatamente (sem esperar o debounce) — é a
+  // última chance antes da página sumir, igual ao rascunho normal abaixo.
+  saveJsonDraftToLocalStorage();
+  // Grava o rascunho local na hora, sem esperar o debounce — é a última
+  // chance antes da página sumir (com ou sem nome de arquivo definido).
+  saveDraftToLocalStorage();
+  const baseName = getProjectBaseName();
+  if (stringsData.length > 0 && baseName) {
+    const projectName = baseName + ' (' + instanceStr + ')';
+    const packageId = sessionStorage.getItem('package_id') || '';
+    const payload = JSON.stringify({
+      project_name: projectName,
+      source_lang: originalLang,
+      target_lang: targetLang,
+      strings: stringsData,
+      package_id: packageId
+    });
+    navigator.sendBeacon('/api/save_progress', new Blob([payload], {type: 'application/json'}));
+    localStorage.setItem('has_saves', '1');
+  }
+});
+
+// Se viemos do botão "Recuperar" na home, os dados não vêm do servidor —
+// vêm direto do rascunho salvo no localStorage nesse mesmo navegador. Isso
+// funciona mesmo que a sessão do servidor já tenha expirado, porque a
+// tradução inteira (com as edições) já está guardada no aparelho.
+function loadFromLocalDraft() {
+  const recovering = sessionStorage.getItem('recover_draft') === '1';
+  sessionStorage.removeItem('recover_draft');
+  if (!recovering) return false;
+  try {
+    const raw = localStorage.getItem(DRAFT_KEY);
+    if (!raw) return false;
+    const draft = JSON.parse(raw);
+    if (!draft || !Array.isArray(draft.strings) || draft.instanceStr !== instanceStr) return false;
+    stringsData = draft.strings;
+    // "original" já vem certo dentro do rascunho (foi congelado no load()
+    // original, antes de qualquer edição) — não sobrescrever aqui.
+    document.getElementById('count-badge').textContent = stringsData.length + ' strings';
+    updateProgressBadge();
+    document.getElementById('loading').classList.remove('active');
+    renderStrings();
+    document.getElementById('save-btn').disabled = stringsData.length === 0;
+    document.getElementById('translate-all-btn').disabled = stringsData.length === 0;
+    document.getElementById('json-mode-btn').disabled = stringsData.length === 0;
+    editedIndices = new Set(stringsData.map((item, idx) => idx).filter(idx => stringsData[idx].value !== stringsData[idx].original));
+    hasUnsavedChanges = true; // recuperado do rascunho local, ainda não confirmado no banco
+    const filenameInput = document.getElementById('filename-input');
+    if (filenameInput && draft.original_name) filenameInput.value = draft.original_name;
+    showToast('Tradução recuperada com sucesso.', 'success', 3500);
+    checkForLeftoverJsonDraft();
+    return true;
+  } catch (e) {
+    console.error('Erro ao recuperar rascunho local', e);
+    return false;
+  }
+}
+
+async function load() {
+  if (!instanceStr) { window.location.href = '/'; return; }
+  fetchAvailableEngines(); // não precisa bloquear o carregamento das strings
+  document.getElementById('top-sub').textContent = originalLang + ' → ' + targetLang;
+  document.getElementById('loading-text').textContent = 'Carregando strings...';
+  document.getElementById('loading').classList.add('active');
+  if (loadFromLocalDraft()) return;
+  try {
+    const res = await fetch('/api/strings?instance=' + encodeURIComponent(instanceStr));
+    const data = await res.json();
+    stringsData = data.strings || [];
+    // Congela uma cópia do valor original de cada string. "value" continua
+    // sendo o campo vivo que o usuário edita; "original" nunca muda depois
+    // disso e é usado pela coluna "Original" e pela busca, pra não bagunçar
+    // a referência quando a lista é re-renderizada após uma edição/filtro.
+    stringsData.forEach(item => { item.original = item.value; });
+    document.getElementById('count-badge').textContent = stringsData.length + ' strings';
+    updateProgressBadge();
+    document.getElementById('loading').classList.remove('active');
+    renderStrings();
+    document.getElementById('save-btn').disabled = stringsData.length === 0;
+    document.getElementById('translate-all-btn').disabled = stringsData.length === 0;
+    document.getElementById('json-mode-btn').disabled = stringsData.length === 0;
+    // Cobre o caso de dar F5 direto no editor (sem passar pela home): se
+    // sobrou um rascunho local desta MESMA instância com algo editado que
+    // não veio no fetch acima (porque nunca foi salvo no servidor), avisa
+    // aqui dentro, sem precisar voltar pra home pra ver o aviso.
+    checkForLeftoverDraft();
+    checkForLeftoverJsonDraft();
+  } catch(e) {
+    document.getElementById('loading').classList.remove('active');
+    showToast('Erro ao carregar strings: ' + e.message, 'error', 5000);
+    // É EXATAMENTE nesse caso (falha ao buscar do servidor — sessão perdida,
+    // .package não encontrado, etc.) que a recuperação local é mais importante.
+    // Sem essa checagem aqui, o aviso nunca aparecia quando o fetch falhava.
+    checkForLeftoverDraft();
+    checkForLeftoverJsonDraft();
+  }
+}
+
+// ---- AVISO DE RASCUNHO DENTRO DO PRÓPRIO EDITOR (caso de reload/F5) ----
+let pendingRecoverDraft = null;
+
+function checkForLeftoverDraft() {
+  try {
+    const raw = localStorage.getItem(DRAFT_KEY);
+    if (!raw) return;
+    const draft = JSON.parse(raw);
+    if (!draft || !Array.isArray(draft.strings) || draft.instanceStr !== instanceStr) return;
+    const hasEdits = draft.strings.some(s => s && s.value && s.value !== s.original);
+    if (!hasEdits) return;
+    pendingRecoverDraft = draft;
+    document.getElementById('editor-draft-banner').classList.add('show');
+  } catch (e) {
+    console.error('Erro ao checar rascunho pendente', e);
+  }
+}
+
+function discardEditorDraft() {
+  clearLocalDraft();
+  pendingRecoverDraft = null;
+  document.getElementById('editor-draft-banner').classList.remove('show');
+}
+
+function recoverEditorDraft() {
+  if (!pendingRecoverDraft) return;
+  stringsData = pendingRecoverDraft.strings;
+  document.getElementById('count-badge').textContent = stringsData.length + ' strings';
+  editedIndices = new Set(stringsData.map((item, idx) => idx).filter(idx => stringsData[idx].value !== stringsData[idx].original));
+  hasUnsavedChanges = true; // recuperado do rascunho local, ainda não confirmado no banco
+  updateProgressBadge();
+  renderStrings();
+  const filenameInput = document.getElementById('filename-input');
+  if (filenameInput && pendingRecoverDraft.original_name) filenameInput.value = pendingRecoverDraft.original_name;
+  document.getElementById('editor-draft-banner').classList.remove('show');
+  showToast('Tradução recuperada com sucesso.', 'success', 3500);
+  pendingRecoverDraft = null;
+}
+
+// ---- AVISO DE RASCUNHO DE JSON NÃO APLICADO (caso de reload sozinho) ----
+let pendingJsonDraft = null;
+
+function checkForLeftoverJsonDraft() {
+  try {
+    const raw = localStorage.getItem(JSON_DRAFT_KEY);
+    if (!raw) return;
+    const draft = JSON.parse(raw);
+    if (!draft || typeof draft.value !== 'string' || draft.instanceStr !== instanceStr) return;
+    if (!draft.value.trim()) return;
+    pendingJsonDraft = draft;
+    document.getElementById('json-draft-banner').classList.add('show');
+  } catch (e) {
+    console.error('Erro ao checar rascunho pendente do JSON', e);
+  }
+}
+
+function discardJsonDraft() {
+  clearJsonDraft();
+  pendingJsonDraft = null;
+  document.getElementById('json-draft-banner').classList.remove('show');
+}
+
+function recoverJsonDraft() {
+  if (!pendingJsonDraft) return;
+  if (stringsData.length === 0) { showToast('Carregue as strings primeiro.', 'error', 3000); return; }
+  enterJsonMode(); // gera o JSON "oficial" a partir de stringsData...
+  document.getElementById('json-textarea').value = pendingJsonDraft.value; // ...e sobrescreve com o rascunho recuperado
+  document.getElementById('json-toolbar-label').textContent = 'JSON · edição recuperada, não aplicada ainda';
+  document.getElementById('json-draft-banner').classList.remove('show');
+  showToast('Edição do JSON recuperada — revise e clique em Aplicar.', 'success', 4000);
+  pendingJsonDraft = null;
+  // Mantém a chave no localStorage até o usuário aplicar ou descartar de
+  // propósito — se a página cair nesse meio-tempo de novo, ainda dá pra
+  // recuperar outra vez.
+}
+
+// O CSS do editor desliga o "puxar pra atualizar" do navegador de propósito
+// (overscroll-behavior: none), pra não recarregar sem querer no meio da
+// rolagem da lista. Esse botão é a forma manual de recarregar no lugar do
+// gesto — o beforeunload já cuida de salvar o rascunho local antes de sair.
+function manualReload() {
+  window.location.reload();
+}
+
+function escapeHtml(str) {
+  return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// Envolve {placeholders} tipo {M0.ele} / {0.SimFirstName} num span colorido.
+// Placeholders bem-formados (com "{" e "}" fechando) ganham a classe "ph"
+// de sempre. Trechos com chave aberta/fechada sem o par correspondente
+// (ex.: "{M0.ele" sem fechar, ou um "}" perdido) ganham "ph-unclosed" —
+// só recebem cor de aviso quando "blurred" (fora da caixinha de edição);
+// enquanto o campo está em foco, ficam com a cor normal do texto.
+function highlightPlaceholdersHtml(rawText, blurred) {
+  const text = rawText || '';
+  const n = text.length;
+  const cls = blurred ? ' blurred' : '';
+  let html = '';
+  let i = 0;
+  while (i < n) {
+    const ch = text[i];
+    if (ch === '{') {
+      let j = i + 1;
+      while (j < n && text[j] !== '{' && text[j] !== '}') j++;
+      if (j < n && text[j] === '}') {
+        // Par completo: {...}
+        html += '<span class="ph' + cls + '">' + escapeHtml(text.slice(i, j + 1)) + '</span>';
+        i = j + 1;
+      } else {
+        // Chave aberta sem fechar até o fim da string ou até outra "{"
+        html += '<span class="ph-unclosed' + cls + '">' + escapeHtml(text.slice(i, j)) + '</span>';
+        i = j;
+      }
+    } else if (ch === '}') {
+      // "}" solto, sem "{" correspondente antes
+      html += '<span class="ph-unclosed' + cls + '">' + escapeHtml(ch) + '</span>';
+      i++;
+    } else {
+      let j = i;
+      while (j < n && text[j] !== '{' && text[j] !== '}') j++;
+      html += escapeHtml(text.slice(i, j));
+      i = j;
+    }
+  }
+  return html;
+}
+
+// Decide se uma string passa pelo filtro de busca + "não traduzidas" + "favoritas".
+// Não toca em stringsData, só decide o que aparece na tela.
+function matchesFilters(item, term, onlyUntranslated, onlyFavorite, onlyNotes, caseSensitive) {
+  if (onlyUntranslated && item.value) return false;
+  if (onlyFavorite && !item.favorite) return false;
+  if (onlyNotes && !item.note) return false;
+  if (!term) return true;
+  const norm = caseSensitive ? (s) => s : (s) => s.toLowerCase();
+  const t = norm(term);
+  return norm(item.key_hex || '').includes(t) ||
+         norm(String(item.key ?? '')).includes(t) ||
+         norm(item.original || '').includes(t) ||
+         norm(item.value || '').includes(t);
+}
+
+let expandedOriginal = new Set();
+let expandedTranslation = new Set();
+let _lastOrigToggle = new Map(); // idx -> timestamp, evita clique "fantasma" duplicado (touch + mouse emulado)
+
+// ---- SELEÇÃO MÚLTIPLA (segurar a caixa pra selecionar, traduzir a seleção) ----
+let selectionMode = false;
+let selectedIndices = new Set();
+let _longPressTimer = null;
+let _longPressFired = false;
+const LONG_PRESS_MS = 480;
+let isDragSelecting = false;
+let dragSelectVisited = new Set();
+
+function renderStrings() {
+  setupListDelegation();
+  const list = document.getElementById('strings-list');
+  if (stringsData.length === 0) {
+    list.innerHTML = '<div class="empty-state"><div class="empty-icon">◌</div><div class="empty-text">Nenhuma string encontrada nesta instância.</div></div>';
+    return;
+  }
+
+  const term = (document.getElementById('search-input')?.value || '').trim();
+  const onlyUntranslated = document.getElementById('filter-untranslated')?.checked || false;
+  const onlyFavorite = document.getElementById('filter-favorite')?.checked || false;
+  const onlyNotes = document.getElementById('filter-notes')?.checked || false;
+  const caseSensitive = document.getElementById('filter-case-sensitive')?.checked || false;
+  const visibleIndices = [];
+  stringsData.forEach((item, idx) => {
+    if (matchesFilters(item, term, onlyUntranslated, onlyFavorite, onlyNotes, caseSensitive)) visibleIndices.push(idx);
+  });
+
+  if (visibleIndices.length === 0) {
+    list.innerHTML = '<div class="empty-state"><div class="empty-icon">◌</div><div class="empty-text">Nenhuma string encontrada com esse filtro.</div></div>';
+    return;
+  }
+
+  list.innerHTML = '';
+  visibleIndices.forEach(idx => {
+    const item = stringsData[idx];
+    const isFav = !!item.favorite;
+    const hasNote = !!item.note;
+    const origExpanded = expandedOriginal.has(idx);
+    const taExpanded = expandedTranslation.has(idx);
+
+    const row = document.createElement('div');
+    row.className = 'string-row' + (selectedIndices.has(idx) ? ' row-selected' : '');
+    row.id = 'srow-' + idx;
+    row.innerHTML =
+      '<div class="selection-check"></div>' +
+      '<div>' +
+        '<div class="key-hex">' + item.key_hex + '</div>' +
+        '<div class="original-text" id="orig-box-' + idx + '" onclick="toggleOriginalExpand(' + idx + ', event)">' +
+          '<button class="copy-btn" id="copy-btn-' + idx + '" onclick="copyOriginal(' + idx + ', event)" title="Copiar original">❐</button>' +
+          '<span class="original-text-inner' + (origExpanded ? '' : ' clamped') + '" id="orig-inner-' + idx + '">' +
+            (item.original ? highlightPlaceholdersHtml(item.original, false) : '<em style="opacity:0.4">vazio</em>') +
+          '</span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="edit-container">' +
+        '<div class="ta-wrap">' +
+          '<button class="fav-btn' + (isFav ? ' active' : '') + '" id="fav-btn-' + idx + '" onclick="toggleFavorite(' + idx + ', event)" title="Favoritar">★</button>' +
+          (hasNote ? '<span class="note-dot" id="note-dot-' + idx + '"></span>' : '<span class="note-dot" id="note-dot-' + idx + '" style="display:none"></span>') +
+          '<button class="expand-arrow-btn' + (taExpanded ? ' expanded' : '') + '" id="exp-arrow-' + idx + '" onclick="toggleTranslationExpand(' + idx + ', event)" title="Expandir/diminuir">▾</button>' +
+          '<textarea class="edit-textarea' + (taExpanded ? '' : ' ta-collapsed') + '" data-idx="' + idx + '" rows="1">' + (item.value || '') + '</textarea>' +
+          '<div class="ta-backdrop' + (taExpanded ? '' : ' ta-collapsed') + '" id="ta-backdrop-' + idx + '"></div>' +
+        '</div>' +
+        '<div class="kebab-wrap" id="kebab-wrap-' + idx + '">' +
+          '<div class="kebab-btn" id="kebab-btn-' + idx + '" onclick="toggleKebab(' + idx + ', event)" title="Ações">⋮</div>' +
+        '</div>' +
+      '</div>';
+    list.appendChild(row);
+    // Os handlers de seleção (long-press/drag-select) e os da textarea de
+    // tradução/nota NÃO são mais anexados aqui, um por elemento — com
+    // milhares de strings isso significava dezenas de milhares de
+    // listeners vivos ao mesmo tempo. Agora existe um único listener
+    // delegado por tipo de evento no container '#strings-list', montado
+    // uma vez em setupListDelegation(). O comportamento é idêntico ao de
+    // antes, só o ponto de anexação mudou.
+
+    const noteRow = document.createElement('div');
+    noteRow.className = 'note-row';
+    noteRow.id = 'note-row-' + idx;
+    noteRow.innerHTML =
+      '<textarea class="note-textarea" id="note-ta-' + idx + '" placeholder="Anotação interna (não vai para o package)..." rows="2">' + escapeHtml(item.note || '') + '</textarea>' +
+      '<div class="note-hint">📝 Só fica salva no editor.</div>';
+    list.appendChild(noteRow);
+
+    const ta = row.querySelector('textarea');
+    if (taExpanded) autoResize(ta);
+    updateBackdrop(idx, true);
+  });
+}
+
+// ---- SELEÇÃO MÚLTIPLA (segurar a caixa pra entrar no modo seleção) ----
+// Antes, cada linha recebia seu próprio conjunto de listeners (7 por linha,
+// mais 6 na textarea de tradução e 1 na de nota). Com milhares de strings
+// isso significava dezenas de milhares de listeners vivos simultaneamente.
+// setupListDelegation() monta esses handlers UMA ÚNICA VEZ no container
+// '#strings-list' (delegação de evento) e descobre a linha/textarea alvo
+// via event.target — a lógica de cada handler é a mesma de antes, só o
+// ponto de anexação mudou. Long-press/drag-select continua entrando em
+// modo seleção só quando o toque começa em cima da caixa do texto ORIGINAL,
+// exatamente como antes.
+let _listDelegationReady = false;
+let _selStartX = 0, _selStartY = 0;
+const TAP_MOVE_THRESHOLD = 10; // px — abaixo disso conta como toque, não rolagem
+
+function setupListDelegation() {
+  if (_listDelegationReady) return;
+  _listDelegationReady = true;
+  const list = document.getElementById('strings-list');
+
+  function point(e) {
+    return e.touches ? e.touches[0] : (e.changedTouches ? e.changedTouches[0] : e);
+  }
+  function movedPastThreshold(e) {
+    const p = point(e);
+    return Math.abs(p.clientX - _selStartX) > TAP_MOVE_THRESHOLD || Math.abs(p.clientY - _selStartY) > TAP_MOVE_THRESHOLD;
+  }
+  function rowIdxFromTarget(target) {
+    const rowEl = target.closest ? target.closest('.string-row') : null;
+    if (!rowEl || !rowEl.id) return null;
+    const idx = parseInt(rowEl.id.replace('srow-', ''), 10);
+    return isNaN(idx) ? null : idx;
+  }
+
+  function pointerDown(e, idx) {
+    const p = point(e);
+    _selStartX = p.clientX; _selStartY = p.clientY;
+    if (selectionMode) {
+      // No mouse, o foco no textarea acontece já no mousedown (antes de
+      // sabermos se virou toque ou arrasto) — bloqueia só nesse caso.
+      // No toque, o navegador só foca depois de confirmar que não é
+      // rolagem, então não precisa (e não deve) travar aqui.
+      if (e.type === 'mousedown') e.preventDefault();
+      return;
+    }
+    // O long-press pra entrar no modo seleção só é iniciado quando o toque
+    // começa em cima da caixa do texto ORIGINAL — assim não conflita com os
+    // botões (favoritar, menu ⋮, copiar, expandir) nem com a caixa de
+    // tradução, que precisa ficar livre pro gesto nativo de selecionar e
+    // copiar/recortar texto.
+    if (!e.target.closest('.original-text')) return;
+    _longPressFired = false;
+    clearTimeout(_longPressTimer);
+    _longPressTimer = setTimeout(() => {
+      _longPressFired = true;
+      enterSelectionMode(idx);
+      startDragSelect(idx);
+      if (navigator.vibrate) navigator.vibrate(15);
+    }, LONG_PRESS_MS);
+  }
+  function pointerMove(e) {
+    if (selectionMode) return; // rolagem normal cuida disso sozinha
+    if (movedPastThreshold(e)) clearTimeout(_longPressTimer); // moveu = é rolagem, cancela o long-press
+  }
+  function pointerUp(e, idx) {
+    clearTimeout(_longPressTimer);
+    if (!selectionMode) return;
+    if (_longPressFired) { _longPressFired = false; return; } // já tratado pelo long-press/drag-select
+    if (!movedPastThreshold(e)) toggleRowSelection(idx); // só alterna se foi um toque parado, não uma rolagem
+  }
+  function clickIntercept(e) {
+    if (!selectionMode) return;
+    if (rowIdxFromTarget(e.target) === null) return; // só intercepta cliques dentro de uma string-row, igual antes
+    // Bloqueia sempre a ação padrão da linha (expandir, favoritar, editar,
+    // abrir menu ⋮...) enquanto em modo seleção — quem decide selecionar
+    // é o pointerUp acima, não o clique em si.
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
+  list.addEventListener('mousedown', function(e) {
+    const idx = rowIdxFromTarget(e.target);
+    if (idx !== null) pointerDown(e, idx);
+  }, true);
+  list.addEventListener('touchstart', function(e) {
+    const idx = rowIdxFromTarget(e.target);
+    if (idx !== null) pointerDown(e, idx);
+  }, { capture: true, passive: true });
+  list.addEventListener('mousemove', pointerMove, true);
+  list.addEventListener('touchmove', pointerMove, { capture: true, passive: true });
+  list.addEventListener('mouseup', function(e) {
+    const idx = rowIdxFromTarget(e.target);
+    if (idx !== null) pointerUp(e, idx);
+  }, true);
+  list.addEventListener('touchend', function(e) {
+    const idx = rowIdxFromTarget(e.target);
+    if (idx !== null) pointerUp(e, idx);
+  }, true);
+  list.addEventListener('click', clickIntercept, true);
+
+  // ---- Textarea de tradução (antes 6 listeners por elemento) ----
+  list.addEventListener('mousedown', function(e) {
+    const ta = e.target.closest ? e.target.closest('.edit-textarea') : null;
+    if (ta && e.detail === 2) e.preventDefault();
+  });
+
+  list.addEventListener('dblclick', function(e) {
+    const ta = e.target.closest ? e.target.closest('.edit-textarea') : null;
+    if (!ta) return;
+    e.preventDefault();
+    toggleTranslationExpand(parseInt(ta.dataset.idx), null);
+  });
+
+  // Guarda o valor "antes da edição" assim que o campo recebe foco —
+  // é esse valor que o botão Desfazer vai restaurar. 'focus'/'blur'/'scroll'
+  // não borbulham, mas listeners em fase de captura num ancestral ainda
+  // assim são disparados normalmente — por isso capture:true aqui.
+  list.addEventListener('focus', function(e) {
+    const ta = e.target.closest ? e.target.closest('.edit-textarea') : null;
+    if (!ta) return;
+    const i = parseInt(ta.dataset.idx);
+    editSnapshots[i] = stringsData[i].value;
+    updateBackdrop(i, false);
+  }, true);
+
+  list.addEventListener('blur', function(e) {
+    const ta = e.target.closest ? e.target.closest('.edit-textarea') : null;
+    if (!ta) return;
+    updateBackdrop(parseInt(ta.dataset.idx), true);
+  }, true);
+
+  list.addEventListener('scroll', function(e) {
+    const ta = e.target.closest ? e.target.closest('.edit-textarea') : null;
+    if (!ta) return;
+    const bd = document.getElementById('ta-backdrop-' + ta.dataset.idx);
+    if (bd) bd.scrollTop = ta.scrollTop;
+  }, true);
+
+  list.addEventListener('input', function(e) {
+    const ta = e.target.closest ? e.target.closest('.edit-textarea') : null;
+    if (ta) {
+      const i = parseInt(ta.dataset.idx);
+      editedIndices.add(i);
+      updateProgressBadge();
+      if (expandedTranslation.has(i)) autoResize(ta);
+      triggerAutoSave();
+      stringsData[i].value = ta.value;
+      updateBackdrop(i, false);
+
+      if (i in editSnapshots) {
+        lastEdit = { idx: i, previousValue: editSnapshots[i] };
+        const undoBtn = document.getElementById('undo-btn');
+        undoBtn.disabled = false;
+        undoBtn.classList.add('has-history');
+        // Redo perde a cor enquanto o usuário edita (ainda não há nada a refazer)
+        document.getElementById('redo-btn').classList.remove('has-history');
+      }
+      return;
+    }
+
+    // ---- Textarea de nota (antes 1 listener por elemento) ----
+    const noteTa = e.target.closest ? e.target.closest('.note-textarea') : null;
+    if (!noteTa) return;
+    const idx = parseInt(noteTa.id.replace('note-ta-', ''), 10);
+    if (isNaN(idx)) return;
+    stringsData[idx].note = noteTa.value;
+    updateNoteDot(idx, !!noteTa.value);
+    triggerAutoSave();
+  });
+}
+
+function enterSelectionMode(idx) {
+  selectionMode = true;
+  selectedIndices.add(idx);
+  document.getElementById('strings-list').classList.add('selection-mode');
+  const row = document.getElementById('srow-' + idx);
+  if (row) row.classList.add('row-selected');
+  updateSelectionToolbar();
+}
+
+// ---- DRAG-SELECT: arrastar o dedo/mouse depois do long-press "pinta" a
+// seleção nas linhas por onde passa, sem precisar soltar e segurar de novo
+// em cada uma. Nunca desmarca — só adiciona à seleção.
+function startDragSelect(idx) {
+  isDragSelecting = true;
+  dragSelectVisited = new Set([idx]);
+  document.addEventListener('touchmove', handleDragSelectMove, { passive: false });
+  document.addEventListener('mousemove', handleDragSelectMove);
+  document.addEventListener('touchend', endDragSelect);
+  document.addEventListener('touchcancel', endDragSelect);
+  document.addEventListener('mouseup', endDragSelect);
+}
+
+function handleDragSelectMove(e) {
+  if (!isDragSelecting) return;
+  const point = e.touches ? e.touches[0] : e;
+  if (!point) return;
+  const el = document.elementFromPoint(point.clientX, point.clientY);
+  const rowEl = el && el.closest ? el.closest('.string-row') : null;
+  // Só trava o scroll quando o dedo está de fato em cima de uma linha da
+  // lista — fora dela (cabeçalho, barra inferior etc.) deixa rolar normal.
+  if (rowEl) e.preventDefault();
+  if (!rowEl || !rowEl.id) return;
+  const idx = parseInt(rowEl.id.replace('srow-', ''), 10);
+  if (isNaN(idx) || dragSelectVisited.has(idx)) return;
+  dragSelectVisited.add(idx);
+  if (!selectedIndices.has(idx)) {
+    selectedIndices.add(idx);
+    rowEl.classList.add('row-selected');
+    updateSelectionToolbar();
+  }
+}
+
+function endDragSelect() {
+  isDragSelecting = false;
+  dragSelectVisited.clear();
+  document.removeEventListener('touchmove', handleDragSelectMove);
+  document.removeEventListener('mousemove', handleDragSelectMove);
+  document.removeEventListener('touchend', endDragSelect);
+  document.removeEventListener('touchcancel', endDragSelect);
+  document.removeEventListener('mouseup', endDragSelect);
+}
+
+function exitSelectionMode() {
+  selectionMode = false;
+  selectedIndices.clear();
+  endDragSelect();
+  document.getElementById('strings-list').classList.remove('selection-mode');
+  document.querySelectorAll('.string-row.row-selected').forEach(r => r.classList.remove('row-selected'));
+  document.getElementById('selection-toolbar').classList.remove('open');
+}
+
+function toggleRowSelection(idx) {
+  const row = document.getElementById('srow-' + idx);
+  if (selectedIndices.has(idx)) {
+    selectedIndices.delete(idx);
+    if (row) row.classList.remove('row-selected');
+  } else {
+    selectedIndices.add(idx);
+    if (row) row.classList.add('row-selected');
+  }
+  if (selectedIndices.size === 0) {
+    exitSelectionMode();
+  } else {
+    updateSelectionToolbar();
+  }
+}
+
+function updateSelectionToolbar() {
+  const bar = document.getElementById('selection-toolbar');
+  const count = selectedIndices.size;
+  bar.classList.toggle('open', count > 0);
+  document.getElementById('selection-toolbar-count').textContent =
+    count + (count === 1 ? ' selecionada' : ' selecionadas');
+}
+
+// Uma string só conta como "já traduzida" se o valor existir E for
+// diferente do original — muitas strings chegam com o value já pré-
+// preenchido igual ao original (ainda não traduzido de fato), então só
+// checar se está vazio dava falso-positivo.
+function isReallyTranslated(idx) {
+  const item = stringsData[idx];
+  return !!item.value && item.value !== item.original;
+}
+
+// Toque em "Traduzir" na toolbar: se alguma das selecionadas já tem
+// tradução, pergunta antes (sobrescrever ou pular); senão, já abre
+// o seletor de engine direto.
+let _selectionOverwritePending = null;
+
+function requestTranslateSelected() {
+  const indices = Array.from(selectedIndices);
+  if (indices.length === 0) return;
+  const alreadyTranslated = indices.filter(idx => isReallyTranslated(idx)).length;
+  if (alreadyTranslated > 0) {
+    _selectionOverwritePending = indices;
+    document.getElementById('selection-overwrite-sub').textContent =
+      alreadyTranslated + ' de ' + indices.length + ' string(s) selecionada(s) já têm tradução. O que fazer com elas?';
+    const sheet = document.getElementById('selection-overwrite-sheet');
+    sheet.classList.add('open');
+    requestAnimationFrame(() => requestAnimationFrame(() => sheet.classList.add('open-active')));
+  } else {
+    openTranslateAllSheet(indices);
+  }
+}
+
+function closeSelectionOverwriteSheet() {
+  const sheet = document.getElementById('selection-overwrite-sheet');
+  sheet.classList.remove('open-active');
+  setTimeout(() => sheet.classList.remove('open'), 300);
+  _selectionOverwritePending = null;
+}
+
+function resolveSelectionOverwrite(choice) {
+  const indices = _selectionOverwritePending;
+  closeSelectionOverwriteSheet();
+  if (!indices) return;
+  if (choice === 'overwrite') {
+    openTranslateAllSheet(indices);
+  } else {
+    const untranslated = indices.filter(idx => !isReallyTranslated(idx));
+    if (untranslated.length === 0) {
+      showToast('Todas as selecionadas já têm tradução.', 'info', 2500);
+      return;
+    }
+    openTranslateAllSheet(untranslated);
+  }
+}
+
+
+function updateBackdrop(idx, blurred) {
+  const backdrop = document.getElementById('ta-backdrop-' + idx);
+  const ta = document.querySelector('[data-idx="' + idx + '"]');
+  if (!backdrop || !ta) return;
+  backdrop.innerHTML = highlightPlaceholdersHtml(ta.value, blurred) + '<span>\u200b</span>';
+}
+
+// ---- EXPANDIR/DIMINUIR (independentes entre original e tradução) ----
+function toggleOriginalExpand(idx, event) {
+  if (event && window.getSelection().toString().length > 0) return; // não fecha durante uma seleção de texto
+  // Alguns WebViews (Android) disparam o evento click duas vezes pro mesmo
+  // toque (um "de verdade" e um "fantasma" emulado do touch). Sem essa
+  // trava, isso faz a caixa abrir e fechar de novo instantaneamente.
+  const now = Date.now();
+  const last = _lastOrigToggle.get(idx) || 0;
+  if (now - last < 350) return;
+  _lastOrigToggle.set(idx, now);
+  const inner = document.getElementById('orig-inner-' + idx);
+  if (!inner) return;
+  if (expandedOriginal.has(idx)) {
+    expandedOriginal.delete(idx);
+    inner.classList.add('clamped');
+  } else {
+    expandedOriginal.add(idx);
+    inner.classList.remove('clamped');
+  }
+}
+
+function toggleTranslationExpand(idx, event) {
+  if (event) event.stopPropagation();
+  const ta = document.querySelector('[data-idx="' + idx + '"]');
+  const backdrop = document.getElementById('ta-backdrop-' + idx);
+  const arrow = document.getElementById('exp-arrow-' + idx);
+  if (!ta) return;
+  if (expandedTranslation.has(idx)) {
+    expandedTranslation.delete(idx);
+    ta.classList.add('ta-collapsed');
+    if (backdrop) backdrop.classList.add('ta-collapsed');
+    if (arrow) arrow.classList.remove('expanded');
+  } else {
+    expandedTranslation.add(idx);
+    ta.classList.remove('ta-collapsed');
+    if (backdrop) backdrop.classList.remove('ta-collapsed');
+    if (arrow) arrow.classList.add('expanded');
+    autoResize(ta);
+  }
+}
+
+// ---- EXPANDIR CAIXAS (original + tradução) ----
+// Força a expansão (não alterna) de uma linha específica.
+function expandBoxes(idx) {
+  const inner = document.getElementById('orig-inner-' + idx);
+  if (inner) {
+    expandedOriginal.add(idx);
+    inner.classList.remove('clamped');
+  }
+  const ta = document.querySelector('[data-idx="' + idx + '"]');
+  if (ta) {
+    expandedTranslation.add(idx);
+    ta.classList.remove('ta-collapsed');
+    const backdrop = document.getElementById('ta-backdrop-' + idx);
+    if (backdrop) backdrop.classList.remove('ta-collapsed');
+    const arrow = document.getElementById('exp-arrow-' + idx);
+    if (arrow) arrow.classList.add('expanded');
+    autoResize(ta);
+  }
+}
+
+// Expande todas as linhas, incluindo as que não estão visíveis no momento
+// (o estado fica salvo em expandedOriginal/expandedTranslation e é aplicado
+// quando a linha for renderizada, ex: ao trocar de filtro).
+function expandAllBoxes() {
+  stringsData.forEach((_, idx) => expandBoxes(idx));
+}
+
+// Volta uma linha específica ao tamanho padrão (oposto de expandBoxes).
+function collapseBoxes(idx) {
+  const inner = document.getElementById('orig-inner-' + idx);
+  if (inner) {
+    expandedOriginal.delete(idx);
+    inner.classList.add('clamped');
+  }
+  const ta = document.querySelector('[data-idx="' + idx + '"]');
+  if (ta) {
+    expandedTranslation.delete(idx);
+    ta.classList.add('ta-collapsed');
+    const backdrop = document.getElementById('ta-backdrop-' + idx);
+    if (backdrop) backdrop.classList.add('ta-collapsed');
+    const arrow = document.getElementById('exp-arrow-' + idx);
+    if (arrow) arrow.classList.remove('expanded');
+  }
+}
+
+// Volta todas as linhas ao tamanho padrão de quando entramos no editor.
+function collapseAllBoxes() {
+  stringsData.forEach((_, idx) => collapseBoxes(idx));
+}
+
+// Uma linha é considerada "totalmente expandida" (pro texto do menu ⋮)
+// só quando original E tradução estão expandidos.
+function isRowFullyExpanded(idx) {
+  return expandedOriginal.has(idx) && expandedTranslation.has(idx);
+}
+
+function areAllBoxesExpanded() {
+  return stringsData.length > 0 &&
+    expandedOriginal.size === stringsData.length &&
+    expandedTranslation.size === stringsData.length;
+}
+
+// "Expandir esta caixa" <-> "Reduzir esta caixa"
+function toggleRowBoxes(idx) {
+  if (isRowFullyExpanded(idx)) {
+    collapseBoxes(idx);
+  } else {
+    expandBoxes(idx);
+  }
+}
+
+// "Expandir todas" <-> "Reduzir todas"
+function toggleAllBoxes() {
+  if (areAllBoxesExpanded()) {
+    collapseAllBoxes();
+  } else {
+    expandAllBoxes();
+  }
+}
+
+// ---- COPIAR ORIGINAL ----
+function copyOriginal(idx, event) {
+  if (event) event.stopPropagation();
+  const text = stringsData[idx].original || '';
+  const btn = document.getElementById('copy-btn-' + idx);
+  const flash = () => {
+    if (!btn) return;
+    btn.innerHTML = '✧';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.innerHTML = '❐'; btn.classList.remove('copied'); }, 1200);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(flash).catch(() => fallbackCopy(text, flash));
+  } else {
+    fallbackCopy(text, flash);
+  }
+}
+
+function fallbackCopy(text, cb) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); } catch(e) {}
+  document.body.removeChild(ta);
+  if (cb) cb();
+}
+
+// ---- FAVORITAR ----
+function toggleFavorite(idx, event) {
+  if (event) event.stopPropagation();
+  stringsData[idx].favorite = !stringsData[idx].favorite;
+  const btn = document.getElementById('fav-btn-' + idx);
+  if (btn) {
+    btn.classList.toggle('active', !!stringsData[idx].favorite);
+    // Animação: estrela sobe e some ao ativar favorito
+    if (stringsData[idx].favorite) {
+      const rect = btn.getBoundingClientRect();
+      const star = document.createElement('span');
+      star.className = 'fav-star-float';
+      star.textContent = '★';
+      star.style.left = (rect.left + window.scrollX + 2) + 'px';
+      star.style.top = (rect.top + window.scrollY) + 'px';
+      document.body.appendChild(star);
+      star.addEventListener('animationend', () => star.remove());
+    }
+  }
+  triggerAutoSave();
+}
+
+// ---- LIMPAR TRADUÇÃO (com histórico próprio de desfazer, independente do ↶/↷) ----
+let clearUndoStash = {};
+let clearUndoTimers = {};
+
+function clearTranslation(idx, event) {
+  if (event) event.stopPropagation();
+  const ta = document.querySelector('[data-idx="' + idx + '"]');
+  if (!ta || !ta.value) return;
+  clearUndoStash[idx] = ta.value;
+  ta.value = '';
+  stringsData[idx].value = '';
+  editedIndices.add(idx);
+  updateBackdrop(idx, document.activeElement !== ta);
+  if (expandedTranslation.has(idx)) autoResize(ta);
+  updateProgressBadge();
+  triggerAutoSave();
+
+  clearTimeout(clearUndoTimers[idx]);
+  clearUndoTimers[idx] = setTimeout(() => restoreClearBtn(idx), 5000);
+}
+
+function undoClear(idx) {
+  const ta = document.querySelector('[data-idx="' + idx + '"]');
+  if (ta && idx in clearUndoStash) {
+    ta.value = clearUndoStash[idx];
+    stringsData[idx].value = clearUndoStash[idx];
+    updateBackdrop(idx, document.activeElement !== ta);
+    if (expandedTranslation.has(idx)) autoResize(ta);
+    updateProgressBadge();
+    triggerAutoSave();
+  }
+  restoreClearBtn(idx);
+}
+
+function restoreClearBtn(idx) {
+  clearTimeout(clearUndoTimers[idx]);
+  delete clearUndoTimers[idx];
+  delete clearUndoStash[idx];
+}
+
+// ---- NOTAS ----
+function toggleNote(idx, event) {
+  if (event) event.stopPropagation();
+  const row = document.getElementById('note-row-' + idx);
+  if (!row) return;
+  row.classList.toggle('open');
+  if (row.classList.contains('open')) {
+    const ta = document.getElementById('note-ta-' + idx);
+    if (ta) ta.focus();
+  }
+}
+
+function updateNoteDot(idx, hasNote) {
+  const dot = document.getElementById('note-dot-' + idx);
+  if (dot) dot.style.display = hasNote ? 'inline-block' : 'none';
+  // O item "Nota" do menu ⋮ só existe uma vez (compartilhado) — só faz
+  // sentido atualizar seu estado visual se for justo a linha que está
+  // aberta agora; senão, refreshKebabMenuContent() cuida disso na próxima
+  // vez que essa linha específica abrir o menu.
+  if (_openKebab === idx) {
+    const kebabNote = document.getElementById('kebab-note-shared');
+    if (kebabNote) kebabNote.classList.toggle('note-filled-item', hasNote);
+  }
+}
+
+// ---- KEBAB MENU ----
+let _openKebab = null;
+
+function toggleKebab(idx, event) {
+  if (event) event.stopPropagation();
+  const menu = document.getElementById('kebab-menu-shared');
+  const btn = document.getElementById('kebab-btn-' + idx);
+  if (!menu || !btn) return;
+
+  const wasOpenForThisRow = menu.classList.contains('open') && _openKebab === idx;
+
+  // Sempre limpa o estado "aberto" do botão anterior, mesmo que seja de
+  // outra linha (o menu em si é único, só o botão .open muda de linha)
+  if (_openKebab !== null) {
+    const prevBtn = document.getElementById('kebab-btn-' + _openKebab);
+    if (prevBtn) prevBtn.classList.remove('open');
+  }
+
+  if (wasOpenForThisRow) {
+    closeKebab();
+    return;
+  }
+
+  // Reposiciona o menu compartilhado embaixo do botão que foi tocado —
+  // como agora é position:fixed e vive fora das linhas (que têm
+  // content-visibility:auto), não é mais cortado pelo contain:paint delas.
+  const rect = btn.getBoundingClientRect();
+  const menuWidth = 148; // bate com o min-width do .kebab-menu
+  let left = rect.right - menuWidth;
+  left = Math.max(8, Math.min(left, window.innerWidth - menuWidth - 8));
+  menu.style.left = left + 'px';
+  menu.style.top = (rect.bottom + 4) + 'px';
+
+  refreshKebabMenuContent(idx);
+  menu.classList.remove('closing');
+  menu.classList.add('open');
+  btn.classList.add('open');
+  _openKebab = idx;
+}
+
+function closeKebab() {
+  const menu = document.getElementById('kebab-menu-shared');
+  if (menu) menu.classList.remove('open');
+  if (_openKebab !== null) {
+    const btn = document.getElementById('kebab-btn-' + _openKebab);
+    if (btn) btn.classList.remove('open');
+  }
+  _openKebab = null;
+}
+
+// Atualiza o conteúdo do menu ⋮ compartilhado pra refletir o estado da
+// linha 'idx' — chamado sempre que o menu abre, já que agora é um só
+// elemento reaproveitado por todas as linhas.
+function refreshKebabMenuContent(idx) {
+  const noteItem = document.getElementById('kebab-note-shared');
+  if (noteItem) noteItem.classList.toggle('note-filled-item', !!(stringsData[idx] && stringsData[idx].note));
+
+  const clearBtn = document.getElementById('kebab-clear-shared');
+  if (clearBtn) {
+    const isUndo = idx in clearUndoStash;
+    clearBtn.classList.toggle('clear-undo-item', isUndo);
+    clearBtn.querySelector('.kebab-item-icon').textContent = isUndo ? '↺' : '⌫';
+    clearBtn.querySelector('.kebab-clear-label').textContent = isUndo ? 'Desfazer limpeza' : 'Limpar tradução';
+  }
+
+  const expandItem = document.getElementById('kebab-expand-shared');
+  if (expandItem) {
+    const expanded = isRowFullyExpanded(idx);
+    expandItem.querySelector('.kebab-item-icon').textContent = expanded ? '⤡' : '⤢';
+    expandItem.querySelector('.kebab-expand-label').textContent = expanded ? 'Reduzir esta caixa' : 'Expandir esta caixa';
+  }
+
+  const expandAllItem = document.getElementById('kebab-expandall-shared');
+  if (expandAllItem) {
+    const allExpanded = areAllBoxesExpanded();
+    expandAllItem.querySelector('.kebab-item-icon').textContent = allExpanded ? '⤡' : '⤢';
+    expandAllItem.querySelector('.kebab-expandall-label').textContent = allExpanded ? 'Reduzir todas' : 'Expandir todas';
+  }
+}
+
+// Despacha o clique num item do menu ⋮ pra ação certa, usando a linha que
+// estava aberta no momento do clique (_openKebab) — os itens do HTML não
+// sabem mais de qual idx são, já que o menu é compartilhado entre todas.
+function kebabAction(action) {
+  const idx = _openKebab;
+  closeKebab();
+  if (idx === null) return;
+  if (action === 'translate') showEngineMenu(idx, null);
+  else if (action === 'note') toggleNote(idx, null);
+  else if (action === 'clear') { if (idx in clearUndoStash) undoClear(idx); else clearTranslation(idx, null); }
+  else if (action === 'expand') toggleRowBoxes(idx);
+  else if (action === 'expandall') toggleAllBoxes();
+}
+
+document.addEventListener('click', function() {
+  if (_openKebab !== null) closeKebab();
+});
+
+// Fecha o kebab ao rolar a lista — o menu não acompanha o botão durante o
+// scroll (não teria porquê, já que ele é position:fixed agora), então é
+// melhor fechar do que deixar flutuando no lugar errado.
+document.getElementById('strings-list').addEventListener('scroll', function() {
+  if (_openKebab !== null) closeKebab();
+}, { passive: true });
+
+// ---- ACORDEÃO DE FILTRO ----
+function toggleFilterAccordion() {
+  document.getElementById('filter-collapsible').classList.toggle('open');
+  document.getElementById('filter-arrow').classList.toggle('open');
+}
+
+// ---- MODO FOCO ----
+let focusModeActive = false;
+let _backBtnOriginalHTML = null;
+
+function toggleFocusMode() {
+  focusModeActive = !focusModeActive;
+  const page = document.querySelector('.page');
+  const backBtn = document.getElementById('back-btn');
+  const focusBtn = document.getElementById('focus-btn');
+  if (focusModeActive) {
+    page.classList.add('focus-mode');
+    focusBtn.classList.add('focus-on');
+    if (_backBtnOriginalHTML === null) _backBtnOriginalHTML = backBtn.innerHTML;
+    backBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+    backBtn.removeAttribute('href');
+    backBtn.title = 'Sair do modo foco';
+    backBtn.onclick = function(e) { e.preventDefault(); toggleFocusMode(); };
+  } else {
+    page.classList.remove('focus-mode');
+    focusBtn.classList.remove('focus-on');
+    backBtn.innerHTML = _backBtnOriginalHTML;
+    backBtn.setAttribute('href', '/info');
+    backBtn.title = '';
+    backBtn.onclick = confirmBack;
+  }
+}
+
+// ---- UNDO/REDO NATIVO ----
+// Rastreia qual textarea está focado para aplicar undo/redo nativo
+let _focusedTextarea = null;
+let _lastFocusedTextarea = null; // nunca zera — usado pelo redo quando foco já saiu
+document.addEventListener('focusin', e => {
+  if (e.target.tagName === 'TEXTAREA') { _focusedTextarea = e.target; _lastFocusedTextarea = e.target; }
+});
+document.addEventListener('focusout', e => {
+  if (e.target.tagName === 'TEXTAREA') {
+    // mantém referência por 200ms pra permitir clique no botão
+    setTimeout(() => { if (_focusedTextarea === e.target) _focusedTextarea = null; }, 200);
+  }
+});
+
+function undoNative() {
+  const ta = _focusedTextarea || _lastFocusedTextarea;
+  if (ta) {
+    ta.focus();
+    document.execCommand('undo');
+    // Atualiza stringsData com novo valor do textarea
+    const idx = parseInt(ta.dataset.idx);
+    if (!isNaN(idx)) {
+      stringsData[idx].value = ta.value;
+      editedIndices.add(idx);
+      triggerAutoSave();
+      updateProgressBadge();
+    }
+    // Redo fica colorido: agora há algo a refazer
+    document.getElementById('redo-btn').classList.add('has-history');
+  }
+}
+
+function redoNative() {
+  const redoBtn = document.getElementById('redo-btn');
+  const ta = _focusedTextarea || _lastFocusedTextarea;
+  if (ta) {
+    ta.focus();
+    document.execCommand('redo');
+    const idx = parseInt(ta.dataset.idx);
+    if (!isNaN(idx)) {
+      stringsData[idx].value = ta.value;
+      editedIndices.add(idx);
+      triggerAutoSave();
+      updateProgressBadge();
+    }
+    redoBtn.classList.remove('has-history');
+  } else {
+    // Flash visual temporário (sem textarea focado = nada a refazer)
+    redoBtn.classList.add('has-history');
+    setTimeout(() => redoBtn.classList.remove('has-history'), 600);
+  }
+}
+
+document.getElementById('search-input').addEventListener('input', renderStrings);
+document.getElementById('filter-untranslated').addEventListener('change', renderStrings);
+document.getElementById('filter-favorite').addEventListener('change', renderStrings);
+document.getElementById('filter-notes').addEventListener('change', renderStrings);
+document.getElementById('filter-case-sensitive').addEventListener('change', renderStrings);
+
+function updateProgressBadge() {
+  const translatedCount = stringsData.filter((item, idx) =>
+    editedIndices.has(idx) || (item.value && item.value !== item.original)
+  ).length;
+  const badge = document.getElementById('count-badge');
+  badge.textContent = translatedCount + '/' + stringsData.length;
+  const anyFilter = document.getElementById('filter-untranslated')?.checked ||
+                    document.getElementById('filter-favorite')?.checked ||
+                    document.getElementById('filter-notes')?.checked;
+  badge.classList.toggle('filter-active', !!anyFilter);
+}
+
+// ---- IMPORTAR TRADUÇÕES ----
+
+function switchImportSource(source) {
+  document.querySelectorAll('.import-source-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.import-section').forEach(s => s.classList.remove('active'));
+  document.getElementById('btn-source-' + source).classList.add('active');
+  document.getElementById('section-' + source).classList.add('active');
+}
+
+async function openImportSheet() {
+  const sheet = document.getElementById('import-sheet');
+  sheet.classList.add('open');
+  requestAnimationFrame(() => requestAnimationFrame(() => sheet.classList.add('open-active')));
+  switchImportSource('saves');
+  await loadImportSaves();
+}
+
+function closeImportSheet() {
+  const sheet = document.getElementById('import-sheet');
+  sheet.classList.remove('open-active');
+  setTimeout(() => sheet.classList.remove('open'), 300);
+}
+
+async function loadImportSaves() {
+  const listEl = document.getElementById('import-saves-list');
+  listEl.innerHTML = '<div class="empty-state"><div class="empty-icon" style="font-size:20px;opacity:0.3">◌</div><div class="empty-text">Carregando saves...</div></div>';
+  try {
+    const res = await fetch('/api/get_saves');
+    const data = await res.json();
+    const saves = data.saves || [];
+    if (saves.length === 0) {
+      listEl.innerHTML = '<div class="empty-state"><div class="empty-icon" style="font-size:20px;opacity:0.3">💾</div><div class="empty-text">Nenhum save encontrado.</div></div>';
+      return;
+    }
+    listEl.innerHTML = '';
+    saves.forEach(save => {
+      const item = document.createElement('div');
+      item.className = 'import-save-item';
+      item.innerHTML =
+        '<div class="import-save-name">' + save.project_name + '</div>' +
+        '<div class="import-save-meta">' + save.source_lang + ' → ' + save.target_lang + ' · ' + (save.last_updated || '').slice(0, 16) + '</div>';
+      item.addEventListener('click', () => applyTranslationsFromSave(save.id, save.project_name));
+      listEl.appendChild(item);
+    });
+  } catch(e) {
+    listEl.innerHTML = '<div class="empty-state"><div class="empty-icon" style="font-size:20px;opacity:0.4">✕</div><div class="empty-text" style="color:#e07070">Erro ao carregar saves.</div></div>';
+  }
+}
+
+async function applyTranslationsFromSave(saveId, saveName) {
+  closeImportSheet();
+  document.getElementById('loading-text').textContent = 'Carregando traduções...';
+  document.getElementById('loading').classList.add('active');
+  try {
+    const res = await fetch('/api/import_translations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ save_id: saveId })
+    });
+    const data = await res.json();
+    document.getElementById('loading').classList.remove('active');
+    if (!data.success) { showToast('Erro ao importar: ' + (data.error || 'desconhecido'), 'error', 5000); return; }
+    applyTranslationMap(data.translations, saveName);
+  } catch(e) {
+    document.getElementById('loading').classList.remove('active');
+    showToast('Erro de conexão ao importar traduções.', 'error', 4000);
+  }
+}
+
+// Importar de arquivo .package
+document.getElementById('import-package-input').addEventListener('change', async function() {
+  const file = this.files[0];
+  if (!file) return;
+  if (!file.name.endsWith('.package')) { showToast('Selecione um arquivo .package válido.', 'error', 4000); return; }
+  closeImportSheet();
+  document.getElementById('loading-text').textContent = 'Lendo arquivo...';
+  document.getElementById('loading').classList.add('active');
+  try {
+    const formData = new FormData();
+    formData.append('package', file);
+    formData.append('target_lang', targetLang);
+    const res = await fetch('/api/import_from_package', {
+      method: 'POST',
+      body: formData
+    });
+    const data = await res.json();
+    document.getElementById('loading').classList.remove('active');
+    if (!data.success) { showToast('Erro ao ler arquivo: ' + (data.error || 'desconhecido'), 'error', 5000); return; }
+    applyTranslationMap(data.translations, file.name);
+  } catch(e) {
+    document.getElementById('loading').classList.remove('active');
+    showToast('Erro de conexão ao ler arquivo.', 'error', 4000);
+  }
+  this.value = '';
+});
+
+function applyTranslationMap(translationMap, sourceName) {
+  let filled = 0;
+  stringsData.forEach((item, idx) => {
+    const key = String(item.key);
+    if (translationMap[key]) {
+      stringsData[idx].value = translationMap[key];
+      editedIndices.add(idx);
+      filled++;
+    }
+  });
+  renderStrings();
+  updateProgressBadge();
+  triggerAutoSave();
+
+  // O toast usa "filter: blur()" na animação de entrada (ver .toast/.toast.show
+  // no CSS). Se ele dispara no mesmo instante em que acabamos de reconstruir
+  // a lista inteira (renderStrings), o navegador pode priorizar a composição
+  // GPU do blur do toast e "esquecer" de repintar a lista até algo forçar um
+  // reflow completo (ex: sair da página e voltar) — o que bate exatamente com
+  // o comportamento visto: os dados já estão certos, só não aparecem na hora.
+  // O alert() antigo não tinha esse problema por ser bloqueante e sem CSS
+  // animado. Aqui garantimos que a lista já teve a chance de pintar (2 RAFs,
+  // mesma técnica usada dentro do próprio showToast) antes de começar a
+  // animação do toast.
+  const list = document.getElementById('strings-list');
+  void list.offsetHeight;
+  requestAnimationFrame(() => {
+    void list.offsetHeight;
+    requestAnimationFrame(() => {
+      showToast(filled + ' traduções carregadas de "' + sourceName + '"!', 'success', 3500);
+    });
+  });
+}
+
+function toggleInstance() {
+  const col = document.getElementById('instance-collapsible');
+  const arrow = document.getElementById('instance-arrow');
+  col.classList.toggle('open');
+  arrow.classList.toggle('open');
+}
+
+function updateInstancePrefix() {
+  // Mostra os 2 dígitos do locale da instância original no prefixo visual
+  const hex = sessionStorage.getItem('selected_instance_hex') || '';
+  // hex_instance formato: "0x115BB614C9012DBA" -> locale = hex[2:4] = "11"
+  const prefix = hex.length >= 4 ? hex.slice(2, 4).toUpperCase() : 'XX';
+  const el = document.getElementById('instance-prefix-display');
+  if (el) el.textContent = prefix;
+}
+
+function validateInstanceInput(el) {
+  const val = el.value.replace(/[^0-9a-fA-F]/g, '');
+  el.value = val.toUpperCase();
+  const hint = document.getElementById('instance-hint');
+  if (val.length === 0) {
+    el.classList.remove('valid', 'invalid');
+    hint.textContent = 'Deixe vazio para manter a instância original. O locale (2 dígitos) é prefixado automaticamente.';
+  } else if (val.length === 14) {
+    el.classList.add('valid'); el.classList.remove('invalid');
+    const prefix = (document.getElementById('instance-prefix-display') || {}).textContent || 'XX';
+    hint.textContent = '✓ Instância resultante: ' + prefix + val.toUpperCase();
+  } else {
+    el.classList.add('invalid'); el.classList.remove('valid');
+    hint.textContent = val.length + '/14 dígitos — precisa ter exatamente 14.';
+  }
+}
+
+async function save() {
+  // Valida nome do arquivo
+  const filenameInput = document.getElementById('filename-input');
+  if (!filenameInput.value.trim()) {
+    filenameInput.classList.add('empty-error');
+    filenameInput.addEventListener('input', () => filenameInput.classList.remove('empty-error'), { once: true });
+    filenameInput.focus();
+    filenameInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    showToast('Dê um nome ao arquivo antes de salvar.', 'error', 4000);
+    return;
+  }
+
+  // Valida instância customizada se preenchida
+  const instanceInputEl = document.getElementById('instance-input');
+  const customInstanceBase = instanceInputEl ? instanceInputEl.value.trim().toUpperCase() : '';
+  if (customInstanceBase && customInstanceBase.length !== 14) {
+    showToast('A instância base precisa ter exatamente 14 dígitos hexadecimais.', 'error', 4000);
+    return;
+  }
+
+  const outputName = filenameInput.value.trim();
+  document.getElementById('loading-text').textContent = 'Salvando arquivo...';
+  document.getElementById('loading').classList.add('active');
+  const packageId = sessionStorage.getItem('package_id') || '';
+  const payload = {
+    instance: instanceStr,
+    strings: stringsData.map(s => ({ key: s.key, value: s.value })),
+    target_language: targetLang,
+    output_name: outputName,
+    package_id: packageId,
+    custom_instance_base: customInstanceBase || null
+  };
+  try {
+    const res = await fetch('/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    document.getElementById('loading').classList.remove('active');
+    if (data.success) {
+      document.getElementById('success-sub').textContent = data.output_name;
+      document.getElementById('downloads-note').textContent = '';
+      document.getElementById('download-link').href = '/download?file=' + data.output_id + '&name=' + encodeURIComponent(data.output_name);
+      const sheet = document.getElementById('success-sheet');
+      sheet.classList.add('open');
+      requestAnimationFrame(() => requestAnimationFrame(() => sheet.classList.add('open-active')));
+      await saveProgressToDatabase();
+    } else {
+      showToast('Erro ao salvar: ' + (data.error || 'desconhecido'), 'error', 5000);
+    }
+  } catch(e) {
+    document.getElementById('loading').classList.remove('active');
+    showToast('Erro de conexão ao salvar.', 'error', 4000);
+  }
+}
+
+function closeSuccessSheet() {
+  const sheet = document.getElementById('success-sheet');
+  sheet.classList.remove('open-active');
+  setTimeout(() => sheet.classList.remove('open'), 350);
+}
+
+// ---- TRADUZIR TUDO ----
+let tallEngine = 'google';
+let tallTargetIndices = null; // null = modo "traduzir tudo (pendentes)"; array = tradução de uma seleção específica
+let tallStartedThisSession = false; // true assim que INICIAR é apertado (usado pra saber se sai do modo seleção ao fechar)
+let tallCancelled = false;
+let tallRunning = false;
+
+// ──────────────────────────────────────────────
+// SUBSTITUIR EM TODAS AS STRINGS
+// ──────────────────────────────────────────────
+function escapeRegExp(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// Snapshot da última substituição em massa, pra permitir desfazer.
+// Guarda só os valores originais dos índices afetados (não o array todo).
+let lastReplaceSnapshot = null; // { entries: [{idx, previousValue}], findText, withText }
+
+// Borda de "palavra inteira" que funciona com acentos (á, ã, ç etc.), já que
+// \b do regex JS só entende [A-Za-z0-9_] e ignoraria letras acentuadas.
+const WORD_CHAR = 'A-Za-zÀ-ÖØ-öø-ÿ0-9_';
+function buildReplaceRegex(findText, ignoreCase, wholeWord) {
+  const flags = ignoreCase ? 'gi' : 'g';
+  const escaped = escapeRegExp(findText);
+  const pattern = wholeWord
+    ? '(?<![' + WORD_CHAR + '])(' + escaped + ')(?![' + WORD_CHAR + '])'
+    : escaped;
+  return new RegExp(pattern, flags);
+}
+
+function openReplaceSheet() {
+  if (stringsData.length === 0) return;
+  document.getElementById('replace-find-input').value = '';
+  document.getElementById('replace-with-input').value = '';
+  document.getElementById('replace-ignore-case').checked = false;
+  document.getElementById('replace-whole-word').checked = false;
+  document.getElementById('replace-preview').textContent = 'Digite algo pra buscar...';
+  document.getElementById('replace-preview').style.color = '';
+  document.getElementById('replace-apply-btn').disabled = true;
+  document.getElementById('replace-undo-btn').style.display = lastReplaceSnapshot ? '' : 'none';
+  const sheet = document.getElementById('replace-sheet');
+  sheet.classList.add('open');
+  requestAnimationFrame(() => requestAnimationFrame(() => sheet.classList.add('open-active')));
+  setTimeout(() => document.getElementById('replace-find-input').focus(), 300);
+}
+
+function closeReplaceSheet() {
+  const sheet = document.getElementById('replace-sheet');
+  sheet.classList.remove('open-active');
+  setTimeout(() => sheet.classList.remove('open'), 300);
+}
+
+// Conta quantas ocorrências e em quantas strings, sem alterar nada ainda.
+function computeReplaceMatches(findText, ignoreCase, wholeWord) {
+  let totalOccurrences = 0;
+  let affectedStrings = 0;
+  stringsData.forEach(item => {
+    if (!item.value) return;
+    const re = buildReplaceRegex(findText, ignoreCase, wholeWord);
+    const matches = item.value.match(re);
+    if (matches && matches.length > 0) {
+      totalOccurrences += matches.length;
+      affectedStrings++;
+    }
+  });
+  return { totalOccurrences, affectedStrings };
+}
+
+function updateReplacePreview() {
+  const findText = document.getElementById('replace-find-input').value;
+  const ignoreCase = document.getElementById('replace-ignore-case').checked;
+  const wholeWord = document.getElementById('replace-whole-word').checked;
+  const preview = document.getElementById('replace-preview');
+  const applyBtn = document.getElementById('replace-apply-btn');
+
+  if (!findText) {
+    preview.textContent = 'Digite algo pra buscar...';
+    preview.style.color = '';
+    applyBtn.disabled = true;
+    return;
+  }
+
+  const { totalOccurrences, affectedStrings } = computeReplaceMatches(findText, ignoreCase, wholeWord);
+  if (totalOccurrences === 0) {
+    preview.textContent = 'Nenhuma ocorrência encontrada nas traduções.';
+    preview.style.color = '#e07070';
+    applyBtn.disabled = true;
+  } else {
+    preview.textContent = totalOccurrences + ' ocorrência(s) em ' + affectedStrings + ' string(s) serão trocadas.';
+    preview.style.color = 'var(--accent)';
+    applyBtn.disabled = false;
+  }
+}
+
+function applyReplaceAll() {
+  const findText = document.getElementById('replace-find-input').value;
+  const withText = document.getElementById('replace-with-input').value;
+  const ignoreCase = document.getElementById('replace-ignore-case').checked;
+  const wholeWord = document.getElementById('replace-whole-word').checked;
+  if (!findText) return;
+
+  const { totalOccurrences, affectedStrings } = computeReplaceMatches(findText, ignoreCase, wholeWord);
+  if (totalOccurrences === 0) return;
+
+  showModal({
+    icon: '⇄',
+    title: 'Confirmar substituição?',
+    msg: totalOccurrences + ' ocorrência(s) em ' + affectedStrings + ' string(s) vão trocar "' + findText + '" por "' + (withText || '(vazio)') + '".',
+    confirmText: 'SUBSTITUIR',
+    cancelText: 'Cancelar',
+    danger: false
+  }).then(() => {
+    const snapshotEntries = [];
+    stringsData.forEach((item, idx) => {
+      if (!item.value) return;
+      const re = buildReplaceRegex(findText, ignoreCase, wholeWord);
+      if (re.test(item.value)) {
+        snapshotEntries.push({ idx, previousValue: item.value });
+        const re2 = buildReplaceRegex(findText, ignoreCase, wholeWord);
+        item.value = item.value.replace(re2, withText);
+        editedIndices.add(idx);
+      }
+    });
+    lastReplaceSnapshot = { entries: snapshotEntries, findText, withText };
+    renderStrings();
+    updateProgressBadge();
+    triggerAutoSave();
+    document.getElementById('replace-undo-btn').style.display = '';
+    closeReplaceSheet();
+    showToast(totalOccurrences + ' ocorrência(s) substituídas em ' + affectedStrings + ' string(s).', 'success', 3500);
+  }).catch(() => {});
+}
+
+function undoLastReplaceAll() {
+  if (!lastReplaceSnapshot) return;
+  const { entries, findText, withText } = lastReplaceSnapshot;
+  showModal({
+    icon: '↩',
+    title: 'Desfazer substituição?',
+    msg: 'Vai restaurar o texto de ' + entries.length + ' string(s) para como estava antes de trocar "' + findText + '" por "' + (withText || '(vazio)') + '".',
+    confirmText: 'DESFAZER',
+    cancelText: 'Cancelar',
+    danger: false
+  }).then(() => {
+    entries.forEach(({ idx, previousValue }) => {
+      stringsData[idx].value = previousValue;
+      editedIndices.add(idx);
+    });
+    lastReplaceSnapshot = null;
+    renderStrings();
+    updateProgressBadge();
+    triggerAutoSave();
+    document.getElementById('replace-undo-btn').style.display = 'none';
+    showToast('Substituição desfeita em ' + entries.length + ' string(s).', 'info', 3000);
+  }).catch(() => {});
+}
+
+function openTranslateAllSheet(targetIndices) {
+  if (stringsData.length === 0) return;
+  tallTargetIndices = targetIndices && targetIndices.length ? targetIndices : null;
+  tallStartedThisSession = false;
+  tallCancelled = false;
+  tallRunning = false;
+  const isSelection = !!tallTargetIndices;
+  document.getElementById('tall-title').textContent = isSelection ? 'Traduzir selecionadas' : 'Traduzir tudo';
+  document.getElementById('tall-title').style.color = '';
+  document.getElementById('tall-sub').textContent = isSelection
+    ? tallTargetIndices.length + ' string(s) selecionada(s) serão traduzidas.'
+    : 'Escolha a engine e toque em iniciar. Strings já traduzidas serão ignoradas.';
+  document.getElementById('tall-fill').style.width = '0%';
+  document.getElementById('tall-status').textContent = 'Aguardando...';
+  document.getElementById('tall-status').style.color = '';
+  document.getElementById('tall-start-btn').disabled = false;
+  document.getElementById('tall-start-btn').textContent = '▶ INICIAR';
+  document.getElementById('tall-start-btn').onclick = () => startTranslateAll();
+  const engineBtn = document.getElementById('tall-engine-picker-btn');
+  if (engineBtn) engineBtn.textContent = engineLabelFor(tallEngine) + ' ▾';
+  const sheet = document.getElementById('tall-sheet');
+  sheet.classList.add('open');
+  requestAnimationFrame(() => requestAnimationFrame(() => sheet.classList.add('open-active')));
+}
+
+function closeTallSheet() {
+  const sheet = document.getElementById('tall-sheet');
+  sheet.classList.remove('open-active');
+  setTimeout(() => sheet.classList.remove('open'), 300);
+  // Se a tradução era de uma seleção e chegou a rodar (concluída ou
+  // cancelada no meio), sai do modo seleção. Se o usuário só abriu o sheet
+  // e desistiu antes de apertar INICIAR, mantém a seleção como estava.
+  if (tallTargetIndices && tallStartedThisSession) {
+    exitSelectionMode();
+  }
+  tallTargetIndices = null;
+}
+
+function cancelTranslateAll() {
+  tallCancelled = true;
+  if (!tallRunning) {
+    closeTallSheet();
+  } else {
+    document.getElementById('tall-status').textContent = 'Cancelando...';
+  }
+}
+
+async function translateSingleWithRetry(idx, engine, maxRetries = 2) {
+  const text = stringsData[idx].original;
+  if (!text || !text.trim()) return 'skip';
+  let attempt = 0;
+  while (attempt <= maxRetries) {
+    try {
+      const res = await fetch('/api/translate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, engine, source_lang: originalLang, target_lang: targetLang })
+      });
+      const data = await res.json();
+      if (data.success && data.translated) {
+        stringsData[idx].value = data.translated;
+        editedIndices.add(idx);
+        return 'ok';
+      }
+      throw new Error(data.error || 'fail');
+    } catch(e) {
+      attempt++;
+      if (attempt <= maxRetries) await sleep(1000);
+    }
+  }
+  return 'error';
+}
+
+// Teste leve e descartável: traduz uma frase curta só pra confirmar que o
+// modelo escolhido está respondendo — não escreve em stringsData, então não
+// altera nenhuma string de verdade. Usado como canário antes de uma tradução
+// em massa começar.
+async function testEngine(engine) {
+  try {
+    const res = await fetch('/api/translate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: 'Hello', engine: engine, source_lang: originalLang, target_lang: targetLang })
+    });
+    const data = await res.json();
+    return !!(data.success && data.translated);
+  } catch (e) {
+    return false;
+  }
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+async function startTranslateAll() {
+  const pending = tallTargetIndices
+    ? tallTargetIndices.map(idx => ({ idx, item: stringsData[idx] }))
+    : stringsData
+        .map((item, idx) => ({ idx, item }))
+        .filter(({ idx, item }) => !editedIndices.has(idx));
+
+  if (pending.length === 0) {
+    showToast('Nenhuma string sem tradução encontrada!', 'info', 3000);
+    return;
+  }
+
+  // Testa o modelo escolhido com uma frase curtinha ANTES de mexer em
+  // qualquer string de verdade — se ele já falhar aqui, mostra o modal e
+  // nada na lista muda, exatamente como pedido.
+  const startBtn = document.getElementById('tall-start-btn');
+  const originalBtnText = startBtn.textContent;
+  startBtn.disabled = true;
+  startBtn.textContent = 'Testando modelo...';
+
+  const engineOk = await testEngine(tallEngine);
+
+  if (!engineOk) {
+    startBtn.disabled = false;
+    startBtn.textContent = originalBtnText;
+    const wantsSwitch = await showModelUnavailableModal();
+    if (wantsSwitch) {
+      showEngineMenu(null, null);
+    }
+    return; // nenhuma string foi tocada
+  }
+
+  tallStartedThisSession = true;
+  tallRunning = true;
+  tallCancelled = false;
+  document.getElementById('tall-start-btn').disabled = true;
+  document.getElementById('tall-start-btn').textContent = 'Traduzindo...';
+  document.getElementById('tall-title').textContent = 'Traduzindo...';
+
+  const total = pending.length;
+  let done = 0;
+  let errors = 0;
+  let consecutiveErrors = 0;
+  const BATCH = 5;
+  const DELAY_BETWEEN_BATCHES = 300;
+  const PAUSE_ON_MANY_ERRORS = 5000;
+  const CONSECUTIVE_ERROR_THRESHOLD = 5;
+
+  for (let i = 0; i < pending.length; i += BATCH) {
+    if (tallCancelled) break;
+    const batch = pending.slice(i, i + BATCH);
+    await Promise.all(batch.map(async ({ idx }) => {
+      if (tallCancelled) return;
+      const result = await translateSingleWithRetry(idx, tallEngine);
+      done++;
+      if (result === 'error') { errors++; consecutiveErrors++; }
+      else consecutiveErrors = 0;
+      const pct = Math.round((done / total) * 100);
+      document.getElementById('tall-fill').style.width = pct + '%';
+      const statusEl = document.getElementById('tall-status');
+      statusEl.textContent = done + '/' + total + ' strings · ' + errors + ' falhas';
+      statusEl.style.color = errors > 0 ? '#e07070' : 'var(--text-muted)';
+    }));
+
+    updateProgressBadge();
+    triggerAutoSave();
+
+    if (consecutiveErrors >= CONSECUTIVE_ERROR_THRESHOLD && !tallCancelled) {
+      const statusEl = document.getElementById('tall-status');
+      statusEl.textContent = 'Muitas falhas seguidas — pausando 5s...';
+      statusEl.style.color = '#e07070';
+      await sleep(PAUSE_ON_MANY_ERRORS);
+      consecutiveErrors = 0;
+    } else if (i + BATCH < pending.length && !tallCancelled) {
+      await sleep(DELAY_BETWEEN_BATCHES);
+    }
+  }
+
+  // A lista fica escondida atrás do overlay quase opaco do modal durante toda
+  // a tradução em massa, então não há motivo pra redesenhar ela (custosa,
+  // reconstrói o DOM inteiro) a cada lote de 5 strings — isso é O(n²/5) e
+  // deixava o app engasgando em pacotes grandes. Redesenha só uma vez aqui,
+  // depois que o loop termina (seja por conclusão ou cancelamento), quando
+  // o usuário está prestes a ver a lista de novo.
+  renderStrings();
+
+  tallRunning = false;
+  const finalStatus = document.getElementById('tall-status');
+  const finalTitle  = document.getElementById('tall-title');
+  if (tallCancelled) {
+    finalTitle.textContent = 'Cancelado';
+    finalTitle.style.color = 'var(--text-muted)';
+    finalStatus.textContent = done + ' traduzidas · ' + errors + ' falhas';
+    finalStatus.style.color = errors > 0 ? '#e07070' : 'var(--text-muted)';
+  } else {
+    finalTitle.textContent = 'Concluído ✦';
+    finalTitle.style.color = 'var(--accent)';
+    finalStatus.textContent = (done - errors) + ' traduzidas · ' + (errors > 0 ? errors + ' puladas' : 'sem erros ✦');
+    finalStatus.style.color = errors > 0 ? '#e07070' : 'var(--accent)';
+  }
+  document.getElementById('tall-start-btn').textContent = 'Fechar';
+  document.getElementById('tall-start-btn').disabled = false;
+  document.getElementById('tall-start-btn').onclick = () => closeTallSheet();
+}
+
+
+// ── Scrollbar diamond & is-scrolling ──
+(function() {
+  const list = document.getElementById('strings-list');
+  const diamond = document.getElementById('scroll-diamond');
+  let scrollTimer;
+
+  list.addEventListener('scroll', () => {
+    // is-scrolling class for scrollbar thumb opacity
+    list.classList.add('is-scrolling');
+
+    // Position diamond along the track
+    const ratio = list.scrollTop / (list.scrollHeight - list.clientHeight || 1);
+    const topMin = list.getBoundingClientRect().top + 8;
+    const topMax = list.getBoundingClientRect().bottom - 18;
+    const y = topMin + ratio * (topMax - topMin);
+    diamond.style.top = y + 'px';
+    diamond.classList.add('visible');
+
+    // Reset hide timer
+    clearTimeout(scrollTimer);
+    scrollTimer = setTimeout(() => {
+      list.classList.remove('is-scrolling');
+      diamond.classList.remove('visible');
+    }, 800);
+  }, { passive: true });
+})();
+
+// ---- CRONÔMETRO ----
+const _sessionStart = Date.now();
+function updateTimer() {
+  const elapsed = Math.floor((Date.now() - _sessionStart) / 1000);
+  const h = Math.floor(elapsed / 3600);
+  const m = Math.floor((elapsed % 3600) / 60);
+  const s = elapsed % 60;
+  const timeStr = h > 0
+    ? h + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0')
+    : m + ':' + String(s).padStart(2, '0');
+  const el = document.getElementById('timer-badge');
+  el.textContent = timeStr;
+  // Reduz font quando chega em horas para caber na largura fixa sem empurrar nada
+  el.style.fontSize = h > 0 ? '8px' : '10px';
+}
+setInterval(updateTimer, 1000);
+
+// ---- TOGGLE FILTRO PELO BADGE ----
+function toggleUntranslatedFilter() {
+  const cb = document.getElementById('filter-untranslated');
+  const badge = document.getElementById('count-badge');
+  cb.checked = !cb.checked;
+  badge.classList.toggle('filter-active', cb.checked);
+  renderStrings();
+}
+
+// ---- CONFIRMAR VOLTAR ----
+function confirmBack(e) {
+  // No modo JSON, o botão voltar mostra o modal de "aplicar JSON?" em vez de navegar
+  if (jsonModeActive) {
+    e.preventDefault();
+    exitJsonMode();
+    return;
+  }
+  if (!hasUnsavedChanges) return; // já está tudo salvo, volta normalmente
+  e.preventDefault();
+  showModal({
+    icon: '↩',
+    title: 'Salvar antes de sair?',
+    msg: 'Você tem traduções não salvas. Deseja salvar o progresso antes de sair?',
+    confirmText: 'SALVAR E SAIR',
+    cancelText: 'Sair sem salvar',
+    danger: false
+  }).then(async () => {
+    await saveProgressToDatabase();
+    window.location.href = '/info';
+  }).catch(() => { window.location.href = '/info'; });
+}
+
+// ──────────────────────────────────────────────
+// MODO JSON
+// ──────────────────────────────────────────────
+let jsonModeActive = false;
+
+function enterJsonMode() {
+  if (stringsData.length === 0) return;
+  jsonModeActive = true;
+
+  // Sincroniza o nome do arquivo com o campo principal
+  const mainName = document.getElementById('filename-input').value.trim();
+  document.getElementById('json-filename-input').value = mainName;
+
+  // Gera o JSON das strings de tradução (apenas key e value)
+  const jsonArr = stringsData.map(item => ({
+    key: item.key_hex || ('0x' + (item.key >>> 0).toString(16).toUpperCase().padStart(8, '0')),
+    value: item.value || ''
+  }));
+  document.getElementById('json-textarea').value = JSON.stringify(jsonArr, null, 2);
+  document.getElementById('json-error-msg').textContent = '';
+  document.getElementById('json-textarea').classList.remove('has-error');
+  document.getElementById('json-toolbar-label').textContent = 'JSON · ' + jsonArr.length + ' strings';
+
+  // Mostra painel JSON, esconde o editor normal
+  document.querySelector('.filter-bar').style.display = 'none';
+  document.querySelector('.col-headers').style.display = 'none';
+  document.querySelector('.strings-list').style.display = 'none';
+  document.querySelector('.bottom-bar').style.display = 'none';
+  document.getElementById('json-panel').classList.add('active');
+
+  // Ajusta a page para usar o painel como flex item
+  document.querySelector('.page').style.overflow = 'hidden';
+}
+
+function exitJsonMode() {
+  const ta = document.getElementById('json-textarea');
+  const currentJson = ta.value;
+
+  // Verifica se o JSON foi editado em relação ao stringsData atual
+  const currentArr = stringsData.map(item => ({
+    key: item.key_hex || ('0x' + (item.key >>> 0).toString(16).toUpperCase().padStart(8, '0')),
+    value: item.value || ''
+  }));
+  const snapshot = JSON.stringify(currentArr, null, 2);
+  const hasUnsaved = currentJson.trim() !== snapshot.trim();
+
+  if (!hasUnsaved) {
+    _doExitJsonMode();
+    return;
+  }
+
+  showModal({
+    icon: '◈',
+    title: 'Aplicar edições do JSON?',
+    msg: 'Você editou o JSON mas não clicou em Aplicar. Deseja aplicar as alterações antes de voltar ao modo Package?',
+    confirmText: 'APLICAR E VOLTAR',
+    cancelText: 'Descartar e voltar',
+  }).then(() => {
+    applyJsonEdits();
+    _doExitJsonMode();
+  }).catch(() => {
+    clearJsonDraft(); // usuário escolheu descartar de propósito
+    _doExitJsonMode();
+  });
+}
+
+function _doExitJsonMode() {
+  jsonModeActive = false;
+  document.querySelector('.filter-bar').style.display = '';
+  document.querySelector('.col-headers').style.display = '';
+  document.querySelector('.strings-list').style.display = '';
+  document.querySelector('.bottom-bar').style.display = '';
+  document.getElementById('json-panel').classList.remove('active');
+
+  // Sincroniza de volta o nome caso tenha sido alterado no JSON
+  const jsonName = document.getElementById('json-filename-input').value.trim();
+  if (jsonName) document.getElementById('filename-input').value = jsonName;
+}
+
+// Aplica um array [{key, value}, ...] ao stringsData e retorna quantas
+// entradas foram efetivamente casadas por key. Usado tanto pelo "APLICAR"
+// do textarea do modo JSON quanto pelo "IMPORTAR JSON" (arquivo externo),
+// para garantir o mesmo comportamento nos dois casos.
+function mergeJsonArrayIntoStrings(parsed) {
+  const map = {};
+  for (const entry of parsed) {
+    if (entry && entry.key !== undefined && entry.value !== undefined) {
+      // Aceita key como "0xABCD1234" ou número decimal
+      const keyNorm = String(entry.key).toUpperCase();
+      map[keyNorm] = String(entry.value);
+    }
+  }
+
+  let applied = 0;
+  stringsData.forEach((item, idx) => {
+    const keyHex = (item.key_hex || '').toUpperCase();
+    const keyDec = String(item.key);
+    if (map[keyHex] !== undefined) {
+      stringsData[idx].value = map[keyHex];
+      editedIndices.add(idx);
+      applied++;
+    } else if (map['0X' + keyDec] !== undefined) {
+      stringsData[idx].value = map['0X' + keyDec];
+      editedIndices.add(idx);
+      applied++;
+    }
+  });
+  return applied;
+}
+
+function applyJsonEdits() {
+  const ta = document.getElementById('json-textarea');
+  const errEl = document.getElementById('json-error-msg');
+  let parsed;
+  try {
+    parsed = JSON.parse(ta.value);
+  } catch(e) {
+    errEl.textContent = 'JSON inválido: ' + e.message;
+    ta.classList.add('has-error');
+    return;
+  }
+  if (!Array.isArray(parsed)) {
+    errEl.textContent = 'Esperado um array [ { key, value }, ... ]';
+    ta.classList.add('has-error');
+    return;
+  }
+
+  const applied = mergeJsonArrayIntoStrings(parsed);
+
+  ta.classList.remove('has-error');
+  errEl.textContent = '';
+  clearJsonDraft(); // já foi aplicado de verdade, não precisa mais do rascunho cru
+  document.getElementById('json-toolbar-label').textContent = '✓ ' + applied + ' strings aplicadas';
+  // Igual ao "Carregar traduções": os dados do modo package precisam ser
+  // redesenhados agora, não só quando algo mais disparar renderStrings().
+  renderStrings();
+  triggerAutoSave();
+  updateProgressBadge();
+
+  setTimeout(() => {
+    document.getElementById('json-toolbar-label').textContent = 'JSON · ' + stringsData.length + ' strings';
+  }, 2500);
+}
+
+// ---- IMPORTAR JSON (arquivo local) ----
+// O site não gera .json diretamente nos saves (só .package), então esse
+// fluxo é sempre a partir de um arquivo no dispositivo do usuário — por
+// exemplo um .json exportado antes via "SALVAR JSON" e editado externamente.
+function triggerImportJson() {
+  document.getElementById('import-json-input').click();
+}
+
+document.getElementById('import-json-input').addEventListener('change', function() {
+  const file = this.files[0];
+  if (!file) return;
+  if (!file.name.toLowerCase().endsWith('.json')) {
+    showToast('Selecione um arquivo .json válido.', 'error', 4000);
+    this.value = '';
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    let parsed;
+    try {
+      parsed = JSON.parse(e.target.result);
+    } catch(err) {
+      showToast('JSON inválido: ' + err.message, 'error', 5000);
+      return;
+    }
+    if (!Array.isArray(parsed)) {
+      showToast('Esperado um array [ { key, value }, ... ] no arquivo.', 'error', 5000);
+      return;
+    }
+
+    const applied = mergeJsonArrayIntoStrings(parsed);
+
+    // Se estivermos dentro do modo JSON, o textarea também precisa refletir
+    // o resultado do import — senão fica com o conteúdo antigo em tela.
+    if (jsonModeActive) {
+      const jsonArr = stringsData.map(item => ({
+        key: item.key_hex || ('0x' + (item.key >>> 0).toString(16).toUpperCase().padStart(8, '0')),
+        value: item.value || ''
+      }));
+      const ta = document.getElementById('json-textarea');
+      ta.value = JSON.stringify(jsonArr, null, 2);
+      ta.classList.remove('has-error');
+      document.getElementById('json-error-msg').textContent = '';
+      document.getElementById('json-toolbar-label').textContent = 'JSON · ' + jsonArr.length + ' strings';
+    }
+
+    renderStrings();
+    updateProgressBadge();
+    triggerAutoSave();
+
+    showToast(applied + ' traduções importadas de "' + file.name + '"!', 'success', 3500);
+  };
+  reader.onerror = function() {
+    showToast('Erro ao ler o arquivo.', 'error', 4000);
+  };
+  reader.readAsText(file);
+  this.value = '';
+});
+
+function saveJson() {
+  // Valida o JSON antes de baixar
+  const ta = document.getElementById('json-textarea');
+  const errEl = document.getElementById('json-error-msg');
+  let parsed;
+  try {
+    parsed = JSON.parse(ta.value);
+  } catch(e) {
+    errEl.textContent = 'JSON inválido — corrija antes de salvar.';
+    ta.classList.add('has-error');
+    return;
+  }
+
+  const outputName = (document.getElementById('json-filename-input').value.trim() || 'output') + '.json';
+  const blob = new Blob([JSON.stringify(parsed, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = outputName;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  ta.classList.remove('has-error');
+  errEl.textContent = '';
+  document.getElementById('json-toolbar-label').textContent = '⬇ ' + outputName + ' salvo!';
+  setTimeout(() => {
+    document.getElementById('json-toolbar-label').textContent = 'JSON · ' + (parsed.length || 0) + ' strings';
+  }, 2500);
+}
+
+// Habilita o botão JSON junto com o de salvar
+// (já que ele depende de stringsData estar carregado)
+
+load();
+</script>
+<div id="scroll-diamond"></div>
+</body>
+</html> 
