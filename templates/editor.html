@@ -826,7 +826,7 @@ async function processTranslation(engine) {
   document.getElementById('engine-menu').classList.remove('open');
   if (currentIdx === null) return;
   const idx = currentIdx;
-  const textarea = document.querySelector('[data-idx="' + idx + '"]');
+  const textarea = document.getElementById('edit-ta-' + idx);
   const originalText = stringsData[idx].original;
   if (!originalText || !originalText.trim()) {
     showToast('Esta string não tem texto original para traduzir.', 'info', 2500);
@@ -1310,7 +1310,7 @@ function renderStrings() {
           '<button class="fav-btn' + (isFav ? ' active' : '') + '" id="fav-btn-' + idx + '" onclick="toggleFavorite(' + idx + ', event)" title="Favoritar">★</button>' +
           (hasNote ? '<span class="note-dot" id="note-dot-' + idx + '"></span>' : '<span class="note-dot" id="note-dot-' + idx + '" style="display:none"></span>') +
           '<button class="expand-arrow-btn' + (taExpanded ? ' expanded' : '') + '" id="exp-arrow-' + idx + '" onclick="toggleTranslationExpand(' + idx + ', event)" title="Expandir/diminuir">▾</button>' +
-          '<textarea class="edit-textarea' + (taExpanded ? '' : ' ta-collapsed') + '" data-idx="' + idx + '" rows="1">' + (item.value || '') + '</textarea>' +
+          '<textarea class="edit-textarea' + (taExpanded ? '' : ' ta-collapsed') + '" id="edit-ta-' + idx + '" data-idx="' + idx + '" rows="1">' + (item.value || '') + '</textarea>' +
           '<div class="ta-backdrop' + (taExpanded ? '' : ' ta-collapsed') + '" id="ta-backdrop-' + idx + '"></div>' +
         '</div>' +
         '<div class="kebab-wrap" id="kebab-wrap-' + idx + '">' +
@@ -1651,7 +1651,7 @@ function resolveSelectionOverwrite(choice) {
 
 function updateBackdrop(idx, blurred) {
   const backdrop = document.getElementById('ta-backdrop-' + idx);
-  const ta = document.querySelector('[data-idx="' + idx + '"]');
+  const ta = document.getElementById('edit-ta-' + idx);
   if (!backdrop || !ta) return;
   backdrop.innerHTML = highlightPlaceholdersHtml(ta.value, blurred) + '<span>\u200b</span>';
 }
@@ -1679,7 +1679,7 @@ function toggleOriginalExpand(idx, event) {
 
 function toggleTranslationExpand(idx, event) {
   if (event) event.stopPropagation();
-  const ta = document.querySelector('[data-idx="' + idx + '"]');
+  const ta = document.getElementById('edit-ta-' + idx);
   const backdrop = document.getElementById('ta-backdrop-' + idx);
   const arrow = document.getElementById('exp-arrow-' + idx);
   if (!ta) return;
@@ -1705,7 +1705,7 @@ function expandBoxes(idx) {
     expandedOriginal.add(idx);
     inner.classList.remove('clamped');
   }
-  const ta = document.querySelector('[data-idx="' + idx + '"]');
+  const ta = document.getElementById('edit-ta-' + idx);
   if (ta) {
     expandedTranslation.add(idx);
     ta.classList.remove('ta-collapsed');
@@ -1731,7 +1731,7 @@ function collapseBoxes(idx) {
     expandedOriginal.delete(idx);
     inner.classList.add('clamped');
   }
-  const ta = document.querySelector('[data-idx="' + idx + '"]');
+  const ta = document.getElementById('edit-ta-' + idx);
   if (ta) {
     expandedTranslation.delete(idx);
     ta.classList.add('ta-collapsed');
@@ -1835,7 +1835,7 @@ let clearUndoTimers = {};
 
 function clearTranslation(idx, event) {
   if (event) event.stopPropagation();
-  const ta = document.querySelector('[data-idx="' + idx + '"]');
+  const ta = document.getElementById('edit-ta-' + idx);
   if (!ta || !ta.value) return;
   clearUndoStash[idx] = ta.value;
   ta.value = '';
@@ -1851,7 +1851,7 @@ function clearTranslation(idx, event) {
 }
 
 function undoClear(idx) {
-  const ta = document.querySelector('[data-idx="' + idx + '"]');
+  const ta = document.getElementById('edit-ta-' + idx);
   if (ta && idx in clearUndoStash) {
     ta.value = clearUndoStash[idx];
     stringsData[idx].value = clearUndoStash[idx];
@@ -2085,7 +2085,23 @@ function redoNative() {
   }
 }
 
-document.getElementById('search-input').addEventListener('input', renderStrings);
+// Espera o usuário parar de digitar por SEARCH_DEBOUNCE_MS antes de rodar
+// renderStrings() de fato. Sem isso, cada tecla/apagar disparava um filtro
+// completo em stringsData + reconstrução de toda a lista no DOM antes de
+// deixar a próxima tecla ser processada — em pacotes grandes (milhares de
+// strings) isso é o que fazia o campo de busca parecer travado/lento.
+// Os checkboxes de filtro continuam sem debounce, pois disparam só uma vez
+// por toque (evento 'change'), não a cada tecla.
+function debounce(fn, ms) {
+  let timer = null;
+  return function(...args) {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn.apply(this, args), ms);
+  };
+}
+const SEARCH_DEBOUNCE_MS = 200;
+
+document.getElementById('search-input').addEventListener('input', debounce(renderStrings, SEARCH_DEBOUNCE_MS));
 document.getElementById('filter-untranslated').addEventListener('change', renderStrings);
 document.getElementById('filter-favorite').addEventListener('change', renderStrings);
 document.getElementById('filter-notes').addEventListener('change', renderStrings);
