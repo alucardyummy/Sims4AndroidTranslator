@@ -169,8 +169,16 @@
   .save-btn:disabled { opacity: 0.4; pointer-events: none; }
   .loading-overlay { display: none; position: fixed; inset: 0; background: rgba(15,15,15,0.92); z-index: 100; align-items: center; justify-content: center; flex-direction: column; gap: 1rem; }
   .loading-overlay.active { display: flex; }
-  .spinner { width: 36px; height: 36px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
-  .loading-text { font-size: 13px; color: var(--text-muted); letter-spacing: 0.04em; text-align: center; }
+  .loading-gif { width: 36px; height: 36px; object-fit: contain; border-radius: 50%; }
+  .loading-phrase-container { position: relative; min-height: 18px; display: flex; align-items: center; justify-content: center; max-width: 260px; padding: 0 12px; }
+  .loading-phrase { font-size: 13px; color: var(--text-muted); letter-spacing: 0.04em; text-align: center; line-height: 1.5; animation: phraseInOut 3.2s ease forwards; }
+  @keyframes phraseInOut {
+    0%   { opacity: 0; transform: translateX(-18px); }
+    14%  { opacity: 1; transform: translateX(0); }
+    82%  { opacity: 1; transform: translateX(0); }
+    100% { opacity: 0; transform: translateX(18px); }
+  }
+  .loading-text { font-size: 13px; color: var(--text-muted); letter-spacing: 0.04em; text-align: center; display: none; }
   .success-sheet { display: none; position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,0); align-items: flex-end; transition: background 0.32s ease; }
   .success-sheet.open { display: flex; }
   .success-sheet.open-active { background: rgba(0,0,0,0.8); }
@@ -478,8 +486,9 @@
 </div>
 
 <div class="loading-overlay" id="loading">
-  <div class="spinner"></div>
-  <div class="loading-text" id="loading-text">Carregando...</div>
+  <img class="loading-gif" id="loading-gif" src="/img/loading.webp" alt="">
+  <div class="loading-phrase-container" id="loading-phrase-container"></div>
+  <div class="loading-text" id="loading-text"></div>
 </div>
 
 <div class="success-sheet" id="success-sheet" onclick="if(event.target===this) closeSuccessSheet();">
@@ -683,6 +692,58 @@ document.addEventListener('pointerdown', function(e) {
   btn.classList.add('btn-tapped');
   btn.addEventListener('animationend', () => btn.classList.remove('btn-tapped'), { once: true });
 }, { passive: true });
+
+// ---- FRASES BOBAS DA TELA DE CARREGAMENTO ----
+// Mesmo carrossel do index.html: usado só nos carregamentos "de espera sem
+// sub-etapas" (abrir instância, importar traduções de outro save, importar
+// .package). O "Salvando arquivo..." fica de fora de propósito — é o único
+// momento em que, se travar, a pessoa quer saber o que estava rolando.
+const LOADING_PHRASES = [
+  'sorvete',
+  'Você sabia que as lontras-marinhas dão as mãos enquanto dormem?',
+  'gatinhos pãozinhos',
+  'isso não tem nada a ver com o carregamento',
+  'respira fundo',
+  'em algum lugar, uma capivara está tranquila',
+  'polvos têm três corações',
+  'pipoca',
+  '🦦🦦🦦',
+];
+let _lastPhraseIdx = -1;
+let _phrasesRunning = false;
+
+function pickLoadingPhrase() {
+  if (LOADING_PHRASES.length === 1) return LOADING_PHRASES[0];
+  let i;
+  do { i = Math.floor(Math.random() * LOADING_PHRASES.length); } while (i === _lastPhraseIdx);
+  _lastPhraseIdx = i;
+  return LOADING_PHRASES[i];
+}
+
+function loadingPhraseCycle() {
+  const container = document.getElementById('loading-phrase-container');
+  if (!container || !_phrasesRunning) return;
+  const el = document.createElement('div');
+  el.className = 'loading-phrase';
+  el.textContent = pickLoadingPhrase();
+  el.addEventListener('animationend', () => {
+    el.remove();
+    loadingPhraseCycle();
+  });
+  container.appendChild(el);
+}
+
+function startLoadingPhrases() {
+  document.getElementById('loading-text').style.display = 'none';
+  _phrasesRunning = true;
+  loadingPhraseCycle();
+}
+
+function stopLoadingPhrases() {
+  _phrasesRunning = false;
+  const container = document.getElementById('loading-phrase-container');
+  if (container) container.innerHTML = '';
+}
 
 let stringsData = [];
 let instanceStr  = sessionStorage.getItem('selected_instance_str') || '';
@@ -1068,9 +1129,9 @@ async function load() {
   if (!instanceStr) { window.location.href = '/'; return; }
   fetchAvailableEngines(); // não precisa bloquear o carregamento das strings
   document.getElementById('top-sub').textContent = originalLang + ' → ' + targetLang;
-  document.getElementById('loading-text').textContent = 'Carregando strings...';
   document.getElementById('loading').classList.add('active');
-  if (loadFromLocalDraft()) return;
+  startLoadingPhrases();
+  if (loadFromLocalDraft()) { stopLoadingPhrases(); return; }
   try {
     const res = await fetch('/api/strings?instance=' + encodeURIComponent(instanceStr));
     const data = await res.json();
@@ -1083,6 +1144,7 @@ async function load() {
     document.getElementById('count-badge').textContent = stringsData.length + ' strings';
     updateProgressBadge();
     document.getElementById('loading').classList.remove('active');
+    stopLoadingPhrases();
     renderStrings();
     document.getElementById('save-btn').disabled = stringsData.length === 0;
     document.getElementById('translate-all-btn').disabled = stringsData.length === 0;
@@ -1095,6 +1157,7 @@ async function load() {
     checkForLeftoverJsonDraft();
   } catch(e) {
     document.getElementById('loading').classList.remove('active');
+    stopLoadingPhrases();
     showToast('Erro ao carregar strings: ' + e.message, 'error', 5000);
     // É EXATAMENTE nesse caso (falha ao buscar do servidor — sessão perdida,
     // .package não encontrado, etc.) que a recuperação local é mais importante.
@@ -2170,8 +2233,8 @@ async function loadImportSaves() {
 
 async function applyTranslationsFromSave(saveId, saveName) {
   closeImportSheet();
-  document.getElementById('loading-text').textContent = 'Carregando traduções...';
   document.getElementById('loading').classList.add('active');
+  startLoadingPhrases();
   try {
     const res = await fetch('/api/import_translations', {
       method: 'POST',
@@ -2180,10 +2243,12 @@ async function applyTranslationsFromSave(saveId, saveName) {
     });
     const data = await res.json();
     document.getElementById('loading').classList.remove('active');
+    stopLoadingPhrases();
     if (!data.success) { showToast('Erro ao importar: ' + (data.error || 'desconhecido'), 'error', 5000); return; }
     applyTranslationMap(data.translations, saveName);
   } catch(e) {
     document.getElementById('loading').classList.remove('active');
+    stopLoadingPhrases();
     showToast('Erro de conexão ao importar traduções.', 'error', 4000);
   }
 }
@@ -2194,8 +2259,8 @@ document.getElementById('import-package-input').addEventListener('change', async
   if (!file) return;
   if (!file.name.endsWith('.package')) { showToast('Selecione um arquivo .package válido.', 'error', 4000); return; }
   closeImportSheet();
-  document.getElementById('loading-text').textContent = 'Lendo arquivo...';
   document.getElementById('loading').classList.add('active');
+  startLoadingPhrases();
   try {
     const formData = new FormData();
     formData.append('package', file);
@@ -2206,10 +2271,12 @@ document.getElementById('import-package-input').addEventListener('change', async
     });
     const data = await res.json();
     document.getElementById('loading').classList.remove('active');
+    stopLoadingPhrases();
     if (!data.success) { showToast('Erro ao ler arquivo: ' + (data.error || 'desconhecido'), 'error', 5000); return; }
     applyTranslationMap(data.translations, file.name);
   } catch(e) {
     document.getElementById('loading').classList.remove('active');
+    stopLoadingPhrases();
     showToast('Erro de conexão ao ler arquivo.', 'error', 4000);
   }
   this.value = '';
@@ -2303,7 +2370,9 @@ async function save() {
   }
 
   const outputName = filenameInput.value.trim();
-  document.getElementById('loading-text').textContent = 'Salvando arquivo...';
+  const savingTextEl = document.getElementById('loading-text');
+  savingTextEl.textContent = 'Salvando arquivo...';
+  savingTextEl.style.display = '';
   document.getElementById('loading').classList.add('active');
   const packageId = sessionStorage.getItem('package_id') || '';
   const payload = {
