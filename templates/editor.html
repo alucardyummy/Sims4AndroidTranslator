@@ -167,11 +167,11 @@
   .save-btn { flex: 1; padding: 8px 12px; background: var(--accent-dim); border: none; border-radius: 8px; color: var(--bg); font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; cursor: pointer; -webkit-tap-highlight-color: transparent; white-space: nowrap; }
   .save-btn:active { transform: scale(0.97); background: var(--accent); }
   .save-btn:disabled { opacity: 0.4; pointer-events: none; }
-  .loading-overlay { display: none; position: fixed; inset: 0; background: rgba(15,15,15,0.92); z-index: 100; align-items: center; justify-content: center; flex-direction: column; gap: 1rem; }
+  .loading-overlay { display: none; position: fixed; inset: 0; background: rgba(15,15,15,0.92); z-index: 100; align-items: center; justify-content: center; flex-direction: column; gap: 0.5rem; }
   .loading-overlay.active { display: flex; }
-  .loading-gif { width: 36px; height: 36px; object-fit: contain; border-radius: 50%; }
+  .loading-gif { width: 54px; height: 54px; object-fit: contain; border-radius: 50%; }
   .loading-phrase-container { position: relative; min-height: 18px; display: flex; align-items: center; justify-content: center; max-width: 260px; padding: 0 12px; }
-  .loading-phrase { font-size: 13px; color: var(--text-muted); letter-spacing: 0.04em; text-align: center; line-height: 1.5; animation: phraseInOut 5.3s ease forwards; }
+  .loading-phrase { font-size: 13px; color: var(--text-muted); letter-spacing: 0.04em; text-align: center; line-height: 1.5; animation: phraseInOut 4.8s ease forwards; }
   @keyframes phraseInOut {
     0%   { opacity: 0; transform: translateX(-18px); }
     14%  { opacity: 1; transform: translateX(0); }
