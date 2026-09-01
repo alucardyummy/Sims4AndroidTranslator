@@ -136,9 +136,15 @@
   /* Loading */
   .loading-overlay { display: none; position: fixed; inset: 0; background: rgba(15,15,15,0.9); z-index: 100; align-items: center; justify-content: center; flex-direction: column; gap: 1rem; }
   .loading-overlay.active { display: flex; }
-  .spinner { width: 40px; height: 40px; border: 2px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .loading-text { font-size: 13px; color: rgba(255,255,255,0.7); letter-spacing: 0.05em; }
+  .loading-gif { width: 40px; height: 40px; object-fit: contain; border-radius: 50%; }
+  .loading-phrase-container { position: relative; min-height: 18px; display: flex; align-items: center; justify-content: center; max-width: 260px; padding: 0 12px; }
+  .loading-phrase { font-size: 13px; color: rgba(255,255,255,0.7); letter-spacing: 0.05em; text-align: center; line-height: 1.5; animation: phraseInOut 3.2s ease forwards; }
+  @keyframes phraseInOut {
+    0%   { opacity: 0; transform: translateX(-18px); }
+    14%  { opacity: 1; transform: translateX(0); }
+    82%  { opacity: 1; transform: translateX(0); }
+    100% { opacity: 0; transform: translateX(18px); }
+  }
 
   /* Version */
   .version { font-size: 11px; color: var(--text-muted); opacity: 0.6; letter-spacing: 0.05em; margin-top: 2rem; position: relative; z-index: 1; }
@@ -742,8 +748,8 @@
 </div>
 
 <div class="loading-overlay" id="loading">
-  <div class="spinner"></div>
-  <div class="loading-text">Lendo arquivo...</div>
+  <img class="loading-gif" id="loading-gif" src="/img/loading.webp" alt="">
+  <div class="loading-phrase-container" id="loading-phrase-container"></div>
 </div>
 
 <!-- form legado removido: upload agora é direto Frontend → Supabase -->
@@ -915,8 +921,57 @@ function updateImportUI() {
   }
 }
 
-function setLoadingText(msg) {
-  document.querySelector('.loading-text').textContent = msg;
+// ---- FRASES BOBAS DA TELA DE CARREGAMENTO ----
+// Enquanto o arquivo sobe/processa, mostramos frases aleatórias e sem
+// nenhuma relação com o progresso real — é só companhia boba pra espera não
+// parecer tão parada. Cada frase é um elemento novo (mesma técnica do
+// fav-star-float: anima uma vez com 'forwards' e se remove no fim), então o
+// próximo elemento só nasce quando o anterior termina de sumir — nunca
+// dessincroniza mesmo que o navegador atrase um frame ou outro.
+const LOADING_PHRASES = [
+  'sorvete',
+  'Você sabia que as lontras-marinhas dão as mãos enquanto dormem?',
+  'gatinhos pãozinhos',
+  'isso não tem nada a ver com o carregamento',
+  'respira fundo',
+  'em algum lugar, uma capivara está tranquila',
+  'polvos têm três corações',
+  'pipoca',
+  '🦦🦦🦦',
+];
+let _lastPhraseIdx = -1;
+let _phrasesRunning = false;
+
+function pickLoadingPhrase() {
+  if (LOADING_PHRASES.length === 1) return LOADING_PHRASES[0];
+  let i;
+  do { i = Math.floor(Math.random() * LOADING_PHRASES.length); } while (i === _lastPhraseIdx);
+  _lastPhraseIdx = i;
+  return LOADING_PHRASES[i];
+}
+
+function loadingPhraseCycle() {
+  const container = document.getElementById('loading-phrase-container');
+  if (!container || !_phrasesRunning) return;
+  const el = document.createElement('div');
+  el.className = 'loading-phrase';
+  el.textContent = pickLoadingPhrase();
+  el.addEventListener('animationend', () => {
+    el.remove();
+    loadingPhraseCycle();
+  });
+  container.appendChild(el);
+}
+
+function startLoadingPhrases() {
+  _phrasesRunning = true;
+  loadingPhraseCycle();
+}
+
+function stopLoadingPhrases() {
+  _phrasesRunning = false;
+  const container = document.getElementById('loading-phrase-container');
+  if (container) container.innerHTML = '';
 }
 
 async function handleUpload(file) {
@@ -928,16 +983,15 @@ async function handleUpload(file) {
 
   document.getElementById('error-msg').classList.remove('active');
   document.getElementById('loading').classList.add('active');
+  startLoadingPhrases();
 
   try {
     // 1. Pede a signed URL ao Flask
-    setLoadingText('Preparando upload...');
     const urlRes = await fetch('/api/upload_url', { method: 'POST' });
     if (!urlRes.ok) throw new Error('Erro ao obter URL de upload');
     const { file_id, signed_url } = await urlRes.json();
 
     // 2. Faz o upload DIRETO para o Supabase Storage (sem passar pelo Flask)
-    setLoadingText('Enviando arquivo...');
     const uploadRes = await fetch(signed_url, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/octet-stream' },
@@ -946,7 +1000,6 @@ async function handleUpload(file) {
     if (!uploadRes.ok) throw new Error('Erro no upload: ' + uploadRes.statusText);
 
     // 3. Avisa o Flask para processar o arquivo
-    setLoadingText('Processando...');
     const confirmRes = await fetch('/upload/confirm', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -960,10 +1013,10 @@ async function handleUpload(file) {
       throw new Error(result.error || 'Erro ao processar arquivo');
     }
   } catch (e) {
+    stopLoadingPhrases();
     document.getElementById('loading').classList.remove('active');
     document.getElementById('error-msg').textContent = e.message || 'Erro desconhecido';
     document.getElementById('error-msg').classList.add('active');
-    setLoadingText('Lendo arquivo...');
   }
 }
 
