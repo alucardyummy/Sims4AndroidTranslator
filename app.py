@@ -1404,9 +1404,20 @@ def merge_page():
     return send_file(os.path.join(TEMPLATE_DIR, "merge.html"))
 
 
+# Marca reservada exclusiva do app pra identificar merges "com memória":
+# type=0x53344D46 soletra "S4MF" em ASCII — extremamente improvável de colidir
+# com um resource type real do jogo. group/instance são constantes fixas.
+MERGE_MANIFEST_TYPE = 0x53344D46
+MERGE_MANIFEST_GROUP = 0x00000000
+MERGE_MANIFEST_INSTANCE = 0x0000000000000001
+
+
 @app.route("/api/merge", methods=["POST"])
 def api_merge():
+    from packer.resource import ResourceID
+
     files = request.files.getlist("packages")
+    mode = request.form.get("mode", "simple")  # "simple" ou "smart"
     if not files or len(files) < 2:
         return json.dumps({"error": "Envie pelo menos 2 arquivos .package"}), 400
 
@@ -1420,8 +1431,15 @@ def api_merge():
 
     tmp_inputs = []
     try:
+        # No modo "smart", guardamos de qual arquivo de origem cada resource
+        # veio — é o que permite separar o merge de volta depois, com certeza
+        # absoluta (ao contrário do palpite por Group ID usado no /api/unmerge
+        # para arquivos que não têm essa marca).
+        manifest_resources = []
+        source_names = [f.filename for f in files]
+
         with DbpfPackage.write(tmp_out_path) as outpkg:
-            for f in files:
+            for src_idx, f in enumerate(files):
                 tmp_in = tempfile.NamedTemporaryFile(delete=False, suffix=".package")
                 f.save(tmp_in.name)
                 tmp_in.close()
@@ -1430,11 +1448,28 @@ def api_merge():
                 with DbpfPackage.read(tmp_in.name) as pkg:
                     for rid in pkg.search():
                         resource = pkg[rid]
-                        content = pkg.content(resource)
+                        compression, raw_bytes, decompressed_size = pkg.raw_content(resource)
                         try:
-                            outpkg.put(rid, content)
+                            outpkg.put_raw(rid, compression, raw_bytes, decompressed_size)
+                            if mode == "smart":
+                                manifest_resources.append(
+                                    [hex(rid.type), hex(rid.group), hex(rid.instance), src_idx]
+                                )
                         except Exception:
                             pass  # ignora conflitos de key duplicada
+
+            if mode == "smart":
+                manifest = {
+                    "format": "s4at_merge_manifest_v1",
+                    "sources": source_names,
+                    "resources": manifest_resources,
+                }
+                manifest_rid = ResourceID(
+                    type=MERGE_MANIFEST_TYPE,
+                    group=MERGE_MANIFEST_GROUP,
+                    instance=MERGE_MANIFEST_INSTANCE,
+                )
+                outpkg.put(manifest_rid, json.dumps(manifest).encode("utf-8"))
 
         return send_file(
             tmp_out_path,
@@ -1446,6 +1481,125 @@ def api_merge():
         return json.dumps({"error": f"Erro ao mesclar: {e}"}), 500
     finally:
         for p in tmp_inputs:
+            try:
+                os.remove(p)
+            except Exception:
+                pass
+
+
+@app.route("/api/unmerge", methods=["POST"])
+def api_unmerge():
+    """
+    Recebe um único .package já mesclado e devolve ele "desmembrado".
+
+    Dois caminhos:
+      1) Se o arquivo tem a marca de manifesto (criada pelo modo "smart" do
+         /api/merge), a separação é EXATA: sabemos de verdade qual resource
+         veio de qual arquivo original.
+      2) Se não tem (merge feito por outra ferramenta, ou pelo modo "simples"
+         daqui mesmo), caímos pro palpite por Group ID: agrupamos os
+         resources que compartilham o mesmo Group, já que é convenção comum
+         entre criadores de CC manter um Group ID fixo por mod. Não é 100%
+         garantido (é a mesma técnica que o Sims 4 Studio usa no "Split
+         Merged Package" dele), então avisamos isso pro usuário na resposta.
+    """
+    from packer.resource import ResourceID
+    import base64
+
+    f = request.files.get("package")
+    if not f or not f.filename.endswith(".package"):
+        return json.dumps({"error": "Envie um arquivo .package válido"}), 400
+
+    tmp_in = tempfile.NamedTemporaryFile(delete=False, suffix=".package")
+    f.save(tmp_in.name)
+    tmp_in.close()
+
+    tmp_outputs = []
+    try:
+        manifest = None
+        all_resources = []  # [(rid, resource_obj), ...] exceto o próprio manifesto
+
+        with DbpfPackage.read(tmp_in.name) as pkg:
+            manifest_rid = ResourceID(
+                type=MERGE_MANIFEST_TYPE,
+                group=MERGE_MANIFEST_GROUP,
+                instance=MERGE_MANIFEST_INSTANCE,
+            )
+            for rid in pkg.search():
+                if rid == manifest_rid:
+                    resource = pkg[rid]
+                    try:
+                        manifest = json.loads(pkg.content(resource).decode("utf-8"))
+                    except Exception:
+                        manifest = None
+                    continue
+                resource = pkg[rid]
+                compression, raw_bytes, decompressed_size = pkg.raw_content(resource)
+                all_resources.append((rid, resource, (compression, raw_bytes, decompressed_size)))
+
+            # ---- agrupa: por manifesto (exato) ou por Group ID (palpite) ----
+            groups = {}  # chave -> {"label": str, "items": [(rid, content), ...]}
+            used_manifest = False
+
+            if manifest and manifest.get("format") == "s4at_merge_manifest_v1":
+                used_manifest = True
+                sources = manifest.get("sources", [])
+                origin_by_key = {
+                    (r[0], r[1], r[2]): r[3] for r in manifest.get("resources", [])
+                }
+                for rid, resource, raw in all_resources:
+                    key = (hex(rid.type), hex(rid.group), hex(rid.instance))
+                    src_idx = origin_by_key.get(key)
+                    if src_idx is not None and src_idx < len(sources):
+                        label = sources[src_idx]
+                    else:
+                        label = "desconhecido.package"
+                    groups.setdefault(label, []).append((rid, raw))
+            else:
+                for rid, resource, raw in all_resources:
+                    label = f"grupo_{rid.group:08X}.package"
+                    groups.setdefault(label, []).append((rid, raw))
+
+            parts = []
+            for label, items in groups.items():
+                tmp_out = tempfile.NamedTemporaryFile(delete=False, suffix=".package")
+                tmp_out_path = tmp_out.name
+                tmp_out.close()
+                tmp_outputs.append(tmp_out_path)
+
+                with DbpfPackage.write(tmp_out_path) as outpkg:
+                    for rid, raw in items:
+                        try:
+                            compression, raw_bytes, decompressed_size = raw
+                            outpkg.put_raw(rid, compression, raw_bytes, decompressed_size)
+                        except Exception:
+                            pass
+
+                with open(tmp_out_path, "rb") as fh:
+                    data = fh.read()
+
+                parts.append({
+                    "filename": label,
+                    "size": len(data),
+                    "resource_count": len(items),
+                    "data_b64": base64.b64encode(data).decode("ascii"),
+                })
+
+        parts.sort(key=lambda p: p["filename"].lower())
+
+        return json.dumps({
+            "success": True,
+            "exact": used_manifest,
+            "parts": parts,
+        })
+    except Exception as e:
+        return json.dumps({"error": f"Erro ao separar: {e}"}), 500
+    finally:
+        try:
+            os.remove(tmp_in.name)
+        except Exception:
+            pass
+        for p in tmp_outputs:
             try:
                 os.remove(p)
             except Exception:
