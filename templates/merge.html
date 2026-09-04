@@ -40,7 +40,7 @@
   .drop-zone.has-files .drop-zone-icon { color: var(--accent); transform: scale(1.15); }
   .drop-zone-label { font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.08em; color: var(--text-muted); text-transform: uppercase; }
   .drop-zone-sub { font-size: 11px; color: var(--text-dim); text-align: center; line-height: 1.6; }
-  #file-input { display: none; }
+  #file-input, #split-file-input { display: none; }
 
   /* Lista de arquivos */
   .file-list { display: flex; flex-direction: column; gap: 5px; margin-bottom: 1rem; }
@@ -58,6 +58,28 @@
   .merge-btn { width: 100%; padding: 17px; background: var(--accent-dim); border: none; border-radius: var(--radius); color: #080808; font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 0.1em; cursor: pointer; -webkit-tap-highlight-color: transparent; margin-top: auto; transition: background 0.15s, transform 0.1s, opacity 0.2s; }
   .merge-btn:active { background: var(--accent); transform: scale(0.97); }
   .merge-btn:disabled { opacity: 0.2; pointer-events: none; }
+
+  /* Abas de modo (Mesclar rapidinho / com memória / Separar) */
+  .mode-tabs { display: flex; flex-direction: column; gap: 8px; margin-bottom: 1.5rem; }
+  .mode-tab { text-align: left; background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: border-color 0.15s, background 0.15s; }
+  .mode-tab:active { background: rgba(156,184,178,0.04); }
+  .mode-tab.selected { border-color: var(--accent-dim); background: rgba(156,184,178,0.06); }
+  .mode-tab-title { font-family: 'Syne', sans-serif; font-size: 12.5px; font-weight: 700; letter-spacing: 0.04em; color: var(--text); display: flex; align-items: center; gap: 7px; }
+  .mode-tab-title .dot { width: 7px; height: 7px; border-radius: 50%; border: 1.5px solid var(--text-dim); flex-shrink: 0; transition: background 0.15s, border-color 0.15s; }
+  .mode-tab.selected .mode-tab-title .dot { background: var(--accent); border-color: var(--accent); }
+  .mode-tab-sub { font-size: 10.5px; color: var(--text-dim); line-height: 1.5; margin-top: 3px; }
+
+  /* Resultado da separação */
+  .split-result-item { display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); animation: itemIn 0.22s ease; }
+  .split-result-info { flex: 1; min-width: 0; }
+  .split-result-name { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .split-result-meta { font-size: 9.5px; color: var(--text-dim); margin-top: 2px; }
+  .split-download-btn { width: 30px; height: 30px; background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; color: var(--accent); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; -webkit-tap-highlight-color: transparent; transition: background 0.15s, transform 0.1s; }
+  .split-download-btn:active { background: var(--accent-dim); color: #080808; transform: scale(0.92); }
+  .split-download-btn svg { width: 15px; height: 15px; }
+  .split-badge { font-size: 10px; letter-spacing: 0.03em; padding: 7px 11px; border-radius: 8px; margin-bottom: 0.9rem; line-height: 1.5; }
+  .split-badge.exact { background: rgba(156,184,178,0.08); color: var(--accent); border: 1px solid rgba(156,184,178,0.2); }
+  .split-badge.guess { background: rgba(176,112,112,0.08); color: #c08585; border: 1px solid rgba(176,112,112,0.2); }
 
   /* Loading */
   .loading-overlay { display: none; position: fixed; inset: 0; background: rgba(15,15,15,0.92); z-index: 100; align-items: center; justify-content: center; flex-direction: column; gap: 1rem; }
@@ -94,26 +116,61 @@
     <div class="topbar-title">Mesclar .packages</div>
   </div>
 
-  <div class="section-label">Arquivos selecionados</div>
-
-  <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
-    <div class="drop-zone-icon">◈</div>
-    <div class="drop-zone-label">Selecionar arquivos</div>
-    <div class="drop-zone-sub">Toque para escolher os .package<br>que deseja juntar num só</div>
+  <div class="mode-tabs" id="mode-tabs">
+    <button class="mode-tab selected" data-mode="simple" onclick="switchMode('simple')">
+      <div class="mode-tab-title"><span class="dot"></span>Mesclar rapidinho</div>
+      <div class="mode-tab-sub">Junta tudo num arquivo só. Não dá pra separar de volta depois.</div>
+    </button>
+    <button class="mode-tab" data-mode="smart" onclick="switchMode('smart')">
+      <div class="mode-tab-title"><span class="dot"></span>Mesclar com memória</div>
+      <div class="mode-tab-sub">Junta tudo, mas guarda um mapinha de cada arquivo — dá pra separar de volta quando quiser.</div>
+    </button>
+    <button class="mode-tab" data-mode="split" onclick="switchMode('split')">
+      <div class="mode-tab-title"><span class="dot"></span>Separar arquivo mesclado</div>
+      <div class="mode-tab-sub">Importa um .package já mesclado e baixa os arquivos originais separados.</div>
+    </button>
   </div>
-  <input type="file" id="file-input" accept=".package" multiple>
 
-  <div class="search-wrap" id="search-wrap">
-    <span class="search-icon">◎</span>
-    <input class="search-input" id="search-input" type="text" placeholder="Buscar arquivo..." oninput="filterList()">
+  <div id="merge-section">
+    <div class="section-label">Arquivos selecionados</div>
+
+    <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+      <div class="drop-zone-icon">◈</div>
+      <div class="drop-zone-label">Selecionar arquivos</div>
+      <div class="drop-zone-sub">Toque para escolher os .package<br>que deseja juntar num só</div>
+    </div>
+    <input type="file" id="file-input" accept=".package" multiple>
+
+    <div class="search-wrap" id="search-wrap">
+      <span class="search-icon">◎</span>
+      <input class="search-input" id="search-input" type="text" placeholder="Buscar arquivo..." oninput="filterList()">
+    </div>
+    <div class="search-count" id="search-count"></div>
+    <div class="file-list" id="file-list"></div>
+    <div class="file-count" id="file-count"></div>
+
+    <div class="separator"></div>
+
+    <button class="merge-btn" id="merge-btn" onclick="doMerge()" disabled>MESCLAR E BAIXAR</button>
   </div>
-  <div class="search-count" id="search-count"></div>
-  <div class="file-list" id="file-list"></div>
-  <div class="file-count" id="file-count"></div>
 
-  <div class="separator"></div>
+  <div id="split-section" style="display:none;">
+    <div class="section-label">Arquivo mesclado</div>
 
-  <button class="merge-btn" id="merge-btn" onclick="doMerge()" disabled>MESCLAR E BAIXAR</button>
+    <div class="drop-zone" id="split-drop-zone" onclick="document.getElementById('split-file-input').click()">
+      <div class="drop-zone-icon">◈</div>
+      <div class="drop-zone-label" id="split-drop-label">Selecionar .package</div>
+      <div class="drop-zone-sub" id="split-drop-sub">Toque para escolher o .package<br>já mesclado que quer separar</div>
+    </div>
+    <input type="file" id="split-file-input" accept=".package">
+
+    <div id="split-results-wrap" style="display:none;">
+      <div class="separator"></div>
+      <div class="split-badge" id="split-badge"></div>
+      <div class="section-label">Arquivos encontrados</div>
+      <div class="file-list" id="split-results-list"></div>
+    </div>
+  </div>
 </div>
 
 <div class="loading-overlay" id="loading">
@@ -125,6 +182,21 @@
 
 <script>
 let selectedFiles = [];
+let currentMode = 'simple'; // 'simple' | 'smart' | 'split'
+let splitFile = null;
+let splitParts = []; // [{filename, size, resource_count, data_b64}]
+
+function switchMode(mode) {
+  currentMode = mode;
+  document.querySelectorAll('.mode-tab').forEach(el => {
+    el.classList.toggle('selected', el.dataset.mode === mode);
+  });
+  document.getElementById('merge-section').style.display = (mode === 'split') ? 'none' : 'block';
+  document.getElementById('split-section').style.display = (mode === 'split') ? 'block' : 'none';
+
+  const btn = document.getElementById('merge-btn');
+  btn.textContent = (mode === 'smart') ? 'MESCLAR COM MEMÓRIA' : 'MESCLAR E BAIXAR';
+}
 
 document.getElementById('file-input').addEventListener('change', function() {
   addFiles(Array.from(this.files));
@@ -181,7 +253,7 @@ function renderList() {
   btn.disabled = n < 2;
   drop.classList.toggle('has-files', n > 0);
 
-  const sub = document.querySelector('.drop-zone-sub');
+  const sub = document.querySelector('#merge-section .drop-zone-sub');
   sub.textContent = n > 0 ? 'Toque para adicionar mais arquivos' : 'Toque para escolher os .package\nque deseja juntar num só';
 
   document.getElementById('search-wrap').classList.toggle('visible', n > 0);
@@ -202,6 +274,7 @@ async function doMerge() {
   try {
     const formData = new FormData();
     selectedFiles.forEach(f => formData.append('packages', f));
+    formData.append('mode', currentMode === 'smart' ? 'smart' : 'simple');
 
     const res = await fetch('/api/merge', { method: 'POST', body: formData });
 
@@ -227,9 +300,103 @@ async function doMerge() {
   }
 }
 
+// ---- Separar arquivo mesclado ----
+
+document.getElementById('split-file-input').addEventListener('change', function() {
+  const f = this.files[0];
+  this.value = '';
+  if (!f) return;
+  if (!f.name.endsWith('.package')) {
+    showToast('Apenas arquivos .package são aceitos.');
+    return;
+  }
+  splitFile = f;
+  document.getElementById('split-drop-zone').classList.add('has-files');
+  document.getElementById('split-drop-label').textContent = f.name;
+  document.getElementById('split-drop-sub').textContent = 'Toque para trocar o arquivo';
+  doSplit();
+});
+
+async function doSplit() {
+  if (!splitFile) return;
+
+  const loading = document.getElementById('loading');
+  const loadingText = document.getElementById('loading-text');
+  loading.classList.add('active');
+  loadingText.textContent = 'Separando arquivos...';
+  document.getElementById('split-results-wrap').style.display = 'none';
+
+  try {
+    const formData = new FormData();
+    formData.append('package', splitFile);
+
+    const res = await fetch('/api/unmerge', { method: 'POST', body: formData });
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || 'Erro ao separar o arquivo');
+    }
+
+    splitParts = data.parts || [];
+    renderSplitResults(data.exact);
+    loading.classList.remove('active');
+  } catch(e) {
+    loading.classList.remove('active');
+    showToast(e.message || 'Erro ao separar o arquivo.');
+  }
+}
+
+function renderSplitResults(exact) {
+  const badge = document.getElementById('split-badge');
+  if (exact) {
+    badge.className = 'split-badge exact';
+    badge.textContent = '✓ Esse arquivo tinha o mapinha de origem — separação exata, cada parte é idêntica ao arquivo original.';
+  } else {
+    badge.className = 'split-badge guess';
+    badge.textContent = '⚠ Esse arquivo não tinha mapinha de origem (não foi mesclado com "memória"). Separamos por um palpite baseado em Group ID — pode não bater 100% com os arquivos originais.';
+  }
+
+  const list = document.getElementById('split-results-list');
+  list.innerHTML = '';
+  splitParts.forEach((p, idx) => {
+    const item = document.createElement('div');
+    item.className = 'split-result-item';
+    item.innerHTML =
+      '<div class="split-result-info">' +
+        '<div class="split-result-name">' + p.filename + '</div>' +
+        '<div class="split-result-meta">' + formatSize(p.size) + ' · ' + p.resource_count + ' recurso' + (p.resource_count !== 1 ? 's' : '') + '</div>' +
+      '</div>' +
+      '<button class="split-download-btn" onclick="downloadSplitPart(' + idx + ')" title="Baixar">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+          '<path d="M12 4v13m0 0l-5-5m5 5l5-5M5 20h14"/>' +
+        '</svg>' +
+      '</button>';
+    list.appendChild(item);
+  });
+
+  document.getElementById('split-results-wrap').style.display = 'block';
+}
+
+function downloadSplitPart(idx) {
+  const p = splitParts[idx];
+  if (!p) return;
+  const byteChars = atob(p.data_b64);
+  const bytes = new Uint8Array(byteChars.length);
+  for (let i = 0; i < byteChars.length; i++) bytes[i] = byteChars.charCodeAt(i);
+  const blob = new Blob([bytes], { type: 'application/octet-stream' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = p.filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 function filterList() {
   const q = document.getElementById('search-input').value.toLowerCase().trim();
-  const items = document.querySelectorAll('.file-item');
+  const items = document.querySelectorAll('#merge-section .file-item');
   let visible = 0;
   items.forEach(item => {
     const name = item.querySelector('.file-item-name').textContent.toLowerCase();
