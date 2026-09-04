@@ -136,6 +136,18 @@ class _DbpfWriter:
         locator = DbpfLocator(seek, len(zcontent), (0x5A42, 1))
         return locator
 
+    def put_raw_rsrc(self, raw_bytes, compression):
+        # Igual a put_rsrc, mas escreve os bytes exatamente como recebidos —
+        # sem chamar zlib.compress. Usado quando estamos só COPIANDO um
+        # resource de um pacote pra outro sem alterar o conteúdo (merge,
+        # unmerge): descomprimir e recomprimir à toa é caro (a maior parte
+        # do tempo de merge/unmerge em pacotes grandes vinha exatamente
+        # daqui) e desnecessário, já que os bytes não mudam.
+        seek = self.f.seek
+        self.f.put_raw_bytes(raw_bytes)
+        locator = DbpfLocator(seek, len(raw_bytes), compression)
+        return locator
+
     def write_index(self, idx):
         with self.f.at(None):
             idx_start = self.f.seek
@@ -239,6 +251,20 @@ class DbpfPackage:
         elif resource.locator.compression[0] == 0x5A42:
             return zlib.decompress(ibuf, 15, resource.size)
 
+    def raw_content(self, resource):
+        # Igual a content(), mas NÃO descomprime — devolve os bytes
+        # exatamente como estão gravados no arquivo, junto com a tag de
+        # compressão original e o tamanho real (descomprimido). Combinado
+        # com put_raw(), permite copiar um resource de um pacote pra outro
+        # sem o ciclo caro (e desnecessário) de descomprimir e recomprimir.
+        assert isinstance(resource, Resource)
+        assert resource.package is self
+
+        with self.package.f.at(resource.locator.offset):
+            ibuf = self.package.f.get_raw_bytes(resource.locator.length)
+
+        return resource.locator.compression, ibuf, resource.size
+
     def commit(self):
         if self.writable:
             self.package.write_index(self._index_cache)
@@ -249,6 +275,16 @@ class DbpfPackage:
             self._index_cache[rid] = Resource(id=rid,
                                               locator=self.package.put_rsrc(content),
                                               size=len(content),
+                                              package=self)
+
+    def put_raw(self, rid, compression, raw_bytes, decompressed_size):
+        # Contraparte de raw_content(): grava bytes já comprimidos (ou não)
+        # direto no pacote, preservando a compressão original — sem passar
+        # por zlib.compress de novo.
+        if self.writable:
+            self._index_cache[rid] = Resource(id=rid,
+                                              locator=self.package.put_raw_rsrc(raw_bytes, compression),
+                                              size=decompressed_size,
                                               package=self)
 
     def close(self):
