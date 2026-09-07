@@ -830,29 +830,56 @@ function engineLabelFor(engineId) {
 
 // idx === null abre o seletor no modo "Traduzir tudo" (bulk); um idx
 // específico abre no modo "traduzir esta string" (single).
+// Listener único de "fechar ao clicar fora" do engine-menu. Antes, cada
+// chamada de showEngineMenu() registrava um listener novo no document e só
+// o removia se o usuário clicasse fora do menu — se o menu fosse fechado de
+// outro jeito (selecionando um modelo, por ex.), o listener ficava
+// pendurado pra sempre. Na abertura seguinte, esse listener "fantasma"
+// via o clique que ABRIU o menu (que também borbulha até o document) como
+// um "clique fora", e fechava o menu na mesma hora — parecia que o botão
+// tinha parado de funcionar. Agora só existe uma referência por vez,
+// guardada em _engineMenuCloseListener, e closeEngineMenu() centraliza
+// a limpeza pra nunca sobrar listener órfão.
+let _engineMenuCloseListener = null;
+
+function closeEngineMenu() {
+  const menu = document.getElementById('engine-menu');
+  menu.classList.remove('open');
+  if (_engineMenuCloseListener) {
+    document.removeEventListener('click', _engineMenuCloseListener);
+    _engineMenuCloseListener = null;
+  }
+}
+
 function showEngineMenu(idx, event) {
   if (event) event.stopPropagation();
   _enginePickerMode = (idx === null) ? 'bulk' : 'single';
   const menu = document.getElementById('engine-menu');
   const alreadyOpenForSame = menu.classList.contains('open') && (idx === null || currentIdx === idx);
   if (alreadyOpenForSame) {
-    menu.classList.remove('open');
+    closeEngineMenu();
     return;
+  }
+  // Garante que não existe nenhum listener de uma abertura anterior antes
+  // de abrir de novo — evita empilhar vários "closeMenu" no document.
+  if (_engineMenuCloseListener) {
+    document.removeEventListener('click', _engineMenuCloseListener);
+    _engineMenuCloseListener = null;
   }
   currentIdx = idx;
   menu.classList.add('open');
   setTimeout(() => {
-    document.addEventListener('click', function closeMenu(e) {
+    _engineMenuCloseListener = function closeMenu(e) {
       if (!menu.contains(e.target)) {
-        menu.classList.remove('open');
-        document.removeEventListener('click', closeMenu);
+        closeEngineMenu();
       }
-    });
+    };
+    document.addEventListener('click', _engineMenuCloseListener);
   }, 50);
 }
 
 function selectEngine(engineId) {
-  document.getElementById('engine-menu').classList.remove('open');
+  closeEngineMenu();
   if (_enginePickerMode === 'bulk') {
     tallEngine = engineId;
     const btn = document.getElementById('tall-engine-picker-btn');
@@ -884,7 +911,7 @@ function closeConfirmModal(wantsSwitch) {
 }
 
 async function processTranslation(engine) {
-  document.getElementById('engine-menu').classList.remove('open');
+  closeEngineMenu();
   if (currentIdx === null) return;
   const idx = currentIdx;
   const textarea = document.getElementById('edit-ta-' + idx);
