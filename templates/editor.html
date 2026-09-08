@@ -134,9 +134,10 @@
   .note-textarea { width: 100%; background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; padding: 7px 9px; font-size: 11px; color: var(--text); font-family: 'DM Sans', sans-serif; resize: none; min-height: 32px; }
   .note-textarea:focus { outline: none; border-color: #9cb8b2; }
   .note-hint { font-size: 9px; color: var(--text-dim); margin-top: 3px; }
-  .focus-toggle-btn { width: 26px; height: 26px; border-radius: 50%; background: var(--accent-dim); border: none; color: var(--bg); font-size: 11px; display: flex; align-items: center; justify-content: center; cursor: pointer; -webkit-tap-highlight-color: transparent; flex-shrink: 0; transition: background 0.2s; }
+  .focus-toggle-btn { position: relative; width: 26px; height: 26px; border-radius: 50%; background: var(--accent-dim); border: none; color: var(--bg); font-size: 11px; display: flex; align-items: center; justify-content: center; cursor: pointer; -webkit-tap-highlight-color: transparent; flex-shrink: 0; transition: background 0.2s; }
   .focus-toggle-btn:active { transform: scale(0.92); background: var(--accent); }
-  .focus-toggle-btn.focus-on { background: var(--text-muted); }
+  .focus-toggle-btn.focus-on { background: var(--accent-dim); }
+  .focus-eye { position: absolute; width: 70%; height: auto; transition: opacity 0.28s ease; }
   .filter-toggle-row { display: flex; align-items: center; gap: 6px; padding: 2px 0; cursor: pointer; -webkit-tap-highlight-color: transparent; user-select: none; }
   .filter-toggle-label { font-size: 11px; color: var(--text-muted); flex: 1; }
   .filter-arrow { font-size: 9px; color: var(--text-muted); transition: transform 0.2s; display: inline-block; }
@@ -352,13 +353,8 @@
         <button class="undo-btn" id="redo-btn" onclick="redoNative()" title="Refazer (↷)">↷</button>
       </div>
       <button class="focus-toggle-btn" id="focus-btn" onclick="toggleFocusMode()" title="Modo foco">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <path d="M2 12.5Q6.5 5.5 12 5.5T22 12.5Q17.5 19 12 19T2 12.5Z" fill="#f0e8fb" opacity="0.95"/>
-          <circle cx="12" cy="12.3" r="4.3" fill="#b89cd9"/>
-          <circle cx="12" cy="12.3" r="2" fill="#5c4680"/>
-          <circle cx="10.6" cy="10.9" r="1" fill="#fff" opacity="0.85"/>
-          <path d="M4.5 8.6q1-1.4 2.3-2.2M19.5 8.6q-1-1.4-2.3-2.2" stroke="#8a72b0" stroke-width="1.1" stroke-linecap="round" fill="none"/>
-        </svg>
+        <img class="focus-eye" id="focus-eye-closed" src="/img/foxTclosed.png" alt="" style="opacity:1;">
+        <img class="focus-eye" id="focus-eye-open" src="/img/foxTopen.png" alt="" style="opacity:0;">
       </button>
       <div class="timer-badge" id="timer-badge">0:00</div>
       <div class="count-badge" id="count-badge" onclick="toggleUntranslatedFilter()" title="Clique para filtrar não traduzidas">—</div>
@@ -2210,9 +2206,13 @@ function toggleFocusMode() {
   const page = document.querySelector('.page');
   const backBtn = document.getElementById('back-btn');
   const focusBtn = document.getElementById('focus-btn');
+  const eyeClosed = document.getElementById('focus-eye-closed');
+  const eyeOpen = document.getElementById('focus-eye-open');
   if (focusModeActive) {
     page.classList.add('focus-mode');
     focusBtn.classList.add('focus-on');
+    eyeClosed.style.opacity = '0';
+    eyeOpen.style.opacity = '1';
     if (_backBtnOriginalHTML === null) _backBtnOriginalHTML = backBtn.innerHTML;
     backBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
     backBtn.removeAttribute('href');
@@ -2221,6 +2221,8 @@ function toggleFocusMode() {
   } else {
     page.classList.remove('focus-mode');
     focusBtn.classList.remove('focus-on');
+    eyeClosed.style.opacity = '1';
+    eyeOpen.style.opacity = '0';
     backBtn.innerHTML = _backBtnOriginalHTML;
     backBtn.setAttribute('href', '/info');
     backBtn.title = '';
