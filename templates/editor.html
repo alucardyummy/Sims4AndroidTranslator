@@ -698,10 +698,11 @@ document.addEventListener('pointerdown', function(e) {
 }, { passive: true });
 
 // ---- FRASES BOBAS DA TELA DE CARREGAMENTO ----
-// Mesmo carrossel do index.html: usado só nos carregamentos "de espera sem
+// Mesmo carrossel do index.html: usado nos carregamentos "de espera sem
 // sub-etapas" (abrir instância, importar traduções de outro save, importar
-// .package). O "Salvando arquivo..." fica de fora de propósito — é o único
-// momento em que, se travar, a pessoa quer saber o que estava rolando.
+// .package, salvar). No save(), a frase boba roda por cima e o status real
+// ("Salvando arquivo...") continua visível por baixo ao mesmo tempo — assim
+// a pessoa ainda sabe o que estava rolando se travar, sem perder a graça.
 const LOADING_PHRASES = [
   'sorvete',
   'Você sabia que as lontras-marinhas dão as mãos enquanto dormem?',
@@ -712,6 +713,32 @@ const LOADING_PHRASES = [
   'polvos têm três corações',
   'pipoca',
   '🦦🦦🦦',
+  'chinelo quentinho',
+  'os corvos lembram do seu rosto pra sempre',
+  'seu Sim provavelmente também tá esperando alguma coisa agora',
+  'coelhos pulam de lado quando estão felizes (se chama "binky")',
+  '🐌 devagar e sempre',
+  'estrelas-do-mar não têm cérebro e vivem numa boa assim mesmo',
+  'cheiro de livro novo',
+  '☁️ nuvem passando, nada a declarar',
+  'pinguins pedem casamento oferecendo uma pedrinha',
+  'isso é café pra sua paciência',
+  'um Sim em algum lugar tá fazendo xixi na calça agora',
+  'meia saindo quentinha da secadora',
+  'abelhas dançam pra dar as coordenadas do pólen',
+  '🍕🍕🍕',
+  'shh, deixa isso pensando em paz',
+  'flanela macia recém-lavada',
+  'em algum lugar um gato espirrou bem baixinho',
+  'isso é só o universo pigarreando',
+  '🌻 girassol seguindo o sol, devagarinho',
+  'capim balançando sem pressa nenhuma',
+  'o plumbob tá verde, relaxa',
+  'tem um Sim preso numa piscina sem escada em algum lugar',
+  'um Sim brigou com a torradeira agora mesmo e perdeu',
+  'um gnomo de jardim sumiu e ninguém sabe pra onde foi',
+  'um Sim tá cantando em Simlish no chuveiro',
+  'alguém esqueceu a panela no fogo lá na vizinhança',
 ];
 let _lastPhraseIdx = -1;
 let _phrasesRunning = false;
@@ -737,8 +764,12 @@ function loadingPhraseCycle() {
   container.appendChild(el);
 }
 
-function startLoadingPhrases() {
-  document.getElementById('loading-text').style.display = 'none';
+// keepStatusText=true mantém o "loading-text" visível junto com o
+// carrossel — usado pelo save(), que agora mostra a frase boba por cima e o
+// status real ("Salvando arquivo...") por baixo ao mesmo tempo, em vez de
+// esconder a frase boba pra só mostrar o texto sério como antes.
+function startLoadingPhrases(keepStatusText) {
+  if (!keepStatusText) document.getElementById('loading-text').style.display = 'none';
   _phrasesRunning = true;
   loadingPhraseCycle();
 }
@@ -2448,6 +2479,7 @@ async function save() {
   savingTextEl.textContent = 'Salvando arquivo...';
   savingTextEl.style.display = '';
   document.getElementById('loading').classList.add('active');
+  startLoadingPhrases(true); // true = mantém "Salvando arquivo..." visível junto com as frases bobas
   const packageId = sessionStorage.getItem('package_id') || '';
   const payload = {
     instance: instanceStr,
@@ -2465,6 +2497,8 @@ async function save() {
     });
     const data = await res.json();
     document.getElementById('loading').classList.remove('active');
+    stopLoadingPhrases();
+    savingTextEl.style.display = 'none';
     if (data.success) {
       document.getElementById('success-sub').textContent = data.output_name;
       document.getElementById('downloads-note').textContent = '';
@@ -2478,6 +2512,8 @@ async function save() {
     }
   } catch(e) {
     document.getElementById('loading').classList.remove('active');
+    stopLoadingPhrases();
+    savingTextEl.style.display = 'none';
     showToast('Erro de conexão ao salvar.', 'error', 4000);
   }
 }
