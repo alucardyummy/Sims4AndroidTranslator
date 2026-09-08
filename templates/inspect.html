@@ -29,9 +29,15 @@
   .upload-hint { font-size: 11px; color: var(--text-muted); opacity: 0.6; margin-top: 6px; }
   .spinner-wrap { display: none; text-align: center; padding: 2rem; }
   .spinner-wrap.active { display: block; }
-  .spinner { width: 36px; height: 36px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 1rem; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .spinner-label { font-size: 13px; color: var(--text-muted); }
+  .loading-gif { width: 54px; height: 54px; object-fit: contain; border-radius: 50%; margin: 0 auto 1rem; display: block; }
+  .loading-phrase-container { position: relative; min-height: 16px; display: flex; align-items: center; justify-content: center; max-width: 260px; padding: 0 12px; margin: 0 auto; }
+  .loading-phrase { font-size: 12px; color: var(--text-muted); letter-spacing: 0.03em; text-align: center; line-height: 1.5; animation: phraseInOut 4.8s ease forwards; }
+  @keyframes phraseInOut {
+    0%   { opacity: 0; transform: translateX(-18px); }
+    14%  { opacity: 1; transform: translateX(0); }
+    82%  { opacity: 1; transform: translateX(0); }
+    100% { opacity: 0; transform: translateX(18px); }
+  }
   .results { display: none; }
   .results.active { display: block; }
   .result-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; flex-wrap: wrap; gap: 8px; }
@@ -94,8 +100,8 @@
   <input type="file" id="file-input" accept=".package" style="display:none">
 
   <div class="spinner-wrap" id="spinner">
-    <div class="spinner"></div>
-    <div class="spinner-label">Lendo arquivo...</div>
+    <img class="loading-gif" id="loading-gif" src="/img/loading.webp" alt="">
+    <div class="loading-phrase-container" id="loading-phrase-container"></div>
   </div>
 
   <div class="results" id="results">
@@ -121,6 +127,81 @@ let resourcesOpen = false;
 let allResources = [];
 let currentFile = null;
 
+// ---- FRASES BOBAS DA TELA DE CARREGAMENTO ----
+// Mesmo carrossel do index.html/editor.html, usado só enquanto o package
+// sobe e é inspecionado — sem relação nenhuma com o progresso real.
+const LOADING_PHRASES = [
+  'sorvete',
+  'Você sabia que as lontras-marinhas dão as mãos enquanto dormem?',
+  'gatinhos pãozinhos',
+  'isso não tem nada a ver com o carregamento',
+  'respira fundo',
+  'em algum lugar, uma capivara está tranquila',
+  'polvos têm três corações',
+  'pipoca',
+  '🦦🦦🦦',
+  'chinelo quentinho',
+  'os corvos lembram do seu rosto pra sempre',
+  'seu Sim provavelmente também tá esperando alguma coisa agora',
+  'coelhos pulam de lado quando estão felizes (se chama "binky")',
+  '🐌 devagar e sempre',
+  'estrelas-do-mar não têm cérebro e vivem numa boa assim mesmo',
+  'cheiro de livro novo',
+  '☁️ nuvem passando, nada a declarar',
+  'pinguins pedem casamento oferecendo uma pedrinha',
+  'isso é café pra sua paciência',
+  'um Sim em algum lugar tá fazendo xixi na calça agora',
+  'meia saindo quentinha da secadora',
+  'abelhas dançam pra dar as coordenadas do pólen',
+  '🍕🍕🍕',
+  'shh, deixa isso pensando em paz',
+  'flanela macia recém-lavada',
+  'em algum lugar um gato espirrou bem baixinho',
+  'isso é só o universo pigarreando',
+  '🌻 girassol seguindo o sol, devagarinho',
+  'capim balançando sem pressa nenhuma',
+  'o plumbob tá verde, relaxa',
+  'tem um Sim preso numa piscina sem escada em algum lugar',
+  'um Sim brigou com a torradeira agora mesmo e perdeu',
+  'um gnomo de jardim sumiu e ninguém sabe pra onde foi',
+  'um Sim tá cantando em Simlish no chuveiro',
+  'alguém esqueceu a panela no fogo lá na vizinhança',
+];
+let _lastPhraseIdx = -1;
+let _phrasesRunning = false;
+
+function pickLoadingPhrase() {
+  if (LOADING_PHRASES.length === 1) return LOADING_PHRASES[0];
+  let i;
+  do { i = Math.floor(Math.random() * LOADING_PHRASES.length); } while (i === _lastPhraseIdx);
+  _lastPhraseIdx = i;
+  return LOADING_PHRASES[i];
+}
+
+function loadingPhraseCycle() {
+  const container = document.getElementById('loading-phrase-container');
+  if (!container || !_phrasesRunning) return;
+  const el = document.createElement('div');
+  el.className = 'loading-phrase';
+  el.textContent = pickLoadingPhrase();
+  el.addEventListener('animationend', () => {
+    el.remove();
+    loadingPhraseCycle();
+  });
+  container.appendChild(el);
+}
+
+function startLoadingPhrases() {
+  _phrasesRunning = true;
+  loadingPhraseCycle();
+}
+
+function stopLoadingPhrases() {
+  _phrasesRunning = false;
+  const container = document.getElementById('loading-phrase-container');
+  if (container) container.innerHTML = '';
+}
+
 document.getElementById('file-input').addEventListener('change', async function() {
   const file = this.files[0];
   if (!file) return;
@@ -129,6 +210,7 @@ document.getElementById('file-input').addEventListener('change', async function(
   hideError();
   document.getElementById('upload-area').style.display = 'none';
   document.getElementById('spinner').classList.add('active');
+  startLoadingPhrases();
   document.getElementById('results').classList.remove('active');
 
   try {
@@ -137,6 +219,7 @@ document.getElementById('file-input').addEventListener('change', async function(
     const res = await fetch('/api/inspect_package', { method: 'POST', body: formData });
     const data = await res.json();
     document.getElementById('spinner').classList.remove('active');
+    stopLoadingPhrases();
 
     if (!data.success) { showError(data.error || 'Erro ao inspecionar.'); document.getElementById('upload-area').style.display = ''; return; }
 
@@ -159,6 +242,7 @@ document.getElementById('file-input').addEventListener('change', async function(
     document.getElementById('results').classList.add('active');
   } catch(e) {
     document.getElementById('spinner').classList.remove('active');
+    stopLoadingPhrases();
     document.getElementById('upload-area').style.display = '';
     showError('Erro de conexão: ' + e.message);
   }
