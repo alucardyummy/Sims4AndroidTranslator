@@ -291,6 +291,9 @@
   .package-return-btn:active { background: var(--surface2); color: var(--accent); border-color: var(--accent-dim); }
   .json-import-btn { flex: 0 0 auto; padding: 7px 11px; background: transparent; border: 1px solid var(--accent-dim); border-radius: 8px; color: var(--accent); font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.05em; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: all 0.2s; white-space: nowrap; }
   .json-import-btn:active { background: rgba(156,184,178,0.1); }
+  /* ── Botão "Apagar tudo" (modo JSON) ── */
+  .json-clear-btn { flex: 0 0 auto; padding: 5px 9px; background: transparent; border: 1px solid rgba(224,112,112,0.5); border-radius: 6px; color: #e07070; font-family: 'DM Mono', monospace; font-size: 10px; font-weight: 500; letter-spacing: 0.03em; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: all 0.2s; white-space: nowrap; }
+  .json-clear-btn:active { background: rgba(224,112,112,0.14); }
 
   /* ── Toast de notificação ── */
   .toast-wrap { position: fixed; top: 0; left: 0; right: 0; z-index: 9000; display: flex; flex-direction: column; align-items: center; gap: 6px; padding-top: 10px; pointer-events: none; }
@@ -448,6 +451,7 @@
     <div class="json-toolbar">
       <span class="json-toolbar-label" id="json-toolbar-label">JSON · edite e aplique</span>
       <span class="json-error-msg" id="json-error-msg"></span>
+      <button class="json-clear-btn" id="json-clear-btn" onclick="confirmClearJson()" title="Apagar todo o conteúdo do JSON">🗑 Apagar tudo</button>
       <button class="json-apply-btn" id="json-apply-btn" onclick="applyJsonEdits()">✓ APLICAR</button>
     </div>
     <div class="json-editor-wrap">
@@ -1607,7 +1611,33 @@ function enterSelectionMode(idx) {
   const row = document.getElementById('srow-' + idx);
   if (row) row.classList.add('row-selected');
   updateSelectionToolbar();
+  pushSelectionModeHistoryState();
 }
+
+// ---- CANCELAR SELEÇÃO COM O "VOLTAR" NATIVO ----
+// Ao entrar no modo seleção, empurramos uma entrada extra no histórico do
+// navegador. Assim, o gesto/botão "voltar" nativo do celular (que dispara
+// popstate em vez de navegar de fato pra trás) fecha a seleção em vez de
+// sair da página — exatamente como o "✕" da barra já fazia. Sem isso, o
+// "voltar" nativo tentaria ir pra página anterior e o "✕" continuaria
+// sendo o único jeito de cancelar.
+let _selectionHistoryPushed = false;
+
+function pushSelectionModeHistoryState() {
+  if (_selectionHistoryPushed) return;
+  _selectionHistoryPushed = true;
+  history.pushState({ s4tSelectionMode: true }, '');
+}
+
+window.addEventListener('popstate', function() {
+  if (selectionMode) {
+    // Voltar nativo enquanto em modo seleção: só cancela a seleção. A
+    // navegação "de verdade" já foi consumida pelo próprio pushState, então
+    // não precisamos (nem devemos) navegar pra outro lugar aqui.
+    _selectionHistoryPushed = false;
+    _exitSelectionModeState();
+  }
+});
 
 // ---- DRAG-SELECT: arrastar o dedo/mouse depois do long-press "pinta" a
 // seleção nas linhas por onde passa, sem precisar soltar e segurar de novo
@@ -1652,7 +1682,24 @@ function endDragSelect() {
   document.removeEventListener('mouseup', endDragSelect);
 }
 
+// Chamada pelo "✕" da barra (e por qualquer outro código que precise
+// cancelar a seleção). Faz a limpeza de estado e, se havia uma entrada de
+// histórico pendente (empurrada em enterSelectionMode), a consome com
+// history.back() — isso mantém o histórico do navegador limpo e faz o "✕"
+// se comportar exatamente como o "voltar" nativo.
 function exitSelectionMode() {
+  _exitSelectionModeState();
+  if (_selectionHistoryPushed) {
+    _selectionHistoryPushed = false;
+    history.back();
+  }
+}
+
+// Só a limpeza de estado/UI, sem mexer no histórico — usada tanto pelo
+// exitSelectionMode() acima quanto pelo listener de popstate (nesse caso o
+// histórico já foi consumido pelo próprio "voltar", então não deve chamar
+// history.back() de novo).
+function _exitSelectionModeState() {
   selectionMode = false;
   selectedIndices.clear();
   endDragSelect();
@@ -3015,6 +3062,30 @@ function applyJsonEdits() {
   setTimeout(() => {
     document.getElementById('json-toolbar-label').textContent = 'JSON · ' + stringsData.length + ' strings';
   }, 2500);
+}
+
+// ---- APAGAR TUDO (modo JSON) ----
+// Recurso avançado: limpa completamente o textarea do modo JSON pra quem já
+// sabe mexer com JSON e quer colar sua própria estrutura por cima — desde
+// que use as mesmas "key" das strings originais, senão nada é aplicado
+// depois em "APLICAR" (mergeJsonArrayIntoStrings só casa por key existente).
+function confirmClearJson() {
+  showModal({
+    icon: '🗑',
+    title: 'Apagar tudo?',
+    msg: 'Isso apaga todo o conteúdo do editor JSON agora em tela. Você pode colar seu próprio JSON depois — só use as mesmas "key" das strings originais pra elas serem aplicadas.',
+    confirmText: 'APAGAR TUDO',
+    cancelText: 'Cancelar',
+    danger: true
+  }).then(() => {
+    const ta = document.getElementById('json-textarea');
+    ta.value = '';
+    document.getElementById('json-error-msg').textContent = '';
+    ta.classList.remove('has-error');
+    document.getElementById('json-toolbar-label').textContent = 'JSON · vazio, cole seu conteúdo';
+    scheduleJsonDraftSave();
+    ta.focus();
+  }).catch(() => {});
 }
 
 // ---- IMPORTAR JSON (arquivo local) ----
