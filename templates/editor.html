@@ -1696,8 +1696,70 @@ window.addEventListener('popstate', function() {
     // do modo foco em vez de tentar navegar pra outra página.
     _focusHistoryPushed = false;
     _exitFocusModeState();
+  } else {
+    // "Voltar" nativo sem estar em nenhum modo especial: é uma tentativa
+    // de sair do editor de verdade. Sem essa interceptação, o navegador
+    // fazia a navegação de volta pra /info "crua" (às vezes restaurando a
+    // página do cache em vez de recarregar), o que podia deixar a tela de
+    // info travada carregando pra sempre. Em vez disso, mostramos o aviso
+    // (igual o "✕" já faz quando tem coisa não salva) e só saímos de fato
+    // com uma navegação nova (window.location.href), nunca com o "voltar"
+    // cru do navegador.
+    _editorGuardPushed = false;
+    handleEditorExitAttempt();
   }
 });
+
+// ---- AVISO AO SAIR DO EDITOR COM O "VOLTAR" NATIVO ----
+// Empurra uma entrada de histórico assim que o editor carrega, pelo mesmo
+// motivo das duas de cima: sem ela, o "voltar" nativo simplesmente navega
+// pra fora da página sem passar por nenhum aviso.
+let _editorGuardPushed = false;
+
+function pushEditorGuardHistoryState() {
+  if (_editorGuardPushed) return;
+  _editorGuardPushed = true;
+  history.pushState({ s4tEditorGuard: true }, '');
+}
+pushEditorGuardHistoryState();
+
+function handleEditorExitAttempt() {
+  // No modo JSON, o voltar nativo também deveria só fechar o modo JSON
+  // (igual o "✕"/confirmBack já faz), não sair do editor de uma vez.
+  if (jsonModeActive) {
+    exitJsonMode();
+    pushEditorGuardHistoryState();
+    return;
+  }
+  if (!hasUnsavedChanges) {
+    showModal({
+      icon: '↩',
+      title: 'Sair do editor?',
+      msg: 'Você será levado de volta à tela de pacotes.',
+      confirmText: 'SAIR',
+      cancelText: 'Cancelar',
+      danger: false
+    }).then(() => {
+      window.location.href = '/info';
+    }).catch(() => {
+      pushEditorGuardHistoryState();
+    });
+    return;
+  }
+  showModal({
+    icon: '↩',
+    title: 'Salvar antes de sair?',
+    msg: 'Você tem traduções não salvas. Deseja salvar o progresso antes de sair?',
+    confirmText: 'SALVAR E SAIR',
+    cancelText: 'Sair sem salvar',
+    danger: false
+  }).then(async () => {
+    await saveProgressToDatabase();
+    window.location.href = '/info';
+  }).catch(() => {
+    window.location.href = '/info';
+  });
+}
 
 // ---- DRAG-SELECT: arrastar o dedo/mouse depois do long-press "pinta" a
 // seleção nas linhas por onde passa, sem precisar soltar e segurar de novo
