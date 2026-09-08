@@ -84,8 +84,15 @@
   /* Loading */
   .loading-overlay { display: none; position: fixed; inset: 0; background: rgba(15,15,15,0.92); z-index: 100; align-items: center; justify-content: center; flex-direction: column; gap: 1rem; }
   .loading-overlay.active { display: flex; }
-  .spinner { width: 30px; height: 30px; border: 1.5px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
-  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-gif { width: 54px; height: 54px; object-fit: contain; border-radius: 50%; }
+  .loading-phrase-container { position: relative; min-height: 18px; display: flex; align-items: center; justify-content: center; max-width: 260px; padding: 0 12px; }
+  .loading-phrase { font-size: 13px; color: var(--text-muted); letter-spacing: 0.04em; text-align: center; line-height: 1.5; animation: phraseInOut 4.8s ease forwards; }
+  @keyframes phraseInOut {
+    0%   { opacity: 0; transform: translateX(-18px); }
+    14%  { opacity: 1; transform: translateX(0); }
+    82%  { opacity: 1; transform: translateX(0); }
+    100% { opacity: 0; transform: translateX(18px); }
+  }
   .loading-text { font-size: 11px; color: var(--text-muted); letter-spacing: 0.06em; font-family: 'DM Mono', monospace; }
 
   /* Toast */
@@ -174,13 +181,91 @@
 </div>
 
 <div class="loading-overlay" id="loading">
-  <div class="spinner"></div>
+  <img class="loading-gif" id="loading-gif" src="/img/loading.webp" alt="">
+  <div class="loading-phrase-container" id="loading-phrase-container"></div>
   <div class="loading-text" id="loading-text">Mesclando...</div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
+// ---- FRASES BOBAS DA TELA DE CARREGAMENTO ----
+// Mesmo carrossel do index.html/editor.html. A frase boba roda por cima e o
+// status real ("Mesclando...", "Separando arquivos...") continua visível
+// por baixo ao mesmo tempo — assim, se travar, dá pra saber o que estava
+// rolando sem perder a graça enquanto espera.
+const LOADING_PHRASES = [
+  'sorvete',
+  'Você sabia que as lontras-marinhas dão as mãos enquanto dormem?',
+  'gatinhos pãozinhos',
+  'isso não tem nada a ver com o carregamento',
+  'respira fundo',
+  'em algum lugar, uma capivara está tranquila',
+  'polvos têm três corações',
+  'pipoca',
+  '🦦🦦🦦',
+  'chinelo quentinho',
+  'os corvos lembram do seu rosto pra sempre',
+  'seu Sim provavelmente também tá esperando alguma coisa agora',
+  'coelhos pulam de lado quando estão felizes (se chama "binky")',
+  '🐌 devagar e sempre',
+  'estrelas-do-mar não têm cérebro e vivem numa boa assim mesmo',
+  'cheiro de livro novo',
+  '☁️ nuvem passando, nada a declarar',
+  'pinguins pedem casamento oferecendo uma pedrinha',
+  'isso é café pra sua paciência',
+  'um Sim em algum lugar tá fazendo xixi na calça agora',
+  'meia saindo quentinha da secadora',
+  'abelhas dançam pra dar as coordenadas do pólen',
+  '🍕🍕🍕',
+  'shh, deixa isso pensando em paz',
+  'flanela macia recém-lavada',
+  'em algum lugar um gato espirrou bem baixinho',
+  'isso é só o universo pigarreando',
+  '🌻 girassol seguindo o sol, devagarinho',
+  'capim balançando sem pressa nenhuma',
+  'o plumbob tá verde, relaxa',
+  'tem um Sim preso numa piscina sem escada em algum lugar',
+  'um Sim brigou com a torradeira agora mesmo e perdeu',
+  'um gnomo de jardim sumiu e ninguém sabe pra onde foi',
+  'um Sim tá cantando em Simlish no chuveiro',
+  'alguém esqueceu a panela no fogo lá na vizinhança',
+];
+let _lastPhraseIdx = -1;
+let _phrasesRunning = false;
+
+function pickLoadingPhrase() {
+  if (LOADING_PHRASES.length === 1) return LOADING_PHRASES[0];
+  let i;
+  do { i = Math.floor(Math.random() * LOADING_PHRASES.length); } while (i === _lastPhraseIdx);
+  _lastPhraseIdx = i;
+  return LOADING_PHRASES[i];
+}
+
+function loadingPhraseCycle() {
+  const container = document.getElementById('loading-phrase-container');
+  if (!container || !_phrasesRunning) return;
+  const el = document.createElement('div');
+  el.className = 'loading-phrase';
+  el.textContent = pickLoadingPhrase();
+  el.addEventListener('animationend', () => {
+    el.remove();
+    loadingPhraseCycle();
+  });
+  container.appendChild(el);
+}
+
+function startLoadingPhrases() {
+  _phrasesRunning = true;
+  loadingPhraseCycle();
+}
+
+function stopLoadingPhrases() {
+  _phrasesRunning = false;
+  const container = document.getElementById('loading-phrase-container');
+  if (container) container.innerHTML = '';
+}
+
 let selectedFiles = [];
 let currentMode = 'simple'; // 'simple' | 'smart' | 'split'
 let splitFile = null;
@@ -270,6 +355,7 @@ async function doMerge() {
   const loadingText = document.getElementById('loading-text');
   loading.classList.add('active');
   loadingText.textContent = 'Mesclando ' + selectedFiles.length + ' arquivos...';
+  startLoadingPhrases();
 
   try {
     const formData = new FormData();
@@ -294,8 +380,10 @@ async function doMerge() {
     URL.revokeObjectURL(url);
 
     loading.classList.remove('active');
+    stopLoadingPhrases();
   } catch(e) {
     loading.classList.remove('active');
+    stopLoadingPhrases();
     showToast(e.message || 'Erro ao mesclar os arquivos.');
   }
 }
@@ -324,6 +412,7 @@ async function doSplit() {
   const loadingText = document.getElementById('loading-text');
   loading.classList.add('active');
   loadingText.textContent = 'Separando arquivos...';
+  startLoadingPhrases();
   document.getElementById('split-results-wrap').style.display = 'none';
 
   try {
@@ -340,8 +429,10 @@ async function doSplit() {
     splitParts = data.parts || [];
     renderSplitResults(data.exact);
     loading.classList.remove('active');
+    stopLoadingPhrases();
   } catch(e) {
     loading.classList.remove('active');
+    stopLoadingPhrases();
     showToast(e.message || 'Erro ao separar o arquivo.');
   }
 }
