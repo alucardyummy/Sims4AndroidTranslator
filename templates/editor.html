@@ -1691,6 +1691,11 @@ window.addEventListener('popstate', function() {
     // não precisamos (nem devemos) navegar pra outro lugar aqui.
     _selectionHistoryPushed = false;
     _exitSelectionModeState();
+  } else if (focusModeActive) {
+    // Mesma lógica, agora pro modo foco: o "voltar" nativo do celular sai
+    // do modo foco em vez de tentar navegar pra outra página.
+    _focusHistoryPushed = false;
+    _exitFocusModeState();
   }
 });
 
@@ -2201,33 +2206,72 @@ function toggleFilterAccordion() {
 let focusModeActive = false;
 let _backBtnOriginalHTML = null;
 
+// Igual ao modo seleção: empurra uma entrada extra no histórico ao entrar,
+// pra que o "voltar" nativo do celular (popstate) saia do modo foco em vez
+// de navegar pra outra página. O "✕" (back-btn) consome essa entrada com
+// history.back() em vez de mexer direto no estado — assim ele se comporta
+// exatamente como o "voltar" nativo faria.
+let _focusHistoryPushed = false;
+
+function pushFocusModeHistoryState() {
+  if (_focusHistoryPushed) return;
+  _focusHistoryPushed = true;
+  history.pushState({ s4tFocusMode: true }, '');
+}
+
 function toggleFocusMode() {
-  focusModeActive = !focusModeActive;
-  const page = document.querySelector('.page');
+  if (focusModeActive) {
+    _exitFocusModeState();
+    if (_focusHistoryPushed) {
+      _focusHistoryPushed = false;
+      history.back();
+    }
+  } else {
+    _enterFocusModeState();
+    pushFocusModeHistoryState();
+  }
+}
+
+function _enterFocusModeState() {
+  focusModeActive = true;
   const backBtn = document.getElementById('back-btn');
   const focusBtn = document.getElementById('focus-btn');
   const eyeClosed = document.getElementById('focus-eye-closed');
   const eyeOpen = document.getElementById('focus-eye-open');
-  if (focusModeActive) {
-    page.classList.add('focus-mode');
-    focusBtn.classList.add('focus-on');
-    eyeClosed.style.opacity = '0';
-    eyeOpen.style.opacity = '1';
-    if (_backBtnOriginalHTML === null) _backBtnOriginalHTML = backBtn.innerHTML;
-    backBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
-    backBtn.removeAttribute('href');
-    backBtn.title = 'Sair do modo foco';
-    backBtn.onclick = function(e) { e.preventDefault(); toggleFocusMode(); };
-  } else {
-    page.classList.remove('focus-mode');
-    focusBtn.classList.remove('focus-on');
-    eyeClosed.style.opacity = '1';
-    eyeOpen.style.opacity = '0';
-    backBtn.innerHTML = _backBtnOriginalHTML;
-    backBtn.setAttribute('href', '/info');
-    backBtn.title = '';
-    backBtn.onclick = confirmBack;
-  }
+  // Feedback visual (ícone do olho + botão de voltar) acontece na hora,
+  // pro clique parecer instantâneo. A troca de classe no .page é que mexe
+  // com o layout da lista inteira (com 2000+ strings, isso pode travar por
+  // um instante) — jogando ela pro próximo frame, pelo menos o clique já
+  // "respondeu" visualmente antes de vir esse trabalho pesado.
+  focusBtn.classList.add('focus-on');
+  eyeClosed.style.opacity = '0';
+  eyeOpen.style.opacity = '1';
+  if (_backBtnOriginalHTML === null) _backBtnOriginalHTML = backBtn.innerHTML;
+  backBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+  backBtn.removeAttribute('href');
+  backBtn.title = 'Sair do modo foco';
+  backBtn.onclick = function(e) { e.preventDefault(); toggleFocusMode(); };
+  requestAnimationFrame(() => {
+    document.querySelector('.page').classList.add('focus-mode');
+  });
+}
+
+function _exitFocusModeState() {
+  focusModeActive = false;
+  const backBtn = document.getElementById('back-btn');
+  const focusBtn = document.getElementById('focus-btn');
+  const eyeClosed = document.getElementById('focus-eye-closed');
+  const eyeOpen = document.getElementById('focus-eye-open');
+  focusBtn.classList.remove('focus-on');
+  eyeClosed.style.opacity = '1';
+  eyeOpen.style.opacity = '0';
+  backBtn.innerHTML = _backBtnOriginalHTML;
+  backBtn.setAttribute('href', '/info');
+  backBtn.title = '';
+  backBtn.onclick = confirmBack;
+  requestAnimationFrame(() => {
+    document.querySelector('.page').classList.remove('focus-mode');
+  });
 }
 
 // ---- UNDO/REDO NATIVO ----
