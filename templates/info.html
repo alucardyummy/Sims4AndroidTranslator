@@ -340,18 +340,39 @@ function goEditor() {
   window.location.href = '/editor';
 }
 
+// ---- VOLTAR NATIVO NESSA TELA VAI DIRETO PRO INDEX ----
+// Sem isso, o "voltar" do celular tentava restaurar a página anterior de
+// verdade — que podia ser um /editor antigo guardado em cache, causando
+// aquele ping-pong editor → info → editor → info até desistir. Em vez
+// disso, a gente intercepta e manda sempre pra "/", direto.
+let _infoGuardPushed = false;
+
+function pushInfoGuardHistoryState() {
+  if (_infoGuardPushed) return;
+  _infoGuardPushed = true;
+  history.pushState({ s4tInfoGuard: true }, '');
+}
+
+window.addEventListener('popstate', function() {
+  _infoGuardPushed = false;
+  window.location.href = '/';
+});
+
 // Se você sai dessa página bem no instante em que o spinner acima é ligado
 // (indo pro /editor) e depois volta pra cá com o "voltar" nativo, o
 // navegador às vezes restaura essa página do cache (bfcache) em vez de
 // recarregar do zero — e como nenhum script roda de novo nesse caso, o
 // spinner ficava ligado pra sempre, travado na "foto" de quando você saiu.
 // O evento "pageshow" com persisted=true detecta exatamente essa restauração
-// e desliga o spinner manualmente.
+// e desliga o spinner manualmente. Também reempurra a guarda acima, pelo
+// mesmo motivo do editor.html: a entrada de histórico pode ter se perdido.
 window.addEventListener('pageshow', function(e) {
   if (e.persisted) {
     document.getElementById('loading').classList.remove('active');
     stopLoadingPhrases();
   }
+  _infoGuardPushed = false;
+  pushInfoGuardHistoryState();
 });
 
 load();
