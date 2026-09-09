@@ -340,6 +340,20 @@ function goEditor() {
   window.location.href = '/editor';
 }
 
+// Se você sai dessa página bem no instante em que o spinner acima é ligado
+// (indo pro /editor) e depois volta pra cá com o "voltar" nativo, o
+// navegador às vezes restaura essa página do cache (bfcache) em vez de
+// recarregar do zero — e como nenhum script roda de novo nesse caso, o
+// spinner ficava ligado pra sempre, travado na "foto" de quando você saiu.
+// O evento "pageshow" com persisted=true detecta exatamente essa restauração
+// e desliga o spinner manualmente.
+window.addEventListener('pageshow', function(e) {
+  if (e.persisted) {
+    document.getElementById('loading').classList.remove('active');
+    stopLoadingPhrases();
+  }
+});
+
 load();
 </script>
 </body>
