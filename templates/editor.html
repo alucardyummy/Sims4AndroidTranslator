@@ -1721,7 +1721,18 @@ function pushEditorGuardHistoryState() {
   _editorGuardPushed = true;
   history.pushState({ s4tEditorGuard: true }, '');
 }
-pushEditorGuardHistoryState();
+
+// "pageshow" dispara tanto num carregamento novo quanto quando o navegador
+// restaura a página do cache (voltar/avançar sem recarregar do zero) — e é
+// exatamente nesse segundo caso que a entrada de histórico "guarda" podia
+// ter sido perdida (por exemplo, depois de confirmar "Sair" e navegar pra
+// /info, o que corta a entrada extra que tínhamos empurrado). Sem isso, um
+// próximo "voltar" ficava sem proteção nenhuma. Resetar a flag aqui garante
+// que sempre reempurramos, não importa o motivo de ela ter sumido.
+window.addEventListener('pageshow', function() {
+  _editorGuardPushed = false;
+  pushEditorGuardHistoryState();
+});
 
 function handleEditorExitAttempt() {
   // No modo JSON, o voltar nativo também deveria só fechar o modo JSON
