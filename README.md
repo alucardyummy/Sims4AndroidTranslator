@@ -1,76 +1,79 @@
 <div align="center">
   <img src="img/icon-pf.webp" width="80" />
 
----
+  ### Sims4AndroidTranslator
 
-O **Sims4AndroidTranslator** é uma ferramenta web que permite traduzir arquivos `.package` do The Sims 4 diretamente pelo celular Android, sem precisar de um PC.
+  Ferramenta web para traduzir, mesclar e criar mods (`.package`) do The Sims 4 direto pelo celular Android, sem precisar de PC.
 
-Ele é um remake mobile-first baseado no projeto do [Voky1](https://github.com/voky1), reconstruído com Flask + Kivy e hospedado via Vercel.
+  **[sims4androidtranslator.vercel.app](https://sims4androidtranslator.vercel.app)**
 
----
-
-<h3><b>Como usar:</b></h3>
-
-Acesse **[sims4androidtranslator.vercel.app](https://sims4androidtranslator.vercel.app)**
-
-Toque em **IMPORTAR** e selecione o arquivo `.package` do seu celulEscolha o idioma de destino
-
-Adicione um nome ao arquivo em "output"
-
-Faça sua tradução
-
-Baixe o arquivo traduzido
-
-Adicione o arquivo .package traduzido diretamente na sua pasta Mods
-
-  <p align="center">Fácil né? :3</p>
-
----
-
-<h3><b>O que o site oferece, o que esperar e o que saber?</b></h3>
-
-<h3><b>Traduzir Mods</b></h3>
-<b>Perfeitamente funcional, não muda instâncias originais.</b>
-
-### Tradução manual ou automática
-
-* Manual: Há 2 tradutores disponíveis ao lado de cada string, aparecem ao clicar no losango
-* Automática: Losango acima de "Salvar Package" no editor
-* ! Porém, as vezes as traduções podem ser inconsistentes, por isso sempre revise se as frases traduzidas fazem sentido com placeholders como:
-
-<div align="center">
-<pre>
-  {SimFirstName}
-  {SimPronounSubjective}
-  {SimPronounObjective}
-  {SimPronounPossessiveDependent}
-  {SimPossessiveIndependent}
-  {SimPronounReflexive}
-etc
-</pre>
 </div>
 
-### Salvar progresso
+---
 
-* SEMPRE salve o progresso antes de sair. O salvamento automático na home do site só funciona se o arquivo tiver nome.
+### Como usar
 
-### Carregar traduções de um save
-
-* Serve para reimportar uma tradução feita no site para outro .package se as keys coincidirem.
-
-### Mesclar vários .packages em um
-
-* Junta vários arquivos `.package` em um só. Útil quando você precisa combinar traduções de um mesmo mod num único arquivo.
+1. Acesse o site e toque em **IMPORTAR**, selecionando o `.package` do mod
+2. Escolha o idioma de destino
+3. Traduza as strings (manual ou automático)
+4. Dê um nome ao arquivo de saída e salve
+5. Baixe o `.package` traduzido e jogue direto na pasta `Mods`
 
 ---
 
-<h3><b>Créditos</b></h3>
+### Traduzir mods
 
-- Projeto original: **[The Sims 4 Translator](https://github.com/voky1/sims4-translator)**
+O core do site: lê as STBLs (tabelas de string) do `.package`, permite editar cada texto e gera um novo pacote com o idioma de destino, sem alterar a instância original.
+
+- **Manual** — toque no ícone de traduzir ao lado de qualquer string (ou em várias selecionadas de uma vez) pra abrir o menu de modelos e escolher qual usar
+- **Em massa** — botão "Traduzir tudo" roda a tradução automática em todas as strings do arquivo de uma vez, usando o modelo selecionado
+- **Atenção a placeholders** — sempre revise se termos como `{SimFirstName}`, `{SimPronounSubjective}`, `{SimPronounObjective}` etc. continuam intactos após a tradução automática
+
+### Modelos de tradução disponíveis
+
+O site possui alguns modelos diversificados para atender a diferentes nichos de Mods. Se um falhar ou estiver fora do ar, tenta o próximo sozinho.
+
+> Alguns desses modelos rodam localmente, por isso, nem sempre estarão funcionando. Os demais usuários podem escolhê-los, mas se estiverem offline a tradução passa direto pra próxima opção da lista.
+
+### Salvar progresso e continuar depois
+
+- Progresso pode ser salvo a qualquer momento e retomado depois pelo menu de projetos salvos
+- Funciona sem conta (sessão de convidado, guardada por cookie) ou vinculado a uma conta (username/senha ou login com Google) — os saves de convidado migram automaticamente pra conta ao fazer login
+- **Sempre salve antes de sair**: o rascunho automático da home só funciona se o projeto já tiver nome
+
+### Importar traduções existentes
+
+Duas formas de reaproveitar trabalho já feito:
+
+- **De um save salvo** — reimporta uma tradução feita no site em outro `.package`, desde que as keys coincidam
+- **De um `.package` já traduzido** — extrai as strings de um pacote que já tem a tradução embutida (detecta o idioma certo automaticamente quando o pacote tem mais de uma tabela de idioma)
+
+### Mesclar `.packages`
+
+Junta vários arquivos `.package` em um só — útil pra combinar traduções de um mesmo mod num único arquivo.
+
+- **Simples** — mescla direta
+- **Inteligente** — grava um manifesto interno com a origem de cada recurso, permitindo desmesclar o arquivo de volta nos originais depois
+
+### Contas
+
+- Cadastro com usuário/senha (recuperação por pergunta de segurança) ou login com Google
+- Perfil com nome de usuário e foto customizáveis
+- Sessão de convidado dura 30 dias e migra pra conta automaticamente no login
 
 ---
+
+### Stack
+
+Flask · PostgreSQL (via Supabase) · Google OAuth · Vercel
+
+---
+
+### Créditos
+
+Projeto original: **[The Sims 4 Translator](https://github.com/voky1/sims4-translator)**, por [Voky1](https://github.com/voky1) — este é um remake mobile-first, reconstruído do zero para rodar direto no navegador do Android.
 
 <div align="center">
   <img src="img/sillyblumbob.webp" width="60" /><br/>
-  <sub>Remake mobile: <b>AlucardYummy<b/></sub>
+  <sub>Remake mobile: <b>AlucardYummy</b></sub>
 </div>
