@@ -48,6 +48,15 @@ def assetlinks():
     return send_from_directory('.well-known', 'assetlinks.json', mimetype='application/json')
 
 
+@app.route('/sw.js')
+def service_worker():
+    # Content-Type application/javascript + escopo raiz é obrigatório pro
+    # navegador aceitar registrar o Service Worker.
+    resp = send_from_directory('.', 'sw.js', mimetype='application/javascript')
+    resp.headers['Service-Worker-Allowed'] = '/'
+    return resp
+
+
 @app.before_request
 def ensure_guest_session():
     if 'user_id' not in session and 'guest_session_id' not in session:
@@ -141,6 +150,40 @@ def init_db():
             c.execute("CREATE INDEX IF NOT EXISTS idx_package_files_orphaned_at ON package_files (orphaned_at);")
         except Exception as e:
             print("Coluna orphaned_at já existe ou houve um aviso:", e)
+
+        # ------------------------------------------------------------------
+        # Inscrições de notificação push (sininho). Uma linha por navegador
+        # que aceitou notificações — funciona igual pro site aberto no Chrome
+        # (PWA) e pro app instalado (TWA), porque os dois usam a mesma Push
+        # API por baixo dos panos.
+        # ------------------------------------------------------------------
+        c.execute('''
+            CREATE TABLE IF NOT EXISTS push_subscriptions (
+                id SERIAL PRIMARY KEY,
+                endpoint TEXT UNIQUE NOT NULL,
+                p256dh VARCHAR(255) NOT NULL,
+                auth VARCHAR(255) NOT NULL,
+                user_id INTEGER REFERENCES users(id),
+                guest_session_id VARCHAR(255),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        ''')
+
+        # ------------------------------------------------------------------
+        # Histórico de novidades mostrado dentro do site (lista no painel do
+        # sininho). Cada disparo de notificação vira uma linha aqui também,
+        # então quem não tinha notificação ativada ainda consegue ver o que
+        # perdeu.
+        # ------------------------------------------------------------------
+        c.execute('''
+            CREATE TABLE IF NOT EXISTS site_updates (
+                id SERIAL PRIMARY KEY,
+                title VARCHAR(255) NOT NULL,
+                body TEXT,
+                url VARCHAR(255),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        ''')
 
         conn.commit()
         conn.close()
@@ -265,6 +308,175 @@ def _process_package_bytes(file_bytes):
         os.remove(tmp_path)
 
     return all_instances, strings_cache
+
+
+@app.route("/api/push/vapid_public_key")
+def push_vapid_public_key():
+    return {"key": os.environ.get("VAPID_PUBLIC_KEY", "")}
+
+
+@app.route("/api/push/subscribe", methods=["POST"])
+def push_subscribe():
+    data = request.get_json(silent=True) or {}
+    endpoint = data.get("endpoint")
+    keys = data.get("keys") or {}
+    p256dh = keys.get("p256dh")
+    auth = keys.get("auth")
+
+    if not endpoint or not p256dh or not auth:
+        return {"error": "Inscrição inválida"}, 400
+
+    user_id = session.get('user_id')
+    guest_id = session.get('guest_session_id')
+
+    try:
+        conn = get_db()
+        c = conn.cursor()
+        c.execute(
+            """
+            INSERT INTO push_subscriptions (endpoint, p256dh, auth, user_id, guest_session_id)
+            VALUES (%s, %s, %s, %s, %s)
+            ON CONFLICT (endpoint) DO UPDATE SET
+                p256dh = EXCLUDED.p256dh,
+                auth = EXCLUDED.auth,
+                user_id = COALESCE(EXCLUDED.user_id, push_subscriptions.user_id),
+                guest_session_id = COALESCE(EXCLUDED.guest_session_id, push_subscriptions.guest_session_id)
+            """,
+            (endpoint, p256dh, auth, user_id, guest_id)
+        )
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print("Erro ao salvar inscrição push:", e)
+        return {"error": "Falha ao salvar inscrição"}, 500
+
+    return {"ok": True}
+
+
+@app.route("/api/push/unsubscribe", methods=["POST"])
+def push_unsubscribe():
+    data = request.get_json(silent=True) or {}
+    endpoint = data.get("endpoint")
+    if not endpoint:
+        return {"error": "endpoint ausente"}, 400
+
+    try:
+        conn = get_db()
+        c = conn.cursor()
+        c.execute("DELETE FROM push_subscriptions WHERE endpoint = %s", (endpoint,))
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print("Erro ao remover inscrição push:", e)
+        return {"error": "Falha ao remover inscrição"}, 500
+
+    return {"ok": True}
+
+
+@app.route("/api/updates")
+def get_updates():
+    try:
+        conn = get_db()
+        c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        c.execute("SELECT id, title, body, url, created_at FROM site_updates ORDER BY created_at DESC LIMIT 30")
+        rows = c.fetchall()
+        conn.close()
+    except Exception as e:
+        print("Erro ao buscar updates:", e)
+        return {"updates": []}, 500
+
+    updates = [
+        {
+            "id": r["id"],
+            "title": r["title"],
+            "body": r["body"],
+            "url": r["url"],
+            "created_at": r["created_at"].isoformat() if r["created_at"] else None
+        }
+        for r in rows
+    ]
+    return {"updates": updates}
+
+
+@app.route("/api/admin/notify_update", methods=["POST"])
+def admin_notify_update():
+    # Protegido por um segredo compartilhado (não por login de usuário),
+    # já que só você vai disparar isso — nunca chame essa rota a partir
+    # do frontend público.
+    secret = request.headers.get("X-Admin-Secret", "")
+    expected = os.environ.get("ADMIN_NOTIFY_SECRET", "")
+    if not expected or secret != expected:
+        return {"error": "Não autorizado"}, 401
+
+    data = request.get_json(silent=True) or {}
+    title = data.get("title") or "Sims 4 Translator"
+    body = data.get("body") or "Tem novidade por aqui!"
+    url = data.get("url") or "/"
+
+    # Grava no histórico do site independente de ter alguém inscrito em
+    # push ou não — é o que alimenta a listinha dentro do painel do sininho.
+    try:
+        conn = get_db()
+        c = conn.cursor()
+        c.execute(
+            "INSERT INTO site_updates (title, body, url) VALUES (%s, %s, %s)",
+            (title, body, url)
+        )
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print("Erro ao gravar update no histórico:", e)
+
+    from pywebpush import webpush, WebPushException
+
+    vapid_private_key = os.environ.get("VAPID_PRIVATE_KEY", "")
+    vapid_claims = {"sub": os.environ.get("VAPID_CLAIM_EMAIL", "mailto:contato@example.com")}
+
+    sent, failed, removed = 0, 0, 0
+
+    try:
+        conn = get_db()
+        c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        c.execute("SELECT id, endpoint, p256dh, auth FROM push_subscriptions")
+        subs = c.fetchall()
+        conn.close()
+    except Exception as e:
+        return {"error": f"Falha ao ler inscrições: {e}"}, 500
+
+    payload = json.dumps({"title": title, "body": body, "url": url, "tag": "update"})
+
+    dead_ids = []
+    for sub in subs:
+        try:
+            webpush(
+                subscription_info={
+                    "endpoint": sub["endpoint"],
+                    "keys": {"p256dh": sub["p256dh"], "auth": sub["auth"]}
+                },
+                data=payload,
+                vapid_private_key=vapid_private_key,
+                vapid_claims=dict(vapid_claims)
+            )
+            sent += 1
+        except WebPushException as e:
+            failed += 1
+            # 404/410 = inscrição expirada (usuário desinstalou, limpou dados etc.)
+            status = getattr(e.response, "status_code", None)
+            if status in (404, 410):
+                dead_ids.append(sub["id"])
+
+    if dead_ids:
+        try:
+            conn = get_db()
+            c = conn.cursor()
+            c.execute("DELETE FROM push_subscriptions WHERE id = ANY(%s)", (dead_ids,))
+            conn.commit()
+            conn.close()
+            removed = len(dead_ids)
+        except Exception as e:
+            print("Erro ao limpar inscrições mortas:", e)
+
+    return {"ok": True, "sent": sent, "failed": failed, "removed": removed, "total": len(subs)}
 
 
 @app.route("/")
