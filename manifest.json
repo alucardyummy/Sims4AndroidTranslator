@@ -3,6 +3,7 @@
   "short_name": "Translator",
   "start_url": "/",
   "display": "standalone",
+  "gcm_sender_id": "103953800507",
   "background_color": "#0f0f0f",
   "theme_color": "#0f0f0f",
   "icons": [
