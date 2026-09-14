@@ -20,7 +20,7 @@ self.addEventListener('push', (event) => {
   const options = {
     body: data.body || 'Tem novidade por aqui!',
     icon: '/img/favicon.png',
-    badge: '/img/plumBD.webp',
+    badge: '/img/plumBD.png',
     data: { url: data.url || '/' },
     tag: data.tag || 'update',
     renotify: true,
