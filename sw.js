@@ -1,6 +1,4 @@
-// Service Worker do Sims 4 Translator — cuida das notificações push.
-// Não faz cache de nada de propósito: o site já é leve e assim evita
-// o clássico problema de PWA mostrando versão antiga em cache.
+
 
 self.addEventListener('install', () => {
   self.skipWaiting();
@@ -22,7 +20,7 @@ self.addEventListener('push', (event) => {
   const options = {
     body: data.body || 'Tem novidade por aqui!',
     icon: '/img/favicon.png',
-    badge: '/img/favicon.png',
+    badge: '/img/plumBD.webp',
     data: { url: data.url || '/' },
     tag: data.tag || 'update',
     renotify: true,
