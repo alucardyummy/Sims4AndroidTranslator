@@ -2045,14 +2045,40 @@ async function onPushToggleChange() {
     const { key } = await keyRes.json();
     if (!key) {
       toggle.checked = false;
-      console.log('VAPID public key não configurada no servidor.');
+      showAlert('O servidor ainda não tem uma chave de notificação configurada (VAPID_PUBLIC_KEY). Avisa o desenvolvedor.');
       return;
     }
 
-    const sub = await swRegistration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(key)
-    });
+    let sub;
+    try {
+      sub = await swRegistration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(key)
+      });
+    } catch (subErr) {
+      // Se já existe uma inscrição feita com uma chave antiga (ex: depois
+      // de trocar a VAPID_PUBLIC_KEY no servidor), o Chrome recusa criar
+      // uma nova até a antiga ser removida. Detecta esse caso, limpa a
+      // inscrição velha e tenta assinar de novo, uma única vez.
+      const msg = String(subErr && subErr.message || subErr);
+      const isStaleKey = /applicationServerKey|gcmSenderId/i.test(msg);
+      if (!isStaleKey) throw subErr;
+
+      const stale = await swRegistration.pushManager.getSubscription();
+      if (stale) {
+        await fetch('/api/push/unsubscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ endpoint: stale.endpoint })
+        }).catch(() => {});
+        await stale.unsubscribe().catch(() => {});
+      }
+
+      sub = await swRegistration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(key)
+      });
+    }
 
     await fetch('/api/push/subscribe', {
       method: 'POST',
@@ -2063,7 +2089,9 @@ async function onPushToggleChange() {
     updateBellRing(true);
   } catch (e) {
     toggle.checked = false;
+    const msg = String(e && e.message || e);
     console.log('Erro ao alternar notificações:', e);
+    showAlert('Não deu pra ativar as notificações. Erro: ' + msg);
   }
 }
 
