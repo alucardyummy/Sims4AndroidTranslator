@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Enviar Novidade — Sims 4 Translator</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: #0f0f0f;
+    color: #eee;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .card {
+    width: 100%;
+    max-width: 420px;
+    background: #1a1a1a;
+    border: 1px solid #2c2c2c;
+    border-radius: 16px;
+    padding: 28px;
+  }
+  h1 {
+    font-size: 20px;
+    margin: 0 0 4px;
+  }
+  .sub {
+    color: #999;
+    font-size: 13px;
+    margin: 0 0 24px;
+  }
+  label {
+    display: block;
+    font-size: 13px;
+    color: #bbb;
+    margin: 16px 0 6px;
+  }
+  input, textarea {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1px solid #333;
+    background: #111;
+    color: #fff;
+    font-size: 14px;
+    font-family: inherit;
+    resize: vertical;
+  }
+  input:focus, textarea:focus {
+    outline: none;
+    border-color: #8b5cf6;
+  }
+  .remember {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    font-size: 13px;
+    color: #999;
+  }
+  .remember input { width: auto; }
+  button {
+    width: 100%;
+    margin-top: 24px;
+    padding: 13px;
+    border: none;
+    border-radius: 10px;
+    background: #8b5cf6;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  button:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+  button:active:not(:disabled) { transform: scale(0.98); }
+  .msg {
+    margin-top: 16px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    font-size: 13px;
+    display: none;
+    white-space: pre-wrap;
+  }
+  .msg.ok { display: block; background: #14301f; color: #7ee2a8; border: 1px solid #1f5a37; }
+  .msg.err { display: block; background: #3a1616; color: #ff9b9b; border: 1px solid #6b1f1f; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1>📣 Enviar Novidade</h1>
+    <p class="sub">Dispara uma notificação push pra todo mundo inscrito.</p>
+
+    <label for="secret">Segredo de admin</label>
+    <input type="password" id="secret" placeholder="X-Admin-Secret" autocomplete="off">
+    <div class="remember">
+      <input type="checkbox" id="remember">
+      <label for="remember" style="margin:0;">Lembrar neste navegador</label>
+    </div>
+
+    <label for="title">Título</label>
+    <input type="text" id="title" placeholder="Ex: Tradução atualizada!" maxlength="80">
+
+    <label for="body">Mensagem</label>
+    <textarea id="body" rows="3" placeholder="Ex: Já dá pra baixar a versão nova." maxlength="200"></textarea>
+
+    <label for="url">Link ao clicar (opcional)</label>
+    <input type="text" id="url" placeholder="/ (padrão)">
+
+    <button id="send-btn" onclick="sendNotification()">Enviar notificação</button>
+
+    <div id="msg" class="msg"></div>
+  </div>
+
+<script>
+  const secretInput = document.getElementById('secret');
+  const rememberBox = document.getElementById('remember');
+
+  const savedSecret = localStorage.getItem('admin_notify_secret');
+  if (savedSecret) {
+    secretInput.value = savedSecret;
+    rememberBox.checked = true;
+  }
+
+  async function sendNotification() {
+    const btn = document.getElementById('send-btn');
+    const msg = document.getElementById('msg');
+    const secret = secretInput.value.trim();
+    const title = document.getElementById('title').value.trim();
+    const body = document.getElementById('body').value.trim();
+    const url = document.getElementById('url').value.trim();
+
+    msg.className = 'msg';
+    msg.textContent = '';
+
+    if (!secret) {
+      msg.className = 'msg err';
+      msg.textContent = 'Preenche o segredo de admin.';
+      return;
+    }
+    if (!title || !body) {
+      msg.className = 'msg err';
+      msg.textContent = 'Preenche o título e a mensagem.';
+      return;
+    }
+
+    if (rememberBox.checked) {
+      localStorage.setItem('admin_notify_secret', secret);
+    } else {
+      localStorage.removeItem('admin_notify_secret');
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Enviando...';
+
+    try {
+      const res = await fetch('/api/admin/notify_update', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Admin-Secret': secret
+        },
+        body: JSON.stringify({ title, body, url: url || undefined })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        msg.className = 'msg err';
+        msg.textContent = 'Erro: ' + (data.error || res.status);
+      } else {
+        msg.className = 'msg ok';
+        msg.textContent = `Enviado! ${data.sent} entregue(s), ${data.failed} falha(s), ${data.removed} inscrição(ões) morta(s) removida(s), de ${data.total} no total.`;
+      }
+    } catch (e) {
+      msg.className = 'msg err';
+      msg.textContent = 'Falha de rede: ' + e.message;
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Enviar notificação';
+    }
+  }
+</script>
+</body>
+</html>
