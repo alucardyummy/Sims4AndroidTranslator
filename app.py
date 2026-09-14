@@ -398,11 +398,13 @@ def get_updates():
     return {"updates": updates}
 
 
+@app.route("/admin")
+def admin_notify_page():
+    return send_file(os.path.join(TEMPLATE_DIR, "admin_notify.html"))
+
+
 @app.route("/api/admin/notify_update", methods=["POST"])
 def admin_notify_update():
-    # Protegido por um segredo compartilhado (não por login de usuário),
-    # já que só você vai disparar isso — nunca chame essa rota a partir
-    # do frontend público.
     secret = request.headers.get("X-Admin-Secret", "")
     expected = os.environ.get("ADMIN_NOTIFY_SECRET", "")
     if not expected or secret != expected:
