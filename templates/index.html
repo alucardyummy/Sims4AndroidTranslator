@@ -60,6 +60,23 @@
   .topbar { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 0 0; position: relative; z-index: 10; }
   .profile-circle { width: 36px; height: 36px; border-radius: 50%; overflow: hidden; cursor: pointer; border: 1px solid var(--border); background: var(--surface); -webkit-tap-highlight-color: transparent; flex-shrink: 0; }
   .profile-circle img { width: 100%; height: 100%; object-fit: cover; }
+  .bell-btn {
+    width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    border: 1px solid var(--border); background: var(--surface);
+    cursor: pointer; -webkit-tap-highlight-color: transparent;
+    transition: transform 0.15s ease, background 0.2s ease;
+  }
+  .bell-btn:active { transform: scale(0.9); }
+  .bell-btn.subscribed { background: rgba(184,156,217,0.22); border-color: #b89cd9; }
+  .bell-btn.shake svg { animation: bellShake 0.5s ease; }
+  @keyframes bellShake {
+    0%, 100% { transform: rotate(0deg); }
+    20% { transform: rotate(-12deg); }
+    40% { transform: rotate(10deg); }
+    60% { transform: rotate(-6deg); }
+    80% { transform: rotate(4deg); }
+  }
   .select-topbar { display: none; width: 100%; align-items: center; justify-content: space-between; padding: 0.5rem 0.75rem; position: relative; z-index: 10; }
   .select-topbar.active { display: flex; }
   .select-cancel { background: none; border: none; color: var(--text-muted); font-size: 13px; cursor: pointer; padding: 4px 8px; -webkit-tap-highlight-color: transparent; }
@@ -249,6 +266,22 @@
   .form-input:focus { outline: none; border-color: var(--accent-dim); background: rgba(255,255,255,0.5); }
   .modal-btn { width: 100%; padding: 12px; background: rgba(30,50,46,0.65); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: #fff; font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 0.05em; cursor: pointer; margin-top: 0.5rem; backdrop-filter: blur(8px); }
   .modal-btn:active { background: var(--accent); }
+
+  .push-toggle-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.1rem; }
+  .push-toggle-label { font-size: 13px; color: var(--text); }
+  .switch { position: relative; display: inline-block; width: 42px; height: 24px; flex-shrink: 0; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .switch-slider { position: absolute; cursor: pointer; inset: 0; background: var(--border); border-radius: 999px; transition: background 0.2s ease; }
+  .switch-slider::before { content: ""; position: absolute; height: 18px; width: 18px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: transform 0.2s ease; }
+  .switch input:checked + .switch-slider { background: #b89cd9; }
+  .switch input:checked + .switch-slider::before { transform: translateX(18px); }
+
+  .updates-list { display: flex; flex-direction: column; gap: 10px; max-height: 55vh; overflow-y: auto; }
+  .updates-empty { font-size: 12.5px; color: var(--text-muted); text-align: center; padding: 1rem 0; }
+  .update-item { border: 1px solid var(--border); border-radius: 10px; padding: 0.7rem 0.85rem; background: rgba(196,174,232,0.06); }
+  .update-item-title { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; color: #c4aee8; margin-bottom: 3px; }
+  .update-item-body { font-size: 12px; line-height: 1.45; color: var(--text); }
+  .update-item-date { font-size: 10.5px; color: var(--text-muted); margin-top: 5px; }
   .modal-switch { text-align: center; font-size: 12px; color: #1b1047; margin-top: 1rem; cursor: pointer; font-weight: 500; }
   .modal-switch span { color: var(--accent); text-decoration: underline; font-weight: 500; }
 
@@ -665,7 +698,15 @@
         })();
       </script>
     </div>
-    <div style="width:36px"></div>
+    <button class="bell-btn" id="bell-btn" onclick="openUpdatesModal()" aria-label="Ver novidades">
+      <svg width="20" height="20" viewBox="0 0 60 60" fill="none">
+        <path d="M30 14 Q20 14 19 26 Q18 34 14 39 Q13 40.5 15 40.5 L45 40.5 Q47 40.5 46 39 Q42 34 41 26 Q40 14 30 14 Z" fill="#c4aee8" opacity="0.9"/>
+        <path d="M22 26 Q23 18 30 17" stroke="#e5d9f5" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+        <path d="M26 12 Q30 9 34 12" stroke="#b89cd9" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+        <path d="M25 41 Q25 45.5 30 45.5 Q35 45.5 35 41" fill="#b89cd9" opacity="0.85"/>
+        <circle class="bell-dot" id="bell-dot" cx="44" cy="16" r="7" fill="#d4bef0" stroke="#0f0f0f" stroke-width="1.2" style="display:none"/>
+      </svg>
+    </button>
   </div>
 
   <div class="select-topbar" id="topbar-select">
@@ -869,7 +910,24 @@
     </div>
     <button class="modal-btn fx-press" onclick="saveProfile()">SALVAR ALTERAÇÕES</button>
     <button class="modal-btn fx-press" style="background:transparent;border:1px solid #b89cd9;color:#413d57;margin-top:10px" onclick="handleLogout()">SAIR DA CONTA</button>
-  </div></div><div class="alert-overlay" id="custom-alert" onclick="if(event.target===this)closeCustomAlert()">
+  </div></div><div class="modal-overlay" id="updates-modal" onclick="if(event.target===this)closeUpdatesModal()">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeUpdatesModal()">✕</button>
+    <h3 class="modal-title">Novidades</h3>
+
+    <div class="push-toggle-row">
+      <span class="push-toggle-label">Notificar no celular</span>
+      <label class="switch">
+        <input type="checkbox" id="push-toggle" onchange="onPushToggleChange()">
+        <span class="switch-slider"></span>
+      </label>
+    </div>
+
+    <div class="updates-list" id="updates-list">
+      <div class="updates-empty">Carregando...</div>
+    </div>
+  </div>
+</div><div class="alert-overlay" id="custom-alert" onclick="if(event.target===this)closeCustomAlert()">
   <div class="alert-box">
     <div class="alert-icon" id="custom-alert-icon">!</div>
     <p class="alert-msg" id="custom-alert-msg"></p>
@@ -1896,16 +1954,195 @@ showDraftBannerIfNeeded();
 
 loadSaves();
 
+let swRegistration = null;
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
+function updateBellRing(isSubscribed) {
+  const btn = document.getElementById('bell-btn');
+  if (!btn) return;
+  btn.classList.toggle('subscribed', isSubscribed);
+}
+
+function updateUnreadDot(hasUnread) {
+  const dot = document.getElementById('bell-dot');
+  if (!dot) return;
+  dot.style.display = hasUnread ? 'block' : 'none';
+}
+
+async function refreshBellState() {
+  if (!swRegistration) return;
+  try {
+    const sub = await swRegistration.pushManager.getSubscription();
+    updateBellRing(!!sub);
+    const toggle = document.getElementById('push-toggle');
+    if (toggle) toggle.checked = !!sub;
+  } catch (e) {}
+}
+
+async function checkForUnreadUpdates() {
+  try {
+    const res = await fetch('/api/updates');
+    const data = await res.json();
+    const updates = data.updates || [];
+    if (!updates.length) return;
+    const lastSeen = localStorage.getItem('last_seen_update_id');
+    if (String(updates[0].id) !== lastSeen) updateUnreadDot(true);
+  } catch (e) {}
+}
+
+async function onPushToggleChange() {
+  const toggle = document.getElementById('push-toggle');
+  if (!swRegistration) {
+    toggle.checked = false;
+    showAlert('Seu navegador não suporta notificações, ou a página ainda está carregando. Tenta de novo em alguns segundos.');
+    return;
+  }
+
+  try {
+    const existing = await swRegistration.pushManager.getSubscription();
+
+    if (!toggle.checked) {
+      if (existing) {
+        await fetch('/api/push/unsubscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ endpoint: existing.endpoint })
+        });
+        await existing.unsubscribe();
+      }
+      updateBellRing(false);
+      return;
+    }
+
+    if (existing) {
+      updateBellRing(true);
+      return;
+    }
+
+    if (Notification.permission === 'denied') {
+      toggle.checked = false;
+      showAlert('As notificações estão bloqueadas nas configurações do navegador/app. Ative nas permissões de site pra receber os avisos.');
+      return;
+    }
+
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') {
+      toggle.checked = false;
+      return;
+    }
+
+    const keyRes = await fetch('/api/push/vapid_public_key');
+    const { key } = await keyRes.json();
+    if (!key) {
+      toggle.checked = false;
+      console.log('VAPID public key não configurada no servidor.');
+      return;
+    }
+
+    const sub = await swRegistration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(key)
+    });
+
+    await fetch('/api/push/subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(sub)
+    });
+
+    updateBellRing(true);
+  } catch (e) {
+    toggle.checked = false;
+    console.log('Erro ao alternar notificações:', e);
+  }
+}
+
+function formatUpdateDate(iso) {
+  if (!iso) return '';
+  try {
+    const d = new Date(iso);
+    return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
+  } catch (e) { return ''; }
+}
+
+async function loadUpdatesList() {
+  const list = document.getElementById('updates-list');
+  list.innerHTML = '<div class="updates-empty">Carregando...</div>';
+  try {
+    const res = await fetch('/api/updates');
+    const data = await res.json();
+    const updates = data.updates || [];
+
+    if (!updates.length) {
+      list.innerHTML = '<div class="updates-empty">Nenhuma novidade ainda :3</div>';
+      return;
+    }
+
+    list.innerHTML = updates.map(u => `
+      <div class="update-item">
+        <div class="update-item-title">${escapeHtml(u.title)}</div>
+        <div class="update-item-body">${escapeHtml(u.body || '')}</div>
+        <div class="update-item-date">${formatUpdateDate(u.created_at)}</div>
+      </div>
+    `).join('');
+
+    localStorage.setItem('last_seen_update_id', String(updates[0].id));
+    updateUnreadDot(false);
+  } catch (e) {
+    list.innerHTML = '<div class="updates-empty">Não deu pra carregar as novidades agora.</div>';
+  }
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function openUpdatesModal() {
+  document.getElementById('updates-modal').classList.add('active');
+  const box = document.querySelector('#updates-modal .modal-box');
+  box.classList.remove('animate-out');
+  void box.offsetWidth;
+  box.classList.add('animate-in');
+  refreshBellState();
+  loadUpdatesList();
+}
+
+function closeUpdatesModal() {
+  const box = document.querySelector('#updates-modal .modal-box');
+  box.classList.remove('animate-in');
+  box.classList.add('animate-out');
+  document.getElementById('updates-modal').classList.remove('active');
+  setTimeout(() => { box.classList.remove('animate-out'); }, 380);
+}
+
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
       .then(registration => {
-        console.log('Service Worker registrado com sucesso!');
+        swRegistration = registration;
+        refreshBellState();
+        checkForUnreadUpdates();
       })
       .catch(err => {
         console.log('Falha ao registrar o Service Worker:', err);
       });
   });
+} else {
+  checkForUnreadUpdates();
+  const btn = document.getElementById('bell-btn');
+  if (btn) btn.querySelector('svg').style.opacity = '0.4';
 }
 </script>
 </body>
