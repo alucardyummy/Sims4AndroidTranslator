@@ -118,11 +118,20 @@
 
     <div id="msg" class="msg"></div>
 
-    <label style="margin-top:28px;">Novidades enviadas (apagar daqui remove pra todo mundo)</label>
-    <div id="updates-list" style="margin-top:8px; display:flex; flex-direction:column; gap:8px;"></div>
+    <label style="margin-top:28px; display:flex; align-items:center; justify-content:space-between;">
+      <span>Novidades enviadas</span>
+      <span id="selected-count" style="color:#777; font-weight:400;"></span>
+    </label>
+    <div style="display:flex; gap:8px; margin-bottom:8px;">
+      <button type="button" onclick="toggleSelectAll()" style="all:unset; cursor:pointer; font-size:12px; color:#8b5cf6; padding:4px 8px;" id="select-all-btn">Selecionar tudo</button>
+      <button type="button" onclick="deleteSelected()" style="all:unset; cursor:pointer; font-size:12px; color:#ff9b9b; padding:4px 8px;">🗑 Apagar selecionados</button>
+    </div>
+    <div id="updates-list" style="display:flex; flex-direction:column; gap:8px;"></div>
   </div>
 
 <script>
+  const selectedIds = new Set();
+
   const secretInput = document.getElementById('secret');
   const rememberBox = document.getElementById('remember');
 
@@ -194,6 +203,8 @@
 
   async function loadUpdatesList() {
     const list = document.getElementById('updates-list');
+    selectedIds.clear();
+    updateSelectedCount();
     list.innerHTML = '<div style="color:#777; font-size:13px;">Carregando...</div>';
     try {
       const res = await fetch('/api/updates');
@@ -206,19 +217,72 @@
       list.innerHTML = '';
       for (const u of updates) {
         const row = document.createElement('div');
-        row.style.cssText = 'display:flex; align-items:center; justify-content:space-between; gap:10px; background:#111; border:1px solid #2c2c2c; border-radius:10px; padding:10px 12px;';
+        row.style.cssText = 'display:flex; align-items:center; gap:10px; background:#111; border:1px solid #2c2c2c; border-radius:10px; padding:10px 12px;';
         row.innerHTML = `
-          <div style="min-width:0;">
+          <input type="checkbox" data-id="${u.id}" style="width:18px; height:18px; flex-shrink:0; accent-color:#8b5cf6;">
+          <div style="min-width:0; flex:1;">
             <div style="font-size:13px; font-weight:600; color:#eee; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(u.title)}</div>
             <div style="font-size:12px; color:#999; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(u.body)}</div>
           </div>
           <button data-id="${u.id}" style="all:unset; cursor:pointer; color:#ff9b9b; font-size:18px; padding:4px 8px; flex-shrink:0;">🗑</button>
         `;
+        const checkbox = row.querySelector('input[type=checkbox]');
+        checkbox.onchange = () => {
+          if (checkbox.checked) selectedIds.add(u.id);
+          else selectedIds.delete(u.id);
+          updateSelectedCount();
+        };
         row.querySelector('button').onclick = () => deleteUpdate(u.id);
         list.appendChild(row);
       }
     } catch (e) {
       list.innerHTML = '<div style="color:#ff9b9b; font-size:13px;">Falha ao carregar.</div>';
+    }
+  }
+
+  function updateSelectedCount() {
+    const el = document.getElementById('selected-count');
+    el.textContent = selectedIds.size ? `${selectedIds.size} selecionada(s)` : '';
+  }
+
+  function toggleSelectAll() {
+    const boxes = document.querySelectorAll('#updates-list input[type=checkbox]');
+    const allChecked = boxes.length > 0 && [...boxes].every(b => b.checked);
+    boxes.forEach(b => {
+      b.checked = !allChecked;
+      const id = Number(b.dataset.id);
+      if (!allChecked) selectedIds.add(id);
+      else selectedIds.delete(id);
+    });
+    updateSelectedCount();
+  }
+
+  async function deleteSelected() {
+    const secret = secretInput.value.trim();
+    if (!secret) {
+      alert('Preenche o segredo de admin primeiro pra poder apagar.');
+      return;
+    }
+    if (!selectedIds.size) {
+      alert('Marca pelo menos uma pra apagar.');
+      return;
+    }
+    if (!confirm(`Apagar ${selectedIds.size} novidade(s) de vez? Isso remove pra todo mundo.`)) return;
+
+    try {
+      const res = await fetch('/api/admin/delete_update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': secret },
+        body: JSON.stringify({ ids: [...selectedIds] })
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        alert('Erro ao apagar: ' + (data.error || res.status));
+        return;
+      }
+      loadUpdatesList();
+    } catch (e) {
+      alert('Falha de rede: ' + e.message);
     }
   }
 
