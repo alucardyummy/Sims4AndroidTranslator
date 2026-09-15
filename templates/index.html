@@ -2211,8 +2211,10 @@ async function onPushToggleChange() {
   } catch (e) {
     toggle.checked = false;
     const msg = String(e && e.message || e);
+    const name = (e && e.name) || 'Unknown';
+    const code = (e && e.code !== undefined) ? (' [code ' + e.code + ']') : '';
     console.log('Erro ao alternar notificações:', e);
-    showAlert('Não deu pra ativar as notificações. Erro: ' + msg);
+    showAlert('Não deu pra ativar as notificações. Erro: ' + name + code + ' - ' + msg);
   }
 }
 
