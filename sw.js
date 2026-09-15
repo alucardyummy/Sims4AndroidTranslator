@@ -19,7 +19,6 @@ self.addEventListener('push', (event) => {
   const title = data.title || 'Sims 4 Translator';
   const options = {
     body: data.body || 'Tem novidade por aqui!',
-    icon: '/img/favicon.png',
     badge: '/img/plumBD.png',
     data: { url: data.url || '/' },
     tag: data.tag || 'update',
@@ -27,7 +26,31 @@ self.addEventListener('push', (event) => {
     vibrate: [80, 40, 80]
   };
 
-  event.waitUntil(self.registration.showNotification(title, options));
+  // Se o app (WebView nativa) estiver de pé, oferece a notificação pra ela
+  // primeiro — ela tem a ponte pra mostrar com a cor de marca. Só cai pro
+  // padrão do navegador (sem cor) se nenhum client assumir.
+  event.waitUntil((async () => {
+    let handledNatively = false;
+    try {
+      const clientList = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+      for (const client of clientList) {
+        const result = await new Promise((resolve) => {
+          const channel = new MessageChannel();
+          const timer = setTimeout(() => resolve(null), 300);
+          channel.port1.onmessage = (e) => { clearTimeout(timer); resolve(e.data); };
+          client.postMessage(
+            { type: 'native-notify-check', payload: { title, body: options.body, url: options.data.url, tag: options.tag } },
+            [channel.port2]
+          );
+        });
+        if (result && result.handled) { handledNatively = true; break; }
+      }
+    } catch (e) { /* segue pro fallback abaixo */ }
+
+    if (!handledNatively) {
+      await self.registration.showNotification(title, options);
+    }
+  })());
 });
 
 self.addEventListener('notificationclick', (event) => {
