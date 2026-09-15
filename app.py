@@ -403,6 +403,30 @@ def admin_notify_page():
     return send_file(os.path.join(TEMPLATE_DIR, "admin_notify.html"))
 
 
+@app.route("/api/admin/delete_update", methods=["POST"])
+def admin_delete_update():
+    secret = request.headers.get("X-Admin-Secret", "")
+    expected = os.environ.get("ADMIN_NOTIFY_SECRET", "")
+    if not expected or secret != expected:
+        return {"error": "Não autorizado"}, 401
+
+    data = request.get_json(silent=True) or {}
+    update_id = data.get("id")
+    if not update_id:
+        return {"error": "Faltou o id"}, 400
+
+    try:
+        conn = get_db()
+        c = conn.cursor()
+        c.execute("DELETE FROM site_updates WHERE id = %s", (update_id,))
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        return {"error": f"Falha ao apagar: {e}"}, 500
+
+    return {"deleted": update_id}
+
+
 @app.route("/api/admin/notify_update", methods=["POST"])
 def admin_notify_update():
     secret = request.headers.get("X-Admin-Secret", "")
