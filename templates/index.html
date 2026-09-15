@@ -82,6 +82,8 @@
   .select-cancel { background: none; border: none; color: var(--text-muted); font-size: 13px; cursor: pointer; padding: 4px 8px; -webkit-tap-highlight-color: transparent; }
   .select-count { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 600; color: var(--text); text-align: center; flex: 1; min-width: 0; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .select-delete { background: none; border: none; color: var(--accent); font-size: 13px; font-weight: 700; cursor: pointer; padding: 4px 8px; -webkit-tap-highlight-color: transparent; display: flex; align-items: center; gap: 6px; }
+  #topbar-select .select-all-btn,
+  #topbar-select .select-delete { color: #6b5f8a; }
 
   /* LOGO */
   .logo-area { text-align: center; margin: 1.5rem 0 1.25rem; position: relative; z-index: 1; }
@@ -122,6 +124,7 @@
     cursor: pointer; -webkit-tap-highlight-color: transparent;
     transition: border-color 0.15s;
     position: relative;
+    -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
   }
   .save-item:active { background: rgba(0,0,0,0.05); }
 
@@ -284,6 +287,7 @@
     position: relative; border: 1px solid var(--border); border-radius: 10px;
     padding: 0.7rem 2.1rem 0.7rem 0.85rem; background: rgba(196,174,232,0.06);
     transition: padding-left 0.15s, border-color 0.15s, background 0.15s;
+    -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
   }
   .update-item.disintegrating {
     animation: saveDisintegrate 0.9s cubic-bezier(0.4, 0, 0.8, 0) forwards;
