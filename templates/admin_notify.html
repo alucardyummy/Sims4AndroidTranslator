@@ -117,6 +117,9 @@
     <button id="send-btn" onclick="sendNotification()">Enviar notificação</button>
 
     <div id="msg" class="msg"></div>
+
+    <label style="margin-top:28px;">Novidades enviadas (apagar daqui remove pra todo mundo)</label>
+    <div id="updates-list" style="margin-top:8px; display:flex; flex-direction:column; gap:8px;"></div>
   </div>
 
 <script>
@@ -185,7 +188,70 @@
       btn.disabled = false;
       btn.textContent = 'Enviar notificação';
     }
+
+    loadUpdatesList();
   }
+
+  async function loadUpdatesList() {
+    const list = document.getElementById('updates-list');
+    list.innerHTML = '<div style="color:#777; font-size:13px;">Carregando...</div>';
+    try {
+      const res = await fetch('/api/updates');
+      const data = await res.json();
+      const updates = data.updates || [];
+      if (!updates.length) {
+        list.innerHTML = '<div style="color:#777; font-size:13px;">Nenhuma novidade ainda.</div>';
+        return;
+      }
+      list.innerHTML = '';
+      for (const u of updates) {
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex; align-items:center; justify-content:space-between; gap:10px; background:#111; border:1px solid #2c2c2c; border-radius:10px; padding:10px 12px;';
+        row.innerHTML = `
+          <div style="min-width:0;">
+            <div style="font-size:13px; font-weight:600; color:#eee; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(u.title)}</div>
+            <div style="font-size:12px; color:#999; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(u.body)}</div>
+          </div>
+          <button data-id="${u.id}" style="all:unset; cursor:pointer; color:#ff9b9b; font-size:18px; padding:4px 8px; flex-shrink:0;">🗑</button>
+        `;
+        row.querySelector('button').onclick = () => deleteUpdate(u.id);
+        list.appendChild(row);
+      }
+    } catch (e) {
+      list.innerHTML = '<div style="color:#ff9b9b; font-size:13px;">Falha ao carregar.</div>';
+    }
+  }
+
+  function escapeHtml(s) {
+    const d = document.createElement('div');
+    d.textContent = s || '';
+    return d.innerHTML;
+  }
+
+  async function deleteUpdate(id) {
+    const secret = secretInput.value.trim();
+    if (!secret) {
+      alert('Preenche o segredo de admin primeiro pra poder apagar.');
+      return;
+    }
+    try {
+      const res = await fetch('/api/admin/delete_update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': secret },
+        body: JSON.stringify({ id })
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        alert('Erro ao apagar: ' + (data.error || res.status));
+        return;
+      }
+      loadUpdatesList();
+    } catch (e) {
+      alert('Falha de rede: ' + e.message);
+    }
+  }
+
+  loadUpdatesList();
 </script>
 </body>
 </html>
