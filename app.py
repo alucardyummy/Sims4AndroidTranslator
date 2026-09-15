@@ -411,20 +411,23 @@ def admin_delete_update():
         return {"error": "Não autorizado"}, 401
 
     data = request.get_json(silent=True) or {}
-    update_id = data.get("id")
-    if not update_id:
-        return {"error": "Faltou o id"}, 400
+    ids = data.get("ids")
+    if ids is None:
+        single_id = data.get("id")
+        ids = [single_id] if single_id else []
+    if not ids:
+        return {"error": "Faltou o id (ou ids)"}, 400
 
     try:
         conn = get_db()
         c = conn.cursor()
-        c.execute("DELETE FROM site_updates WHERE id = %s", (update_id,))
+        c.execute("DELETE FROM site_updates WHERE id = ANY(%s)", (ids,))
         conn.commit()
         conn.close()
     except Exception as e:
         return {"error": f"Falha ao apagar: {e}"}, 500
 
-    return {"deleted": update_id}
+    return {"deleted": ids}
 
 
 @app.route("/api/admin/notify_update", methods=["POST"])
