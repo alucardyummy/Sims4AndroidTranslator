@@ -80,8 +80,8 @@
   .select-topbar { display: none; width: 100%; align-items: center; justify-content: space-between; padding: 0.5rem 0.75rem; position: relative; z-index: 10; }
   .select-topbar.active { display: flex; }
   .select-cancel { background: none; border: none; color: var(--text-muted); font-size: 13px; cursor: pointer; padding: 4px 8px; -webkit-tap-highlight-color: transparent; }
-  .select-count { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 600; color: var(--text); text-align: center; flex: 1; min-width: 0; line-height: 1.25; }
-  .select-delete { background: none; border: none; color: #6b5f8a; font-size: 13px; font-weight: 700; cursor: pointer; padding: 4px 8px; -webkit-tap-highlight-color: transparent; display: flex; align-items: center; gap: 6px; }
+  .select-count { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 600; color: var(--text); text-align: center; flex: 1; min-width: 0; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .select-delete { background: none; border: none; color: var(--accent); font-size: 13px; font-weight: 700; cursor: pointer; padding: 4px 8px; -webkit-tap-highlight-color: transparent; display: flex; align-items: center; gap: 6px; }
 
   /* LOGO */
   .logo-area { text-align: center; margin: 1.5rem 0 1.25rem; position: relative; z-index: 1; }
@@ -306,7 +306,11 @@
   #updates-list.select-mode .update-item { padding-left: 2.15rem; }
   #updates-list.select-mode .update-item-delete { display: none; }
   #updates-list.select-mode .update-item .sel-circle { display: flex; }
-  .updates-select-bar { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 0.9rem; }
+  .updates-select-bar { display: flex; align-items: center; justify-content: space-between; gap: 4px; margin-bottom: 0.9rem; }
+  .updates-select-bar .select-cancel,
+  .updates-select-bar .select-all-btn,
+  .updates-select-bar .select-delete { padding: 4px 5px; font-size: 12px; }
+  .updates-select-bar .select-count { font-size: 13px; }
   .modal-switch { text-align: center; font-size: 12px; color: #1b1047; margin-top: 1rem; cursor: pointer; font-weight: 500; }
   .modal-switch span { color: var(--accent); text-decoration: underline; font-weight: 500; }
 
@@ -425,7 +429,7 @@
   /* Botão selecionar tudo */
   .select-all-group { display: flex; align-items: center; gap: 2px; }
   .select-all-btn {
-    background: none; border: none; color: #6b5f8a; font-size: 13px; font-weight: 700;
+    background: none; border: none; color: var(--accent); font-size: 13px; font-weight: 700;
     cursor: pointer; padding: 4px 8px; -webkit-tap-highlight-color: transparent;
     font-family: 'DM Sans', sans-serif; transition: opacity 0.15s;
   }
@@ -725,10 +729,10 @@
     </div>
     <button class="bell-btn" id="bell-btn" onclick="openUpdatesModal()" aria-label="Ver novidades">
       <svg width="20" height="20" viewBox="0 0 60 60" fill="none">
-        <path d="M30 14 Q20 14 19 26 Q18 34 14 39 Q13 40.5 15 40.5 L45 40.5 Q47 40.5 46 39 Q42 34 41 26 Q40 14 30 14 Z" fill="#c4aee8" opacity="0.9"/>
-        <path d="M22 26 Q23 18 30 17" stroke="#e5d9f5" stroke-width="1.3" fill="none" stroke-linecap="round"/>
-        <path d="M26 12 Q30 9 34 12" stroke="#b89cd9" stroke-width="1.6" fill="none" stroke-linecap="round"/>
-        <path d="M25 41 Q25 45.5 30 45.5 Q35 45.5 35 41" fill="#b89cd9" opacity="0.85"/>
+        <path d="M30 14 Q20 14 19 26 Q18 34 14 39 Q13 40.5 15 40.5 L45 40.5 Q47 40.5 46 39 Q42 34 41 26 Q40 14 30 14 Z" fill="#6b5589" opacity="0.9"/>
+        <path d="M22 26 Q23 18 30 17" stroke="#8a7fa6" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+        <path d="M26 12 Q30 9 34 12" stroke="#5a4d80" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+        <path d="M25 41 Q25 45.5 30 45.5 Q35 45.5 35 41" fill="#5a4d80" opacity="0.85"/>
         <circle class="bell-dot" id="bell-dot" cx="44" cy="16" r="7" fill="#d4bef0" stroke="#0f0f0f" stroke-width="1.2" style="display:none"/>
       </svg>
     </button>
@@ -1177,6 +1181,11 @@ function beginDragSelect(cfg, startId, alreadyResolved) {
 
 document.addEventListener('touchmove', (e) => {
   if (!dragSelect) return;
+  // Enquanto está arrastando pra selecionar, impede o gesto de "puxar pra
+  // recarregar" do navegador — mas só durante o arrasto, então o puxar
+  // normal (fora do modo seleção) continua recarregando a página igual.
+  e.preventDefault();
+
   const touch = e.touches[0];
   if (!touch) return;
   const el = document.elementFromPoint(touch.clientX, touch.clientY);
@@ -1195,7 +1204,7 @@ document.addEventListener('touchmove', (e) => {
     dragSelect.touchedIds.add(id);
     dragSelect.setSelected(id, dragSelect.adding);
   }
-}, { passive: true });
+}, { passive: false });
 
 function endDragSelect() { dragSelect = null; }
 document.addEventListener('touchend', endDragSelect);
@@ -2467,10 +2476,22 @@ function nativeNotify(title, body, url, tag) {
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.addEventListener('message', (event) => {
     const msg = event.data || {};
-    if (msg.type !== 'native-notify-check') return;
-    const p = msg.payload || {};
-    const handled = nativeNotify(p.title, p.body, p.url, p.tag);
-    if (event.ports && event.ports[0]) event.ports[0].postMessage({ handled });
+    if (msg.type === 'native-notify-check') {
+      const p = msg.payload || {};
+      const handled = nativeNotify(p.title, p.body, p.url, p.tag);
+      if (event.ports && event.ports[0]) event.ports[0].postMessage({ handled });
+      return;
+    }
+    if (msg.type === 'new-update') {
+      // Chegou notificação nova: se o modal já está aberto, atualiza a
+      // lista na hora; senão, só acende o pontinho do sino.
+      const modal = document.getElementById('updates-modal');
+      if (modal && modal.classList.contains('active')) {
+        loadUpdatesList();
+      } else {
+        updateUnreadDot(true);
+      }
+    }
   });
 }
 
