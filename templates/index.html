@@ -2228,6 +2228,17 @@ async function onPushToggleChange() {
     });
 
     updateBellRing(true);
+
+    // Se o modal de novidades já estiver aberto quando a pessoa ativa o
+    // push (ex: clicou no toggle de lá de dentro), recarrega a lista na
+    // hora em vez de deixar o aviso "ative as notificações" parado até
+    // um recarregamento manual da página.
+    const modal = document.getElementById('updates-modal');
+    if (modal && modal.classList.contains('active')) {
+      loadUpdatesList();
+    } else {
+      checkForUnreadUpdates();
+    }
   } catch (e) {
     toggle.checked = false;
     const msg = String(e && e.message || e);
