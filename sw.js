@@ -14,6 +14,19 @@ self.addEventListener('push', (event) => {
     data = { title: 'Sims 4 Translator', body: event.data ? event.data.text() : '' };
   }
 
+  if (data.type === 'dismiss-updates') {
+    event.waitUntil((async () => {
+      const notifs = await self.registration.getNotifications({ tag: 'update' });
+      notifs.forEach((n) => n.close());
+
+      const clientList = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+      for (const client of clientList) {
+        client.postMessage({ type: 'updates-changed' });
+      }
+    })());
+    return;
+  }
+
   const title = data.title || 'Sims 4 Translator';
   const options = {
     body: data.body || 'Tem novidade por aqui!',
