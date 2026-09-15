@@ -205,9 +205,22 @@
     const list = document.getElementById('updates-list');
     selectedIds.clear();
     updateSelectedCount();
+
+    const secret = secretInput.value.trim();
+    if (!secret) {
+      list.innerHTML = '<div style="color:#777; font-size:13px;">Preenche o segredo de admin acima pra ver a lista.</div>';
+      return;
+    }
+
     list.innerHTML = '<div style="color:#777; font-size:13px;">Carregando...</div>';
     try {
-      const res = await fetch('/api/updates');
+      const res = await fetch('/api/admin/updates', {
+        headers: { 'X-Admin-Secret': secret }
+      });
+      if (!res.ok) {
+        list.innerHTML = '<div style="color:#ff9b9b; font-size:13px;">Segredo inválido ou sem permissão.</div>';
+        return;
+      }
       const data = await res.json();
       const updates = data.updates || [];
       if (!updates.length) {
