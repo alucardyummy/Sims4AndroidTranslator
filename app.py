@@ -382,7 +382,7 @@ def get_updates():
     # pedindo pra ativar em vez da lista.
     endpoint = request.args.get("endpoint", "").strip()
     if not endpoint:
-        return {"updates": [], "subscribed": False}
+        return {"updates": [], "subscribed": False}, 200, {"Cache-Control": "no-store"}
 
     try:
         conn = get_db()
@@ -391,7 +391,7 @@ def get_updates():
         c.execute("SELECT 1 FROM push_subscriptions WHERE endpoint = %s", (endpoint,))
         if not c.fetchone():
             conn.close()
-            return {"updates": [], "subscribed": False}
+            return {"updates": [], "subscribed": False}, 200, {"Cache-Control": "no-store"}
 
         c.execute("SELECT id, title, body, url, created_at FROM site_updates ORDER BY created_at DESC LIMIT 30")
         rows = c.fetchall()
@@ -410,7 +410,7 @@ def get_updates():
         }
         for r in rows
     ]
-    return {"updates": updates, "subscribed": True}
+    return {"updates": updates, "subscribed": True}, 200, {"Cache-Control": "no-store"}
 
 
 @app.route("/admin")
@@ -442,7 +442,60 @@ def admin_delete_update():
     except Exception as e:
         return {"error": f"Falha ao apagar: {e}"}, 500
 
+    # Manda um push "silencioso" (sem abrir notificação nova) pra todo
+    # mundo inscrito, avisando pra fechar a notificação de update que
+    # estiver aberta na barra e recarregar a listinha de quem estiver com
+    # o site aberto — sem isso, some só quando a pessoa arrasta pro lado
+    # manualmente ou recarrega a página.
+    try:
+        _push_dismiss_updates()
+    except Exception as e:
+        print("Aviso: falha ao mandar dismiss push:", e)
+
     return {"deleted": ids}
+
+
+def _push_dismiss_updates():
+    from pywebpush import webpush, WebPushException
+
+    vapid_private_key = os.environ.get("VAPID_PRIVATE_KEY", "")
+    vapid_claims = {"sub": os.environ.get("VAPID_CLAIM_EMAIL", "mailto:contato@example.com")}
+    if not vapid_private_key:
+        return
+
+    conn = get_db()
+    c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    c.execute("SELECT id, endpoint, p256dh, auth FROM push_subscriptions")
+    subs = c.fetchall()
+    conn.close()
+
+    payload = json.dumps({"type": "dismiss-updates"})
+    dead_ids = []
+    for sub in subs:
+        try:
+            webpush(
+                subscription_info={
+                    "endpoint": sub["endpoint"],
+                    "keys": {"p256dh": sub["p256dh"], "auth": sub["auth"]}
+                },
+                data=payload,
+                vapid_private_key=vapid_private_key,
+                vapid_claims=dict(vapid_claims)
+            )
+        except WebPushException as e:
+            status = getattr(e.response, "status_code", None)
+            if status in (404, 410):
+                dead_ids.append(sub["id"])
+
+    if dead_ids:
+        try:
+            conn = get_db()
+            c = conn.cursor()
+            c.execute("DELETE FROM push_subscriptions WHERE id = ANY(%s)", (dead_ids,))
+            conn.commit()
+            conn.close()
+        except Exception:
+            pass
 
 
 @app.route("/api/admin/updates")
