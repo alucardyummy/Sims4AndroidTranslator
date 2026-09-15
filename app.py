@@ -375,9 +375,24 @@ def push_unsubscribe():
 
 @app.route("/api/updates")
 def get_updates():
+    # Só devolve a lista de novidades pra quem realmente tem uma inscrição
+    # de push ativa no servidor — o navegador manda o endpoint da própria
+    # inscrição como prova. Sem isso (ou com endpoint desconhecido),
+    # devolve vazio e "subscribed": false, pro front mostrar uma mensagem
+    # pedindo pra ativar em vez da lista.
+    endpoint = request.args.get("endpoint", "").strip()
+    if not endpoint:
+        return {"updates": [], "subscribed": False}
+
     try:
         conn = get_db()
         c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+        c.execute("SELECT 1 FROM push_subscriptions WHERE endpoint = %s", (endpoint,))
+        if not c.fetchone():
+            conn.close()
+            return {"updates": [], "subscribed": False}
+
         c.execute("SELECT id, title, body, url, created_at FROM site_updates ORDER BY created_at DESC LIMIT 30")
         rows = c.fetchall()
         conn.close()
@@ -395,7 +410,7 @@ def get_updates():
         }
         for r in rows
     ]
-    return {"updates": updates}
+    return {"updates": updates, "subscribed": True}
 
 
 @app.route("/admin")
