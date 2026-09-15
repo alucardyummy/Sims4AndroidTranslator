@@ -53,7 +53,7 @@
   }
   input:focus, textarea:focus {
     outline: none;
-    border-color: #8b5cf6;
+    border-color: #8a7fa6;
   }
   .remember {
     display: flex;
@@ -70,7 +70,7 @@
     padding: 13px;
     border: none;
     border-radius: 10px;
-    background: #8b5cf6;
+    background: #8a7fa6;
     color: #fff;
     font-size: 15px;
     font-weight: 600;
@@ -120,7 +120,15 @@
   </div>
 
   <div class="card">
-    <h1>📣 Enviar Novidade</h1>
+    <h1 style="display:flex; align-items:center; gap:10px;">
+      <svg width="26" height="24" viewBox="0 0 26 24" style="flex-shrink:0;">
+        <path d="M3 10 L19 5 Q21 4.3 21 6.3 L21 17.7 Q21 19.7 19 19 L3 14 Z" fill="#6b5589" stroke="#5a4d80" stroke-width="0.8" stroke-linejoin="round"/>
+        <path d="M9.5 15.6 Q8.8 19.5 11.8 20.3 Q14.3 21 14.2 18.2 L13.6 15.2" fill="#5a4d80" opacity="0.9"/>
+        <path d="M23 8 Q25.3 12 23 16" stroke="#8a7fa6" stroke-width="1.4" stroke-linecap="round" fill="none"/>
+        <path d="M22.6 9.8 Q24 12 22.6 14.2" stroke="#8a7fa6" stroke-width="1.1" stroke-linecap="round" fill="none" opacity="0.8"/>
+      </svg>
+      Enviar Novidade
+    </h1>
     <p class="sub">Dispara uma notificação push pra todo mundo inscrito.</p>
 
     <label for="secret">Segredo de admin</label>
@@ -148,8 +156,11 @@
       <span id="selected-count" style="color:#777; font-weight:400;"></span>
     </label>
     <div style="display:flex; gap:8px; margin-bottom:8px;">
-      <button type="button" onclick="toggleSelectAll()" style="all:unset; cursor:pointer; font-size:12px; color:#8b5cf6; padding:4px 8px;" id="select-all-btn">Selecionar tudo</button>
-      <button type="button" onclick="deleteSelected()" style="all:unset; cursor:pointer; font-size:12px; color:#ff9b9b; padding:4px 8px;">🗑 Apagar selecionados</button>
+      <button type="button" onclick="toggleSelectAll()" style="all:unset; cursor:pointer; font-size:12px; color:#8a7fa6; padding:4px 8px;" id="select-all-btn">Selecionar tudo</button>
+      <button type="button" onclick="deleteSelected()" style="all:unset; cursor:pointer; font-size:12px; color:#ff9b9b; padding:4px 8px; display:inline-flex; align-items:center; gap:5px;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+        Apagar selecionados
+      </button>
     </div>
     <div id="updates-list" style="display:flex; flex-direction:column; gap:8px;"></div>
   </div>
@@ -257,12 +268,14 @@
         const row = document.createElement('div');
         row.style.cssText = 'display:flex; align-items:center; gap:10px; background:#111; border:1px solid #2c2c2c; border-radius:10px; padding:10px 12px;';
         row.innerHTML = `
-          <input type="checkbox" data-id="${u.id}" style="width:18px; height:18px; flex-shrink:0; accent-color:#8b5cf6;">
+          <input type="checkbox" data-id="${u.id}" style="width:18px; height:18px; flex-shrink:0; accent-color:#8a7fa6;">
           <div style="min-width:0; flex:1;">
             <div style="font-size:13px; font-weight:600; color:#eee; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(u.title)}</div>
             <div style="font-size:12px; color:#999; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(u.body)}</div>
           </div>
-          <button data-id="${u.id}" style="all:unset; cursor:pointer; color:#ff9b9b; font-size:18px; padding:4px 8px; flex-shrink:0;">🗑</button>
+          <button data-id="${u.id}" style="all:unset; cursor:pointer; color:#ff9b9b; padding:4px 8px; flex-shrink:0; display:flex; align-items:center;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+          </button>
         `;
         const checkbox = row.querySelector('input[type=checkbox]');
         checkbox.onchange = () => {
