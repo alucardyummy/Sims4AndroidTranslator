@@ -140,7 +140,8 @@
   .save-meta { font-size: 10px; color: var(--accent); margin-top: 3px; }
   .save-actions { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
   .btn-icon { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 12px; padding: 4px 6px; -webkit-tap-highlight-color: transparent; }
-  .btn-icon.delete { color: var(--text-muted); }
+  .btn-icon.delete { color: var(--text-muted); display: flex; align-items: center; justify-content: center; }
+  .btn-icon.delete svg { width: 15px; height: 15px; display: block; }
 
   /* Estado seleção ativa */
   .select-mode .save-item { cursor: default; }
@@ -279,29 +280,33 @@
   .updates-list { display: flex; flex-direction: column; gap: 10px; max-height: 55vh; overflow-y: auto; }
   .updates-empty { font-size: 12.5px; color: var(--text-muted); text-align: center; padding: 1rem 0; }
 
-  .update-item { position: relative; border-radius: 10px; overflow: hidden; }
-  .update-item-delete-bg {
-    position: absolute; inset: 0; display: flex; align-items: center; justify-content: flex-end;
-    gap: 5px; padding-right: 18px; border-radius: 10px;
-    background: linear-gradient(90deg, rgba(196,174,232,0.06), rgba(180,70,70,0.55));
-    color: #fff; -webkit-tap-highlight-color: transparent; cursor: pointer;
-  }
-  .update-item-delete-bg svg { width: 18px; height: 18px; flex-shrink: 0; }
-  .update-item-content {
+  .update-item {
     position: relative; border: 1px solid var(--border); border-radius: 10px;
-    padding: 0.7rem 0.85rem; background: rgba(196,174,232,0.06);
-    transform: translateX(0); transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
-    touch-action: pan-y; will-change: transform;
+    padding: 0.7rem 2.1rem 0.7rem 0.85rem; background: rgba(196,174,232,0.06);
+    transition: padding-left 0.15s, border-color 0.15s, background 0.15s;
   }
-  .update-item-content.dragging { transition: none; }
-  .update-item-content.swiped { transform: translateX(-62px); }
-  .update-item-content.disintegrating {
+  .update-item.disintegrating {
     animation: saveDisintegrate 0.9s cubic-bezier(0.4, 0, 0.8, 0) forwards;
     pointer-events: none; overflow: hidden;
   }
+  .update-item.selected { border-color: var(--accent-dim); background: rgba(0,0,0,0.08); }
   .update-item-title { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; color: #c4aee8; margin-bottom: 3px; }
   .update-item-body { font-size: 12px; line-height: 1.45; color: var(--text); }
   .update-item-date { font-size: 10.5px; color: var(--text-muted); margin-top: 5px; }
+  .update-item-delete {
+    position: absolute; top: 0.55rem; right: 0.5rem;
+    background: none; border: none; color: var(--text-muted); cursor: pointer;
+    padding: 4px 6px; -webkit-tap-highlight-color: transparent;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .update-item-delete svg { width: 15px; height: 15px; display: block; }
+  /* Círculo de seleção das novidades (mesmo .sel-circle das saves), no canto
+     esquerdo, só aparece em modo seleção */
+  .update-item .sel-circle { position: absolute; top: 0.6rem; left: 0.55rem; display: none; }
+  #updates-list.select-mode .update-item { padding-left: 2.15rem; }
+  #updates-list.select-mode .update-item-delete { display: none; }
+  #updates-list.select-mode .update-item .sel-circle { display: flex; }
+  .updates-select-bar { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 0.9rem; }
   .modal-switch { text-align: center; font-size: 12px; color: #1b1047; margin-top: 1rem; cursor: pointer; font-weight: 500; }
   .modal-switch span { color: var(--accent); text-decoration: underline; font-weight: 500; }
 
@@ -932,8 +937,22 @@
     <button class="modal-btn fx-press" style="background:transparent;border:1px solid #b89cd9;color:#413d57;margin-top:10px" onclick="handleLogout()">SAIR DA CONTA</button>
   </div></div><div class="modal-overlay" id="updates-modal" onclick="if(event.target===this)closeUpdatesModal()">
   <div class="modal-box">
-    <button class="modal-close" onclick="closeUpdatesModal()">✕</button>
-    <h3 class="modal-title">Novidades</h3>
+    <div id="updates-header-normal">
+      <button class="modal-close" onclick="closeUpdatesModal()">✕</button>
+      <h3 class="modal-title">Novidades</h3>
+    </div>
+    <div class="updates-select-bar" id="updates-select-bar" style="display:none">
+      <button class="select-cancel" onclick="exitUpdateSelectMode()">Cancelar</button>
+      <span class="select-count" id="update-select-count">0 selecionados</span>
+      <div class="select-all-group">
+        <button class="select-all-btn" onclick="selectAllUpdates()">Tudo</button>
+        <button class="select-all-btn" onclick="deselectAllUpdates()">Desmarcar</button>
+      </div>
+      <button class="select-delete" onclick="deleteSelectedUpdates()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+        Apagar
+      </button>
+    </div>
 
     <div class="push-toggle-row">
       <span class="push-toggle-label">Notificar no celular</span>
@@ -956,6 +975,9 @@
 </div><script>
 let currentUser = null;
 let newProfilePicBase64 = null;
+// Ícone de lixeira em SVG, reaproveitado em todo botão de apagar (saves e novidades)
+const TRASH_SVG = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>';
+
 let selectMode = false;
 let selectedIds = new Set();
 let hasSaves = false;
@@ -1132,6 +1154,67 @@ function setupFileInput(inputId) {
 }
 setupFileInput('file-input');
 setupFileInput('file-input-new');
+
+// ── Arrastar para selecionar vários de uma vez (saves e novidades) ────────
+// Funciona em cima de qualquer lista em modo seleção: começa no item que o
+// dedo tocou e, enquanto arrasta sem soltar, vai selecionando (ou
+// desselecionando, se o primeiro item já estava marcado) cada item por
+// baixo do dedo. Um único helper genérico serve pras duas listas.
+let dragSelect = null;
+
+function beginDragSelect(cfg, startId, alreadyResolved) {
+  dragSelect = {
+    itemSelector: cfg.itemSelector,
+    getIdFromElement: cfg.getIdFromElement,
+    isSelected: cfg.isSelected,
+    setSelected: cfg.setSelected,
+    startId: startId,
+    touchedIds: new Set([startId]),
+    adding: alreadyResolved ? true : null,
+    resolved: !!alreadyResolved
+  };
+}
+
+document.addEventListener('touchmove', (e) => {
+  if (!dragSelect) return;
+  const touch = e.touches[0];
+  if (!touch) return;
+  const el = document.elementFromPoint(touch.clientX, touch.clientY);
+  const itemEl = el && el.closest(dragSelect.itemSelector);
+  if (!itemEl) return;
+  const id = dragSelect.getIdFromElement(itemEl);
+  if (id === null || id === undefined) return;
+
+  if (!dragSelect.resolved) {
+    dragSelect.adding = !dragSelect.isSelected(dragSelect.startId);
+    dragSelect.setSelected(dragSelect.startId, dragSelect.adding);
+    dragSelect.resolved = true;
+  }
+
+  if (!dragSelect.touchedIds.has(id)) {
+    dragSelect.touchedIds.add(id);
+    dragSelect.setSelected(id, dragSelect.adding);
+  }
+}, { passive: true });
+
+function endDragSelect() { dragSelect = null; }
+document.addEventListener('touchend', endDragSelect);
+document.addEventListener('touchcancel', endDragSelect);
+
+const saveDragConfig = {
+  itemSelector: '.save-item',
+  getIdFromElement: (el) => {
+    const items = Array.from(document.querySelectorAll('#saves-list .save-item'));
+    const idx = items.indexOf(el);
+    return (idx >= 0 && savesData[idx]) ? savesData[idx].id : null;
+  },
+  isSelected: (id) => selectedIds.has(id),
+  setSelected: (id, val) => {
+    if (val) selectedIds.add(id); else selectedIds.delete(id);
+    updateSelectCount();
+    updateSelectVisuals(id);
+  }
+};
 
 function enterSelectMode() {
   selectMode = true;
@@ -1396,23 +1479,32 @@ function renderSaves(animate = false) {
     actions.style.display = selectMode ? 'none' : 'flex';
     actions.innerHTML =
       '<button class="btn-icon" onclick="editSave(' + save.id + ');event.stopPropagation()">editar</button>' +
-      '<button class="btn-icon delete" onclick="deleteSingleSave(' + save.id + ');event.stopPropagation()">✕</button>';
+      '<button class="btn-icon delete" onclick="deleteSingleSave(' + save.id + ');event.stopPropagation()">' + TRASH_SVG + '</button>';
 
     item.appendChild(circle);
     item.appendChild(info);
     item.appendChild(actions);
 
-    // Toque longo entra no modo seleção
+    // Toque longo entra no modo seleção. Se o dedo continuar arrastando sem
+    // soltar, a seleção continua marcando (ou desmarcando) cada save por
+    // baixo dele — mesmo helper de arrastar usado nas novidades.
     let pressTimer;
     item.addEventListener('touchstart', () => {
       pressTimer = setTimeout(() => {
         didLongPress = true;
         if (!selectMode) enterSelectMode();
         toggleSelect(save.id);
+        beginDragSelect(saveDragConfig, save.id, true);
       }, 500);
     }, { passive: true });
     item.addEventListener('touchend', () => clearTimeout(pressTimer));
     item.addEventListener('touchmove', () => clearTimeout(pressTimer));
+
+    // Se já estamos em modo seleção, um novo toque em qualquer item já
+    // começa a arrastar a seleção a partir dele, sem precisar de toque longo.
+    item.addEventListener('touchstart', () => {
+      if (selectMode) beginDragSelect(saveDragConfig, save.id, false);
+    }, { passive: true });
 
     // Toque/click: animação de pressionar
     let didLongPress = false;
@@ -2143,6 +2235,25 @@ function addDismissedUpdateId(id) {
   } catch (e) {}
 }
 
+let updatesData = [];
+let updateSelectMode = false;
+let selectedUpdateIds = new Set();
+
+const updateDragConfig = {
+  itemSelector: '.update-item',
+  getIdFromElement: (el) => {
+    const items = Array.from(document.querySelectorAll('#updates-list .update-item'));
+    const idx = items.indexOf(el);
+    return (idx >= 0 && updatesData[idx]) ? updatesData[idx].id : null;
+  },
+  isSelected: (id) => selectedUpdateIds.has(id),
+  setSelected: (id, val) => {
+    if (val) selectedUpdateIds.add(id); else selectedUpdateIds.delete(id);
+    updateUpdateSelectCount();
+    updateUpdateSelectVisuals(id);
+  }
+};
+
 async function loadUpdatesList() {
   const list = document.getElementById('updates-list');
   list.innerHTML = '<div class="updates-empty">Carregando...</div>';
@@ -2150,127 +2261,160 @@ async function loadUpdatesList() {
     const res = await fetch('/api/updates');
     const data = await res.json();
     const dismissed = getDismissedUpdateIds();
-    const updates = (data.updates || []).filter(u => !dismissed.has(u.id));
+    updatesData = (data.updates || []).filter(u => !dismissed.has(u.id));
 
     if (data.updates && data.updates.length) {
       localStorage.setItem('last_seen_update_id', String(data.updates[0].id));
       updateUnreadDot(false);
     }
 
-    list.innerHTML = '';
-    if (!updates.length) {
-      list.innerHTML = '<div class="updates-empty">Nenhuma novidade ainda :3</div>';
-      return;
-    }
-
-    updates.forEach(u => list.appendChild(buildUpdateItem(u)));
+    renderUpdates();
   } catch (e) {
     list.innerHTML = '<div class="updates-empty">Não deu pra carregar as novidades agora.</div>';
   }
 }
 
-// Monta um item de novidade com a lixeirinha por trás, revelada ao arrastar
-// (mesmo ícone de lixeira usado no "Apagar" seleção das saves).
+function renderUpdates() {
+  const list = document.getElementById('updates-list');
+  list.innerHTML = '';
+  if (!updatesData.length) {
+    list.innerHTML = '<div class="updates-empty">Nenhuma novidade ainda :3</div>';
+    return;
+  }
+  updatesData.forEach(u => list.appendChild(buildUpdateItem(u)));
+}
+
+// Monta um item de novidade igual ao visual original (título/corpo/data
+// empilhados), com o botão de lixeira no canto e — em modo seleção — um
+// círculo à esquerda, tudo igual ao sistema das saves.
 function buildUpdateItem(u) {
   const item = document.createElement('div');
-  item.className = 'update-item';
+  item.className = 'update-item' + (selectedUpdateIds.has(u.id) ? ' selected' : '');
 
-  const deleteBg = document.createElement('div');
-  deleteBg.className = 'update-item-delete-bg';
-  deleteBg.innerHTML =
-    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">' +
-    '<polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>';
+  const circle = document.createElement('div');
+  circle.className = 'sel-circle' + (selectedUpdateIds.has(u.id) ? ' checked' : '');
 
-  const content = document.createElement('div');
-  content.className = 'update-item-content';
-  content.innerHTML =
+  const info = document.createElement('div');
+  info.innerHTML =
     '<div class="update-item-title">' + escapeHtml(u.title) + '</div>' +
     '<div class="update-item-body">' + escapeHtml(u.body || '') + '</div>' +
     '<div class="update-item-date">' + formatUpdateDate(u.created_at) + '</div>';
 
-  item.appendChild(deleteBg);
-  item.appendChild(content);
+  const deleteBtn = document.createElement('button');
+  deleteBtn.className = 'update-item-delete';
+  deleteBtn.innerHTML = TRASH_SVG;
+  deleteBtn.onclick = (e) => { e.stopPropagation(); dismissUpdate(u.id, item); };
 
-  deleteBg.addEventListener('click', () => dismissUpdate(u.id, item, content));
-  attachUpdateSwipe(item, content, u.id);
+  item.appendChild(circle);
+  item.appendChild(info);
+  item.appendChild(deleteBtn);
+
+  // Toque longo entra no modo seleção; arrastar sem soltar continua marcando
+  // os próximos itens (mesmo comportamento das saves).
+  let pressTimer;
+  let didLongPress = false;
+  item.addEventListener('touchstart', () => {
+    pressTimer = setTimeout(() => {
+      didLongPress = true;
+      if (!updateSelectMode) enterUpdateSelectMode();
+      toggleUpdateSelect(u.id);
+      beginDragSelect(updateDragConfig, u.id, true);
+    }, 500);
+  }, { passive: true });
+  item.addEventListener('touchend', () => clearTimeout(pressTimer));
+  item.addEventListener('touchmove', () => clearTimeout(pressTimer));
+
+  // Se já estamos em modo seleção, um novo toque em qualquer item já começa
+  // a arrastar a seleção a partir dele.
+  item.addEventListener('touchstart', () => {
+    if (updateSelectMode) beginDragSelect(updateDragConfig, u.id, false);
+  }, { passive: true });
+
+  item.addEventListener('click', () => {
+    if (updateSelectMode) {
+      toggleUpdateSelect(u.id);
+      return;
+    }
+    if (didLongPress) { didLongPress = false; }
+  });
 
   return item;
 }
 
-// Gesto de arrastar (pointer events cobrem touch, mouse e caneta).
-function attachUpdateSwipe(item, content, id) {
-  const REVEAL = 62;   // o quanto abre pra mostrar a lixeira
-  const COMMIT = 120;  // arrastar além disso já apaga direto, sem precisar soltar em cima do ícone
+function enterUpdateSelectMode() {
+  updateSelectMode = true;
+  selectedUpdateIds.clear();
+  document.getElementById('updates-header-normal').style.display = 'none';
+  document.getElementById('updates-select-bar').style.display = 'flex';
+  document.getElementById('updates-list').classList.add('select-mode');
+  updateUpdateSelectCount();
+}
 
-  let startX = 0, startY = 0, dx = 0, dragging = false, axisLocked = null, open = false;
+function exitUpdateSelectMode() {
+  updateSelectMode = false;
+  selectedUpdateIds.clear();
+  document.getElementById('updates-header-normal').style.display = '';
+  document.getElementById('updates-select-bar').style.display = 'none';
+  document.getElementById('updates-list').classList.remove('select-mode');
+  renderUpdates();
+}
 
-  content.addEventListener('pointerdown', (e) => {
-    if (e.pointerType === 'mouse' && e.button !== 0) return;
-    startX = e.clientX; startY = e.clientY; dx = 0; dragging = true; axisLocked = null;
-    content.classList.add('dragging');
-    content.setPointerCapture(e.pointerId);
+function toggleUpdateSelect(id) {
+  if (selectedUpdateIds.has(id)) selectedUpdateIds.delete(id);
+  else selectedUpdateIds.add(id);
+  updateUpdateSelectCount();
+  updateUpdateSelectVisuals(id);
+}
+
+function updateUpdateSelectVisuals(pulseId) {
+  const items = document.querySelectorAll('#updates-list .update-item');
+  items.forEach((el, i) => {
+    const u = updatesData[i];
+    if (!u) return;
+    const isSelected = selectedUpdateIds.has(u.id);
+    el.classList.toggle('selected', isSelected);
+    const circle = el.querySelector('.sel-circle');
+    if (circle) circle.classList.toggle('checked', isSelected);
   });
+}
 
-  content.addEventListener('pointermove', (e) => {
-    if (!dragging) return;
-    const rawDx = e.clientX - startX;
-    const rawDy = e.clientY - startY;
+function selectAllUpdates() {
+  updatesData.forEach(u => selectedUpdateIds.add(u.id));
+  updateUpdateSelectCount();
+  updateUpdateSelectVisuals();
+}
 
-    if (axisLocked === null && (Math.abs(rawDx) > 6 || Math.abs(rawDy) > 6)) {
-      axisLocked = Math.abs(rawDx) > Math.abs(rawDy) ? 'x' : 'y';
-    }
-    if (axisLocked === 'y') return; // deixa o scroll vertical da lista acontecer
+function deselectAllUpdates() {
+  selectedUpdateIds.clear();
+  updateUpdateSelectCount();
+  updateUpdateSelectVisuals();
+}
 
-    dx = rawDx;
-    const base = open ? -REVEAL : 0;
-    let pos = base + dx;
-    if (pos > 0) pos = 0;                 // não arrasta pra direita além do repouso
-    if (pos < -COMMIT) pos = -COMMIT;     // limite visual do arrasto
-    content.style.transform = 'translateX(' + pos + 'px)';
-  });
+function updateUpdateSelectCount() {
+  document.getElementById('update-select-count').textContent =
+    selectedUpdateIds.size + ' selecionado' + (selectedUpdateIds.size !== 1 ? 's' : '');
+}
 
-  const finishDrag = (e) => {
-    if (!dragging) return;
-    dragging = false;
-    content.classList.remove('dragging');
-    if (axisLocked !== 'x') { content.style.transform = open ? 'translateX(-' + REVEAL + 'px)' : ''; return; }
-
-    const base = open ? -REVEAL : 0;
-    const finalPos = Math.max(-COMMIT, Math.min(0, base + dx));
-
-    if (finalPos <= -COMMIT + 4) {
-      dismissUpdate(id, item, content);
-      return;
-    }
-    if (finalPos <= -REVEAL / 2) {
-      content.style.transform = 'translateX(-' + REVEAL + 'px)';
-      content.classList.add('swiped');
-      open = true;
-    } else {
-      content.style.transform = '';
-      content.classList.remove('swiped');
-      open = false;
-    }
-  };
-
-  content.addEventListener('pointerup', finishDrag);
-  content.addEventListener('pointercancel', finishDrag);
+function deleteSelectedUpdates() {
+  if (selectedUpdateIds.size === 0) return;
+  const toDelete = new Set(selectedUpdateIds);
+  toDelete.forEach(id => addDismissedUpdateId(id));
+  updatesData = updatesData.filter(u => !toDelete.has(u.id));
+  exitUpdateSelectMode();
 }
 
 // Apaga (esconde) uma novidade pra esse usuário, com a mesma animação de
-// desintegração/poeira já usada ao apagar uma save.
-function dismissUpdate(id, itemEl, contentEl) {
-  const rect = itemEl.getBoundingClientRect();
-  spawnDustParticles(rect);
-  contentEl.classList.add('disintegrating');
+// desintegração/poeira usada ao apagar uma save (animateDeleteItem).
+function dismissUpdate(id, itemEl) {
   addDismissedUpdateId(id);
-  setTimeout(() => {
+  updatesData = updatesData.filter(u => u.id !== id);
+  animateDeleteItem(itemEl, () => {
     itemEl.remove();
     const list = document.getElementById('updates-list');
     if (list && !list.querySelector('.update-item')) {
       list.innerHTML = '<div class="updates-empty">Nenhuma novidade ainda :3</div>';
     }
-  }, 900);
+  });
 }
 
 function escapeHtml(str) {
@@ -2290,6 +2434,7 @@ function openUpdatesModal() {
 }
 
 function closeUpdatesModal() {
+  if (updateSelectMode) exitUpdateSelectMode();
   const box = document.querySelector('#updates-modal .modal-box');
   box.classList.remove('animate-in');
   box.classList.add('animate-out');
