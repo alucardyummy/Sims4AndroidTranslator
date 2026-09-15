@@ -2531,6 +2531,16 @@ if ('serviceWorker' in navigator) {
       } else {
         updateUnreadDot(true);
       }
+      return;
+    }
+    if (msg.type === 'updates-changed') {
+      // Uma novidade foi apagada no painel de admin (não é uma nova
+      // chegando) — só atualiza a lista se o modal estiver aberto; não
+      // acende o pontinho, já que não é algo pra "ler".
+      const modal = document.getElementById('updates-modal');
+      if (modal && modal.classList.contains('active')) {
+        loadUpdatesList();
+      }
     }
   });
 }
