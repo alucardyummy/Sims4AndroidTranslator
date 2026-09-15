@@ -278,7 +278,27 @@
 
   .updates-list { display: flex; flex-direction: column; gap: 10px; max-height: 55vh; overflow-y: auto; }
   .updates-empty { font-size: 12.5px; color: var(--text-muted); text-align: center; padding: 1rem 0; }
-  .update-item { border: 1px solid var(--border); border-radius: 10px; padding: 0.7rem 0.85rem; background: rgba(196,174,232,0.06); }
+
+  .update-item { position: relative; border-radius: 10px; overflow: hidden; }
+  .update-item-delete-bg {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: flex-end;
+    gap: 5px; padding-right: 18px; border-radius: 10px;
+    background: linear-gradient(90deg, rgba(196,174,232,0.06), rgba(180,70,70,0.55));
+    color: #fff; -webkit-tap-highlight-color: transparent; cursor: pointer;
+  }
+  .update-item-delete-bg svg { width: 18px; height: 18px; flex-shrink: 0; }
+  .update-item-content {
+    position: relative; border: 1px solid var(--border); border-radius: 10px;
+    padding: 0.7rem 0.85rem; background: rgba(196,174,232,0.06);
+    transform: translateX(0); transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
+    touch-action: pan-y; will-change: transform;
+  }
+  .update-item-content.dragging { transition: none; }
+  .update-item-content.swiped { transform: translateX(-62px); }
+  .update-item-content.disintegrating {
+    animation: saveDisintegrate 0.9s cubic-bezier(0.4, 0, 0.8, 0) forwards;
+    pointer-events: none; overflow: hidden;
+  }
   .update-item-title { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; color: #c4aee8; margin-bottom: 3px; }
   .update-item-body { font-size: 12px; line-height: 1.45; color: var(--text); }
   .update-item-date { font-size: 10.5px; color: var(--text-muted); margin-top: 5px; }
@@ -2103,32 +2123,154 @@ function formatUpdateDate(iso) {
   } catch (e) { return ''; }
 }
 
+// ── Novidades dispensadas (apagadas) pelo usuário neste aparelho ──────────
+// As novidades vêm de uma tabela compartilhada no servidor (site_updates),
+// então "apagar" uma novidade é só escondê-la localmente pra esse usuário,
+// sem afetar quem mais usa o app.
+const DISMISSED_UPDATES_KEY = 'dismissed_update_ids';
+
+function getDismissedUpdateIds() {
+  try {
+    return new Set(JSON.parse(localStorage.getItem(DISMISSED_UPDATES_KEY) || '[]'));
+  } catch (e) { return new Set(); }
+}
+
+function addDismissedUpdateId(id) {
+  try {
+    const ids = getDismissedUpdateIds();
+    ids.add(id);
+    localStorage.setItem(DISMISSED_UPDATES_KEY, JSON.stringify([...ids]));
+  } catch (e) {}
+}
+
 async function loadUpdatesList() {
   const list = document.getElementById('updates-list');
   list.innerHTML = '<div class="updates-empty">Carregando...</div>';
   try {
     const res = await fetch('/api/updates');
     const data = await res.json();
-    const updates = data.updates || [];
+    const dismissed = getDismissedUpdateIds();
+    const updates = (data.updates || []).filter(u => !dismissed.has(u.id));
 
+    if (data.updates && data.updates.length) {
+      localStorage.setItem('last_seen_update_id', String(data.updates[0].id));
+      updateUnreadDot(false);
+    }
+
+    list.innerHTML = '';
     if (!updates.length) {
       list.innerHTML = '<div class="updates-empty">Nenhuma novidade ainda :3</div>';
       return;
     }
 
-    list.innerHTML = updates.map(u => `
-      <div class="update-item">
-        <div class="update-item-title">${escapeHtml(u.title)}</div>
-        <div class="update-item-body">${escapeHtml(u.body || '')}</div>
-        <div class="update-item-date">${formatUpdateDate(u.created_at)}</div>
-      </div>
-    `).join('');
-
-    localStorage.setItem('last_seen_update_id', String(updates[0].id));
-    updateUnreadDot(false);
+    updates.forEach(u => list.appendChild(buildUpdateItem(u)));
   } catch (e) {
     list.innerHTML = '<div class="updates-empty">Não deu pra carregar as novidades agora.</div>';
   }
+}
+
+// Monta um item de novidade com a lixeirinha por trás, revelada ao arrastar
+// (mesmo ícone de lixeira usado no "Apagar" seleção das saves).
+function buildUpdateItem(u) {
+  const item = document.createElement('div');
+  item.className = 'update-item';
+
+  const deleteBg = document.createElement('div');
+  deleteBg.className = 'update-item-delete-bg';
+  deleteBg.innerHTML =
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">' +
+    '<polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>';
+
+  const content = document.createElement('div');
+  content.className = 'update-item-content';
+  content.innerHTML =
+    '<div class="update-item-title">' + escapeHtml(u.title) + '</div>' +
+    '<div class="update-item-body">' + escapeHtml(u.body || '') + '</div>' +
+    '<div class="update-item-date">' + formatUpdateDate(u.created_at) + '</div>';
+
+  item.appendChild(deleteBg);
+  item.appendChild(content);
+
+  deleteBg.addEventListener('click', () => dismissUpdate(u.id, item, content));
+  attachUpdateSwipe(item, content, u.id);
+
+  return item;
+}
+
+// Gesto de arrastar (pointer events cobrem touch, mouse e caneta).
+function attachUpdateSwipe(item, content, id) {
+  const REVEAL = 62;   // o quanto abre pra mostrar a lixeira
+  const COMMIT = 120;  // arrastar além disso já apaga direto, sem precisar soltar em cima do ícone
+
+  let startX = 0, startY = 0, dx = 0, dragging = false, axisLocked = null, open = false;
+
+  content.addEventListener('pointerdown', (e) => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    startX = e.clientX; startY = e.clientY; dx = 0; dragging = true; axisLocked = null;
+    content.classList.add('dragging');
+    content.setPointerCapture(e.pointerId);
+  });
+
+  content.addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    const rawDx = e.clientX - startX;
+    const rawDy = e.clientY - startY;
+
+    if (axisLocked === null && (Math.abs(rawDx) > 6 || Math.abs(rawDy) > 6)) {
+      axisLocked = Math.abs(rawDx) > Math.abs(rawDy) ? 'x' : 'y';
+    }
+    if (axisLocked === 'y') return; // deixa o scroll vertical da lista acontecer
+
+    dx = rawDx;
+    const base = open ? -REVEAL : 0;
+    let pos = base + dx;
+    if (pos > 0) pos = 0;                 // não arrasta pra direita além do repouso
+    if (pos < -COMMIT) pos = -COMMIT;     // limite visual do arrasto
+    content.style.transform = 'translateX(' + pos + 'px)';
+  });
+
+  const finishDrag = (e) => {
+    if (!dragging) return;
+    dragging = false;
+    content.classList.remove('dragging');
+    if (axisLocked !== 'x') { content.style.transform = open ? 'translateX(-' + REVEAL + 'px)' : ''; return; }
+
+    const base = open ? -REVEAL : 0;
+    const finalPos = Math.max(-COMMIT, Math.min(0, base + dx));
+
+    if (finalPos <= -COMMIT + 4) {
+      dismissUpdate(id, item, content);
+      return;
+    }
+    if (finalPos <= -REVEAL / 2) {
+      content.style.transform = 'translateX(-' + REVEAL + 'px)';
+      content.classList.add('swiped');
+      open = true;
+    } else {
+      content.style.transform = '';
+      content.classList.remove('swiped');
+      open = false;
+    }
+  };
+
+  content.addEventListener('pointerup', finishDrag);
+  content.addEventListener('pointercancel', finishDrag);
+}
+
+// Apaga (esconde) uma novidade pra esse usuário, com a mesma animação de
+// desintegração/poeira já usada ao apagar uma save.
+function dismissUpdate(id, itemEl, contentEl) {
+  const rect = itemEl.getBoundingClientRect();
+  spawnDustParticles(rect);
+  contentEl.classList.add('disintegrating');
+  addDismissedUpdateId(id);
+  setTimeout(() => {
+    itemEl.remove();
+    const list = document.getElementById('updates-list');
+    if (list && !list.querySelector('.update-item')) {
+      list.innerHTML = '<div class="updates-empty">Nenhuma novidade ainda :3</div>';
+    }
+  }, 900);
 }
 
 function escapeHtml(str) {
@@ -2153,6 +2295,38 @@ function closeUpdatesModal() {
   box.classList.add('animate-out');
   document.getElementById('updates-modal').classList.remove('active');
   setTimeout(() => { box.classList.remove('animate-out'); }, 380);
+}
+
+// Cor de marca usada na notificação nativa (mesma família roxa do sininho/
+// modal de Novidades). Só é usada dentro do app empacotado — no Chrome
+// normal essa ponte não existe e cai no Web Push padrão, sem cor.
+const NATIVE_NOTIFY_COLOR = '#b89cd9';
+
+// Tenta mostrar a notificação via ponte nativa (Android/pyjnius, com cor).
+// Retorna true se a ponte existia e assumiu a notificação; false se não
+// tem ponte (ex.: rodando no Chrome comum) e o chamador deve seguir o
+// fluxo padrão.
+function nativeNotify(title, body, url, tag) {
+  if (window.AndroidNotify && typeof window.AndroidNotify.notify === 'function') {
+    try {
+      window.AndroidNotify.notify(title || 'Sims 4 Translator', body || '', NATIVE_NOTIFY_COLOR, tag || 'update', url || '/');
+      return true;
+    } catch (e) { return false; }
+  }
+  return false;
+}
+
+// O sw.js pergunta, antes de mostrar a notificação padrão do navegador, se
+// essa página consegue repassar pra ponte nativa. Só existe ponte quando
+// está rodando dentro do app (WebView do buildozer).
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.addEventListener('message', (event) => {
+    const msg = event.data || {};
+    if (msg.type !== 'native-notify-check') return;
+    const p = msg.payload || {};
+    const handled = nativeNotify(p.title, p.body, p.url, p.tag);
+    if (event.ports && event.ports[0]) event.ports[0].postMessage({ handled });
+  });
 }
 
 if ('serviceWorker' in navigator) {
