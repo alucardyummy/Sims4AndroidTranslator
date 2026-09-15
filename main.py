@@ -136,7 +136,16 @@ def run_android():
                     TrustingClient = autoclass('org.kivy.TrustingWebViewClient')
                     wv.setWebViewClient(TrustingClient())
                     wv.setWebChromeClient(FileChooserClient())
-                    
+
+                    _write_log('webview', 'Registrando ponte de notificação nativa')
+                    try:
+                        NativeNotifier = autoclass('org.kivy.NativeNotifier')
+                        notifier = NativeNotifier(activity)
+                        wv.addJavascriptInterface(notifier, 'AndroidNotify')
+                    except Exception:
+                        import traceback
+                        _write_log('native_notifier_error', traceback.format_exc())
+
                     _write_log('webview', 'Carregando URL')
                     wv.loadUrl("https://127.0.0.1:5000")
                     
@@ -163,6 +172,12 @@ def run_android():
     class Sims4App(App):
         def build(self):
             Window.clearcolor = (0.06, 0.06, 0.06, 1)
+            try:
+                from android.permissions import request_permissions, Permission
+                request_permissions([Permission.POST_NOTIFICATIONS])
+            except Exception:
+                import traceback
+                _write_log('permission_error', traceback.format_exc())
             threading.Thread(target=flask_thread, daemon=True).start()
             Clock.schedule_interval(check_ready, 0.5)
             from kivy.uix.label import Label
