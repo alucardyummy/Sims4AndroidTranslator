@@ -445,6 +445,36 @@ def admin_delete_update():
     return {"deleted": ids}
 
 
+@app.route("/api/admin/updates")
+def admin_list_updates():
+    secret = request.headers.get("X-Admin-Secret", "")
+    expected = os.environ.get("ADMIN_NOTIFY_SECRET", "")
+    if not expected or secret != expected:
+        return {"error": "Não autorizado"}, 401
+
+    try:
+        conn = get_db()
+        c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        c.execute("SELECT id, title, body, url, created_at FROM site_updates ORDER BY created_at DESC LIMIT 30")
+        rows = c.fetchall()
+        conn.close()
+    except Exception as e:
+        print("Erro ao buscar updates (admin):", e)
+        return {"updates": []}, 500
+
+    updates = [
+        {
+            "id": r["id"],
+            "title": r["title"],
+            "body": r["body"],
+            "url": r["url"],
+            "created_at": r["created_at"].isoformat() if r["created_at"] else None
+        }
+        for r in rows
+    ]
+    return {"updates": updates}
+
+
 @app.route("/api/admin/notify_update", methods=["POST"])
 def admin_notify_update():
     secret = request.headers.get("X-Admin-Secret", "")
