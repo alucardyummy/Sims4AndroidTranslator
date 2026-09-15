@@ -415,7 +415,9 @@ def get_updates():
 
 @app.route("/admin")
 def admin_notify_page():
-    return send_file(os.path.join(TEMPLATE_DIR, "admin_notify.html"))
+    response = send_file(os.path.join(TEMPLATE_DIR, "admin_notify.html"))
+    response.headers["Cache-Control"] = "no-store"
+    return response
 
 
 @app.route("/api/admin/delete_update", methods=["POST"])
