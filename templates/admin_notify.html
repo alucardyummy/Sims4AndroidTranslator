@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Enviar Novidade — Sims 4 Translator</title>
 <style>
-  * { box-sizing: border-box; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; tap-highlight-color: transparent; }
   body {
     margin: 0;
     min-height: 100vh;
@@ -91,9 +91,34 @@
   }
   .msg.ok { display: block; background: #14301f; color: #7ee2a8; border: 1px solid #1f5a37; }
   .msg.err { display: block; background: #3a1616; color: #ff9b9b; border: 1px solid #6b1f1f; }
+
+  .confirm-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+    align-items: center; justify-content: center; padding: 24px; z-index: 100;
+  }
+  .confirm-overlay.active { display: flex; }
+  .confirm-box {
+    width: 100%; max-width: 340px; background: #1a1a1a; border: 1px solid #2c2c2c;
+    border-radius: 16px; padding: 22px;
+  }
+  .confirm-box p { margin: 0 0 20px; font-size: 14px; color: #ddd; line-height: 1.4; }
+  .confirm-actions { display: flex; gap: 10px; }
+  .confirm-actions button { margin-top: 0; width: 100%; }
+  .confirm-actions .btn-no { background: #2c2c2c; color: #ccc; }
+  .confirm-actions .btn-yes { background: #c94f4f; }
 </style>
 </head>
 <body>
+  <div class="confirm-overlay" id="confirm-overlay">
+    <div class="confirm-box">
+      <p id="confirm-text">Realmente apagar?</p>
+      <div class="confirm-actions">
+        <button type="button" class="btn-no" onclick="closeConfirm(false)">Não</button>
+        <button type="button" class="btn-yes" onclick="closeConfirm(true)">Sim</button>
+      </div>
+    </div>
+  </div>
+
   <div class="card">
     <h1>📣 Enviar Novidade</h1>
     <p class="sub">Dispara uma notificação push pra todo mundo inscrito.</p>
@@ -270,6 +295,17 @@
     updateSelectedCount();
   }
 
+  let confirmResolve = null;
+  function askConfirm(text) {
+    document.getElementById('confirm-text').textContent = text;
+    document.getElementById('confirm-overlay').classList.add('active');
+    return new Promise((resolve) => { confirmResolve = resolve; });
+  }
+  function closeConfirm(result) {
+    document.getElementById('confirm-overlay').classList.remove('active');
+    if (confirmResolve) { confirmResolve(result); confirmResolve = null; }
+  }
+
   async function deleteSelected() {
     const secret = secretInput.value.trim();
     if (!secret) {
@@ -280,7 +316,9 @@
       alert('Marca pelo menos uma pra apagar.');
       return;
     }
-    if (!confirm(`Apagar ${selectedIds.size} novidade(s) de vez? Isso remove pra todo mundo.`)) return;
+    const n = selectedIds.size;
+    const ok = await askConfirm(`Realmente apagar ${n} novidade${n > 1 ? 's' : ''}? Isso remove pra todo mundo.`);
+    if (!ok) return;
 
     try {
       const res = await fetch('/api/admin/delete_update', {
@@ -311,6 +349,9 @@
       alert('Preenche o segredo de admin primeiro pra poder apagar.');
       return;
     }
+    const ok = await askConfirm('Realmente apagar essa novidade? Isso remove pra todo mundo.');
+    if (!ok) return;
+
     try {
       const res = await fetch('/api/admin/delete_update', {
         method: 'POST',
