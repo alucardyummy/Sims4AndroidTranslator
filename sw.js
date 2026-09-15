@@ -17,10 +17,7 @@ self.addEventListener('push', (event) => {
   const title = data.title || 'Sims 4 Translator';
   const options = {
     body: data.body || 'Tem novidade por aqui!',
-    // Pixel transparente 1x1: sem isso o Chrome gera sozinho um avatar com
-    // a inicial do nome do site (o "S" feio). Com um ícone "vazio" definido,
-    // ele não tem o que gerar e o círculo fica em branco.
-    icon: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==',
+    icon: '/img/notif-empty.png',
     badge: '/img/plumBD.png',
     data: { url: data.url || '/' },
     tag: data.tag || 'update',
