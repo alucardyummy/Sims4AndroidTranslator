@@ -19,6 +19,10 @@ self.addEventListener('push', (event) => {
   const title = data.title || 'Sims 4 Translator';
   const options = {
     body: data.body || 'Tem novidade por aqui!',
+    // Pixel transparente 1x1: sem isso o Chrome gera sozinho um avatar com
+    // a inicial do nome do site (o "S" feio). Com um ícone "vazio" definido,
+    // ele não tem o que gerar e o círculo fica em branco.
+    icon: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==',
     badge: '/img/plumBD.png',
     data: { url: data.url || '/' },
     tag: data.tag || 'update',
@@ -31,8 +35,9 @@ self.addEventListener('push', (event) => {
   // padrão do navegador (sem cor) se nenhum client assumir.
   event.waitUntil((async () => {
     let handledNatively = false;
+    let clientList = [];
     try {
-      const clientList = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+      clientList = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
       for (const client of clientList) {
         const result = await new Promise((resolve) => {
           const channel = new MessageChannel();
@@ -49,6 +54,12 @@ self.addEventListener('push', (event) => {
 
     if (!handledNatively) {
       await self.registration.showNotification(title, options);
+    }
+
+    // Avisa qualquer aba aberta do site que chegou novidade, pra lista da
+    // página se atualizar sozinha, sem precisar recarregar.
+    for (const client of clientList) {
+      client.postMessage({ type: 'new-update' });
     }
   })());
 });
