@@ -29,8 +29,6 @@
 
   button, button * { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 
-  /* Cor de seleção de texto (highlight ao arrastar/selecionar palavras),
-     trocando o azul padrão do navegador pelo tom da marca. */
   ::selection { background: #837991; color: #fff; }
   ::-moz-selection { background: #837991; color: #fff; }
   :root {
@@ -2117,9 +2115,24 @@ async function refreshBellState() {
   } catch (e) {}
 }
 
+// Pega o endpoint da inscrição de push atual (se existir) pra provar ao
+// servidor que esse navegador está mesmo inscrito. Sem inscrição, retorna
+// string vazia e quem chamou trata como "não inscrito".
+async function getSubEndpointParam() {
+  try {
+    if (!swRegistration) return '';
+    const sub = await swRegistration.pushManager.getSubscription();
+    return sub ? ('?endpoint=' + encodeURIComponent(sub.endpoint)) : '';
+  } catch (e) {
+    return '';
+  }
+}
+
 async function checkForUnreadUpdates() {
   try {
-    const res = await fetch('/api/updates');
+    const qs = await getSubEndpointParam();
+    if (!qs) return; // não inscrito: sem pontinho de novidade
+    const res = await fetch('/api/updates' + qs);
     const data = await res.json();
     const updates = data.updates || [];
     if (!updates.length) return;
@@ -2276,7 +2289,14 @@ async function loadUpdatesList() {
   const list = document.getElementById('updates-list');
   list.innerHTML = '<div class="updates-empty">Carregando...</div>';
   try {
-    const res = await fetch('/api/updates');
+    const qs = await getSubEndpointParam();
+    if (!qs) {
+      updatesData = [];
+      list.innerHTML = '<div class="updates-empty">Ative as notificações pra ver as novidades daqui.</div>';
+      return;
+    }
+
+    const res = await fetch('/api/updates' + qs);
     const data = await res.json();
     const dismissed = getDismissedUpdateIds();
     updatesData = (data.updates || []).filter(u => !dismissed.has(u.id));
