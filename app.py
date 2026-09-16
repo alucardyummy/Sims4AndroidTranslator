@@ -445,19 +445,19 @@ def admin_delete_update():
         return {"error": f"Falha ao apagar: {e}"}, 500
 
     # Manda um push "silencioso" (sem abrir notificação nova) pra todo
-    # mundo inscrito, avisando pra fechar a notificação de update que
-    # estiver aberta na barra e recarregar a listinha de quem estiver com
-    # o site aberto — sem isso, some só quando a pessoa arrasta pro lado
-    # manualmente ou recarrega a página.
+    # mundo inscrito, avisando pra fechar a(s) notificação(ões) específica(s)
+    # que estiver(em) aberta(s) na barra e recarregar a listinha de quem
+    # estiver com o site aberto — sem isso, some só quando a pessoa arrasta
+    # pro lado manualmente ou recarrega a página.
     try:
-        _push_dismiss_updates()
+        _push_dismiss_updates(ids)
     except Exception as e:
         print("Aviso: falha ao mandar dismiss push:", e)
 
     return {"deleted": ids}
 
 
-def _push_dismiss_updates():
+def _push_dismiss_updates(ids=None):
     from pywebpush import webpush, WebPushException
 
     vapid_private_key = os.environ.get("VAPID_PRIVATE_KEY", "")
@@ -471,7 +471,97 @@ def _push_dismiss_updates():
     subs = c.fetchall()
     conn.close()
 
-    payload = json.dumps({"type": "dismiss-updates"})
+    payload = json.dumps({"type": "dismiss-updates", "ids": ids or []})
+    dead_ids = []
+    for sub in subs:
+        try:
+            webpush(
+                subscription_info={
+                    "endpoint": sub["endpoint"],
+                    "keys": {"p256dh": sub["p256dh"], "auth": sub["auth"]}
+                },
+                data=payload,
+                vapid_private_key=vapid_private_key,
+                vapid_claims=dict(vapid_claims)
+            )
+        except WebPushException as e:
+            status = getattr(e.response, "status_code", None)
+            if status in (404, 410):
+                dead_ids.append(sub["id"])
+
+    if dead_ids:
+        try:
+            conn = get_db()
+            c = conn.cursor()
+            c.execute("DELETE FROM push_subscriptions WHERE id = ANY(%s)", (dead_ids,))
+            conn.commit()
+            conn.close()
+        except Exception:
+            pass
+
+
+@app.route("/api/admin/edit_update", methods=["POST"])
+def admin_edit_update():
+    secret = request.headers.get("X-Admin-Secret", "")
+    expected = os.environ.get("ADMIN_NOTIFY_SECRET", "")
+    if not expected or secret != expected:
+        return {"error": "Não autorizado"}, 401
+
+    data = request.get_json(silent=True) or {}
+    update_id = data.get("id")
+    title = data.get("title") or "Sims 4 Translator"
+    body = data.get("body") or "Tem novidade por aqui!"
+    url = data.get("url") or "/"
+
+    if not update_id:
+        return {"error": "Faltou o id"}, 400
+
+    try:
+        conn = get_db()
+        c = conn.cursor()
+        c.execute(
+            "UPDATE site_updates SET title = %s, body = %s, url = %s WHERE id = %s",
+            (title, body, url, update_id)
+        )
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        return {"error": f"Falha ao editar: {e}"}, 500
+
+    # Push silencioso: só atualiza o texto de quem AINDA tiver a notificação
+    # na barra (renotify/silent no service worker). Quem já dispensou não
+    # recebe nada de volta — a edição não "ressuscita" notificação fechada.
+    try:
+        _push_edit_update(update_id, title, body, url)
+    except Exception as e:
+        print("Aviso: falha ao mandar edit push:", e)
+
+    return {"ok": True, "id": update_id}
+
+
+def _push_edit_update(update_id, title, body, url):
+    from pywebpush import webpush, WebPushException
+
+    vapid_private_key = os.environ.get("VAPID_PRIVATE_KEY", "")
+    vapid_claims = {"sub": os.environ.get("VAPID_CLAIM_EMAIL", "mailto:contato@example.com")}
+    if not vapid_private_key:
+        return
+
+    conn = get_db()
+    c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    c.execute("SELECT id, endpoint, p256dh, auth FROM push_subscriptions")
+    subs = c.fetchall()
+    conn.close()
+
+    payload = json.dumps({
+        "type": "edit-update",
+        "id": update_id,
+        "tag": f"update-{update_id}",
+        "title": title,
+        "body": body,
+        "url": url
+    })
+
     dead_ids = []
     for sub in subs:
         try:
@@ -544,13 +634,15 @@ def admin_notify_update():
 
     # Grava no histórico do site independente de ter alguém inscrito em
     # push ou não — é o que alimenta a listinha dentro do painel do sininho.
+    new_id = None
     try:
         conn = get_db()
         c = conn.cursor()
         c.execute(
-            "INSERT INTO site_updates (title, body, url) VALUES (%s, %s, %s)",
+            "INSERT INTO site_updates (title, body, url) VALUES (%s, %s, %s) RETURNING id",
             (title, body, url)
         )
+        new_id = c.fetchone()[0]
         conn.commit()
         conn.close()
     except Exception as e:
@@ -572,7 +664,11 @@ def admin_notify_update():
     except Exception as e:
         return {"error": f"Falha ao ler inscrições: {e}"}, 500
 
-    payload = json.dumps({"title": title, "body": body, "url": url, "tag": "update"})
+    # Tag única por notificação (baseada no id do banco) — assim cada
+    # novidade empilha separada na barra em vez de substituir a anterior,
+    # e dá pra fechar/editar uma específica sem mexer nas outras.
+    tag = f"update-{new_id}" if new_id else "update"
+    payload = json.dumps({"title": title, "body": body, "url": url, "tag": tag})
 
     dead_ids = []
     for sub in subs:
