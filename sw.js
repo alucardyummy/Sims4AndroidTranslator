@@ -16,8 +16,41 @@ self.addEventListener('push', (event) => {
 
   if (data.type === 'dismiss-updates') {
     event.waitUntil((async () => {
-      const notifs = await self.registration.getNotifications({ tag: 'update' });
-      notifs.forEach((n) => n.close());
+      // ids específicos (novo formato) — cada notificação tem sua própria tag
+      const ids = Array.isArray(data.ids) ? data.ids : [];
+      const tags = ids.length ? ids.map((id) => `update-${id}`) : ['update'];
+
+      for (const tag of tags) {
+        const notifs = await self.registration.getNotifications({ tag });
+        notifs.forEach((n) => n.close());
+      }
+
+      const clientList = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+      for (const client of clientList) {
+        client.postMessage({ type: 'updates-changed' });
+      }
+    })());
+    return;
+  }
+
+  if (data.type === 'edit-update') {
+    event.waitUntil((async () => {
+      const tag = data.tag || `update-${data.id}`;
+      const notifs = await self.registration.getNotifications({ tag });
+
+      // só atualiza o texto se ela ainda estiver na barra — se a pessoa já
+      // dispensou, não faz nada (não ressuscita notificação já fechada)
+      if (notifs.length) {
+        await self.registration.showNotification(data.title, {
+          body: data.body,
+          icon: '/img/notif-empty.png',
+          badge: '/img/plumBD.png',
+          data: { url: data.url || '/' },
+          tag,
+          renotify: false,
+          silent: true
+        });
+      }
 
       const clientList = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
       for (const client of clientList) {
