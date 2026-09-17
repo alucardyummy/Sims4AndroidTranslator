@@ -2492,37 +2492,11 @@ function closeUpdatesModal() {
   setTimeout(() => { box.classList.remove('animate-out'); }, 380);
 }
 
-// Cor de marca usada na notificação nativa (mesma família roxa do sininho/
-// modal de Novidades). Só é usada dentro do app empacotado — no Chrome
-// normal essa ponte não existe e cai no Web Push padrão, sem cor.
-const NATIVE_NOTIFY_COLOR = '#b89cd9';
-
-// Tenta mostrar a notificação via ponte nativa (Android/pyjnius, com cor).
-// Retorna true se a ponte existia e assumiu a notificação; false se não
-// tem ponte (ex.: rodando no Chrome comum) e o chamador deve seguir o
-// fluxo padrão.
-function nativeNotify(title, body, url, tag) {
-  if (window.AndroidNotify && typeof window.AndroidNotify.notify === 'function') {
-    try {
-      window.AndroidNotify.notify(title || 'Sims 4 Translator', body || '', NATIVE_NOTIFY_COLOR, tag || 'update', url || '/');
-      return true;
-    } catch (e) { return false; }
-  }
-  return false;
-}
-
-// O sw.js pergunta, antes de mostrar a notificação padrão do navegador, se
-// essa página consegue repassar pra ponte nativa. Só existe ponte quando
-// está rodando dentro do app (WebView do buildozer).
+// A cor de marca da notificação é aplicada do lado nativo, no app TWA
+// (BrandedNotificationDelegationService)
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.addEventListener('message', (event) => {
     const msg = event.data || {};
-    if (msg.type === 'native-notify-check') {
-      const p = msg.payload || {};
-      const handled = nativeNotify(p.title, p.body, p.url, p.tag);
-      if (event.ports && event.ports[0]) event.ports[0].postMessage({ handled });
-      return;
-    }
     if (msg.type === 'new-update') {
       // Chegou notificação nova: se o modal já está aberto, atualiza a
       // lista na hora; senão, só acende o pontinho do sino.
