@@ -71,34 +71,15 @@ self.addEventListener('push', (event) => {
     vibrate: [80, 40, 80]
   };
 
-  // Se o app (WebView nativa) estiver de pé, oferece a notificação pra ela
-  // primeiro — ela tem a ponte pra mostrar com a cor de marca. Só cai pro
-  // padrão do navegador (sem cor) se nenhum client assumir.
+  // A cor de marca é aplicada do lado nativo pelo BrandedNotificationDelegationService
+  // (no app TWA), que intercepta a notificação delegada pelo Chrome antes de
+  // exibi-la — não depende de nenhuma aba aberta pra funcionar.
   event.waitUntil((async () => {
-    let handledNatively = false;
-    let clientList = [];
-    try {
-      clientList = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-      for (const client of clientList) {
-        const result = await new Promise((resolve) => {
-          const channel = new MessageChannel();
-          const timer = setTimeout(() => resolve(null), 300);
-          channel.port1.onmessage = (e) => { clearTimeout(timer); resolve(e.data); };
-          client.postMessage(
-            { type: 'native-notify-check', payload: { title, body: options.body, url: options.data.url, tag: options.tag } },
-            [channel.port2]
-          );
-        });
-        if (result && result.handled) { handledNatively = true; break; }
-      }
-    } catch (e) { /* segue pro fallback abaixo */ }
-
-    if (!handledNatively) {
-      await self.registration.showNotification(title, options);
-    }
+    await self.registration.showNotification(title, options);
 
     // Avisa qualquer aba aberta do site que chegou novidade, pra lista da
     // página se atualizar sozinha, sem precisar recarregar.
+    const clientList = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
     for (const client of clientList) {
       client.postMessage({ type: 'new-update' });
     }
