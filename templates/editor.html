@@ -145,7 +145,7 @@
   .filter-collapsible { display: none; flex-direction: column; gap: 6px; padding-top: 4px; }
   .filter-collapsible.open { display: flex; }
   .focus-mode .undo-group, .focus-mode .timer-badge,
-  .focus-mode .save-progress-btn, .focus-mode .focus-toggle-btn, .focus-mode .filter-bar,
+  .focus-mode .save-progress-btn, .focus-mode .filter-bar,
   .focus-mode .col-headers, .focus-mode .bottom-bar, .focus-mode .copy-btn,
   .focus-mode .fav-btn, .focus-mode .expand-arrow-btn { display: none !important; }
   .translate-btn { width: 26px; height: 26px; border-radius: 50%; background: var(--surface); border: 1px solid var(--accent-dim); color: var(--accent); display: flex; align-items: center; justify-content: center; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: all 0.2s; flex-shrink: 0; font-size: 13px; }
@@ -2306,10 +2306,16 @@ function pushFocusModeHistoryState() {
 
 function toggleFocusMode() {
   if (focusModeActive) {
-    _exitFocusModeState();
     if (_focusHistoryPushed) {
-      _focusHistoryPushed = false;
+      // Deixa o próprio history.back() disparar o popstate, que é quem
+      // chama _exitFocusModeState(). Se chamássemos _exitFocusModeState()
+      // aqui antes, focusModeActive já viraria false e o listener de
+      // popstate cairia no "else" (tentativa de sair do editor de
+      // verdade), mandando o usuário pro /info em vez de só sair do
+      // modo foco.
       history.back();
+    } else {
+      _exitFocusModeState();
     }
   } else {
     _enterFocusModeState();
