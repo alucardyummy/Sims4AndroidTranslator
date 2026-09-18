@@ -426,7 +426,7 @@
   <div class="bottom-bar">
     <div class="filename-row">
       <span class="filename-label">Nome:</span>
-      <input type="text" class="filename-input" id="filename-input" placeholder="output" maxlength="100">
+      <input type="text" class="filename-input" id="filename-input" placeholder="output" maxlength="100" autocomplete="off" autocorrect="off" spellcheck="false">
       <span class="ext-label">.package</span>
     </div>
     <div class="instance-toggle-row" onclick="toggleInstance()">
@@ -816,6 +816,18 @@ let instanceStr  = sessionStorage.getItem('selected_instance_str') || '';
   } else {
     // Novo upload — descarta qualquer nome de sessão anterior
     sessionStorage.removeItem('original_name');
+    // Além de limpar o sessionStorage, força o campo a ficar vazio de fato.
+    // O navegador/WebView pode autopreencher o input sozinho (autofill de
+    // formulário) com o último valor digitado ali em uma sessão anterior,
+    // mesmo sem autocomplete ligado no nosso lado — e às vezes esse
+    // autofill roda um pouco DEPOIS do DOMContentLoaded, então limpamos de
+    // novo logo em seguida (setTimeout curto) pra vencer essa corrida.
+    const clearFilenameInput = () => {
+      const input = document.getElementById('filename-input');
+      if (input) input.value = '';
+    };
+    document.addEventListener('DOMContentLoaded', clearFilenameInput);
+    document.addEventListener('DOMContentLoaded', () => setTimeout(clearFilenameInput, 150));
   }
 })();
 
