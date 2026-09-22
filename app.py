@@ -1087,7 +1087,12 @@ def api_translate():
 
     try:
         result = translate_with_fallback(text, target_lang=target_lang, tone=tone, preferred_engine=engine)
-        return json.dumps({"success": True, "translated": result["text"], "error": None})
+        return json.dumps({
+            "success": True,
+            "translated": result["text"],
+            "engine_used": result["engine_used"],
+            "error": None,
+        })
     except RuntimeError as e:
         return json.dumps({"success": False, "translated": None, "error": str(e)}), 502
 
@@ -1120,7 +1125,7 @@ def api_translate_bulk():
                 tone=item.get("tone", "formal"),
                 preferred_engine=engine,
             )
-            return position, {"idx": item["idx"], "translated": r["text"], "error": None}
+            return position, {"idx": item["idx"], "translated": r["text"], "engine_used": r["engine_used"], "error": None}
         except RuntimeError as e:
             # uma string falhando não derruba as outras - erro só nesse item
             return position, {"idx": item["idx"], "translated": None, "error": str(e)}
