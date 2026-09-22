@@ -1461,6 +1461,13 @@ function renderStrings() {
   }
 
   list.innerHTML = '';
+  // Coleta as textareas que precisam de autoResize (as que já começam
+  // expandidas) pra medir/aplicar a altura delas em lote DEPOIS do loop —
+  // mesmo motivo do expandAllBoxes() acima: ler scrollHeight dentro do loop,
+  // uma textarea de cada vez, força um reflow síncrono por linha. Com uma
+  // lista grande e "Expandir todas" ativo, trocar de filtro cairia nesse
+  // mesmo travamento de novo se fizéssemos autoResize aqui dentro do loop.
+  const toAutoResize = [];
   visibleIndices.forEach(idx => {
     const item = stringsData[idx];
     const isFav = !!item.favorite;
@@ -1512,9 +1519,16 @@ function renderStrings() {
     list.appendChild(noteRow);
 
     const ta = row.querySelector('textarea');
-    if (taExpanded) autoResize(ta);
+    if (taExpanded) toAutoResize.push(ta);
     updateBackdrop(idx, true);
   });
+
+  // Mede e aplica a altura de todas as textareas expandidas de uma vez só —
+  // três passes separados (zera / mede / aplica), não intercalados, pelo
+  // mesmo motivo do expandAllBoxes() acima.
+  toAutoResize.forEach(ta => { ta.style.height = 'auto'; });
+  const resizeHeights = toAutoResize.map(ta => ta.scrollHeight);
+  toAutoResize.forEach((ta, i) => { ta.style.height = resizeHeights[i] + 'px'; });
 }
 
 // ---- SELEÇÃO MÚLTIPLA (segurar a caixa pra entrar no modo seleção) ----
@@ -2025,8 +2039,51 @@ function expandBoxes(idx) {
 // Expande todas as linhas, incluindo as que não estão visíveis no momento
 // (o estado fica salvo em expandedOriginal/expandedTranslation e é aplicado
 // quando a linha for renderizada, ex: ao trocar de filtro).
+//
+// Com milhares de strings, expandir uma de cada vez (chamando expandBoxes(idx)
+// num loop, como era antes) travava a aba por vários segundos. O motivo:
+// autoResize() faz um "write" (style.height = 'auto') seguido de um "read"
+// (scrollHeight) — e ler scrollHeight OBRIGA o navegador a recalcular o
+// layout da página inteira na hora, porque o valor só existe depois do
+// recálculo. Intercalando write/read pra cada uma das milhares de textareas,
+// o navegador é forçado a refazer esse recálculo (reflow síncrono) uma vez
+// POR STRING. Aqui, em vez disso, separamos em três passes: 1) só escreve
+// (zera a altura de todas as caixas, sem ler nada no meio — o navegador não
+// precisa recalcular layout só porque um estilo mudou, só quando algo LÊ um
+// valor que depende dele), 2) só lê (mede a altura de todas de uma vez —
+// só a primeira leitura força o reflow, as seguintes já saem prontas porque
+// nada escreveu nesse meio tempo), 3) só escreve de novo (aplica a altura
+// medida). Isso troca ~2500 reflows síncronos por 1.
 function expandAllBoxes() {
-  stringsData.forEach((_, idx) => expandBoxes(idx));
+  const textareas = [];
+
+  // Passe 1 — só escrita: expande as classes e zera a altura de cada caixa.
+  stringsData.forEach((_, idx) => {
+    const inner = document.getElementById('orig-inner-' + idx);
+    if (inner) {
+      expandedOriginal.add(idx);
+      inner.classList.remove('clamped');
+    }
+    const ta = document.getElementById('edit-ta-' + idx);
+    if (ta) {
+      expandedTranslation.add(idx);
+      ta.classList.remove('ta-collapsed');
+      const backdrop = document.getElementById('ta-backdrop-' + idx);
+      if (backdrop) backdrop.classList.remove('ta-collapsed');
+      const arrow = document.getElementById('exp-arrow-' + idx);
+      if (arrow) arrow.classList.add('expanded');
+      ta.style.height = 'auto';
+      textareas.push(ta);
+    }
+  });
+
+  // Passe 2 — só leitura: mede a altura necessária de cada textarea. O
+  // navegador só precisa recalcular o layout uma vez pra satisfazer todas
+  // essas leituras, já que nada é escrito entre elas.
+  const heights = textareas.map(ta => ta.scrollHeight);
+
+  // Passe 3 — só escrita: aplica a altura medida em cada uma.
+  textareas.forEach((ta, i) => { ta.style.height = heights[i] + 'px'; });
 }
 
 // Volta uma linha específica ao tamanho padrão (oposto de expandBoxes).
