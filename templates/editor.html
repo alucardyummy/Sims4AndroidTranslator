@@ -1014,7 +1014,11 @@ async function processTranslation(engine) {
       triggerAutoSave();
       editedIndices.add(idx);
       updateProgressBadge();
-      showToast('Traduzido com ' + engineLabel + '!', 'success', 2000);
+      // data.engine_used é a engine que REALMENTE traduziu (o backend cai
+      // pra próxima da cadeia se a pedida falhar/recusar) — usa ela no toast
+      // em vez da engine pedida, senão o toast mente quando cai em fallback.
+      const usedLabel = data.engine_used ? engineLabelFor(data.engine_used) : engineLabel;
+      showToast('Traduzido com ' + usedLabel + '!', 'success', 2000);
       ok = true;
     }
   } catch (e) { /* cai no fluxo de indisponível abaixo */ }
@@ -1845,10 +1849,17 @@ function endDragSelect() {
 // history.back() — isso mantém o histórico do navegador limpo e faz o "✕"
 // se comportar exatamente como o "voltar" nativo.
 function exitSelectionMode() {
-  _exitSelectionModeState();
   if (_selectionHistoryPushed) {
-    _selectionHistoryPushed = false;
+    // Mesmo padrão do toggleFocusMode(): deixa o history.back() disparar o
+    // popstate, que é quem chama _exitSelectionModeState(). Se limpássemos
+    // o estado aqui ANTES (como era antes dessa correção), selectionMode já
+    // virava false e o listener de popstate caía no "else" (tentativa de
+    // sair do editor de verdade) em vez do "if (selectionMode)" — mostrando
+    // o aviso errado de "Sair do editor?" toda vez que a seleção era
+    // cancelada (✕ ou desselecionando a última string marcada).
     history.back();
+  } else {
+    _exitSelectionModeState();
   }
 }
 
