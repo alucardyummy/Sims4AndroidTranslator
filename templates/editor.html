@@ -1425,6 +1425,38 @@ function matchesFilters(item, term, onlyUntranslated, onlyFavorite, onlyNotes, c
 
 let expandedOriginal = new Set();
 let expandedTranslation = new Set();
+
+// Guarda quais linhas estão ATUALMENTE sendo renderizadas de verdade pelo
+// navegador — ou seja, não puladas pelo content-visibility:auto do CSS
+// (.string-row). É atualizado pelo evento 'contentvisibilityautostatechange'
+// de cada linha (disparado pelo próprio navegador quando ela entra/sai da
+// tela). Serve pra saber, em expandAllBoxes(), quais textareas já podem ser
+// medidas sem custo (as visíveis) e quais devem esperar a vez delas.
+let visibleRowIndices = new Set();
+
+// Chamado pelo navegador sempre que uma linha entra ou sai do estado
+// "pulado" do content-visibility:auto (ex: ao rolar a lista, ou assim que
+// ela é inserida no DOM e o navegador decide se ela já nasce visível).
+// Quando uma linha PASSA a ser renderizada de verdade e já deveria estar
+// expandida (por causa de um "Expandir todas" anterior, clicado enquanto
+// ela ainda estava fora de tela, por exemplo), aplica o redimensionamento
+// agora — é o momento exato em que o navegador JÁ vai calcular o layout
+// dela de qualquer jeito pra desenhar na tela, então medir a altura aqui
+// não tem custo extra nenhum, ao contrário de fazer isso preventivamente
+// pra milhares de linhas que ninguém está vendo.
+function handleRowVisibilityChange(event) {
+  const idx = parseInt(this.id.slice(5), 10); // 'srow-123' -> 123
+  if (Number.isNaN(idx)) return;
+  if (event.skipped) {
+    visibleRowIndices.delete(idx);
+  } else {
+    visibleRowIndices.add(idx);
+    if (expandedTranslation.has(idx)) {
+      const ta = document.getElementById('edit-ta-' + idx);
+      if (ta) autoResize(ta);
+    }
+  }
+}
 let _lastOrigToggle = new Map(); // idx -> timestamp, evita clique "fantasma" duplicado (touch + mouse emulado)
 
 // ---- SELEÇÃO MÚLTIPLA (segurar a caixa pra selecionar, traduzir a seleção) ----
@@ -1495,6 +1527,12 @@ function renderStrings() {
         '</div>' +
       '</div>';
     list.appendChild(row);
+    // Escuta quando o navegador decide que ESSA linha passou a ser
+    // renderizada de verdade (saiu do estado "pulado" do content-visibility:
+    // auto) — é o gatilho pra medir/redimensionar a textarea dela, se for o
+    // caso (ver handleRowVisibilityChange() lá em cima). Evita ter que medir
+    // a altura de milhares de linhas fora de tela de uma vez só.
+    row.addEventListener('contentvisibilityautostatechange', handleRowVisibilityChange);
     // Os handlers de seleção (long-press/drag-select) e os da textarea de
     // tradução/nota NÃO são mais anexados aqui, um por elemento — com
     // milhares de strings isso significava dezenas de milhares de
@@ -1511,8 +1549,6 @@ function renderStrings() {
       '<div class="note-hint">📝 Só fica salva no editor.</div>';
     list.appendChild(noteRow);
 
-    const ta = row.querySelector('textarea');
-    if (taExpanded) autoResize(ta);
     updateBackdrop(idx, true);
   });
 }
@@ -2025,8 +2061,69 @@ function expandBoxes(idx) {
 // Expande todas as linhas, incluindo as que não estão visíveis no momento
 // (o estado fica salvo em expandedOriginal/expandedTranslation e é aplicado
 // quando a linha for renderizada, ex: ao trocar de filtro).
+//
+// Com milhares de strings, expandir uma de cada vez (chamando expandBoxes(idx)
+// num loop, como era antes) travava a aba por vários segundos. O motivo:
+// autoResize() faz um "write" (style.height = 'auto') seguido de um "read"
+// (scrollHeight) — e ler scrollHeight OBRIGA o navegador a recalcular o
+// layout da página inteira na hora, porque o valor só existe depois do
+// recálculo. Intercalando write/read pra cada uma das milhares de textareas,
+// o navegador é forçado a refazer esse recálculo (reflow síncrono) uma vez
+// POR STRING. Aqui, em vez disso, separamos em três passes: 1) só escreve
+// (zera a altura de todas as caixas, sem ler nada no meio — o navegador não
+// precisa recalcular layout só porque um estilo mudou, só quando algo LÊ um
+// valor que depende dele), 2) só lê (mede a altura de todas de uma vez —
+// só a primeira leitura força o reflow, as seguintes já saem prontas porque
+// nada escreveu nesse meio tempo), 3) só escreve de novo (aplica a altura
+// medida). Isso troca ~2500 reflows síncronos por 1.
 function expandAllBoxes() {
-  stringsData.forEach((_, idx) => expandBoxes(idx));
+  // Passe 1 — só escrita, pra TODAS as linhas (inclusive as milhares que
+  // estão fora de tela agora): troca as classes e marca o estado como
+  // expandido. Isso não força nenhum layout — é só escrita de classe/estado,
+  // então continua barato mesmo em milhares de linhas.
+  //
+  // NÃO lemos scrollHeight aqui pra todo mundo (como fazíamos antes) porque,
+  // com content-visibility:auto, cada linha fora de tela é um compartimento
+  // de layout independente: ler a altura dela força o navegador a calcular o
+  // layout DAQUELA linha especificamente, uma por uma, sem nenhum jeito de
+  // agrupar esse custo entre linhas diferentes (testei isso de verdade — nem
+  // juntando todas as leituras num lote só isso deixa de doer). Então, em vez
+  // de acordar 2500 linhas escondidas só pra medir um número que ninguém vai
+  // ver ainda, deixamos cada uma delas se redimensionar sozinha e de graça no
+  // exato momento em que entrar em tela de verdade (ver
+  // handleRowVisibilityChange, disparado pelo evento
+  // 'contentvisibilityautostatechange') — que é quando o navegador já ia
+  // calcular o layout dela mesmo, then medir junto não custa nada extra.
+  stringsData.forEach((_, idx) => {
+    const inner = document.getElementById('orig-inner-' + idx);
+    if (inner) {
+      expandedOriginal.add(idx);
+      inner.classList.remove('clamped');
+    }
+    const ta = document.getElementById('edit-ta-' + idx);
+    if (ta) {
+      expandedTranslation.add(idx);
+      ta.classList.remove('ta-collapsed');
+      const backdrop = document.getElementById('ta-backdrop-' + idx);
+      if (backdrop) backdrop.classList.remove('ta-collapsed');
+      const arrow = document.getElementById('exp-arrow-' + idx);
+      if (arrow) arrow.classList.add('expanded');
+    }
+  });
+
+  // Passe 2 — só as linhas que JÁ estão sendo renderizadas de verdade agora
+  // (rastreadas em visibleRowIndices) precisam medir/redimensionar
+  // imediatamente, pra não deixar a caixa "pulando" de tamanho na frente do
+  // usuário. São só as poucas que cabem na tela no momento do clique — daí
+  // isso continuar rápido não importa o tamanho da lista inteira.
+  const visibleTextareas = [];
+  visibleRowIndices.forEach(idx => {
+    const ta = document.getElementById('edit-ta-' + idx);
+    if (ta) visibleTextareas.push(ta);
+  });
+  visibleTextareas.forEach(ta => { ta.style.height = 'auto'; });
+  const heights = visibleTextareas.map(ta => ta.scrollHeight);
+  visibleTextareas.forEach((ta, i) => { ta.style.height = heights[i] + 'px'; });
 }
 
 // Volta uma linha específica ao tamanho padrão (oposto de expandBoxes).
