@@ -88,6 +88,16 @@
   @media (prefers-reduced-motion: reduce) {
     .greeting.wipe { animation: none; -webkit-mask-image: none; mask-image: none; }
   }
+
+  /* OLHINHO DA SENHA */
+  .pw-wrap { position: relative; display: block; }
+  .pw-wrap .form-input { width: 100%; padding-right: 46px; }
+  .pw-eye { position: absolute; top: 0; right: 0; height: 100%; width: 44px; display: flex; align-items: center; justify-content: center; background: none; border: none; padding: 0; cursor: pointer; color: #6b5589; -webkit-tap-highlight-color: transparent; transition: color 0.2s ease, transform 0.15s ease; }
+  .pw-eye:active { transform: scale(0.88); }
+  .pw-eye .eye-on { display: none; }          /* senha visível  -> olho aberto */
+  .pw-eye.on { color: #5a4d80; }
+  .pw-eye.on .eye-off { display: none; }       /* senha escondida -> olho riscado */
+  .pw-eye.on .eye-on { display: block; }
   #nick-modal { z-index: 900; } /* abaixo do modal de login (1000), pra "Já tenho conta" abrir por cima */
   .nick-sub { font-size: 12.5px; line-height: 1.45; color: rgba(255,255,255,0.88); text-shadow: 0 1px 3px rgba(0,0,0,0.25); margin: -0.6rem 0 1rem; }
   .nick-count { font-size: 10px; letter-spacing: 0.05em; color: rgba(255,255,255,0.75); text-shadow: 0 1px 2px rgba(0,0,0,0.25); text-align: right; }
@@ -862,7 +872,7 @@
     <div class="auth-tab active tab-visible" id="tab-login">
       <h3 class="modal-title">Entrar na Conta</h3>
       <div class="form-group"><label>Nome de Usuário</label><input type="text" class="form-input" id="login-username" placeholder="Seu usuário"></div>
-      <div class="form-group"><label>Senha</label><input type="password" class="form-input" id="login-password" placeholder="••••••••"></div>
+      <div class="form-group"><label>Senha</label><div class="pw-wrap"><input type="password" class="form-input" id="login-password" placeholder="••••••••"><button type="button" class="pw-eye" onmousedown="event.preventDefault()" onclick="togglePw(this)" aria-label="Mostrar senha" aria-pressed="false"><svg class="eye-on" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 12S5.5 5 12 5s10.5 7 10.5 7-4 7-10.5 7S1.5 12 1.5 12z"/><circle cx="12" cy="12" r="3.2"/></svg><svg class="eye-off" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.6 5.1A10.6 10.6 0 0 1 12 5c6.5 0 10.5 7 10.5 7a17.6 17.6 0 0 1-3.2 3.9"/><path d="M6.4 6.5C3.4 8.3 1.5 12 1.5 12S5.5 19 12 19c1.7 0 3.2-.5 4.5-1.2"/><path d="M9.9 9.9a3.2 3.2 0 0 0 4.2 4.2"/><path d="M3 3l18 18"/></svg></button></div></div>
       <button class="modal-btn fx-press" onclick="handleLogin()">ENTRAR</button>
       <div class="auth-divider">ou</div>
       <button class="google-btn fx-press" onclick="handleGoogleLogin()">
@@ -890,7 +900,7 @@
     <div class="auth-tab" id="tab-register">
       <h3 class="modal-title">Criar Conta</h3>
       <div class="form-group"><label>Nome de Usuário</label><input type="text" class="form-input" id="reg-username" placeholder="Ex: Alucard"></div>
-      <div class="form-group"><label>Senha</label><input type="password" class="form-input" id="reg-password" placeholder="Mínimo 6 caracteres"></div>
+      <div class="form-group"><label>Senha</label><div class="pw-wrap"><input type="password" class="form-input" id="reg-password" placeholder="Mínimo 6 caracteres"><button type="button" class="pw-eye" onmousedown="event.preventDefault()" onclick="togglePw(this)" aria-label="Mostrar senha" aria-pressed="false"><svg class="eye-on" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 12S5.5 5 12 5s10.5 7 10.5 7-4 7-10.5 7S1.5 12 1.5 12z"/><circle cx="12" cy="12" r="3.2"/></svg><svg class="eye-off" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.6 5.1A10.6 10.6 0 0 1 12 5c6.5 0 10.5 7 10.5 7a17.6 17.6 0 0 1-3.2 3.9"/><path d="M6.4 6.5C3.4 8.3 1.5 12 1.5 12S5.5 19 12 19c1.7 0 3.2-.5 4.5-1.2"/><path d="M9.9 9.9a3.2 3.2 0 0 0 4.2 4.2"/><path d="M3 3l18 18"/></svg></button></div></div>
       <div class="form-group">
         <label>Pergunta de Segurança</label>
         <input type="hidden" id="reg-question" value="Nome do primeiro animalzinho">
@@ -933,7 +943,7 @@
         </div>
       </div>
       <div class="form-group"><label>Resposta Secreta</label><input type="text" class="form-input" id="forgot-answer" placeholder="Digite a resposta cadastrada"></div>
-      <div class="form-group"><label>Nova Senha</label><input type="password" class="form-input" id="forgot-new-password" placeholder="Nova senha"></div>
+      <div class="form-group"><label>Nova Senha</label><div class="pw-wrap"><input type="password" class="form-input" id="forgot-new-password" placeholder="Nova senha"><button type="button" class="pw-eye" onmousedown="event.preventDefault()" onclick="togglePw(this)" aria-label="Mostrar senha" aria-pressed="false"><svg class="eye-on" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 12S5.5 5 12 5s10.5 7 10.5 7-4 7-10.5 7S1.5 12 1.5 12z"/><circle cx="12" cy="12" r="3.2"/></svg><svg class="eye-off" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.6 5.1A10.6 10.6 0 0 1 12 5c6.5 0 10.5 7 10.5 7a17.6 17.6 0 0 1-3.2 3.9"/><path d="M6.4 6.5C3.4 8.3 1.5 12 1.5 12S5.5 19 12 19c1.7 0 3.2-.5 4.5-1.2"/><path d="M9.9 9.9a3.2 3.2 0 0 0 4.2 4.2"/><path d="M3 3l18 18"/></svg></button></div></div>
       <button class="modal-btn fx-press" onclick="handleForgotPassword()">ALTERAR SENHA</button>
       <p class="modal-switch" onclick="switchTab('login')">Voltar para o <span>Login</span></p>
     </div>
@@ -2051,6 +2061,7 @@ async function saveProfile() {
 }
 
 function closeAuthModal() {
+  resetPwToggles();
   const box = document.querySelector('#auth-modal .modal-box');
   box.classList.remove('animate-in');
   box.classList.add('animate-out');
@@ -2073,7 +2084,31 @@ async function handleLogout() {
   try { localStorage.removeItem('cached_profile_pic'); localStorage.removeItem('nickname'); } catch (e) {}
   window.location.reload();
 }
+
+// ─── OLHINHO DA SENHA ───────────────────────────────────────────────────────
+function togglePw(btn) {
+  const input = btn.parentElement.querySelector('input');
+  if (!input) return;
+  const show = input.type === 'password';
+  let s = null, e = null;
+  try { s = input.selectionStart; e = input.selectionEnd; } catch (_) {}
+  input.type = show ? 'text' : 'password';
+  try { if (s !== null) input.setSelectionRange(s, e); } catch (_) {}
+  btn.classList.toggle('on', show);
+  btn.setAttribute('aria-pressed', show ? 'true' : 'false');
+  btn.setAttribute('aria-label', show ? 'Ocultar senha' : 'Mostrar senha');
+}
+// Por segurança, volta tudo a "escondido" ao trocar de aba ou fechar o login.
+function resetPwToggles() {
+  document.querySelectorAll('.pw-wrap').forEach(w => {
+    const input = w.querySelector('input'), btn = w.querySelector('.pw-eye');
+    if (input && input.type !== 'password') input.type = 'password';
+    if (btn) { btn.classList.remove('on'); btn.setAttribute('aria-pressed', 'false'); btn.setAttribute('aria-label', 'Mostrar senha'); }
+  });
+}
+
 function switchTab(tab) {
+  resetPwToggles();
   const current = document.querySelector('.auth-tab.active');
   const next = document.getElementById('tab-' + tab);
   if (!next || current === next) return;
