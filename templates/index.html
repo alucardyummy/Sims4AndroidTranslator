@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -68,6 +68,30 @@
     transition: transform 0.15s ease, background 0.2s ease;
   }
   .bell-btn:active { transform: scale(0.9); }
+
+  /* SAUDAÇÃO + APELIDO */
+  @property --wipe { syntax: '<number>'; inherits: false; initial-value: -15; }
+  @keyframes greetWipe { from { --wipe: -15; } to { --wipe: 100; } }
+  .greeting {
+    flex: 1; min-width: 0; margin: 0 10px 0 9px; padding: 2px 0;
+    background: none; border: none; text-align: left; cursor: pointer;
+    font-family: 'DM Sans', sans-serif; font-weight: 500; font-size: 13px; line-height: 1.25;
+    color: #6b5589; overflow-wrap: anywhere;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .greeting:empty { pointer-events: none; }
+  .greeting.wipe {
+    -webkit-mask-image: linear-gradient(90deg, #000 calc(var(--wipe) * 1%), transparent calc(var(--wipe) * 1% + 14%));
+            mask-image: linear-gradient(90deg, #000 calc(var(--wipe) * 1%), transparent calc(var(--wipe) * 1% + 14%));
+    animation: greetWipe 1.4s cubic-bezier(0.4, 0, 0.3, 1) both;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .greeting.wipe { animation: none; -webkit-mask-image: none; mask-image: none; }
+  }
+  #nick-modal { z-index: 900; } /* abaixo do modal de login (1000), pra "Já tenho conta" abrir por cima */
+  .nick-sub { font-size: 12.5px; line-height: 1.45; color: rgba(255,255,255,0.88); text-shadow: 0 1px 3px rgba(0,0,0,0.25); margin: -0.6rem 0 1rem; }
+  .nick-count { font-size: 10px; letter-spacing: 0.05em; color: rgba(255,255,255,0.75); text-shadow: 0 1px 2px rgba(0,0,0,0.25); text-align: right; }
+  .nick-error { min-height: 16px; font-size: 12px; color: #ffd0dc; text-shadow: 0 1px 2px rgba(0,0,0,0.35); margin: -4px 0 8px; }
   .bell-btn.subscribed { background: rgba(184,156,217,0.22); border-color: #b89cd9; }
   .bell-btn.shake svg { animation: bellShake 0.5s ease; }
   @keyframes bellShake {
@@ -732,6 +756,7 @@
         })();
       </script>
     </div>
+    <button class="greeting" id="greeting" type="button" onclick="openNickModal(false)" aria-live="polite" aria-label="Trocar apelido"></button>
     <button class="bell-btn" id="bell-btn" onclick="openUpdatesModal()" aria-label="Ver novidades">
       <svg width="20" height="20" viewBox="0 0 60 60" fill="none">
         <path d="M30 14 Q20 14 19 26 Q18 34 14 39 Q13 40.5 15 40.5 L45 40.5 Q47 40.5 46 39 Q42 34 41 26 Q40 14 30 14 Z" fill="#6b5589" opacity="0.9"/>
@@ -937,6 +962,7 @@
       
     </div>
     <div class="form-group"><label>Nome de Usuário</label><input type="text" class="form-input" id="edit-username"></div>
+    <div class="form-group"><label>Apelido (máx. 8 caracteres)</label><input type="text" class="form-input" id="edit-nickname" maxlength="8" autocomplete="off" autocapitalize="words" spellcheck="false" placeholder="Como a gente te chama?"></div>
     <div class="form-group">
       <label>Foto de Perfil</label>
       <input type="file" id="edit-profile-pic" accept="image/*" style="display:none">
@@ -982,9 +1008,191 @@
     <button class="alert-btn fx-press" onclick="closeCustomAlert()">OK</button>
   </div>
 </div>
+<div class="modal-overlay" id="nick-modal">
+  <div class="modal-box">
+    <button class="modal-close" id="nick-close" onclick="closeNickModal()" style="display:none">✕</button>
+    <h3 class="modal-title" id="nick-title">Como a gente te chama?</h3>
+    <p class="nick-sub" id="nick-sub">Escolhe um apelido curtinho. Ele aparece nas mensagens aqui da página, só pra você.</p>
+    <div class="form-group">
+      <label for="nick-input">Apelido</label>
+      <input type="text" class="form-input" id="nick-input" maxlength="8" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="done" placeholder="insira aqui (máx. 8 caracteres)">
+      <div class="nick-count" id="nick-count">0/8</div>
+    </div>
+    <div class="nick-error" id="nick-error"></div>
+    <button class="modal-btn fx-press" id="nick-save" onclick="submitNick()">CONFIRMAR</button>
+    <p class="modal-switch" id="nick-login" onclick="openAuthFromNick()"><span>Já tenho conta</span></p>
+  </div>
+</div>
 <script>
 let currentUser = null;
 let newProfilePicBase64 = null;
+
+// ─── APELIDO + SAUDAÇÃO ─────────────────────────────────────────────────────
+const NICK_MIN = 2, NICK_MAX = 8;
+const NICK_RE = /^[\p{L}\p{N}]+(?:[ \-][\p{L}\p{N}]+)*$/u;
+// Se voltou do login do Google, a página vai recarregar em instantes: não mostra o pop-up antes disso.
+const PENDING_GOOGLE_LOGIN = new URLSearchParams(window.location.search).has('login_token');
+let shownGreetingNick = null;
+
+// {n} = apelido da pessoa. Pode ter frases sem {n} também.
+const GREETINGS = [
+  'Ah, mais uma tradução né {n}', 'Que ótimo, bora lá', 'Você não cansa é?', 'Hmmm', 'Pois é',
+  'Eu amo mesmo o frio', 'Quem disse isso?', 'É...', 'Isso mesmo!', 'Não', 'Ok', 'Tá',
+  'Se você insiste', 'Eu amo traduzir', 'Você também ama traduzir?', 'Me estresso',
+  'Penso enguauzinho', 'KKKKKKKKKK',
+  'Sul sul, {n}!', 'Oi, {n}!', 'Voltou, {n}? Que surpresa', '{n} de novo por aqui',
+  'Opa, {n}. Senta aí', 'Mais um mod, {n}?', 'Calma que eu tô pensando',
+  'Será que esse mod presta?', 'Tradução é terapia, {n}', 'Lá vem coisa', 'Aham, sei',
+  'Fala sério, {n}', 'Isso vai dar trabalho', '{n}, bebe uma água', 'Hoje vai!',
+  'Ninguém merece', 'Será que traduz tudo?', '{n}, confia no processo', 'Mais uma pra conta',
+  'Tô de olho, {n}', 'Deixa eu adivinhar: mod novo', 'Ixi', 'Ai ai ai', 'Respira, {n}',
+  'Revisa os placeholders, hein', 'Cadê o plumbob?', 'Hmm, mod suspeito', 'Café primeiro, {n}',
+  'KKKKKKKK de novo?', 'Eita', 'Que dia, hein', 'Vai um cafezinho?', 'Eu aguento se você aguentar',
+  'Chegou {n}, pode começar'
+];
+
+function normalizeNick(s) { return String(s || '').normalize('NFC').replace(/\s+/g, ' ').trim(); }
+function nickError(s) {
+  const len = Array.from(s).length;
+  if (len < NICK_MIN) return 'Pelo menos ' + NICK_MIN + ' caracteres, tá?';
+  if (len > NICK_MAX) return 'Máximo de ' + NICK_MAX + ' caracteres.';
+  if (!NICK_RE.test(s)) return 'Só letras, números, espaço e hífen.';
+  return '';
+}
+function getNick() { try { return localStorage.getItem('nickname') || ''; } catch (e) { return ''; } }
+function setNick(n) { try { if (n) localStorage.setItem('nickname', n); else localStorage.removeItem('nickname'); } catch (e) {} }
+
+// Sugestão pra preencher o campo: primeira palavra do nome da conta (sem o número que o site
+// acrescenta em nomes repetidos). Se não couber ou não for "limpa", não sugere nada.
+function suggestNick(username) {
+  const first = normalizeNick(username).split(' ')[0].replace(/\d+$/, '');
+  return nickError(first) ? '' : first;
+}
+
+function pickGreeting(nick) {
+  let last = -1;
+  try { last = parseInt(localStorage.getItem('last_greet'), 10); } catch (e) {}
+  let i, tries = 0;
+  do { i = Math.floor(Math.random() * GREETINGS.length); tries++; } while (i === last && tries < 6);
+  try { localStorage.setItem('last_greet', String(i)); } catch (e) {}
+  return GREETINGS[i].split('{n}').join(nick);
+}
+function renderGreeting(force) {
+  const el = document.getElementById('greeting');
+  if (!el) return;
+  const nick = getNick();
+  if (!nick) { el.textContent = ''; el.classList.remove('wipe'); shownGreetingNick = null; return; }
+  if (!force && shownGreetingNick === nick) return;
+  shownGreetingNick = nick;
+  el.textContent = pickGreeting(nick);   // textContent: nunca interpreta HTML
+  el.classList.remove('wipe');
+  void el.offsetWidth;
+  el.classList.add('wipe');
+}
+
+function updateNickCount() {
+  const n = Array.from(document.getElementById('nick-input').value).length;
+  document.getElementById('nick-count').textContent = n + '/' + NICK_MAX;
+}
+function setNickError(msg) { document.getElementById('nick-error').textContent = msg || ''; }
+
+function openNickModal(required, prefill) {
+  const modal = document.getElementById('nick-modal');
+  const input = document.getElementById('nick-input');
+  const box = modal.querySelector('.modal-box');
+  const alreadyOpen = modal.classList.contains('active');
+  modal.dataset.required = required ? '1' : '';
+  document.getElementById('nick-close').style.display = required ? 'none' : '';
+  document.getElementById('nick-login').style.display = (required && !currentUser) ? '' : 'none';
+  document.getElementById('nick-title').textContent = required ? 'Como a gente te chama?' : 'Trocar apelido';
+  document.getElementById('nick-sub').textContent = required
+    ? 'Escolhe um apelido curtinho. Ele aparece nas mensagens aqui da página, só pra você.'
+    : 'Ele aparece nas mensagens aqui da página, só pra você.';
+  if (alreadyOpen) {
+    // já está aberto (ex.: /api/me respondeu depois): só ajusta, sem apagar o que a pessoa digitou
+    if (!input.value && prefill) input.value = prefill;
+  } else {
+    input.value = prefill != null ? prefill : getNick();
+    box.classList.remove('animate-out');
+    void box.offsetWidth;
+    box.classList.add('animate-in');
+    modal.classList.add('active');
+    setTimeout(() => { try { input.focus(); } catch (e) {} }, 450);
+  }
+  updateNickCount();
+  setNickError('');
+}
+function closeNickModal(force) {
+  const modal = document.getElementById('nick-modal');
+  if (modal.dataset.required && !force) return;   // obrigatório: não fecha sem apelido
+  const box = modal.querySelector('.modal-box');
+  box.classList.remove('animate-in');
+  box.classList.add('animate-out');
+  modal.classList.remove('active');
+  setTimeout(() => box.classList.remove('animate-out'), 380);
+}
+function openAuthFromNick() {
+  try { switchTab('login'); } catch (e) {}   // garante a aba "Entrar na Conta"
+  const m = document.getElementById('auth-modal');
+  const b = m.querySelector('.modal-box');
+  m.classList.add('active');
+  b.classList.remove('animate-out');
+  void b.offsetWidth;
+  b.classList.add('animate-in');
+}
+async function submitNick() {
+  const val = normalizeNick(document.getElementById('nick-input').value);
+  const err = nickError(val);
+  if (err) { setNickError(err); return; }
+  const btn = document.getElementById('nick-save');
+  btn.disabled = true;
+  try {
+    if (currentUser) {
+      const res = await fetch('/api/update_nickname', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nickname: val })
+      });
+      const data = await res.json();
+      if (!data.success) { setNickError(data.error || 'Não deu pra salvar.'); return; }
+      currentUser.nickname = data.nickname || val;
+    }
+    setNick(val);
+    closeNickModal(true);
+    renderGreeting(true);
+  } catch (e) {
+    setNickError('Erro de conexão. Tenta de novo.');
+  } finally {
+    btn.disabled = false;
+  }
+}
+document.getElementById('nick-input').addEventListener('input', () => { updateNickCount(); setNickError(''); });
+document.getElementById('nick-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); submitNick(); } });
+
+// Roda quando o /api/me responde (data = resposta, ou null se a rede falhou).
+async function afterAuthCheck(data) {
+  const local = getNick();
+  if (data && data.logged_in) {
+    if (data.nickname) {
+      setNick(data.nickname);                       // o apelido da conta manda
+      closeNickModal(true);
+    } else if (local) {
+      try {                                         // apelido de visitante migra pra conta
+        const res = await fetch('/api/update_nickname', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nickname: local })
+        });
+        const r = await res.json();
+        if (r.success) currentUser.nickname = r.nickname;
+        else { setNick(''); openNickModal(true, suggestNick(data.username)); }
+      } catch (e) {}
+    } else {
+      openNickModal(true, suggestNick(data.username));
+    }
+  } else if (!local && !PENDING_GOOGLE_LOGIN) {
+    openNickModal(true, '');
+  }
+  renderGreeting();
+}
 // Ícone de lixeira em SVG, reaproveitado em todo botão de apagar (saves e novidades)
 const TRASH_SVG = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>';
 
@@ -1711,9 +1919,11 @@ function animateDeleteItem(el, callback) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function checkLogin() {
+  let authResult = null;
   try {
     const res = await fetch('/api/me');
     const data = await res.json();
+    authResult = data;
     if (data.logged_in) {
       currentUser = data;
       const src = data.profile_pic || '/img/icon-pf.webp';
@@ -1733,6 +1943,7 @@ async function checkLogin() {
       } catch (e) {}
     }
   } catch(e) {}
+  afterAuthCheck(authResult);
 }
 
 document.getElementById('profile-btn').addEventListener('click', () => {
@@ -1747,6 +1958,7 @@ document.getElementById('profile-btn').addEventListener('click', () => {
     _box.classList.add('animate-in');
     
     document.getElementById('edit-username').value = currentUser.username || '';
+    document.getElementById('edit-nickname').value = currentUser.nickname || getNick();
     document.getElementById('modal-profile-img').src = currentUser.profile_pic || '/img/icon-pf.webp';
     newProfilePicBase64 = null;
     
@@ -1814,7 +2026,19 @@ document.getElementById('edit-profile-pic').addEventListener('change', function(
 async function saveProfile() {
   const newName = document.getElementById('edit-username').value.trim();
   const newPic = newProfilePicBase64 || (currentUser ? currentUser.profile_pic : '') || '';
+  const newNick = normalizeNick(document.getElementById('edit-nickname').value);
+  const nickErr = nickError(newNick);
+  if (nickErr) { showAlert('Apelido: ' + nickErr); return; }
   try {
+    if (!currentUser || newNick !== currentUser.nickname) {
+      const nres = await fetch('/api/update_nickname', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nickname: newNick })
+      });
+      const ndata = await nres.json();
+      if (!ndata.success) { showAlert(ndata.error || 'Não deu pra salvar o apelido.'); return; }
+      setNick(ndata.nickname || newNick);
+    }
     const res = await fetch('/api/update_profile', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1846,7 +2070,7 @@ function closeProfileModal() {
 }
 async function handleLogout() {
   await fetch('/api/logout', { method: 'POST' });
-  try { localStorage.removeItem('cached_profile_pic'); } catch (e) {}
+  try { localStorage.removeItem('cached_profile_pic'); localStorage.removeItem('nickname'); } catch (e) {}
   window.location.reload();
 }
 function switchTab(tab) {
@@ -1976,6 +2200,11 @@ document.addEventListener('click', (e) => {
 // ───────────────────────────────────────────────────────────────────────────
 
 // INIT
+renderGreeting();   // usa o apelido guardado no aparelho, sem esperar a rede
+try {
+  // Visitante novo (sem apelido e sem sinal de conta): mostra o pop-up já, sem esperar o /api/me
+  if (!getNick() && !PENDING_GOOGLE_LOGIN && localStorage.getItem('is_logged_in') !== '1') openNickModal(true, '');
+} catch (e) {}
 checkLogin();
 
 // Consome token temporário do Google OAuth redirect
