@@ -8,6 +8,8 @@ import os
 import tempfile
 import uuid
 import json
+import re
+import unicodedata
 import psycopg2
 import psycopg2.extras
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -103,6 +105,12 @@ def init_db():
             c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT;")
         except Exception as e:
             print("Coluna avatar_url já existe ou houve um aviso:", e)
+
+        # Apelido usado nas saudações da home (separado do username de login)
+        try:
+            c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS nickname VARCHAR(16);")
+        except Exception as e:
+            print("Coluna nickname já existe ou houve um aviso:", e)
 
         c.execute('''
             CREATE TABLE IF NOT EXISTS saves (
@@ -1701,6 +1709,24 @@ def forgot_password():
     return json.dumps({"success": False, "error": "Usuário não encontrado."}), 404
 
 
+NICK_MIN, NICK_MAX = 2, 8
+# letras/números (qualquer idioma), com espaço ou hífen SÓ entre palavras
+_NICK_RE = re.compile(r"[^\W_]+(?:[ \-][^\W_]+)*")
+
+
+def clean_nickname(raw):
+    """Normaliza e valida o apelido. Retorna (apelido, None) ou (None, erro)."""
+    nick = unicodedata.normalize("NFC", str(raw or ""))
+    nick = re.sub(r"\s+", " ", nick).strip()
+    if len(nick) < NICK_MIN:
+        return None, f"Apelido muito curto (mínimo {NICK_MIN} caracteres)."
+    if len(nick) > NICK_MAX:
+        return None, f"Apelido muito longo (máximo {NICK_MAX} caracteres)."
+    if not _NICK_RE.fullmatch(nick):
+        return None, "Use só letras, números, espaço e hífen."
+    return nick, None
+
+
 @app.route("/api/me")
 def me():
     user_id = session.get('user_id')
@@ -1711,15 +1737,45 @@ def me():
     c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     c.execute("SELECT username, profile_pic, avatar_url FROM users WHERE id = %s", (user_id,))
     user = c.fetchone()
+
+    # Busca o apelido à parte: se a coluna ainda não existir, o login não quebra.
+    nickname = None
+    if user:
+        try:
+            c.execute("SELECT nickname FROM users WHERE id = %s", (user_id,))
+            row = c.fetchone()
+            nickname = row["nickname"] if row else None
+        except Exception:
+            conn.rollback()
     conn.close()
 
     if user:
         return json.dumps({
             "logged_in": True,
             "username": user["username"],
-            "profile_pic": user["profile_pic"] or user["avatar_url"] or None
+            "profile_pic": user["profile_pic"] or user["avatar_url"] or None,
+            "nickname": nickname
         })
     return json.dumps({"logged_in": False})
+
+
+@app.route("/api/update_nickname", methods=["POST"])
+def update_nickname():
+    user_id = session.get('user_id')
+    if not user_id:
+        return json.dumps({"success": False, "error": "Não logado"}), 401
+
+    data = request.get_json(silent=True) or {}
+    nickname, error = clean_nickname(data.get("nickname"))
+    if error:
+        return json.dumps({"success": False, "error": error}), 400
+
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE users SET nickname = %s WHERE id = %s", (nickname, user_id))
+    conn.commit()
+    conn.close()
+    return json.dumps({"success": True, "nickname": nickname})
 
 
 @app.route("/api/update_profile", methods=["POST"])
