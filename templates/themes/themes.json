@@ -2,7 +2,7 @@
   {
     "id": "coquette",
     "name": "Coquette",
-    "blurb": "🍥🍡Laços, renda e rosa-algodão.",
+    "blurb": "🍥🍡 Laços, renda e rosa-algodão.",
     "swatch": [
       "#fdf9f7",
       "#f3e0e3",
@@ -15,7 +15,7 @@
   {
     "id": "vampiro",
     "name": "Vampiro",
-    "blurb": "🩸Veludo vinho, morcegos e noite sem fim.",
+    "blurb": "🩸 Veludo vinho, morcegos e noite sem fim.",
     "swatch": [
       "#1a0f14",
       "#4a1424",
@@ -24,5 +24,18 @@
     ],
     "nameFont": "'UnifrakturMaguntia', 'Old English Text MT', serif",
     "fonts": "https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&family=IM+Fell+English:ital@0;1&display=swap"
+  },
+  {
+    "id": "slavic",
+    "name": "🇷🇺 Slavic",
+    "blurb": "Pinheiros na névoa, neve caindo e vermelho-sangue.",
+    "swatch": [
+      "#0e1114",
+      "#3b4349",
+      "#aab2b8",
+      "#8a1016"
+    ],
+    "nameFont": "'Oranienbaum', 'Didot', 'Times New Roman', serif",
+    "fonts": "https://fonts.googleapis.com/css2?family=Oranienbaum&family=PT+Serif:ital@0;1&display=swap"
   }
 ]
