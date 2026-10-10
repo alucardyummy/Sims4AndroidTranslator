@@ -183,8 +183,9 @@ html[data-page="index"] .saves-label { font-family: var(--sl-serif); font-style:
 html[data-page="index"] .saves-label::before, html[data-page="index"] .saves-label::after { background: linear-gradient(90deg, transparent, rgba(170,178,184,0.6), transparent); }
 html[data-page="index"] .mascot-divider img { filter: grayscale(1) brightness(1.08) contrast(1.05) drop-shadow(0 0 12px rgba(229,86,91,0.6)); }
 html[data-page="index"] .save-item {
-  background: rgba(12,15,18,0.55) !important;
+  background: rgba(12,15,18,0.34) !important;
   border: 1px solid rgba(170,178,184,0.20) !important;
+  backdrop-filter: blur(10px) saturate(1.05); -webkit-backdrop-filter: blur(10px) saturate(1.05);
   box-shadow: 0 2px 16px rgba(0,0,0,0.30), inset 0 1px 0 rgba(223,228,231,0.05);
 }
 html[data-page="index"] .save-item:hover { background: rgba(31,37,42,0.42) !important; border-color: rgba(229,86,91,0.6) !important; box-shadow: 0 6px 26px rgba(0,0,0,0.4); }
@@ -372,15 +373,4 @@ html:not([data-page="index"]) .stbl-option.selected .stbl-option-check { color: 
 html:not([data-page="index"]) .toast { background: #1c2227; border-color: rgba(229,86,91,0.5); color: #f2a0a4; }
 /* botão do modo foco: a raposa é escura, então o círculo precisa ser claro */
 html:not([data-page="index"]) .focus-toggle-btn, html:not([data-page="index"]) .focus-toggle-btn.focus-on { background: #c8d0d5; border: none; }
-html:not([data-page="index"]) .focus-toggle-btn:active { background: #e5565b; }
-
-/* ═════════════ DESEMPENHO ═════════════
-   backdrop-filter (vidro fosco) refaz o blur de tudo que está atrás, a cada quadro, em cada card e botão.
-   Era o que mais pesava na rolagem. Aqui o "vidro" é imitado com fundo um pouco mais opaco. */
-html[data-page="index"] .save-item,
-html[data-page="index"] .btn-import, html[data-page="index"] .btn-new,
-html[data-page="index"] .btn-merge, html[data-page="index"] .btn-create,
-html[data-page="index"] .select-topbar, html[data-page="index"] .draft-banner,
-html[data-page="index"] .version, html[data-page="index"] .skeleton-item {
-  backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
-} 
+html:not([data-page="index"]) .focus-toggle-btn:active { background: #e5565b; } 
