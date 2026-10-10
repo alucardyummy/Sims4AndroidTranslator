@@ -112,6 +112,12 @@ def init_db():
         except Exception as e:
             print("Coluna nickname já existe ou houve um aviso:", e)
 
+        # CSS personalizado de quem está logado (só o dono vê/aplica)
+        try:
+            c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS custom_css TEXT;")
+        except Exception as e:
+            print("Coluna custom_css já existe ou houve um aviso:", e)
+
         c.execute('''
             CREATE TABLE IF NOT EXISTS saves (
                 id SERIAL PRIMARY KEY,
@@ -1757,6 +1763,106 @@ def me():
             "nickname": nickname
         })
     return json.dumps({"logged_in": False})
+
+
+# ─── CSS PERSONALIZADO ──────────────────────────────────────────────────────
+CSS_MAX = 20000
+_CSS_BLOCKED = re.compile(
+    r"@import|javascript\s*:|vbscript\s*:|expression\s*\(|(?<![\w-])behavior\s*:|-moz-binding"
+    r"|image-set\s*\(|cross-fade\s*\(|</style|<script"
+    r"|(?<![\w-])(?:src|image|element|paint)\s*\("
+)
+_CSS_URL = re.compile(r"""url\(\s*(?:"([^"]*)"|'([^']*)'|([^)"'\s]*))\s*\)""")
+
+
+def _css_for_check(css):
+    """Tira comentários e decodifica escapes (\\75 rl -> url) pra checar as regras sem drible."""
+    text = re.sub(r"/\*.*?\*/", "", css, flags=re.S)
+
+    def _hex(m):
+        try:
+            return chr(int(m.group(1), 16))
+        except (ValueError, OverflowError):
+            return ""
+
+    text = re.sub(r"\\([0-9a-fA-F]{1,6})[ \t\r\n\f]?", _hex, text)
+    text = re.sub(r"\\(.)", r"\1", text, flags=re.S)
+    return text.lower()
+
+
+def sanitize_user_css(raw):
+    """Valida o CSS pessoal. Retorna (css, None) ou (None, mensagem de erro)."""
+    css = str(raw or "").strip()
+    if not css:
+        return "", None
+    if len(css) > CSS_MAX:
+        return None, f"CSS muito grande (máximo {CSS_MAX} caracteres)."
+    if "\x00" in css:
+        return None, "CSS com caractere inválido."
+
+    check = _css_for_check(css)
+
+    bad = _CSS_BLOCKED.search(check)
+    if bad:
+        token = bad.group(0).strip()[:30]
+        return None, f"Esse CSS usa algo que não é permitido: {token}"
+
+    urls = list(_CSS_URL.finditer(check))
+    if len(urls) != check.count("url("):
+        return None, "Não consegui ler um url(...) no seu CSS. Confira as aspas e parênteses."
+    for m in urls:
+        target = (m.group(1) or m.group(2) or m.group(3) or "").strip()
+        if target and not (target.startswith("https://") or target.startswith("data:image/") or target.startswith("/img/")):
+            return None, "Em url(...) só são permitidos links https:// e imagens embutidas (data:image/)."
+
+    return css, None
+
+
+@app.route("/theme.js")
+def theme_js():
+    response = send_file(os.path.join(TEMPLATE_DIR, "theme.js"), mimetype="application/javascript")
+    response.headers["Cache-Control"] = "no-cache"
+    return response
+
+
+@app.route("/api/my_css")
+def my_css():
+    user_id = session.get('user_id')
+    payload = {"logged_in": False, "css": ""}
+    if user_id:
+        conn = get_db()
+        c = conn.cursor()
+        css = ""
+        try:
+            c.execute("SELECT custom_css FROM users WHERE id = %s", (user_id,))
+            row = c.fetchone()
+            css = (row["custom_css"] if row else None) or ""
+            payload = {"logged_in": bool(row), "css": css}
+        except Exception:
+            conn.rollback()
+        conn.close()
+    response = app.response_class(json.dumps(payload), mimetype="application/json")
+    response.headers["Cache-Control"] = "no-store"
+    return response
+
+
+@app.route("/api/save_css", methods=["POST"])
+def save_css():
+    user_id = session.get('user_id')
+    if not user_id:
+        return json.dumps({"success": False, "error": "Não logado"}), 401
+
+    data = request.get_json(silent=True) or {}
+    css, error = sanitize_user_css(data.get("css"))
+    if error:
+        return json.dumps({"success": False, "error": error}), 400
+
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE users SET custom_css = %s WHERE id = %s", (css or None, user_id))
+    conn.commit()
+    conn.close()
+    return json.dumps({"success": True, "css": css})
 
 
 @app.route("/api/update_nickname", methods=["POST"])
