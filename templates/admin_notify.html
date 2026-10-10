@@ -114,6 +114,14 @@
     cursor: default;
   }
   button:active:not(:disabled) { transform: scale(0.98); }
+  .counter {
+    margin-top: 6px;
+    font-size: 12px;
+    text-align: right;
+    color: #777;
+  }
+  .counter.warn { color: #e0c27a; }
+  .counter.over { color: #ff9b9b; }
   .msg {
     margin-top: 16px;
     padding: 12px 14px;
@@ -191,13 +199,14 @@
         <a href="#" id="cancel-edit-link" style="color:#8a7fa6; margin-left:6px;">cancelar</a>
       </span>
     </label>
-    <input type="text" id="title" placeholder="Ex: Tradução atualizada!" maxlength="80">
+    <input type="text" id="title" placeholder="Ex: Tradução atualizada!" maxlength="80" oninput="updateBodyCounter()">
 
     <label for="body">Mensagem</label>
-    <textarea id="body" rows="3" placeholder="Ex: Já dá pra baixar a versão nova." maxlength="200"></textarea>
+    <textarea id="body" rows="3" placeholder="Ex: Já dá pra baixar a versão nova." oninput="updateBodyCounter()"></textarea>
+    <div id="body-counter" class="counter">0 caracteres</div>
 
     <label for="url">Link ao clicar (opcional)</label>
-    <input type="text" id="url" placeholder="/ (padrão)">
+    <input type="text" id="url" placeholder="/ (padrão)" oninput="updateBodyCounter()">
 
     <button id="send-btn" onclick="sendNotification()">Enviar notificação</button>
 
@@ -227,11 +236,44 @@
     cancelEdit();
   };
 
+  // O push (Web Push) aceita no máximo ~4 KB de payload. O servidor monta o
+  // JSON com json.dumps (ensure_ascii), então cada caractere não-ASCII
+  // (acento, emoji) ocupa 6 bytes (\uXXXX; emoji = 12). O contador estima
+  // esse tamanho pra avisar antes de estourar.
+  const PUSH_PAYLOAD_LIMIT = 3800; // margem de segurança sobre os ~4078 bytes
+  function estimatePayloadBytes() {
+    const title = document.getElementById('title').value.trim();
+    const body = document.getElementById('body').value.trim();
+    const url = document.getElementById('url').value.trim() || '/';
+    const json = JSON.stringify({ title, body, url, tag: 'update-000000' });
+    let bytes = 0;
+    for (let i = 0; i < json.length; i++) {
+      bytes += json.charCodeAt(i) > 127 ? 6 : 1;
+    }
+    return bytes + 10; // espaços extras do json.dumps
+  }
+
+  function updateBodyCounter() {
+    const counter = document.getElementById('body-counter');
+    const chars = [...document.getElementById('body').value].length;
+    const bytes = estimatePayloadBytes();
+    const pct = bytes / PUSH_PAYLOAD_LIMIT;
+
+    counter.className = 'counter' + (pct > 1 ? ' over' : pct > 0.8 ? ' warn' : '');
+    counter.textContent = `${chars} ${chars === 1 ? 'caractere' : 'caracteres'}`;
+    if (pct > 0.8) {
+      counter.textContent += pct > 1
+        ? ' · grande demais pro push, encurta um pouco'
+        : ' · chegando no limite do push';
+    }
+  }
+
   function startEdit(u) {
     editingId = u.id;
     document.getElementById('title').value = u.title;
     document.getElementById('body').value = u.body;
     document.getElementById('url').value = (u.url && u.url !== '/') ? u.url : '';
+    updateBodyCounter();
     editingBadge.style.display = 'inline';
     document.getElementById('send-btn').textContent = 'Salvar edição';
     document.getElementById('title').scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -242,6 +284,7 @@
     document.getElementById('title').value = '';
     document.getElementById('body').value = '';
     document.getElementById('url').value = '';
+    updateBodyCounter();
     editingBadge.style.display = 'none';
     document.getElementById('send-btn').textContent = 'Enviar notificação';
   }
@@ -282,6 +325,11 @@
     if (!title || !body) {
       msg.className = 'msg err';
       msg.textContent = 'Preenche o título e a mensagem.';
+      return;
+    }
+    if (estimatePayloadBytes() > PUSH_PAYLOAD_LIMIT) {
+      msg.className = 'msg err';
+      msg.textContent = 'A mensagem está grande demais pro push (limite ~4 KB). Encurta um pouco.';
       return;
     }
 
@@ -342,6 +390,11 @@
     if (!title || !body) {
       msg.className = 'msg err';
       msg.textContent = 'Preenche o título e a mensagem.';
+      return;
+    }
+    if (estimatePayloadBytes() > PUSH_PAYLOAD_LIMIT) {
+      msg.className = 'msg err';
+      msg.textContent = 'A mensagem está grande demais pro push (limite ~4 KB). Encurta um pouco.';
       return;
     }
 
