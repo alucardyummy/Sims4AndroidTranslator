@@ -37,5 +37,18 @@
     ],
     "nameFont": "'Oranienbaum', 'Didot', 'Times New Roman', serif",
     "fonts": "https://fonts.googleapis.com/css2?family=Oranienbaum&family=PT+Serif:ital@0;1&display=swap"
+  },
+  {
+    "id": "cult",
+    "name": "🕯️ Cult",
+    "blurb": "Velas, cruz invertida e sangue seco no subsolo.",
+    "swatch": [
+      "#0c0c0c",
+      "#2a0a0c",
+      "#8a1016",
+      "#ddd8d0"
+    ],
+    "nameFont": "'New Rocker', 'UnifrakturMaguntia', 'Old English Text MT', serif",
+    "fonts": "https://fonts.googleapis.com/css2?family=New+Rocker&family=Special+Elite&display=swap"
   }
 ]
