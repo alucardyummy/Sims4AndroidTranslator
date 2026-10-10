@@ -2120,8 +2120,11 @@ async function saveProfile() {
       body: JSON.stringify({ username: newName, profile_pic: newPic })
     });
     const data = await res.json();
-    if (data.success) window.location.reload();
-    else showAlert(data.error);
+    if (data.success) {
+      // A página recarrega pra refletir o novo nome/foto; o aviso aparece logo depois do recarregamento.
+      try { sessionStorage.setItem('profile_saved', '1'); } catch (e) {}
+      window.location.reload();
+    } else showAlert(data.error);
   } catch(e) { showAlert('Erro ao salvar perfil.'); }
 }
 
@@ -2384,6 +2387,12 @@ document.addEventListener('click', (e) => {
 // ───────────────────────────────────────────────────────────────────────────
 
 // INIT
+try {
+  if (sessionStorage.getItem('profile_saved') === '1') {
+    sessionStorage.removeItem('profile_saved');
+    setTimeout(() => showAlert('Alterações salvas! <3', 'ok'), 450);
+  }
+} catch (e) {}
 renderGreeting();   // usa o apelido guardado no aparelho, sem esperar a rede
 try {
   // Visitante novo (sem apelido e sem sinal de conta): mostra o pop-up já, sem esperar o /api/me
