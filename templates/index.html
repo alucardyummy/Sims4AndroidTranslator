@@ -99,6 +99,24 @@
   .pw-eye.on .eye-off { display: none; }       /* senha escondida -> olho riscado */
   .pw-eye.on .eye-on { display: block; }
 
+
+  /* TEMAS PRONTOS */
+  .theme-btn { width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; margin-right: 8px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); background: var(--surface); color: #6b5589; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: transform 0.15s ease, background 0.2s ease; }
+  .theme-btn:active { transform: scale(0.9); }
+  .theme-sub { font-size: 12.5px; line-height: 1.45; color: var(--text-muted); margin: -0.6rem 0 1rem; }
+  .theme-list { display: flex; flex-direction: column; gap: 10px; max-height: 56vh; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 2px; margin: 0 -2px; }
+  .theme-card { width: 100%; display: flex; align-items: center; gap: 12px; padding: 10px; text-align: left; cursor: pointer; border-radius: 14px; border: 1.5px solid var(--border); background: rgba(255,255,255,0.35); color: var(--text); font-family: inherit; transition: border-color 0.2s ease, background 0.2s ease, transform 0.15s ease; }
+  .theme-card:active { transform: scale(0.98); }
+  .theme-card.active { border-color: var(--accent-dim); background: rgba(255,255,255,0.6); }
+  .theme-swatch { width: 54px; height: 54px; border-radius: 12px; overflow: hidden; flex-shrink: 0; display: grid; grid-template-columns: 1fr 1fr; border: 1px solid rgba(0,0,0,0.08); }
+  .theme-swatch i { display: block; }
+  .theme-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .theme-name { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; line-height: 1.2; }
+  .theme-blurb { font-size: 11.5px; color: var(--text-muted); line-height: 1.35; }
+  .theme-check { width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border: 1.5px solid var(--border); color: transparent; transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease; }
+  .theme-card.active .theme-check { background: var(--accent-dim); border-color: var(--accent-dim); color: #fff; }
+  .theme-foot { font-size: 11.5px; color: var(--text-muted); text-align: center; margin-top: 12px; }
+
   /* CSS PERSONALIZADO */
   #profile-modal .modal-box { max-height: 88vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
   .css-box { margin: 0 0 1rem; border: 1px solid var(--border); border-radius: 10px; background: rgba(255,255,255,0.12); }
@@ -795,6 +813,9 @@
       </script>
     </div>
     <button class="greeting" id="greeting" type="button" onclick="openNickModal(false)" aria-live="polite" aria-label="Trocar apelido"></button>
+    <button class="theme-btn" id="theme-btn" type="button" onclick="openThemeModal()" aria-label="Mudar tema">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13.5" cy="6.5" r="1" fill="currentColor"/><circle cx="17.5" cy="10.5" r="1" fill="currentColor"/><circle cx="8.5" cy="7.5" r="1" fill="currentColor"/><circle cx="6.5" cy="12.5" r="1" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.93 0 1.65-.75 1.65-1.69 0-.44-.18-.83-.44-1.12-.29-.29-.44-.65-.44-1.13a1.64 1.64 0 0 1 1.67-1.67h2c3.05 0 5.55-2.5 5.55-5.55C21.97 6.01 17.46 2 12 2z"/></svg>
+    </button>
     <button class="bell-btn" id="bell-btn" onclick="openUpdatesModal()" aria-label="Ver novidades">
       <svg width="20" height="20" viewBox="0 0 60 60" fill="none">
         <path d="M30 14 Q20 14 19 26 Q18 34 14 39 Q13 40.5 15 40.5 L45 40.5 Q47 40.5 46 39 Q42 34 41 26 Q40 14 30 14 Z" fill="#6b5589" opacity="0.9"/>
@@ -1058,6 +1079,15 @@
     <div class="alert-icon" id="custom-alert-icon">!</div>
     <p class="alert-msg" id="custom-alert-msg"></p>
     <button class="alert-btn fx-press" onclick="closeCustomAlert()">OK</button>
+  </div>
+</div>
+<div class="modal-overlay" id="theme-modal" onclick="if(event.target===this)closeThemeModal()">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeThemeModal()">✕</button>
+    <h3 class="modal-title">Temas</h3>
+    <p class="theme-sub">Escolha um visual pro site todo. Ele vale pra todas as telas.</p>
+    <div class="theme-list" id="theme-list"></div>
+    <p class="theme-foot">Mais temas em breve.</p>
   </div>
 </div>
 <div class="alert-overlay" id="css-confirm" onclick="if(event.target===this)closeCssConfirm()">
@@ -2153,6 +2183,61 @@ async function handleLogout() {
   try { localStorage.removeItem('cached_profile_pic'); localStorage.removeItem('nickname'); } catch (e) {}
   if (window.UserCss) UserCss.clear();
   window.location.reload();
+}
+
+// ─── TEMAS PRONTOS ──────────────────────────────────────────────────────────
+const DEFAULT_THEME = { id: '', name: 'Padrão', blurb: 'O visual verde-água de sempre.', swatch: ['#9cb8b2', '#b4cec9', '#3f524e', '#111111'], nameFont: '' };
+function renderThemeList() {
+  const list = document.getElementById('theme-list');
+  const cur = window.UserTheme ? UserTheme.current() : '';
+  list.textContent = '';
+  [DEFAULT_THEME].concat(window.UserTheme ? UserTheme.list() : []).forEach(t => {
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = 'theme-card' + (t.id === cur ? ' active' : '');
+    card.dataset.theme = t.id;
+    card.setAttribute('aria-pressed', t.id === cur ? 'true' : 'false');
+    card.onclick = () => pickTheme(t.id);
+
+    const sw = document.createElement('span'); sw.className = 'theme-swatch';
+    (t.swatch || []).slice(0, 4).forEach(c => { const i = document.createElement('i'); i.style.background = c; sw.appendChild(i); });
+
+    const tx = document.createElement('span'); tx.className = 'theme-text';
+    const nm = document.createElement('span'); nm.className = 'theme-name'; nm.textContent = t.name;
+    if (t.nameFont) { nm.style.fontFamily = t.nameFont; nm.style.fontWeight = '400'; nm.style.fontSize = '24px'; }
+    const bl = document.createElement('span'); bl.className = 'theme-blurb'; bl.textContent = t.blurb || '';
+    tx.appendChild(nm); tx.appendChild(bl);
+
+    const ck = document.createElement('span'); ck.className = 'theme-check';
+    ck.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+
+    card.appendChild(sw); card.appendChild(tx); card.appendChild(ck);
+    list.appendChild(card);
+  });
+}
+function openThemeModal() {
+  if (window.UserTheme) UserTheme.preload();   // carrega as fontes dos temas pra mostrar os nomes bonitos
+  renderThemeList();
+  const modal = document.getElementById('theme-modal');
+  const box = modal.querySelector('.modal-box');
+  box.classList.remove('animate-out'); void box.offsetWidth; box.classList.add('animate-in');
+  modal.classList.add('active');
+}
+function closeThemeModal() {
+  const modal = document.getElementById('theme-modal');
+  const box = modal.querySelector('.modal-box');
+  box.classList.remove('animate-in'); box.classList.add('animate-out');
+  modal.classList.remove('active');
+  setTimeout(() => box.classList.remove('animate-out'), 380);
+}
+function pickTheme(id) {
+  if (!window.UserTheme) return;
+  UserTheme.set(id);
+  document.querySelectorAll('#theme-list .theme-card').forEach(c => {
+    const on = c.dataset.theme === id;
+    c.classList.toggle('active', on);
+    c.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
 }
 
 // ─── CSS PERSONALIZADO ──────────────────────────────────────────────────────
