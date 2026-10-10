@@ -98,6 +98,26 @@
   .pw-eye.on { color: #5a4d80; }
   .pw-eye.on .eye-off { display: none; }       /* senha escondida -> olho riscado */
   .pw-eye.on .eye-on { display: block; }
+
+  /* CSS PERSONALIZADO */
+  #profile-modal .modal-box { max-height: 88vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .css-box { margin: 0 0 1rem; border: 1px solid var(--border); border-radius: 10px; background: rgba(255,255,255,0.12); }
+  .css-box > summary { cursor: pointer; list-style: none; padding: 11px 12px; display: flex; align-items: center; justify-content: space-between; font-size: 11px; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; color: rgba(255,255,255,0.95); text-shadow: 0 1px 3px rgba(0,0,0,0.25); }
+  .css-box > summary::-webkit-details-marker { display: none; }
+  .css-box > summary::after { content: '+'; font-size: 17px; line-height: 1; }
+  .css-box[open] > summary::after { content: '\2013'; }
+  .css-inner { padding: 0 12px 12px; }
+  .css-help { font-size: 11.5px; line-height: 1.55; color: rgba(255,255,255,0.88); text-shadow: 0 1px 2px rgba(0,0,0,0.25); margin-bottom: 8px; }
+  .css-help code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 10.5px; background: rgba(0,0,0,0.22); padding: 1px 5px; border-radius: 4px; word-break: break-all; }
+  .css-area { width: 100%; min-height: 150px; resize: vertical; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; line-height: 1.5; tab-size: 2; white-space: pre; overflow: auto; }
+  .css-meta { display: flex; justify-content: space-between; gap: 8px; min-height: 16px; margin-top: 4px; font-size: 10.5px; color: rgba(255,255,255,0.8); text-shadow: 0 1px 2px rgba(0,0,0,0.25); }
+  .css-actions { display: flex; gap: 8px; margin: 8px 0; }
+  .css-btn { flex: 1; padding: 10px 6px; border-radius: 8px; border: 1px solid #b89cd9; background: transparent; color: #413d57; font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500; cursor: pointer; }
+  .css-btn-main { background: #5a4d80; border-color: #5a4d80; color: #fff; }
+  .css-danger { width: 100%; margin-top: 2px; background: #b5303f; border-color: #b5303f; color: #fff; font-weight: 700; letter-spacing: 0.04em; }
+  .css-btn:active { transform: scale(0.97); }
+  .alert-actions { display: flex; gap: 10px; }
+  .alert-actions .alert-btn { flex: 1; }
   #nick-modal { z-index: 900; } /* abaixo do modal de login (1000), pra "Já tenho conta" abrir por cima */
   .nick-sub { font-size: 12.5px; line-height: 1.45; color: rgba(255,255,255,0.88); text-shadow: 0 1px 3px rgba(0,0,0,0.25); margin: -0.6rem 0 1rem; }
   .nick-count { font-size: 10px; letter-spacing: 0.05em; color: rgba(255,255,255,0.75); text-shadow: 0 1px 2px rgba(0,0,0,0.25); text-align: right; }
@@ -741,6 +761,7 @@
   .draft-banner-btn.recover { background: rgba(30,50,46,0.65); border-color: rgba(255,255,255,0.2); color: #fff; }
   .draft-banner-btn.recover:active { background: var(--accent); }
 </style>
+<script src="/theme.js"></script>
 </head>
 <script>
   // Failsafe: se por algum motivo o script principal nunca rodar (erro,
@@ -985,6 +1006,20 @@
       <input type="file" id="edit-profile-pic" accept="image/*" style="display:none">
       <button type="button" class="form-input" style="cursor:pointer;text-align:center;" onclick="document.getElementById('edit-profile-pic').click()">Escolher imagem :3</button>
     </div>
+    <details class="css-box" id="css-box">
+      <summary>CSS personalizado</summary>
+      <div class="css-inner">
+        <p class="css-help">Muda a aparência do site todo, só pra você. Cole só CSS de quem você confia. Dica: <code>:root { --accent: #ff7eb6; }</code> troca a cor de destaque em todas as telas, e <code>[data-page="editor"] body { ... }</code> mira uma tela só. Se algo não mudar, tente <code>!important</code>. Se alguma coisa sumir, abra o site com <code>?safe=1</code> no final do link.</p>
+        <textarea id="edit-css" class="form-input css-area" rows="9" spellcheck="false" autocomplete="off" autocapitalize="off" autocorrect="off" placeholder=":root {&#10;  --accent: #ff7eb6;&#10;}"></textarea>
+        <div class="css-meta"><span id="css-status"></span><span id="css-count">0/20000</span></div>
+        <div class="css-actions">
+          <button type="button" class="css-btn" onclick="previewCss()">Aplicar</button>
+          <button type="button" class="css-btn css-btn-main" onclick="saveCss()">Salvar CSS</button>
+          <button type="button" class="css-btn" onclick="copyCss()">Copiar</button>
+        </div>
+        <button type="button" class="css-btn css-danger" onclick="askRestoreCss()">RESTAURAR PADRÃO</button>
+      </div>
+    </details>
     <button class="modal-btn fx-press" onclick="saveProfile()">SALVAR ALTERAÇÕES</button>
     <button class="modal-btn fx-press" style="background:transparent;border:1px solid #b89cd9;color:#413d57;margin-top:10px" onclick="handleLogout()">SAIR DA CONTA</button>
   </div></div><div class="modal-overlay" id="updates-modal" onclick="if(event.target===this)closeUpdatesModal()">
@@ -1023,6 +1058,16 @@
     <div class="alert-icon" id="custom-alert-icon">!</div>
     <p class="alert-msg" id="custom-alert-msg"></p>
     <button class="alert-btn fx-press" onclick="closeCustomAlert()">OK</button>
+  </div>
+</div>
+<div class="alert-overlay" id="css-confirm" onclick="if(event.target===this)closeCssConfirm()">
+  <div class="alert-box">
+    <div class="alert-icon err">!</div>
+    <p class="alert-msg">Tem certeza que deseja restaurar ao padrão fedido? ^^</p>
+    <div class="alert-actions">
+      <button class="alert-btn fx-press" onclick="confirmRestoreCss()">Sim</button>
+      <button class="alert-btn fx-press" onclick="closeCssConfirm()">Não</button>
+    </div>
   </div>
 </div>
 <div class="modal-overlay" id="nick-modal">
@@ -1958,6 +2003,7 @@ async function checkLogin() {
       document.getElementById('modal-profile-img').src = src;
       try {
         localStorage.setItem('is_logged_in', '1');
+        if (window.UserCss && !UserCss.booted && !UserCss.safe) UserCss.sync();   // 1º acesso depois do login
         if (data.profile_pic) localStorage.setItem('cached_profile_pic', data.profile_pic);
         else localStorage.removeItem('cached_profile_pic');
       } catch (e) {}
@@ -1968,6 +2014,7 @@ async function checkLogin() {
         localStorage.removeItem('is_logged_in');
         localStorage.removeItem('cached_profile_pic');
       } catch (e) {}
+      if (window.UserCss) UserCss.clear();
     }
   } catch(e) {}
   afterAuthCheck(authResult);
@@ -1986,6 +2033,7 @@ document.getElementById('profile-btn').addEventListener('click', () => {
     
     document.getElementById('edit-username').value = currentUser.username || '';
     document.getElementById('edit-nickname').value = currentUser.nickname || getNick();
+    loadCssIntoField();
     document.getElementById('modal-profile-img').src = currentUser.profile_pic || '/img/icon-pf.webp';
     newProfilePicBase64 = null;
     
@@ -2088,6 +2136,7 @@ function closeAuthModal() {
   }, 380);
 }
 function closeProfileModal() {
+  if (cssPreviewing && window.UserCss) { UserCss.revert(); cssPreviewing = false; }   // prévia não salva é descartada
   const box = document.querySelector('#profile-modal .modal-box');
   box.classList.remove('animate-in');
   box.classList.add('animate-out');
@@ -2099,8 +2148,91 @@ function closeProfileModal() {
 async function handleLogout() {
   await fetch('/api/logout', { method: 'POST' });
   try { localStorage.removeItem('cached_profile_pic'); localStorage.removeItem('nickname'); } catch (e) {}
+  if (window.UserCss) UserCss.clear();
   window.location.reload();
 }
+
+// ─── CSS PERSONALIZADO ──────────────────────────────────────────────────────
+const CSS_MAX = 20000;
+let cssPreviewing = false, cssStatusTimer = null;
+function cssField() { return document.getElementById('edit-css'); }
+function updateCssCount() { document.getElementById('css-count').textContent = cssField().value.length + '/' + CSS_MAX; }
+function setCssStatus(msg) {
+  const el = document.getElementById('css-status');
+  el.textContent = msg || '';
+  clearTimeout(cssStatusTimer);
+  if (msg) cssStatusTimer = setTimeout(() => { el.textContent = ''; }, 3500);
+}
+async function loadCssIntoField() {
+  try {
+    const res = await fetch('/api/my_css', { cache: 'no-store' });
+    const data = await res.json();
+    if (data.logged_in) cssField().value = data.css || '';
+  } catch (e) {}
+  updateCssCount();
+}
+function previewCss() {
+  if (!window.UserCss) return;
+  UserCss.apply(cssField().value);
+  cssPreviewing = true;
+  setCssStatus('Prévia aplicada (ainda não salvou).');
+}
+async function saveCss() {
+  const css = cssField().value;
+  if (css.length > CSS_MAX) { showAlert('CSS muito grande (máximo ' + CSS_MAX + ' caracteres).'); return; }
+  try {
+    const res = await fetch('/api/save_css', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ css: css })
+    });
+    const data = await res.json();
+    if (!data.success) { showAlert(data.error || 'Não deu pra salvar o CSS.'); return; }
+    UserCss.apply(data.css); UserCss.remember(data.css);
+    cssPreviewing = false;
+    setCssStatus('CSS salvo!');
+  } catch (e) {
+    showAlert('Erro de conexão. Tenta de novo.');
+  }
+}
+async function copyCss() {
+  const v = cssField().value;
+  if (!v) { setCssStatus('Não tem nada pra copiar.'); return; }
+  try { await navigator.clipboard.writeText(v); }
+  catch (e) { cssField().select(); try { document.execCommand('copy'); } catch (_) {} }
+  setCssStatus('CSS copiado!');
+}
+function askRestoreCss() {
+  const overlay = document.getElementById('css-confirm');
+  const box = overlay.querySelector('.alert-box');
+  box.classList.remove('animate-out'); void box.offsetWidth; box.classList.add('animate-in');
+  overlay.classList.add('active');
+}
+function closeCssConfirm() {
+  const overlay = document.getElementById('css-confirm');
+  const box = overlay.querySelector('.alert-box');
+  box.classList.remove('animate-in'); box.classList.add('animate-out');
+  overlay.classList.remove('active');
+  setTimeout(() => box.classList.remove('animate-out'), 380);
+}
+async function confirmRestoreCss() {
+  closeCssConfirm();
+  try {
+    const res = await fetch('/api/save_css', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ css: '' })
+    });
+    const data = await res.json();
+    if (!data.success) { showAlert(data.error || 'Não deu pra restaurar.'); return; }
+    UserCss.clear();
+    cssPreviewing = false;
+    cssField().value = '';
+    updateCssCount();
+    showAlert('Pronto, voltou ao padrão!', 'ok');
+  } catch (e) {
+    showAlert('Erro de conexão. Tenta de novo.');
+  }
+}
+document.getElementById('edit-css').addEventListener('input', updateCssCount);
 
 // ─── OLHINHO DA SENHA ───────────────────────────────────────────────────────
 function togglePw(btn) {
