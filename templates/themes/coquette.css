@@ -111,7 +111,8 @@ html[data-page="index"] .btn-import:active, html[data-page="index"] .btn-new:act
 html[data-page="index"] .btn-merge:active, html[data-page="index"] .btn-create:active { background: rgba(244,214,221,0.7) !important; }
 
 /* saves */
-html[data-page="index"] .mascot-divider img { filter: drop-shadow(0 0 9px rgba(226,160,176,0.55)); }
+/* plumbob vira rosa antigo (combina com a paleta) */
+html[data-page="index"] .mascot-divider img { filter: hue-rotate(-112deg) saturate(1.4) brightness(0.92) drop-shadow(0 0 9px rgba(226,160,176,0.55)); }
 html[data-page="index"] .saves-label { font-family: var(--cq-serif); font-style: italic; font-size: 14px; letter-spacing: 0.04em; text-transform: lowercase; color: #a8868e; }
 html[data-page="index"] .saves-label::before, html[data-page="index"] .saves-label::after { background: linear-gradient(90deg, transparent, #e2b3bd, transparent); }
 html[data-page="index"] .save-item {
