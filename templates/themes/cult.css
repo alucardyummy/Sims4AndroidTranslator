@@ -1,0 +1,351 @@
+/* ════════════════════════════════════════════════════════════════
+   TEMA: CULT  (underground, ocultismo, velas, cruz invertida, grão de zine)
+   Este arquivo vale pro site TODO (home, editor, mesclar, criar, info).
+   Estética sombria de seita/ritual: preto, cinza-cinza, osso e sangue seco.
+
+   Paleta
+     #0c0c0c  breu        fundo da página
+     #2a0a0c  sangue-seco superfícies e bordas fundas
+     #8a1016  sangue      preenchimentos (botões, progresso). Texto claro por cima
+     #e5565b  sangue-vivo destaques em texto/ícone (contraste ~5:1)
+     #ddd8d0  osso        texto principal (contraste ~13:1)
+     #a39d96  cinza       texto de apoio
+   ════════════════════════════════════════════════════════════════ */
+
+/* ── ONDE FICAM SUAS IMAGENS / GIFS ───────────────────────────────
+   Os arquivos estão em  img/themes/cult/
+   cruz.webp  = a cruz balançando com a sombra (faixa no topo da home)
+   velas.webp = as velas acesas (faixa no pé da home)
+   Pra desligar uma delas, troque a url(...) por none.
+   Os dois são P&B e entram com mix-blend-mode: screen, então o preto some
+   e só a luz/branco aparece por cima do fundo.  */
+:root {
+  --cu-cross-image: url(/img/themes/cult/cruz.webp);
+  --cu-candles-image: url(/img/themes/cult/velas.webp);
+  --cu-bg-image: none;       /* fundo extra da home inteira (opcional) */
+}
+
+/* ── Paleta e fontes (todas as páginas) ── */
+:root {
+  --cu-black: 'New Rocker', 'UnifrakturMaguntia', 'Old English Text MT', serif;
+  --cu-serif: 'Special Elite', 'Courier New', monospace;
+
+  --cu-ash: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='360' height='360'%3E%3Cfilter id='v' x='0' y='0' width='100%25' height='100%25' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.012 0.02' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.20 0 0 0 0 0.19 0 0 0 0 0.18 0 0 0 1.6 -0.80'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23v)'/%3E%3C/svg%3E");
+  --cu-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g' x='0' y='0' width='100%25' height='100%25' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' seed='5' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.85 0 0 0 0 0.84 0 0 0 0 0.82 0 0 0 0.32 -0.10'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+  --cu-icross: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 36' width='24' height='36'%3E%3Cpath d='M10 0h4v22h8v4h-8v10h-4V26H2v-4h8z' transform='rotate(180 12 18)' fill='%238a1016'/%3E%3C/svg%3E");
+  --cu-icross-bone: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 36' width='24' height='36'%3E%3Cpath d='M10 0h4v22h8v4h-8v10h-4V26H2v-4h8z' transform='rotate(180 12 18)' fill='%23ddd8d0' fill-opacity='0.55'/%3E%3C/svg%3E");
+  --cu-drip: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 22' width='120' height='22'%3E%3Cpath d='M0 0h120v3c-6 0-6 3-9 3s-3 9-6 9-3-9-6-9c-9 0-9-3-18-3s-6 14-9 14-3-14-9-14c-12 0-12-3-24-3s-3 10-6 10-3-10-9-10c-6 0-9-3-15-3S0 3 0 3z' fill='%238a1016' fill-opacity='0.85'/%3E%3C/svg%3E");
+
+  --bg: #0a0a0a; --surface: #141212; --surface2: #1b1616; --surface3: #100e0e;
+  --border: #2a1c1c; --border2: #3a2626; --border3: #4a3030;
+  --text: #ddd8d0; --text-muted: #a39d96; --text-dim: #7d7872;
+  --accent: #e5565b; --accent-dim: #c23038; --accent-faint: rgba(138,16,22,0.14);
+  --danger: #e5565b; --danger-bg: rgba(229,86,91,0.08); --danger-border: rgba(229,86,91,0.38);
+}
+::selection { background: rgba(138,16,22,0.75); color: #fff; }
+::-moz-selection { background: rgba(138,16,22,0.75); color: #fff; }
+* { caret-color: #e5565b; accent-color: #8a1016; }
+
+@keyframes cuFlicker {
+  0%, 100% { opacity: 0.62; } 18% { opacity: 0.50; } 34% { opacity: 0.66; }
+  52% { opacity: 0.54; } 71% { opacity: 0.64; } 86% { opacity: 0.52; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html[data-page="index"] body::before,
+  html[data-page="index"]::before { animation: none !important; }
+}
+
+/* ═════════════ HOME ═════════════ */
+html[data-page="index"] {
+  --bg: #0c0c0c;
+  --surface: rgba(12,12,12,0.45); --surface2: rgba(42,10,12,0.36); --surface3: rgba(12,12,12,0.6);
+  --border: rgba(138,16,22,0.40); --border2: rgba(221,216,208,0.20); --border3: rgba(138,16,22,0.55);
+}
+
+html[data-page="index"] body {
+  background-image:
+    var(--cu-bg-image),
+    radial-gradient(ellipse 90% 34% at 50% -8%, rgba(138,16,22,0.34) 0%, transparent 70%),
+    radial-gradient(ellipse 80% 36% at 50% 108%, rgba(138,16,22,0.28) 0%, transparent 70%),
+    var(--cu-ash),
+    var(--cu-grain),
+    linear-gradient(176deg, #131111 0%, #0a0a0a 55%, #060505 100%);
+  background-size: cover, auto, auto, 360px 360px, 160px 160px, auto;
+  background-position: center, center, center, 0 0, 0 0, center;
+  background-repeat: no-repeat, no-repeat, no-repeat, repeat, repeat, no-repeat;
+  background-attachment: fixed;
+  background-color: #0c0c0c;
+}
+/* a luz fraca das velas respirando por cima de tudo */
+html[data-page="index"] body::before {
+  background:
+    radial-gradient(ellipse at 50% 100%, rgba(255,170,90,0.10) 0%, transparent 46%),
+    radial-gradient(ellipse at 30% 8%, rgba(221,216,208,0.07) 0%, transparent 40%),
+    radial-gradient(ellipse at 90% 55%, rgba(138,16,22,0.14) 0%, transparent 42%);
+}
+/* cruz balançando no topo: o preto do GIF some (screen), fica só a luz */
+html[data-page="index"] body::after {
+  content: ''; top: 0; left: 0; right: 0; height: 230px; font-size: 0; letter-spacing: 0; color: transparent;
+  background: var(--cu-cross-image) no-repeat center top / cover;
+  mix-blend-mode: screen; opacity: 0.55;
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 45%, transparent 100%);
+          mask-image: linear-gradient(180deg, #000 0%, #000 45%, transparent 100%);
+}
+/* velas no pé da tela (faixa alta o bastante pra mostrar as chamas) */
+html[data-page="index"]::before {
+  content: ''; position: fixed; left: 0; right: 0; bottom: 0; height: 236px; z-index: 0; pointer-events: none;
+  background: var(--cu-candles-image) no-repeat center top / cover;
+  mix-blend-mode: screen; animation: cuFlicker 5.5s ease-in-out infinite;
+}
+/* faixa de sangue escorrendo no rodapé */
+html[data-page="index"]::after {
+  content: ''; position: fixed; left: 0; right: 0; bottom: 0; height: 22px; z-index: 0; pointer-events: none;
+  background: var(--cu-drip) repeat-x left bottom / 120px 22px; transform: scaleY(-1); opacity: 0.8;
+}
+html[data-page="index"] .screen { padding-bottom: 12rem; }
+
+/* topo */
+html[data-page="index"] .profile-circle,
+html[data-page="index"] .bell-btn,
+html[data-page="index"] .theme-btn {
+  background: rgba(14,10,10,0.78); border-color: rgba(138,16,22,0.65);
+  box-shadow: 0 3px 14px rgba(0,0,0,0.55);
+}
+html[data-page="index"] .theme-btn { color: #e5565b; }
+html[data-page="index"] .bell-btn svg path:not([fill="none"]) { fill: #b5aea5; }
+html[data-page="index"] .bell-btn svg path[stroke] { stroke: #e5565b; }
+html[data-page="index"] .bell-btn svg .bell-dot { fill: #e5565b; stroke: #0c0c0c; }
+html[data-page="index"] .bell-btn.subscribed { background: rgba(138,16,22,0.34); border-color: #e5565b; }
+html[data-page="index"] .greeting { font-family: var(--cu-serif); font-weight: 400; font-size: 14px; line-height: 1.2; color: #b5aea5; letter-spacing: 0.04em; }
+
+/* título: letra gótica-metal + cruz invertida como assinatura */
+html[data-page="index"] .title {
+  font-family: var(--cu-black); font-weight: 400; font-size: clamp(26px, 8.5vw, 38px); line-height: 1.05;
+  letter-spacing: 0.04em; text-transform: uppercase;
+  background: none; -webkit-background-clip: border-box; background-clip: border-box;
+  -webkit-text-fill-color: #ddd8d0; color: #ddd8d0;
+  text-shadow: 0 0 20px rgba(138,16,22,0.8), 0 2px 3px rgba(0,0,0,0.8);
+  margin-bottom: 0.1rem;
+}
+html[data-page="index"] .title::after {
+  content: ''; display: block; width: 22px; height: 33px; margin: 8px auto 0;
+  background: var(--cu-icross) center / contain no-repeat;
+  filter: drop-shadow(0 0 7px rgba(229,86,91,0.65));
+}
+html[data-page="index"] .subtitle { font-family: var(--cu-serif); font-size: 13px; letter-spacing: 0.08em; text-transform: lowercase; color: #a39d96; }
+html[data-page="index"] .hint { color: #a39d96; }
+
+/* botões */
+html[data-page="index"] .btn-import,
+html[data-page="index"] .btn-new,
+html[data-page="index"] .btn-merge,
+html[data-page="index"] .btn-create {
+  background: linear-gradient(180deg, rgba(42,10,12,0.55), rgba(12,12,12,0.35)) !important;
+  border: 1px solid rgba(138,16,22,0.75) !important;
+  color: #ddd8d0;
+  font-family: var(--cu-serif); font-weight: 400; letter-spacing: 0.08em; text-transform: lowercase;
+  box-shadow: 0 8px 26px rgba(0,0,0,0.5), inset 0 1px 0 rgba(221,216,208,0.06) !important;
+}
+html[data-page="index"] .btn-import { font-size: 19px; }
+html[data-page="index"] .btn-merge,
+html[data-page="index"] .btn-create { font-size: 13px; letter-spacing: 0.04em; }
+html[data-page="index"] .btn-new { font-size: 28px; font-weight: 400; }
+html[data-page="index"] .btn-import::before { background: linear-gradient(135deg, rgba(221,216,208,0.08) 0%, transparent 58%); }
+html[data-page="index"] .btn-import:hover, html[data-page="index"] .btn-new:hover { background: linear-gradient(180deg, rgba(70,12,16,0.7), rgba(12,12,12,0.4)) !important; border-color: rgba(229,86,91,0.85) !important; }
+html[data-page="index"] .btn-import:active, html[data-page="index"] .btn-new:active,
+html[data-page="index"] .btn-merge:active, html[data-page="index"] .btn-create:active { background: rgba(138,16,22,0.40) !important; }
+
+/* saves: vidro escuro, borda de sangue e uma cruz invertida pendurada */
+html[data-page="index"] .saves-label { font-family: var(--cu-serif); font-size: 13px; letter-spacing: 0.12em; text-transform: lowercase; color: #a39d96; }
+html[data-page="index"] .saves-label::before, html[data-page="index"] .saves-label::after { background: linear-gradient(90deg, transparent, rgba(138,16,22,0.85), transparent); }
+/* plumbob vira vermelho-sangue */
+html[data-page="index"] .mascot-divider img { filter: hue-rotate(-112deg) saturate(2.6) brightness(0.62) contrast(1.2) drop-shadow(0 0 11px rgba(229,86,91,0.6)); }
+html[data-page="index"] .save-item {
+  background: rgba(12,12,12,0.46) !important;
+  border: 1px solid rgba(138,16,22,0.38) !important;
+  backdrop-filter: blur(10px) saturate(1.1); -webkit-backdrop-filter: blur(10px) saturate(1.1);
+  box-shadow: 0 2px 16px rgba(0,0,0,0.35), inset 0 1px 0 rgba(221,216,208,0.04);
+}
+html[data-page="index"] .save-item:hover { background: rgba(42,10,12,0.5) !important; border-color: rgba(229,86,91,0.62) !important; box-shadow: 0 6px 26px rgba(0,0,0,0.45); }
+html[data-page="index"] .save-item.selected { background: rgba(138,16,22,0.26) !important; border-color: #e5565b !important; }
+html[data-page="index"] .save-item::after {
+  content: ''; position: absolute; top: -10px; right: 46px; width: 11px; height: 17px; pointer-events: none;
+  background: var(--cu-icross) center / contain no-repeat; opacity: 0.85;
+}
+html[data-page="index"] .save-item:nth-child(even)::after { right: auto; left: 54px; opacity: 0.55; }
+html[data-page="index"] .save-item:nth-child(3n)::after { display: none; }
+html[data-page="index"] .sel-circle.checked { background: #8a1016 !important; border-color: #e5565b !important; }
+html[data-page="index"] .save-title { color: #ddd8d0; }
+html[data-page="index"] .save-meta { color: #e5565b; }
+html[data-page="index"] .btn-icon { color: #a39d96; }
+html[data-page="index"] .github-badge { color: #7d7872; }
+html[data-page="index"] .github-badge:hover { color: #e5565b; }
+html[data-page="index"] .version { background: rgba(12,12,12,0.55); border-color: rgba(138,16,22,0.36); }
+html[data-page="index"] .skeleton-item { background: rgba(12,12,12,0.4); border-color: rgba(138,16,22,0.26); }
+html[data-page="index"] .skeleton-item::after { background: linear-gradient(105deg, transparent 30%, rgba(229,86,91,0.10) 50%, transparent 70%); background-size: 200% 100%; }
+html[data-page="index"] .sk-circle, html[data-page="index"] .sk-line { background: rgba(221,216,208,0.10); }
+
+/* barra de seleção */
+html[data-page="index"] .select-topbar { background: rgba(12,12,12,0.65); border-color: rgba(138,16,22,0.45); }
+html[data-page="index"] #topbar-select .select-all-btn,
+html[data-page="index"] #topbar-select .select-delete { color: #e5565b; }
+
+/* aviso de rascunho + erro */
+html[data-page="index"] .draft-banner { background: rgba(16,10,10,0.92); border-color: rgba(138,16,22,0.6); box-shadow: 0 8px 26px rgba(0,0,0,0.55); }
+html[data-page="index"] .draft-banner-btn { border-color: rgba(221,216,208,0.25); color: #a39d96; }
+html[data-page="index"] .draft-banner-btn.discard:active { border-color: #e5565b; color: #e5565b; }
+html[data-page="index"] .draft-banner-btn.recover { background: #8a1016; border-color: #e5565b; color: #fff; }
+html[data-page="index"] .draft-banner-btn.recover:active { background: #5a0a0e; }
+html[data-page="index"] .error-msg { background: rgba(138,16,22,0.20); border-color: rgba(229,86,91,0.45); color: #ef8c90; }
+
+/* ═════════════ JANELAS (modais e avisos) ═════════════ */
+.modal-overlay, .alert-overlay { background: rgba(4,3,3,0.80) !important; }
+.modal-box, .alert-box {
+  background: linear-gradient(180deg, rgba(20,12,12,0.95), rgba(12,9,9,0.96)) !important;
+  border: 1px solid rgba(138,16,22,0.48) !important;
+  box-shadow: 0 26px 70px rgba(0,0,0,0.65), inset 0 1px 0 rgba(221,216,208,0.07) !important;
+}
+.modal-title { font-family: var(--cu-black); font-weight: 400; font-size: 27px; line-height: 1.1; color: #ddd8d0; text-shadow: 0 0 16px rgba(138,16,22,0.55); }
+.modal-close { color: #a39d96; }
+.form-group label { color: #a39d96; text-shadow: none; font-family: var(--cu-serif); font-style: italic; font-size: 14px; text-transform: none; letter-spacing: 0.02em; }
+.form-input { background: rgba(0,0,0,0.30) !important; border: 1px solid rgba(221,216,208,0.18) !important; color: #ddd8d0; backdrop-filter: none; -webkit-backdrop-filter: none; }
+.form-input:focus { background: rgba(0,0,0,0.42) !important; border-color: #e5565b !important; }
+.form-input::placeholder { color: #7d7872; }
+.modal-btn, .alert-btn {
+  background: linear-gradient(180deg, #a3141b, #6e0d12) !important;
+  border: 1px solid #e5565b !important; color: #fff !important; backdrop-filter: none;
+  font-family: var(--cu-serif); font-style: italic; font-weight: 400; font-size: 17px; letter-spacing: 0.03em;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.45); box-shadow: 0 6px 18px rgba(138,16,22,0.35);
+}
+.modal-btn:active, .alert-btn:active { background: #5a0a0e !important; }
+.modal-switch { color: #a39d96; } .modal-switch span { color: #ef8c90; }
+.alert-msg { color: #ddd8d0; }
+.alert-icon.err { background: rgba(229,86,91,0.16); color: #ff9a9d; border-color: rgba(229,86,91,0.5); }
+.alert-icon.ok { background: rgba(110,200,160,0.14); color: #8fd9b4; border-color: rgba(110,200,160,0.45); }
+.pw-eye { color: #a39d96; } .pw-eye.on { color: #ef8c90; }
+.google-btn { background: rgba(221,216,208,0.06); border-color: rgba(221,216,208,0.30); color: #ddd8d0; }
+.google-btn:hover { background: rgba(138,16,22,0.20); border-color: #e5565b; color: #fff; }
+.google-btn:active { background: rgba(138,16,22,0.34); }
+.google-btn svg stop { stop-color: #e5565b; }
+.google-btn svg stop:nth-child(2) { stop-color: #efe9df; }
+.auth-divider { color: #a39d96; }
+.auth-divider::before, .auth-divider::after { background: rgba(221,216,208,0.20); }
+.custom-select-btn { background: rgba(0,0,0,0.30); border-color: rgba(221,216,208,0.18); color: #ddd8d0; }
+.custom-select-btn:active { background: rgba(0,0,0,0.42); }
+.custom-select-btn.open { border-color: #e5565b; background: rgba(0,0,0,0.42); }
+.custom-select-drop { background: rgba(16,10,10,0.96); border-color: rgba(138,16,22,0.5); }
+.cs-option { color: #ddd8d0; border-bottom-color: rgba(221,216,208,0.08); }
+.cs-option:active, .cs-option:hover { background: rgba(138,16,22,0.28); color: #fff; }
+.cs-option.selected { color: #ef8c90; }
+
+/* sininho e novidades */
+.push-toggle-label { color: #ddd8d0; }
+.switch-slider { background: rgba(221,216,208,0.20); }
+.switch input:checked + .switch-slider { background: #8a1016; }
+.updates-empty { color: #a39d96; }
+.update-item { border-color: rgba(138,16,22,0.34); background: rgba(42,10,12,0.20); }
+.update-item.selected { border-color: #e5565b; background: rgba(138,16,22,0.20); }
+.update-item-title { font-family: var(--cu-serif); font-size: 15px; font-weight: 400; color: #ef8c90; }
+.update-item-body { color: #ddd8d0; }
+.update-item-date { color: #7d7872; }
+
+/* temas e meus componentes dentro das janelas */
+.theme-sub, .theme-foot { color: #a39d96; }
+.theme-card { background: rgba(42,10,12,0.24); border-color: rgba(138,16,22,0.32); color: #ddd8d0; }
+.theme-card.active { background: rgba(138,16,22,0.22); border-color: #e5565b; }
+.theme-swatch { border-color: rgba(221,216,208,0.22); }
+.theme-name { color: #ddd8d0; }
+.theme-blurb { color: #a39d96; }
+.theme-check { border-color: rgba(221,216,208,0.3); }
+.theme-card.active .theme-check { background: #8a1016; border-color: #e5565b; color: #fff; }
+.nick-sub { color: #a39d96; text-shadow: none; }
+.nick-count { color: #7d7872; text-shadow: none; }
+.nick-error { color: #ff9a9d; text-shadow: none; }
+.nick-preview { font-family: var(--cu-black); font-size: 36px; font-weight: 400; color: #e8e2d8; text-shadow: 0 0 14px rgba(138,16,22,0.7); }
+.css-box { background: rgba(0,0,0,0.22); border-color: rgba(138,16,22,0.34); }
+.css-box > summary { color: #a39d96; text-shadow: none; }
+.css-help { color: #a39d96; text-shadow: none; }
+.css-help code { background: rgba(138,16,22,0.20); color: #e8e2d8; }
+.css-meta { color: #7d7872; text-shadow: none; }
+.css-btn { border-color: rgba(229,86,91,0.5); color: #ef8c90; }
+.css-btn-main { background: #8a1016; border-color: #e5565b; color: #fff; }
+.css-danger { background: #7a0e14; border-color: #e5565b; color: #fff; }
+
+/* ═════════════ DEMAIS PÁGINAS (editor, mesclar, criar, info) ═════════════ */
+html:not([data-page="index"]) body {
+  background-image:
+    radial-gradient(ellipse 90% 26% at 50% -4%, rgba(138,16,22,0.20) 0%, transparent 70%),
+    var(--cu-ash),
+    var(--cu-grain),
+    linear-gradient(172deg, #121212 0%, #080808 100%);
+  background-size: auto, 360px 360px, 160px 160px, auto;
+  background-position: center, 0 0, 0 0, center;
+  background-repeat: no-repeat, repeat, repeat, no-repeat;
+  background-attachment: fixed;
+  background-color: #0a0a0a;
+}
+html:not([data-page="index"]) .loading-overlay { background: rgba(6,4,4,0.95) !important; }
+html:not([data-page="index"]) .lang-dropdown.open-active,
+html:not([data-page="index"]) .success-sheet.open-active,
+html:not([data-page="index"]) .import-sheet.open-active,
+html:not([data-page="index"]) .tall-sheet.open-active,
+html:not([data-page="index"]) .modal-backdrop.open-active,
+html:not([data-page="index"]) .confirm-modal.open { background: rgba(4,3,3,0.72) !important; }
+
+/* os verdes que estavam fixos no código (editor) */
+html:not([data-page="index"]) .count-badge.filter-active { background: rgba(138,16,22,0.14); }
+html:not([data-page="index"]) .save-progress-btn.saved { border-color: #e5565b; color: #ef8c90; background: rgba(138,16,22,0.16); }
+html:not([data-page="index"]) .undo-btn:active,
+html:not([data-page="index"]) .undo-btn.has-history,
+html:not([data-page="index"]) .copy-btn.copied,
+html:not([data-page="index"]) .fav-btn.active,
+html:not([data-page="index"]) .kebab-btn:active,
+html:not([data-page="index"]) .kebab-btn.open,
+html:not([data-page="index"]) .kebab-item.clear-undo-item,
+html:not([data-page="index"]) .fav-star-float,
+html:not([data-page="index"]) .original-text .ph,
+html:not([data-page="index"]) .ta-backdrop .ph { color: #ef8c90; }
+html:not([data-page="index"]) .copy-btn:active,
+html:not([data-page="index"]) .copy-btn.copied,
+html:not([data-page="index"]) .action-btn.clear-undo { border-color: #e5565b; color: #ef8c90; }
+html:not([data-page="index"]) .string-row.row-selected { background: rgba(138,16,22,0.18); }
+html:not([data-page="index"]) .editor-draft-banner-btn.recover { background: rgba(138,16,22,0.22); }
+html:not([data-page="index"]) .note-dot { background: #e5565b; }
+html:not([data-page="index"]) .note-textarea:focus { border-color: #e5565b; }
+html:not([data-page="index"]) .import-source-btn.active { background: rgba(138,16,22,0.12); }
+html:not([data-page="index"]) .translate-all-btn:active,
+html:not([data-page="index"]) .json-mode-btn:active,
+html:not([data-page="index"]) .json-import-btn:active { background: rgba(138,16,22,0.14); }
+/* mesclar */
+html:not([data-page="index"]) .drop-zone::before { background: radial-gradient(ellipse at center, rgba(138,16,22,0.10) 0%, transparent 70%); }
+html:not([data-page="index"]) .drop-zone:active { background: rgba(138,16,22,0.06); }
+html:not([data-page="index"]) .mode-tab:active { background: rgba(138,16,22,0.06); }
+html:not([data-page="index"]) .mode-tab.selected { background: rgba(138,16,22,0.12); }
+html:not([data-page="index"]) .split-badge.exact { background: rgba(138,16,22,0.14); border-color: rgba(229,86,91,0.35); }
+/* info */
+html:not([data-page="index"]) .lang-btn { background: rgba(138,16,22,0.12); }
+html:not([data-page="index"]) .lang-btn:active { background: rgba(138,16,22,0.22); }
+html:not([data-page="index"]) .stbl-option.selected { background: rgba(138,16,22,0.10); }
+html:not([data-page="index"]) .stbl-lang-badge { background: rgba(138,16,22,0.16); }
+
+/* barras fixas e botões primários (o código usa --accent-dim com texto escuro; no sangue precisa de texto claro) */
+html:not([data-page="index"]) .action-bar { background: rgba(10,8,8,0.96); border-top: 1px solid rgba(138,16,22,0.42); box-shadow: 0 -8px 26px rgba(0,0,0,0.45); }
+html:not([data-page="index"]) .btn-build,
+html:not([data-page="index"]) .save-btn,
+html:not([data-page="index"]) .success-new,
+html:not([data-page="index"]) .json-apply-btn,
+html:not([data-page="index"]) .focus-toggle-btn,
+html:not([data-page="index"]) .merge-btn,
+html:not([data-page="index"]) .selection-toolbar-translate {
+  background: linear-gradient(180deg, #a3141b, #6e0d12); color: #fff; border: 1px solid #e5565b;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+}
+html:not([data-page="index"]) .btn-build:active,
+html:not([data-page="index"]) .save-btn:active,
+html:not([data-page="index"]) .success-new:active,
+html:not([data-page="index"]) .focus-toggle-btn:active,
+html:not([data-page="index"]) .merge-btn:active { background: #5a0a0e; }
+html:not([data-page="index"]) .merge-btn:disabled { opacity: 0.35; }
+html:not([data-page="index"]) .confirm-modal-btn-switch { background: #8a1016; color: #fff; border-color: #e5565b; }
+html:not([data-page="index"]) .stbl-option.selected .stbl-option-check { color: #fff; }
+html:not([data-page="index"]) .toast { background: #181010; border-color: rgba(138,16,22,0.5); color: #ef8c90; }
