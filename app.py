@@ -7,6 +7,7 @@ from packer.stbl import Stbl
 import os
 import tempfile
 import uuid
+import hashlib
 import json
 import re
 import unicodedata
@@ -117,6 +118,12 @@ def init_db():
             c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS custom_css TEXT;")
         except Exception as e:
             print("Coluna custom_css já existe ou houve um aviso:", e)
+
+        # Tema pronto escolhido ('default' = padrão; NULL = nunca escolheu)
+        try:
+            c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS theme VARCHAR(32);")
+        except Exception as e:
+            print("Coluna theme já existe ou houve um aviso:", e)
 
         c.execute('''
             CREATE TABLE IF NOT EXISTS saves (
@@ -1818,11 +1825,48 @@ def sanitize_user_css(raw):
     return css, None
 
 
+THEMES_DIR = os.path.join(TEMPLATE_DIR, "themes")
+
+
+def load_themes():
+    """Lê templates/themes/themes.json + <id>.css e devolve {id: {nome, descrição, cores, fontes, css}}."""
+    try:
+        with open(os.path.join(THEMES_DIR, "themes.json"), encoding="utf-8") as f:
+            metas = json.load(f)
+    except Exception as e:
+        print("Temas indisponíveis:", e)
+        return {}
+    themes = {}
+    for meta in metas:
+        tid = str(meta.get("id", ""))
+        if not re.fullmatch(r"[a-z0-9_-]{1,32}", tid):
+            continue
+        try:
+            with open(os.path.join(THEMES_DIR, tid + ".css"), encoding="utf-8") as f:
+                css = f.read()
+        except Exception as e:
+            print(f"Tema {tid} sem arquivo .css:", e)
+            continue
+        themes[tid] = {
+            "name": meta.get("name", tid),
+            "blurb": meta.get("blurb", ""),
+            "swatch": meta.get("swatch", []),
+            "nameFont": meta.get("nameFont", ""),
+            "fonts": meta.get("fonts", ""),
+            "css": css,
+        }
+    return themes
+
+
 @app.route("/theme.js")
 def theme_js():
-    response = send_file(os.path.join(TEMPLATE_DIR, "theme.js"), mimetype="application/javascript")
+    with open(os.path.join(TEMPLATE_DIR, "theme.js"), encoding="utf-8") as f:
+        base = f.read()
+    body = "window.__THEMES__=" + json.dumps(load_themes()) + ";\n" + base
+    response = app.response_class(body, mimetype="application/javascript")
+    response.set_etag(hashlib.md5(body.encode("utf-8")).hexdigest())
     response.headers["Cache-Control"] = "no-cache"
-    return response
+    return response.make_conditional(request)
 
 
 @app.route("/api/my_css")
@@ -1837,13 +1881,39 @@ def my_css():
             c.execute("SELECT custom_css FROM users WHERE id = %s", (user_id,))
             row = c.fetchone()
             css = (row["custom_css"] if row else None) or ""
-            payload = {"logged_in": bool(row), "css": css}
+            payload = {"logged_in": bool(row), "css": css, "theme": None}
         except Exception:
             conn.rollback()
+        if payload["logged_in"]:
+            try:   # à parte: se a coluna ainda não existir, o CSS continua funcionando
+                c.execute("SELECT theme FROM users WHERE id = %s", (user_id,))
+                trow = c.fetchone()
+                payload["theme"] = (trow["theme"] if trow else None) or None
+            except Exception:
+                conn.rollback()
         conn.close()
     response = app.response_class(json.dumps(payload), mimetype="application/json")
     response.headers["Cache-Control"] = "no-store"
     return response
+
+
+@app.route("/api/save_theme", methods=["POST"])
+def save_theme():
+    user_id = session.get('user_id')
+    if not user_id:
+        return json.dumps({"success": False, "error": "Não logado"}), 401
+
+    data = request.get_json(silent=True) or {}
+    theme = str(data.get("theme") or "").strip()
+    if theme != "default" and theme not in load_themes():
+        return json.dumps({"success": False, "error": "Tema desconhecido."}), 400
+
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE users SET theme = %s WHERE id = %s", (theme, user_id))
+    conn.commit()
+    conn.close()
+    return json.dumps({"success": True, "theme": theme})
 
 
 @app.route("/api/save_css", methods=["POST"])
