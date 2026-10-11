@@ -118,16 +118,20 @@
         document.body.appendChild(dbg);
       }
       if (reduced && !DEBUG) return function () {};
-      var MAX = 45, RANGE = 15, tx = 0, ty = 0, cx = 0, cy = 0, base = null, raf = 0, on = false, got = false, probe = 0;   // MAX = px de movimento · RANGE = graus de inclinação pra chegar no máximo
+      var MAX = 45, RANGE = 15, tx = 0, ty = 0, cx = 0, cy = 0, base = null, raf = 0, on = false, got = false, probe = 0, lastG = null, lastB = null, sign = -1, centerT = 0;   // MAX = px de movimento · RANGE = graus de inclinação pra chegar no máximo
       function clamp(v) { return Math.max(-1, Math.min(1, v)); }
       function onTilt(e) {
         nEv++;
         if (e.gamma == null || e.beta == null) return;
         got = true;
-        if (!base) base = { b: e.beta, g: e.gamma };            // posição em que a pessoa segura o celular = centro
-        tx = -clamp((e.gamma - base.g) / RANGE) * MAX;               // inclinar pra direita (gamma+) → círculo vai pra esquerda
-        ty = -clamp((e.beta - base.b) / RANGE) * MAX;
-        base.g += (e.gamma - base.g) * 0.003; base.b += (e.beta - base.b) * 0.003;   // o "centro" acompanha devagar como a pessoa segura o celular (volta pro meio sozinho)
+        lastG = e.gamma; lastB = e.beta; sign = -1;
+        update();
+      }
+      function update() {                                         // converte (leitura − centro) em deslocamento do círculo
+        if (lastG == null) return;
+        if (!base) base = { b: lastB, g: lastG };                 // 1ª leitura = centro provisório (o recentro abaixo corrige)
+        tx = sign * clamp((lastG - base.g) / RANGE) * MAX;        // inclinar pra direita → círculo vai pra esquerda
+        ty = -clamp((lastB - base.b) / RANGE) * MAX;
         if (!raf) raf = requestAnimationFrame(step);
       }
       function step() {
@@ -140,11 +144,8 @@
         var a = e.accelerationIncludingGravity; nMo++;
         if (got || !a || a.x == null || a.y == null) return;
         var g = Math.asin(clamp(a.x / 9.81)) * 57.2958, b = Math.asin(clamp(a.y / 9.81)) * 57.2958;   // graus, como gamma/beta
-        if (!base) base = { b: b, g: g };
-        tx = clamp((g - base.g) / RANGE) * MAX;                   // no acelerômetro o sinal de x é invertido em relação ao gamma
-        ty = -clamp((b - base.b) / RANGE) * MAX;
-        base.g += (g - base.g) * 0.003; base.b += (b - base.b) * 0.003;
-        if (!raf) raf = requestAnimationFrame(step);
+        lastG = g; lastB = b; sign = 1;                           // no acelerômetro o sinal de x é invertido em relação ao gamma
+        update();
       }
       function onMouse(e) {                                       // computador (sem sensor): o mouse faz o papel da inclinação
         tx = -((e.clientX / window.innerWidth) - 0.5) * 2 * MAX;
@@ -155,13 +156,18 @@
         if (on) return; on = true;
         window.addEventListener('deviceorientation', onTilt);
         window.addEventListener('devicemotion', onMotion);
+        centerT = setInterval(function () {                       // recentra por tempo: ~3s pra o círculo voltar ao meio com o celular parado, em qualquer posição
+          if (!base || lastG == null) return;
+          base.g += (lastG - base.g) * 0.03; base.b += (lastB - base.b) * 0.03;
+          update();
+        }, 100);
         probe = setTimeout(function () {                          // 1,5s sem nenhum dado de sensor? usa o mouse (se houver)
           if (!got && window.matchMedia && matchMedia('(pointer: fine)').matches) window.addEventListener('mousemove', onMouse);
         }, 1500);
       }
       function ask() {
         document.removeEventListener('click', ask, true);
-        DeviceOrientationEvent.requestPermission().then(function (r) { if (r === 'granted') { base = null; start(); } }).catch(function () {});   // base=null: recalibra no 1º dado depois da permissão
+        DeviceOrientationEvent.requestPermission().then(function (r) { if (r === 'granted') { base = null; lastG = null; start(); } }).catch(function () {});   // base=null: recalibra no 1º dado depois da permissão
       }
       var dbgT = 0;
       if (DEBUG) dbgT = setInterval(function () {
@@ -181,7 +187,7 @@
         window.removeEventListener('deviceorientation', onTilt);
         window.removeEventListener('mousemove', onMouse);
         window.removeEventListener('devicemotion', onMotion);
-        clearTimeout(probe);
+        clearTimeout(probe); clearInterval(centerT);
         if (dbg) { clearInterval(dbgT); if (dbg.parentNode) dbg.parentNode.removeChild(dbg); }
         if (raf) cancelAnimationFrame(raf);
         doc.style.removeProperty('--cu-tx'); doc.style.removeProperty('--cu-ty');
