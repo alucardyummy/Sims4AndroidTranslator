@@ -159,7 +159,7 @@
       }
       function ask() {
         document.removeEventListener('click', ask, true);
-        DeviceOrientationEvent.requestPermission().then(function (r) { if (r === 'granted') start(); }).catch(function () {});
+        DeviceOrientationEvent.requestPermission().then(function (r) { if (r === 'granted') { base = null; start(); } }).catch(function () {});   // base=null: recalibra no 1º dado depois da permissão
       }
       var dbgT = 0;
       if (DEBUG) dbgT = setInterval(function () {
@@ -171,9 +171,9 @@
           'motion eventos: ' + nMo + '\n' +
           'tx/ty: ' + cx.toFixed(0) + ' / ' + cy.toFixed(0);
       }, 300);
-      if (typeof DeviceOrientationEvent === 'undefined') start();                                                    // sem a API: ainda tenta devicemotion/mouse
-      else if (typeof DeviceOrientationEvent.requestPermission === 'function') document.addEventListener('click', ask, true);   // iOS
-      else start();
+      start();                                                                                                       // sempre já escuta: se o aparelho libera sozinho, funciona sem toque
+      if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function')
+        document.addEventListener('click', ask, true);                                                               // iOS (e navegadores que pedem permissão): o 1º toque libera o sensor
       return function () {
         document.removeEventListener('click', ask, true);
         window.removeEventListener('deviceorientation', onTilt);
