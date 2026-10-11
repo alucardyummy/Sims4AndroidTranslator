@@ -118,21 +118,21 @@
         document.body.appendChild(dbg);
       }
       if (reduced && !DEBUG) return function () {};
-      var MAX = 45, RANGE = 15, DZ = 2.5, tx = 0, ty = 0, cx = 0, cy = 0, base = null, raf = 0, on = false, got = false, probe = 0, lastG = null, lastB = null, sign = -1, centerT = 0;   // MAX = px de movimento · RANGE = graus de inclinação pra chegar no máximo
+      var MAX = 45, RANGE = 15, DZ = 2.5, tx = 0, ty = 0, cx = 0, cy = 0, base = null, raf = 0, on = false, got = false, probe = 0, lastG = null, lastB = null, sign = 1, centerT = 0;   // MAX = px de movimento · RANGE = graus de inclinação pra chegar no máximo
       function clamp(v) { return Math.max(-1, Math.min(1, v)); }
       function dz(d) { return d > DZ ? d - DZ : d < -DZ ? d + DZ : 0; }   // zona morta: tremidinha da mão (até ~DZ graus) não mexe o círculo
       function onTilt(e) {
         nEv++;
         if (e.gamma == null || e.beta == null) return;
         got = true;
-        lastG = e.gamma; lastB = e.beta; sign = -1;
+        lastG = e.gamma; lastB = e.beta; sign = 1;
         update();
       }
       function update() {                                         // converte (leitura − centro) em deslocamento do círculo
         if (lastG == null) return;
         if (!base) base = { b: lastB, g: lastG };                 // 1ª leitura = centro provisório (o recentro abaixo corrige)
-        tx = sign * clamp(dz(lastG - base.g) / RANGE) * MAX;      // inclinar pra direita → círculo vai pra esquerda
-        ty = -clamp(dz(lastB - base.b) / RANGE) * MAX;
+        tx = sign * clamp(dz(lastG - base.g) / RANGE) * MAX;      // inclinar pra direita → círculo vai pra direita (mesmo lado)
+        ty = clamp(dz(lastB - base.b) / RANGE) * MAX;
         if (!raf) raf = requestAnimationFrame(step);
       }
       function step() {
@@ -145,7 +145,7 @@
         var a = e.accelerationIncludingGravity; nMo++;
         if (got || !a || a.x == null || a.y == null) return;
         var g = Math.asin(clamp(a.x / 9.81)) * 57.2958, b = Math.asin(clamp(a.y / 9.81)) * 57.2958;   // graus, como gamma/beta
-        lastG = g; lastB = b; sign = 1;                           // no acelerômetro o sinal de x é invertido em relação ao gamma
+        lastG = g; lastB = b; sign = -1;                          // no acelerômetro o sinal de x é invertido em relação ao gamma
         update();
       }
       function onMouse(e) {                                       // computador (sem sensor): o mouse faz o papel da inclinação
@@ -172,7 +172,7 @@
       }
       var dbgT = 0;
       if (DEBUG) dbgT = setInterval(function () {
-        dbg.textContent = 'tilt debug v4 (recentro por tempo + zona morta)\n' +
+        dbg.textContent = 'tilt debug v5 (mesmo lado)\n' +
           'desvio (graus): ' + (base && lastG != null ? (lastG - base.g).toFixed(1) + ' / ' + (lastB - base.b).toFixed(1) : '-') + '\n' +
           'https: ' + window.isSecureContext + '\n' +
           'reduzir movimento: ' + reduced + '\n' +
