@@ -1875,7 +1875,7 @@ def my_css():
     payload = {"logged_in": False, "css": ""}
     if user_id:
         conn = get_db()
-        c = conn.cursor()
+        c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)   # dict por nome de coluna (row["custom_css"]); com cursor comum dava TypeError e a rota respondia "não logado"
         css = ""
         try:
             c.execute("SELECT custom_css FROM users WHERE id = %s", (user_id,))
