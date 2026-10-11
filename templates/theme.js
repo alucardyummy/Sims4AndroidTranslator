@@ -110,10 +110,18 @@
        Android/Chrome lê direto; no iPhone o navegador exige um toque antes (pedimos no 1º toque da página).
        Respeita "reduzir movimento" e pausa com a aba escondida. */
     var tiltOff = (function () {
-      if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return function () {};
+      var DEBUG = /[?&]tilt=debug(?:&|$)/.test(location.search), dbg = null, nEv = 0, nMo = 0;
+      var reduced = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+      if (DEBUG) {                                                // ?tilt=debug → caixinha no canto com o que o aparelho está mandando
+        dbg = document.createElement('pre');
+        dbg.style.cssText = 'position:fixed;left:6px;top:6px;z-index:99999;margin:0;padding:6px 8px;font:11px/1.35 monospace;color:#fff;background:rgba(0,0,0,.78);border:1px solid #ffa24a;pointer-events:none;white-space:pre';
+        document.body.appendChild(dbg);
+      }
+      if (reduced && !DEBUG) return function () {};
       var MAX = 70, RANGE = 12, tx = 0, ty = 0, cx = 0, cy = 0, base = null, raf = 0, on = false, got = false, probe = 0;   // MAX = px de movimento · RANGE = graus de inclinação pra chegar no máximo
       function clamp(v) { return Math.max(-1, Math.min(1, v)); }
       function onTilt(e) {
+        nEv++;
         if (e.gamma == null || e.beta == null) return;
         got = true;
         if (!base) base = { b: e.beta, g: e.gamma };            // posição em que a pessoa segura o celular = centro
@@ -127,6 +135,15 @@
         doc.style.setProperty('--cu-ty', cy.toFixed(1) + 'px');
         raf = (Math.abs(tx - cx) > 0.1 || Math.abs(ty - cy) > 0.1) && !document.hidden ? requestAnimationFrame(step) : 0;
       }
+      function onMotion(e) {                                      // plano B: acelerômetro (alguns aparelhos/WebViews não mandam deviceorientation)
+        var a = e.accelerationIncludingGravity; nMo++;
+        if (got || !a || a.x == null || a.y == null) return;
+        var g = Math.asin(clamp(a.x / 9.81)) * 57.2958, b = Math.asin(clamp(a.y / 9.81)) * 57.2958;   // graus, como gamma/beta
+        if (!base) base = { b: b, g: g };
+        tx = clamp((g - base.g) / RANGE) * MAX;                   // no acelerômetro o sinal de x é invertido em relação ao gamma
+        ty = -clamp((b - base.b) / RANGE) * MAX;
+        if (!raf) raf = requestAnimationFrame(step);
+      }
       function onMouse(e) {                                       // computador (sem sensor): o mouse faz o papel da inclinação
         tx = -((e.clientX / window.innerWidth) - 0.5) * 2 * MAX;
         ty = -((e.clientY / window.innerHeight) - 0.5) * 2 * MAX;
@@ -135,6 +152,7 @@
       function start() {
         if (on) return; on = true;
         window.addEventListener('deviceorientation', onTilt);
+        window.addEventListener('devicemotion', onMotion);
         probe = setTimeout(function () {                          // 1,5s sem nenhum dado de sensor? usa o mouse (se houver)
           if (!got && window.matchMedia && matchMedia('(pointer: fine)').matches) window.addEventListener('mousemove', onMouse);
         }, 1500);
@@ -143,14 +161,26 @@
         document.removeEventListener('click', ask, true);
         DeviceOrientationEvent.requestPermission().then(function (r) { if (r === 'granted') start(); }).catch(function () {});
       }
-      if (typeof DeviceOrientationEvent === 'undefined') return function () {};
-      if (typeof DeviceOrientationEvent.requestPermission === 'function') document.addEventListener('click', ask, true);   // iOS
+      var dbgT = 0;
+      if (DEBUG) dbgT = setInterval(function () {
+        dbg.textContent = 'tilt debug\n' +
+          'https: ' + window.isSecureContext + '\n' +
+          'reduzir movimento: ' + reduced + '\n' +
+          'translate no css: ' + (window.CSS && CSS.supports && CSS.supports('translate', '1px')) + '\n' +
+          'orientation eventos: ' + nEv + '\n' +
+          'motion eventos: ' + nMo + '\n' +
+          'tx/ty: ' + cx.toFixed(0) + ' / ' + cy.toFixed(0);
+      }, 300);
+      if (typeof DeviceOrientationEvent === 'undefined') start();                                                    // sem a API: ainda tenta devicemotion/mouse
+      else if (typeof DeviceOrientationEvent.requestPermission === 'function') document.addEventListener('click', ask, true);   // iOS
       else start();
       return function () {
         document.removeEventListener('click', ask, true);
         window.removeEventListener('deviceorientation', onTilt);
         window.removeEventListener('mousemove', onMouse);
+        window.removeEventListener('devicemotion', onMotion);
         clearTimeout(probe);
+        if (dbg) { clearInterval(dbgT); if (dbg.parentNode) dbg.parentNode.removeChild(dbg); }
         if (raf) cancelAnimationFrame(raf);
         doc.style.removeProperty('--cu-tx'); doc.style.removeProperty('--cu-ty');
       };
