@@ -111,13 +111,14 @@
        Respeita "reduzir movimento" e pausa com a aba escondida. */
     var tiltOff = (function () {
       if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return function () {};
-      var MAX = 22, tx = 0, ty = 0, cx = 0, cy = 0, base = null, raf = 0, on = false;
+      var MAX = 70, RANGE = 12, tx = 0, ty = 0, cx = 0, cy = 0, base = null, raf = 0, on = false, got = false, probe = 0;   // MAX = px de movimento · RANGE = graus de inclinação pra chegar no máximo
       function clamp(v) { return Math.max(-1, Math.min(1, v)); }
       function onTilt(e) {
         if (e.gamma == null || e.beta == null) return;
+        got = true;
         if (!base) base = { b: e.beta, g: e.gamma };            // posição em que a pessoa segura o celular = centro
-        tx = -clamp((e.gamma - base.g) / 30) * MAX;               // inclinar pra direita (gamma+) → círculo vai pra esquerda
-        ty = -clamp((e.beta - base.b) / 30) * MAX;
+        tx = -clamp((e.gamma - base.g) / RANGE) * MAX;               // inclinar pra direita (gamma+) → círculo vai pra esquerda
+        ty = -clamp((e.beta - base.b) / RANGE) * MAX;
         if (!raf) raf = requestAnimationFrame(step);
       }
       function step() {
@@ -126,7 +127,18 @@
         doc.style.setProperty('--cu-ty', cy.toFixed(1) + 'px');
         raf = (Math.abs(tx - cx) > 0.1 || Math.abs(ty - cy) > 0.1) && !document.hidden ? requestAnimationFrame(step) : 0;
       }
-      function start() { if (on) return; on = true; window.addEventListener('deviceorientation', onTilt); }
+      function onMouse(e) {                                       // computador (sem sensor): o mouse faz o papel da inclinação
+        tx = -((e.clientX / window.innerWidth) - 0.5) * 2 * MAX;
+        ty = -((e.clientY / window.innerHeight) - 0.5) * 2 * MAX;
+        if (!raf) raf = requestAnimationFrame(step);
+      }
+      function start() {
+        if (on) return; on = true;
+        window.addEventListener('deviceorientation', onTilt);
+        probe = setTimeout(function () {                          // 1,5s sem nenhum dado de sensor? usa o mouse (se houver)
+          if (!got && window.matchMedia && matchMedia('(pointer: fine)').matches) window.addEventListener('mousemove', onMouse);
+        }, 1500);
+      }
       function ask() {
         document.removeEventListener('click', ask, true);
         DeviceOrientationEvent.requestPermission().then(function (r) { if (r === 'granted') start(); }).catch(function () {});
@@ -137,6 +149,8 @@
       return function () {
         document.removeEventListener('click', ask, true);
         window.removeEventListener('deviceorientation', onTilt);
+        window.removeEventListener('mousemove', onMouse);
+        clearTimeout(probe);
         if (raf) cancelAnimationFrame(raf);
         doc.style.removeProperty('--cu-tx'); doc.style.removeProperty('--cu-ty');
       };
