@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guia do CSS personalizado · Sims 4 Translator</title>
+<style>
+:root{--bg:#f6f3fb;--card:#fff;--tx:#2a2238;--mu:#6d6384;--ac:#8a5cf0;--bd:#e3dcf2;--cb:#1f1a2e;--ct:#f1eaff;--ic:#5f9487}
+@media(prefers-color-scheme:dark){:root{--bg:#141020;--card:#1d1730;--tx:#efe9fb;--mu:#a99ec4;--ac:#b79bff;--bd:#322950;--cb:#0f0b1a;--ic:#9cb8b2}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+main{max-width:720px;margin:0 auto;padding:20px 16px 80px}
+h1{font-size:26px;line-height:1.2;margin:.4em 0 .2em}
+h2{font-size:20px;margin:2em 0 .5em;padding-top:.6em;border-top:2px dashed var(--bd);color:var(--ac)}
+h3{font-size:16px;margin:1.4em 0 .3em}
+p,li{margin:.5em 0}
+.sub{color:var(--mu);margin-top:0}
+.box{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:12px 14px;margin:14px 0}
+.tip{border-left:4px solid var(--ac)}
+.warn{border-left:4px solid #e5565b}
+code{background:var(--cb);color:var(--ct);padding:1px 6px;border-radius:6px;font-size:.9em}
+pre{position:relative;background:var(--cb);color:var(--ct);padding:12px;border-radius:12px;overflow-x:auto;font-size:13px;line-height:1.5;margin:10px 0}
+pre code{background:none;padding:0}
+pre button{position:absolute;top:6px;right:6px;border:0;border-radius:8px;background:var(--ac);color:#fff;font-size:11px;padding:3px 9px;cursor:pointer}
+dl{margin:8px 0}dt{margin-top:.6em}dt code{font-weight:700}dd{margin:0 0 0 12px;color:var(--mu)}
+nav a{color:var(--ac)}
+.i{width:1.25em;height:1.25em;vertical-align:-.3em}
+h1 .i{width:1.1em;height:1.1em;margin-right:.15em}nav{columns:2;font-size:14px}
+</style>
+</head>
+<body>
+<main>
+
+<h1><svg class="i" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M12 3C6.9 3 3 7 3 12.2 3 17.3 7 21 12 21c1.6 0 2.4-.9 2.4-2 0-1.4-1.1-1.7-1.1-2.9 0-1.1.9-1.9 2.1-1.9H18c1.7 0 3-1.3 3-3C21 6.7 17 3 12 3z" fill="#9cb8b2"/><circle cx="8" cy="12" r="1.5" fill="#cfe3dd"/><circle cx="11.6" cy="7.7" r="1.5" fill="#5f877c"/><circle cx="16.2" cy="9" r="1.5" fill="#cfe3dd"/><circle cx="8.8" cy="16" r="1.5" fill="#7fa59b"/><ellipse cx="6.4" cy="8.8" rx="1" ry="2.2" transform="rotate(35 6.4 8.8)" fill="#fff" opacity=".4"/></svg> Guia do CSS personalizado</h1>
+<p class="sub">Pra mudar o visual do site do seu jeitinho. Explicado tão simples que até o papa consegue (e olha que ele nem tem tempo, kkkk).</p>
+
+<nav>
+<a href="#o-que">1. O que é isso?</a><br>
+<a href="#onde">2. Onde eu colo?</a><br>
+<a href="#receita">3. Como o CSS é escrito</a><br>
+<a href="#cores">4. Cores</a><br>
+<a href="#var">5. Variáveis mágicas</a><br>
+<a href="#telas">6. Mirando numa tela</a><br>
+<a href="#home">7. Mapa da Home</a><br>
+<a href="#janelas">8. Janelas e avisos</a><br>
+<a href="#outras">9. Info, Editor, Mesclar, Criar</a><br>
+<a href="#truques">10. Truques</a><br>
+<a href="#prontos">11. Receitas prontas</a><br>
+<a href="#ruim">12. Deu ruim?</a>
+</nav>
+
+<h2 id="o-que">1. O que é isso?</h2>
+<p>Imagina o site como uma <b>casa</b>. O CSS é a <b>tinta e o pincel</b>: ele não muda onde ficam as portas, só a cor das paredes, o tamanho dos móveis e esse tipo de coisa. Ou seja: <b>você só muda a aparência</b>, não tem como estragar o site. <svg class="i" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><circle cx="6.4" cy="6.6" r="2.6" fill="#7fa59b"/><circle cx="17.6" cy="6.6" r="2.6" fill="#7fa59b"/><circle cx="6.4" cy="6.6" r="1.2" fill="#cfe3dd"/><circle cx="17.6" cy="6.6" r="1.2" fill="#cfe3dd"/><circle cx="12" cy="13" r="7.5" fill="#9cb8b2"/><ellipse cx="12" cy="15.3" rx="3.2" ry="2.4" fill="#cfe3dd"/><circle cx="9" cy="11.8" r=".95" fill="#46695f"/><circle cx="15" cy="11.8" r=".95" fill="#46695f"/><ellipse cx="12" cy="14.2" rx="1.1" ry=".75" fill="#5f877c"/><path d="M10.6 16.3q1.4 1 2.8 0" stroke="#5f877c" stroke-width="1" fill="none" stroke-linecap="round"/><ellipse cx="8.6" cy="8.8" rx="1.6" ry="1" transform="rotate(-30 8.6 8.8)" fill="#fff" opacity=".4"/></svg></p>
+<p>O que você escreve vale <b>só pra você</b> (ninguém mais vê) e funciona em todas as telas e em todos os aparelhos em que você entrar na sua conta.</p>
+
+<h2 id="onde">2. Onde eu colo?</h2>
+<ol>
+<li>Entre na sua conta (o CSS personalizado <b>só aparece pra quem está logado</b>).</li>
+<li>Na home, toque na <b>bolinha do perfil</b> (canto de cima).</li>
+<li>Abra a seção <b>“CSS personalizado”</b> e cole o seu CSS na caixa.</li>
+<li><b>Aplicar</b> = só uma prévia, pra espiar. Se recarregar a página, <b>ela some</b>. <svg class="i" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M5 20.5V11a7 7 0 0 1 14 0v9.5l-2.35-1.9-2.35 1.9L12 18.6l-2.3 1.9-2.35-1.9z" fill="#9cb8b2"/><path d="M7.5 12a4.6 4.6 0 0 1 3-4.3" stroke="#fff" opacity=".5" stroke-width="1.3" fill="none" stroke-linecap="round"/><ellipse cx="9.6" cy="11" rx=".9" ry="1.3" fill="#46695f"/><ellipse cx="14.4" cy="11" rx=".9" ry="1.3" fill="#46695f"/><ellipse cx="12" cy="14" rx=".9" ry="1.1" fill="#5f877c"/><circle cx="7.9" cy="13.4" r="1" fill="#cfe3dd" opacity=".85"/><circle cx="16.1" cy="13.4" r="1" fill="#cfe3dd" opacity=".85"/></svg></li>
+<li><b>Salvar CSS</b> = guarda de verdade. Apareceu <i>“CSS salvo!”</i>? Pronto.</li>
+<li><b>Copiar</b> copia o texto. <b>Restaurar padrão</b> apaga tudo e o site volta ao normal.</li>
+</ol>
+<div class="box warn"><b>Importante:</b> Aplicar não é Salvar! Gostou do resultado? Aperte <b>Salvar CSS</b>, senão ele some quando você recarregar.</div>
+<div class="box tip">Máximo de <b>20.000 caracteres</b> (a caixa mostra a contagem). E cole só CSS de gente em quem você confia.</div>
+
+<h2 id="receita">3. Como o CSS é escrito</h2>
+<p>Todo pedacinho de CSS é uma frase assim:</p>
+<pre><code>QUEM {
+  O QUE MUDAR: COMO;
+}</code></pre>
+<p>Tipo: “<i>o botão grande</i> { <i>cor do texto</i>: <i>rosa</i>; }”. Na linguagem do site:</p>
+<pre><code>.btn-new {
+  color: hotpink;
+}</code></pre>
+<p>Dá pra mudar várias coisas de uma vez, uma por linha, e <b>sempre terminando com ponto e vírgula</b> <code>;</code> (esquecer ele é o erro mais comum!). Tudo que fica entre <code>/* e */</code> é comentário: o site ignora, é só um bilhetinho seu.</p>
+
+<h3>As propriedades mais usadas</h3>
+<dl>
+<dt><code>color</code></dt><dd>cor do texto</dd>
+<dt><code>background</code></dt><dd>cor (ou degradê, ou imagem) do fundo</dd>
+<dt><code>border</code></dt><dd>a bordinha. Ex.: <code>1px solid pink</code> (grossura, tipo, cor)</dd>
+<dt><code>border-radius</code></dt><dd>quão redondo são os cantos. <code>0</code> = quadrado, <code>999px</code> = pílula</dd>
+<dt><code>font-size</code></dt><dd>tamanho da letra. Ex.: <code>18px</code></dd>
+<dt><code>font-family</code></dt><dd>o tipo de letra. Ex.: <code>Georgia, serif</code></dd>
+<dt><code>opacity</code></dt><dd>transparência: <code>1</code> normal, <code>0.5</code> meio apagado, <code>0</code> invisível</dd>
+<dt><code>display: none</code></dt><dd>esconde a coisa (como se ela nunca tivesse existido)</dd>
+<dt><code>padding</code> e <code>margin</code></dt><dd>espaço por dentro e por fora da coisa</dd>
+</dl>
+
+<h2 id="cores">4. Cores</h2>
+<p>Dá pra escrever a cor de três jeitos (todos funcionam em qualquer lugar):</p>
+<dl>
+<dt>Por nome</dt><dd><code>red</code>, <code>hotpink</code>, <code>gold</code>, <code>teal</code>…</dd>
+<dt>Por código</dt><dd><code>#ff4fa3</code>. Pesquise “seletor de cor” no Google, escolha a cor e copie o código.</dd>
+<dt>Com transparência</dt><dd><code>rgba(255, 79, 163, 0.3)</code>: os três primeiros são vermelho, verde e azul (0 a 255); o último é a transparência (0 a 1).</dd>
+</dl>
+<p>Degradê (duas cores se misturando): <code>background: linear-gradient(135deg, #ff4fa3, #35e0ff);</code></p>
+
+<h2 id="var">5. Variáveis mágicas <svg class="i" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M10.5 4l1.9 5.4 5.4 1.9-5.4 1.9-1.9 5.4-1.9-5.4-5.4-1.9 5.4-1.9z" fill="#9cb8b2"/><path d="M10.5 6.8l1 2.8 2.8 1-2.8 1-1 2.8-1-2.8-2.8-1 2.8-1z" fill="#cfe3dd" opacity=".85"/><path d="M18.5 14.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z" fill="#7fa59b"/><circle cx="18" cy="5" r="1.2" fill="#cfe3dd"/></svg> (o jeito mais fácil!)</h2>
+<p>O site tem uns “botões de cor” escondidos chamados <b>variáveis</b>. Mudou uma, mudou o site <b>inteiro</b> de uma vez. É o truque mais poderoso, então comece por aqui:</p>
+<pre><code>:root {
+  --accent: #ff4fa3;
+}</code></pre>
+<p>Isso troca a cor de destaque em todas as telas. <svg class="i" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M3.8 20.2l3.4-10.8 7.4 7.4z" fill="#9cb8b2"/><path d="M5.3 15.3l4.2 4.2M6.9 11.4l6 6" stroke="#7fa59b" stroke-width="1.3" stroke-linecap="round" fill="none"/><path d="M5.6 18l1.9-5.2" stroke="#fff" opacity=".45" stroke-width="1.1" stroke-linecap="round"/><circle cx="14" cy="6" r="1.2" fill="#7fa59b"/><rect x="17.2" y="9" width="2.6" height="1.6" rx=".6" transform="rotate(30 18.5 9.8)" fill="#cfe3dd"/><circle cx="19" cy="14.5" r="1" fill="#9cb8b2"/><path d="M10.5 3l.6 1.5 1.5.6-1.5.6-.6 1.5-.6-1.5-1.5-.6 1.5-.6z" fill="#cfe3dd"/><path d="M15 11c1.4-1 3-.8 4.2.2" stroke="#7fa59b" stroke-width="1.2" stroke-linecap="round" fill="none"/></svg> As variáveis são:</p>
+<dl>
+<dt><code>--bg</code></dt><dd>cor de fundo das telas</dd>
+<dt><code>--surface</code></dt><dd>fundo de cartões, caixas e botões</dd>
+<dt><code>--surface2</code></dt><dd>fundo de caixas mais “fundas” (campos, linhas)</dd>
+<dt><code>--surface3</code></dt><dd>fundo de áreas extras (tela Criar)</dd>
+<dt><code>--border</code>, <code>--border2</code>, <code>--border3</code></dt><dd>cores das bordinhas (da mais fraca à mais forte)</dd>
+<dt><code>--accent</code></dt><dd>cor de destaque: títulos, ícones, números, links</dd>
+<dt><code>--accent-dim</code></dt><dd>destaque mais escuro (botões, quando você aperta)</dd>
+<dt><code>--accent-faint</code></dt><dd>destaque bem clarinho (fundos suaves)</dd>
+<dt><code>--text</code></dt><dd>cor do texto principal</dd>
+<dt><code>--text-muted</code></dt><dd>cor do texto de apoio (as letrinhas menores)</dd>
+<dt><code>--text-dim</code></dt><dd>cor do texto bem discreto</dd>
+<dt><code>--danger</code></dt><dd>vermelho de erro e de apagar</dd>
+<dt><code>--radius</code>, <code>--radius-sm</code>, <code>--radius-xs</code></dt><dd>quão redondos são os cantos (grande, médio, pequeno)</dd>
+</dl>
+<div class="box tip"><b>Detalhe:</b> a home é <b>clarinha</b> por padrão (verde-água) e as outras telas são <b>escuras</b>. Por isso a mesma variável pode ter “cor de partida” diferente em cada uma. Se quiser mudar uma tela só, veja a próxima seção.</div>
+
+<h2 id="telas">6. Mirando numa tela só</h2>
+<p>Cada tela tem um nome secreto. Pra mirar nela, escreva <code>[data-page="nome"]</code> antes do resto:</p>
+<dl>
+<dt><code>index</code></dt><dd>a Home</dd>
+<dt><code>info</code></dt><dd>a tela de detalhes do .package (antes de começar a traduzir)</dd>
+<dt><code>editor</code></dt><dd>o Editor (onde se traduz)</dd>
+<dt><code>merge</code></dt><dd>Mesclar .packages</dd>
+<dt><code>create</code></dt><dd>Criar mod do zero</dd>
+</dl>
+<pre><code>/* botão salvar do editor fica verde, só lá */
+[data-page="editor"] .save-btn {
+  background: green;
+  color: white;
+}
+
+/* variável só na Home */
+html[data-page="index"] {
+  --accent: orange;
+}</code></pre>
+<p>Dá pra mirar também num <b>tema pronto</b> (os da paleta <svg class="i" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M12 3C6.9 3 3 7 3 12.2 3 17.3 7 21 12 21c1.6 0 2.4-.9 2.4-2 0-1.4-1.1-1.7-1.1-2.9 0-1.1.9-1.9 2.1-1.9H18c1.7 0 3-1.3 3-3C21 6.7 17 3 12 3z" fill="#9cb8b2"/><circle cx="8" cy="12" r="1.5" fill="#cfe3dd"/><circle cx="11.6" cy="7.7" r="1.5" fill="#5f877c"/><circle cx="16.2" cy="9" r="1.5" fill="#cfe3dd"/><circle cx="8.8" cy="16" r="1.5" fill="#7fa59b"/><ellipse cx="6.4" cy="8.8" rx="1" ry="2.2" transform="rotate(35 6.4 8.8)" fill="#fff" opacity=".4"/></svg>), com <code>[data-theme="cult"]</code>, por exemplo.</p>
+
+<h2 id="home">7. Mapa da Home <svg class="i" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M3 7l6-2.2v14.2l-6 2.2z" fill="#cfe3dd"/><path d="M9 4.8l6 2.2v14.2l-6-2.2z" fill="#9cb8b2"/><path d="M15 7l6-2.2v14.2l-6 2.2z" fill="#7fa59b"/><path d="M12 8.3c-1.7 0-2.8 1.3-2.8 2.7 0 1.8 2.8 4.2 2.8 4.2s2.8-2.4 2.8-4.2c0-1.4-1.1-2.7-2.8-2.7z" fill="#5f877c"/><circle cx="12" cy="11" r="1" fill="#cfe3dd"/></svg></h2>
+<p>Cada pedaço da tela tem um nome. É só colocar um ponto na frente: <code>.title</code>, <code>.btn-new</code>… Na Home, use <code>html[data-page="index"] .nome</code> (e <code>!important</code> se não pegar, veja a seção 12).</p>
+<dl>
+<dt><code>.screen</code></dt><dd>a tela inteira da Home</dd>
+<dt><code>.topbar</code></dt><dd>a barrinha de cima</dd>
+<dt><code>.profile-circle</code></dt><dd>bolinha da foto do perfil</dd>
+<dt><code>.greeting</code></dt><dd>a saudação ao lado do perfil (“Eita”, “Oi”…)</dd>
+<dt><code>.theme-btn</code></dt><dd>o botão da paleta de tinta (temas)</dd>
+<dt><code>.bell-btn</code></dt><dd>o sininho de novidades</dd>
+<dt><code>.title</code></dt><dd>o título “SIMS 4 TRANSLATOR”. Ele tem um degradê no texto: pra trocar a cor use <code>-webkit-text-fill-color: red !important;</code></dd>
+<dt><code>.subtitle</code></dt><dd>a frase “Tradução de mods .package”</dd>
+<dt><code>.btn-new</code></dt><dd>o botão grande “+” (escolher .package)</dd>
+<dt><code>.btn-merge</code></dt><dd>o botão “Mesclar vários .packages”</dd>
+<dt><code>.btn-create</code></dt><dd>o botão “Criar mod do zero”</dd>
+<dt><code>.hint</code></dt><dd>o textinho de dica embaixo dos botões</dd>
+<dt><code>.mascot-divider</code></dt><dd>o mascotinho que separa as seções</dd>
+<dt><code>.saves-label</code></dt><dd>o rótulo “Traduções salvas”</dd>
+<dt><code>.save-item</code></dt><dd>cada cartãozinho de tradução salva</dd>
+<dt><code>.save-title</code></dt><dd>o nome do arquivo dentro do cartão</dd>
+<dt><code>.save-meta</code></dt><dd>a linha “ENG_US → POR_BR”</dd>
+<dt><code>.btn-icon</code></dt><dd>os botões “editar” e a lixeira (<code>.btn-icon.delete</code> é só a lixeira)</dd>
+<dt><code>.sel-circle</code></dt><dd>a bolinha de selecionar (modo seleção); <code>.save-item.selected</code> é o cartão selecionado</dd>
+<dt><code>.select-topbar</code></dt><dd>a barra que aparece no modo seleção (“0 selecionados”)</dd>
+<dt><code>.draft-banner</code></dt><dd>o aviso “Você tem uma tradução não salva”</dd>
+<dt><code>.skeleton-item</code> e <code>.sk-line</code></dt><dd>os blocos cinzinhas que aparecem enquanto carrega</dd>
+<dt><code>.version</code></dt><dd>o selinho “v1.0 · MIT…” no rodapé</dd>
+<dt><code>.github-badge</code></dt><dd>o ícone do GitHub</dd>
+<dt><code>.error-msg</code></dt><dd>a mensagem de erro vermelha</dd>
+</dl>
+<pre><code>html[data-page="index"] .btn-new {
+  background: hotpink !important;
+  border-radius: 999px !important;
+}</code></pre>
+
+<h2 id="janelas">8. Janelas e avisos <svg class="i" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><rect x="3" y="4.5" width="18" height="15" rx="3.2" fill="#9cb8b2"/><path d="M3 9.3V7.7a3.2 3.2 0 0 1 3.2-3.2h11.6A3.2 3.2 0 0 1 21 7.7v1.6z" fill="#7fa59b"/><circle cx="6.2" cy="6.9" r=".8" fill="#cfe3dd"/><circle cx="8.6" cy="6.9" r=".8" fill="#cfe3dd"/><rect x="6" y="12" width="12" height="1.6" rx=".8" fill="#cfe3dd"/><rect x="6" y="15.2" width="7.5" height="1.6" rx=".8" fill="#cfe3dd" opacity=".6"/></svg></h2>
+<p>As janelinhas que abrem por cima (perfil, entrar, temas, novidades…) usam as mesmas peças. Mudando uma, mudam <b>todas</b>:</p>
+<dl>
+<dt><code>.modal-overlay</code></dt><dd>o fundo escuro atrás da janela</dd>
+<dt><code>.modal-box</code></dt><dd>a janela em si (o “papel”)</dd>
+<dt><code>.modal-title</code></dt><dd>o título da janela</dd>
+<dt><code>.modal-close</code></dt><dd>o ✕ de fechar</dd>
+<dt><code>.form-input</code></dt><dd>campos onde se digita (e o <code>label</code> acima deles)</dd>
+<dt><code>.modal-btn</code></dt><dd>o botão principal (“ENTRAR”, “SALVAR ALTERAÇÕES”)</dd>
+<dt><code>.google-btn</code></dt><dd>o botão “Entrar com Google”</dd>
+<dt><code>.switch</code> / <code>.switch-slider</code></dt><dd>os interruptores de liga/desliga</dd>
+<dt><code>.theme-card</code></dt><dd>cada cartão de tema na janela da paleta</dd>
+<dt><code>.update-item</code></dt><dd>cada novidade na lista de novidades</dd>
+<dt><code>.alert-box</code>, <code>.alert-msg</code>, <code>.alert-btn</code></dt><dd>os avisinhos de “OK / Tem certeza?”</dd>
+<dt><code>.css-box</code>, <code>.css-area</code>, <code>.css-btn</code></dt><dd>a própria caixa do CSS personalizado (sim, dá pra pintar ela também <svg class="i" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="#9cb8b2"/><path d="M8.1 10.7q.9-1.1 1.8 0M14.1 10.7q.9-1.1 1.8 0" stroke="#46695f" stroke-width="1.4" fill="none" stroke-linecap="round"/><path d="M8.4 13.8q3.6 3.8 7.2 0z" fill="#5f877c"/><circle cx="7.3" cy="13.4" r="1.1" fill="#cfe3dd" opacity=".85"/><circle cx="16.7" cy="13.4" r="1.1" fill="#cfe3dd" opacity=".85"/><ellipse cx="8" cy="7.2" rx="2" ry="1.1" transform="rotate(-35 8 7.2)" fill="#fff" opacity=".4"/></svg>)</dd>
+</dl>
+<p>Em <b>todas as telas</b> também existem:</p>
+<dl>
+<dt><code>.toast</code></dt><dd>o avisinho que aparece rapidinho embaixo (<code>.toast.success</code> verde, <code>.toast.error</code> vermelho)</dd>
+<dt><code>.loading-overlay</code></dt><dd>a tela de carregamento; <code>.loading-phrase</code> são as frases que ficam trocando</dd>
+</dl>
+<pre><code>.modal-box {
+  background: #1f1433 !important;
+  border: 2px solid hotpink !important;
+}
+.modal-title { color: hotpink !important; }</code></pre>
+
+<h2 id="outras">9. Info, Editor, Mesclar e Criar <svg class="i" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="#cfe3dd" fill-opacity=".75" stroke="#5f877c" stroke-width="1.8"/><path d="M15.4 15.4l4.9 4.9" stroke="#7fa59b" stroke-width="3.2" stroke-linecap="round"/><path d="M7.4 9.2A3.4 3.4 0 0 1 10 7" stroke="#fff" stroke-width="1.4" stroke-linecap="round" fill="none" opacity=".85"/></svg></h2>
+<p>Agora o passeio guiado: vamos descendo cada tela de cima pra baixo, dizendo o nome de cada pedaço. Todas essas telas têm em comum: <code>.topbar</code> (barra de cima), <code>.back-btn</code> (a setinha ←), <code>.topbar-title</code> (o título ao lado dela), <code>.section-label</code> (os rótulos cinzinhas tipo “DETALHES”) e <code>.separator</code> (a linha que separa). Pra mudar só uma tela, comece com <code>[data-page="..."]</code>.</p>
+
+<h3><svg class="i" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" fill="#cfe3dd"/><path d="M14 3v3.5A1.5 1.5 0 0 0 15.5 8H19z" fill="#9cb8b2"/><path d="M8.5 12.5h7M8.5 15.5h7M8.5 18h4" stroke="#7fa59b" stroke-width="1.3" stroke-linecap="round" fill="none"/></svg> Info <code>[data-page="info"]</code></h3>
+<p>É a tela que aparece depois de escolher um .package, antes de começar a traduzir.</p>
+<dl>
+<dt>Topo</dt><dd><code>.topbar-title</code> é o nome do arquivo (“DEVIOUSDESIRES.PACKAGE”).</dd>
+<dt>“DETALHES”</dt><dd>é um <code>.section-label</code>. As três caixinhas lado a lado ficam dentro de <code>.three-cols</code>, e cada uma é um <code>.info-block</code>, com o nome em cima (<code>.block-label</code>: “INSTANCE”, “GROUP”) e o valor embaixo (<code>.block-value</code>).</dd>
+<dt>Caixinha do meio</dt><dd>“LÍNGUA DESTINO” tem o botão <code>.lang-btn</code> (“POR_BR ▾”) e a dica <code>.lang-hint</code> (“toque p/ escolher”). Ao tocar abre a gaveta <code>.lang-sheet</code>, com as opções em <code>.lang-option</code>.</dd>
+<dt>Embaixo</dt><dd>o botão <code>.start-btn</code> (“COMEÇAR →”).</dd>
+</dl>
+<pre><code>[data-page="info"] .info-block { background: #2a1a45; border-radius: 24px; }
+[data-page="info"] .start-btn { background: hotpink; color: #fff; }</code></pre>
+
+<h3><svg class="i" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M5.2 18.8l.9-3.7 9.6-9.6 3 3-9.6 9.6z" fill="#9cb8b2"/><path d="M15.7 5.5l1.1-1.1a1.5 1.5 0 0 1 2.1 0l.7.7a1.5 1.5 0 0 1 0 2.1l-1.1 1.1z" fill="#7fa59b"/><path d="M5.2 18.8l.9-3.7 2.8 2.8z" fill="#cfe3dd"/><path d="M5.2 18.8l.5-1.9 1.4 1.4z" fill="#5f877c"/><path d="M8.2 14.6l6.6-6.6" stroke="#fff" opacity=".45" stroke-width="1.2" stroke-linecap="round"/></svg> Editor <code>[data-page="editor"]</code></h3>
+<p><b>Barra de cima</b> (da esquerda pra direita):</p>
+<dl>
+<dt><code>.topbar-title</code> e <code>.topbar-sub</code></dt><dd>“Editor” e o “POR_BR → POR_BR” embaixo dele</dd>
+<dt><code>.undo-btn</code></dt><dd>desfazer e refazer (↶ ↷)</dd>
+<dt><code>.focus-toggle-btn</code></dt><dd>a bolinha do olho (modo foco). Ligada ela ganha <code>.focus-on</code></dd>
+<dt><code>.timer-badge</code> e <code>.count-badge</code></dt><dd>o relógio “0:02” e o “0/14” (quantas já foram traduzidas)</dd>
+<dt><code>.save-progress-btn</code></dt><dd>o ↻ e o ✓ do canto</dd>
+</dl>
+<p><b>Busca e filtros:</b> <code>.search-input</code> (“Buscar por key…”), <code>.filter-toggle-row</code> (“Filtrar por ▼”), <code>.filter-bar</code> (a faixa toda) e <code>.col-header</code> (“ORIGINAL” e “TRADUÇÃO”).</p>
+<p><b>Cada linha</b> é um <code>.string-row</code>:</p>
+<dl>
+<dt><code>.row-num</code> e <code>.key-hex</code></dt><dd>o número (1, 2, 3…) e o código (“0xed218d42”) acima dela</dd>
+<dt><code>.original-text</code></dt><dd>a caixa do texto original (em itálico), à esquerda. O texto em si é <code>.original-text-inner</code>, e o botãozinho de copiar dentro dela é o <code>.copy-btn</code></dd>
+<dt><code>.edit-textarea</code></dt><dd>a caixa onde você escreve a tradução, à direita</dd>
+<dt><code>.fav-btn</code></dt><dd>a estrelinha <svg class="i" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9z" fill="#9cb8b2" stroke="#7fa59b" stroke-width="1" stroke-linejoin="round"/><path d="M12 6.2l1.4 3 3.2.5" stroke="#fff" opacity=".5" stroke-width="1.2" fill="none" stroke-linecap="round"/></svg> (acesa = <code>.fav-btn.active</code>)</dd>
+<dt><code>.expand-arrow-btn</code></dt><dd>a setinha ▾ que aumenta a caixa</dd>
+<dt><code>.kebab-btn</code></dt><dd>os três pontinhos ⋮ (o menu que abre é o <code>.kebab-menu</code>)</dd>
+<dt><code>.ph</code> e <code>.ph-unclosed</code></dt><dd>os trechos com <code>{ }</code>. Quando a chave fica aberta (sem fechar), o texto fica amarelo; é o <code>.ph-unclosed</code></dd>
+</dl>
+<p><b>Barra de baixo</b> (<code>.bottom-bar</code>): “Nome:” + <code>.filename-input</code> + “.package”; a linha “<svg class="i" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M18.60 12.00L20.90 12.00" stroke="#9cb8b2" stroke-width="3.1" stroke-linecap="round"/><path d="M16.67 16.67L18.29 18.29" stroke="#9cb8b2" stroke-width="3.1" stroke-linecap="round"/><path d="M12.00 18.60L12.00 20.90" stroke="#9cb8b2" stroke-width="3.1" stroke-linecap="round"/><path d="M7.33 16.67L5.71 18.29" stroke="#9cb8b2" stroke-width="3.1" stroke-linecap="round"/><path d="M5.40 12.00L3.10 12.00" stroke="#9cb8b2" stroke-width="3.1" stroke-linecap="round"/><path d="M7.33 7.33L5.71 5.71" stroke="#9cb8b2" stroke-width="3.1" stroke-linecap="round"/><path d="M12.00 5.40L12.00 3.10" stroke="#9cb8b2" stroke-width="3.1" stroke-linecap="round"/><path d="M16.67 7.33L18.29 5.71" stroke="#9cb8b2" stroke-width="3.1" stroke-linecap="round"/><path fill-rule="evenodd" d="M12 5.4a6.6 6.6 0 1 0 0 13.2 6.6 6.6 0 0 0 0-13.2zm0 4a2.6 2.6 0 1 1 0 5.2 2.6 2.6 0 0 1 0-5.2z" fill="#9cb8b2"/><path d="M7.4 9.2A5.2 5.2 0 0 1 10 7" stroke="#fff" opacity=".5" stroke-width="1.2" stroke-linecap="round" fill="none"/></svg> Alterar instância base” (<code>.instance-toggle-row</code>); e os botões <code>.import-btn</code> (⇄ e ◈), <code>.json-mode-btn</code> (JSON) e <code>.save-btn</code> (“SALVAR PACKAGE”).</p>
+<pre><code>[data-page="editor"] .string-row { border-bottom: 1px solid hotpink; }
+[data-page="editor"] .edit-textarea { font-size: 17px; }
+[data-page="editor"] .fav-btn.active { color: gold; }</code></pre>
+
+<h3><svg class="i" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M9 4a2 2 0 1 1 4 0v2h4a1 1 0 0 1 1 1v4h-2a2 2 0 1 0 0 4h2v4a1 1 0 0 1-1 1h-4v-2a2 2 0 1 0-4 0v2H5a1 1 0 0 1-1-1v-4h2a2 2 0 1 0 0-4H4V7a1 1 0 0 1 1-1h4z" fill="#9cb8b2" stroke="#7fa59b" stroke-width="1" stroke-linejoin="round"/><ellipse cx="7.6" cy="8.4" rx="1.6" ry=".9" fill="#fff" opacity=".4"/><circle cx="15.5" cy="17" r="1" fill="#cfe3dd"/></svg> Mesclar <code>[data-page="merge"]</code></h3>
+<dl>
+<dt><code>.mode-tabs</code></dt><dd>o conjunto das 3 opções (Mesclar rapidinho / com memória / Separar). Cada uma é um <code>.mode-tab</code>; a escolhida ganha <code>.selected</code></dd>
+<dt>Dentro de cada aba</dt><dd><code>.mode-tab-title</code> (o título), <code>.dot</code> (a bolinha, cheia quando selecionada) e <code>.mode-tab-sub</code> (a explicaçãozinha cinza)</dd>
+<dt><code>.drop-zone</code></dt><dd>a caixa tracejada “SELECIONAR ARQUIVOS” (com <code>.drop-zone-icon</code>, <code>.drop-zone-label</code> e <code>.drop-zone-sub</code>). Quando já tem arquivo, ela vira <code>.drop-zone.has-files</code> (e as bordas ficam verdinhas)</dd>
+<dt><code>.search-wrap</code></dt><dd>o campo “Buscar arquivo…” (só aparece depois de adicionar arquivos), com <code>.search-icon</code> e <code>.search-input</code></dd>
+<dt><code>.file-item</code></dt><dd>cada arquivo da lista, com <code>.file-item-index</code> (o número), <code>.file-item-name</code>, <code>.file-item-size</code> (“42.4 MB”) e <code>.file-item-remove</code> (o ✕)</dd>
+<dt><code>.file-count</code></dt><dd>o “2 arquivos · ~84.37 MB”</dd>
+<dt><code>.merge-btn</code></dt><dd>o botão “MESCLAR E BAIXAR”. Sem arquivos ele fica apagadinho: é o <code>.merge-btn:disabled</code></dd>
+</dl>
+<pre><code>[data-page="merge"] .mode-tab.selected { border-color: hotpink; }
+[data-page="merge"] .merge-btn { background: hotpink; }
+[data-page="merge"] .merge-btn:disabled { opacity: .4; }</code></pre>
+
+<h3><svg class="i" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5 5L4 17l3 3 5.7-5.7a4 4 0 0 0 5-5l-2.6 2.6-2.4-.6-.6-2.4z" fill="#9cb8b2" stroke="#7fa59b" stroke-width="1" stroke-linejoin="round"/><circle cx="6.8" cy="17.2" r="1" fill="#cfe3dd"/><path d="M10.5 12.8l-4 4" stroke="#fff" opacity=".4" stroke-width="1.2" stroke-linecap="round"/></svg> Criar mod <code>[data-page="create"]</code></h3>
+<dl>
+<dt><code>.section-label</code></dt><dd>“IDENTIFICAÇÃO DO MOD”, “TRAÇOS DE PERSONALIDADE”, “INTERAÇÕES SOCIAIS”</dd>
+<dt><code>.namespace-block</code></dt><dd>o cartão grande de cima. Dentro, cada campo é um <code>.field</code> com <code>.field-label</code> (“NAMESPACE”) e a caixa de digitar. Os campos ficam em <code>.field input</code>, <code>.field textarea</code> e <code>.field select</code> (esse último é o “IDIOMA DAS STRINGS”)</dd>
+<dt><code>.ns-hint</code> e <code>.ns-preview</code></dt><dd>a dica cinza e o exemplo em verde (“meu_mod:trait_nome”)</dd>
+<dt><code>.add-btn</code></dt><dd>os botões tracejados “+ Adicionar traço” e “+ Adicionar interação”</dd>
+<dt><code>.card</code></dt><dd>cada traço ou interação que você adiciona. Aberto vira <code>.card.expanded</code>. Partes: <code>.card-header</code> (a faixa de cima), <code>.card-index</code> (o “1”), <code>.card-title</code> (“Traço sem nome”, e <code>.card-title.placeholder</code> enquanto não tem nome), <code>.card-chevron</code> (a setinha ▴) e <code>.card-remove</code> (o ✕); o miolo é o <code>.card-body</code></dd>
+<dt><code>.chip-group</code> e <code>.chip</code></dt><dd>as “pílulas” de escolher (Personalidade, Bônus…, Teen+, Todas…). A escolhida é <code>.chip.active</code></dd>
+<dt><code>.toggle</code></dt><dd>os interruptores de liga/desliga (<code>.toggle-slider</code> é a bolinha)</dd>
+<dt><code>.action-bar</code></dt><dd>a barra de baixo, com <code>.btn-preview</code> (“Verificar”) e <code>.btn-build</code> (“GERAR .PACKAGE →”)</dd>
+</dl>
+<pre><code>[data-page="create"] .chip.active { background: hotpink; color: #fff; }
+[data-page="create"] .card { border-radius: 30px; }
+[data-page="create"] .btn-build { background: linear-gradient(135deg, hotpink, #7a3cff); }</code></pre>
+
+<h2 id="truques">10. Truques fáceis <svg class="i" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4.5 19.5l11-11" stroke="#7fa59b" stroke-width="3.4" stroke-linecap="round"/><path d="M4.5 19.5l3-3" stroke="#cfe3dd" stroke-width="3.4" stroke-linecap="round"/><path d="M17.5 2.5l1.1 2.9 2.9 1.1-2.9 1.1-1.1 2.9-1.1-2.9-2.9-1.1 2.9-1.1z" fill="#9cb8b2"/><path d="M17.5 4.6l.6 1.6 1.6.6-1.6.6-.6 1.6-.6-1.6-1.6-.6 1.6-.6z" fill="#cfe3dd"/><circle cx="5.5" cy="6" r="1.1" fill="#cfe3dd"/><circle cx="20" cy="14" r=".9" fill="#7fa59b"/></svg></h2>
+<h3>Cantos mais redondos no site todo</h3>
+<pre><code>:root { --radius: 30px; --radius-sm: 20px; }</code></pre>
+<h3>Esconder uma coisa</h3>
+<pre><code>.version { display: none !important; }</code></pre>
+<h3>Letra maior (bom pra enxergar melhor)</h3>
+<pre><code>body { font-size: 18px; }</code></pre>
+<h3>Trocar o tipo de letra</h3>
+<p>O site já traz <code>Syne</code>, <code>DM Sans</code> e <code>DM Mono</code>. Dá pra usar elas, ou as do seu aparelho, como <code>Georgia</code> ou <code>"Courier New"</code>.</p>
+<pre><code>body { font-family: Georgia, serif !important; }</code></pre>
+<h3>Imagem de fundo</h3>
+<pre><code>html[data-page="index"] body {
+  background: url("https://exemplo.com/foto.jpg") center / cover fixed !important;
+}</code></pre>
+<p>Só funcionam links que começam com <code>https://</code>, imagens do próprio site (<code>/img/...</code>) ou imagens embutidas (<code>data:image/...</code>).</p>
+<h3>Tirar as animações</h3>
+<pre><code>* { animation: none !important; transition: none !important; }</code></pre>
+
+<h2 id="prontos">11. Receitas prontas (copiar e colar) <svg class="i" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 20.5v-7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v7z" fill="#9cb8b2"/><path d="M4 13.5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2V15c-1 0-1.3 1.3-2.6 1.3S15.3 15 14 15s-1.3 1.3-2.6 1.3S9.1 15 8 15s-1.3 1.3-2.6 1.3C4.7 16.3 4.5 15 4 15z" fill="#cfe3dd"/><rect x="11" y="7" width="2" height="4.5" rx="1" fill="#7fa59b"/><path d="M12 2.8c1.3 1.1 1.3 2.6 0 3.6-1.3-1-1.3-2.5 0-3.6z" fill="#cfe3dd"/><path d="M12 4.2c.5.5.5 1.1 0 1.6-.5-.5-.5-1.1 0-1.6z" fill="#fff"/><path d="M6.5 18.5h11" stroke="#fff" opacity=".35" stroke-width="1.1" stroke-linecap="round"/></svg></h2>
+<h3>Tudo rosa</h3>
+<pre><code>:root {
+  --accent: #ff4fa3;
+  --accent-dim: #c2377d;
+}</code></pre>
+<h3>Modo escuro bem escuro em todas as telas</h3>
+<pre><code>:root {
+  --bg: #000;
+  --surface: #111;
+  --surface2: #1a1a1a;
+  --text: #fff;
+  --text-muted: #aaa;
+}</code></pre>
+<h3>Botões em forma de pílula</h3>
+<pre><code>button { border-radius: 999px !important; }</code></pre>
+<h3>Editor com letra grande e fundo diferente</h3>
+<pre><code>[data-page="editor"] body { background: #101820; }
+[data-page="editor"] .edit-textarea { font-size: 17px; }</code></pre>
+
+<h2 id="ruim">12. Deu ruim? <svg class="i" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill-rule="evenodd" d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zm0 5.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7z" fill="#9cb8b2"/><path d="M15.25 15.25l2.6 2.6M8.75 15.25l-2.6 2.6M15.25 8.75l2.6-2.6M8.75 8.75l-2.6-2.6" stroke="#cfe3dd" stroke-width="3.2"/><path d="M6.5 8.5A6.5 6.5 0 0 1 9 6" stroke="#fff" opacity=".5" stroke-width="1.2" stroke-linecap="round" fill="none"/></svg></h2>
+<dl>
+<dt>“Não mudou nada!”</dt>
+<dd>O site tem várias regras com <code>!important</code> (principalmente a Home e as janelas). Coloque <code>!important</code> antes do ponto e vírgula: <code>color: red !important;</code>. Se tiver um <b>tema pronto</b> ligado, ele também pode ganhar: use <code>!important</code> ou teste com o tema padrão.</dd>
+<dt>“Sumiu quando recarreguei!”</dt>
+<dd>Você deve ter apertado só <b>Aplicar</b>. Aperte <b>Salvar CSS</b>.</dd>
+<dt>“Uma coisa sumiu / o site ficou impossível de usar!”</dt>
+<dd>Calma! Abra o site com <code>?safe=1</code> no final do endereço. Isso desliga tema e CSS pessoal só naquela visita, e dá pra ir no perfil corrigir ou apertar <b>Restaurar padrão</b>.</dd>
+<dt>“Disse que o CSS não é permitido”</dt>
+<dd>Por segurança, não vale: <code>@import</code>, <code>javascript:</code>, <code>expression(...)</code>, <code>image-set(...)</code> e afins. E em <code>url(...)</code> só <code>https://</code>, <code>/img/</code> e <code>data:image/</code>.</dd>
+<dt>“Deu erro de ‘muito grande’”</dt>
+<dd>Passou de 20.000 caracteres. Apague os comentários e as coisas que não usa.</dd>
+<dt>“Escrevi certinho e não funciona”</dt>
+<dd>Confira: tem <code>;</code> no fim de cada linha? Fechou todas as chaves <code>{ }</code>? Uma chave faltando estraga o resto do CSS.</dd>
+</dl>
+<div class="box tip">Dica de ouro: mude <b>uma coisa de cada vez</b> e aperte Aplicar. Assim, se algo quebrar, você sabe quem foi. <svg class="i" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M1.8 12S5.7 5.5 12 5.5 22.2 12 22.2 12 18.3 18.5 12 18.5 1.8 12 1.8 12z" fill="#cfe3dd" stroke="#5f877c" stroke-width="1.3" stroke-linejoin="round"/><circle cx="12" cy="12" r="4.2" fill="#9cb8b2"/><circle cx="12" cy="12" r="2" fill="#46695f"/><circle cx="10.9" cy="10.9" r=".8" fill="#fff"/></svg></div>
+
+</main>
+<script>
+document.querySelectorAll('pre').forEach(function(p){
+  var b=document.createElement('button');b.type='button';b.textContent='copiar';
+  b.onclick=function(){
+    var t=p.querySelector('code').innerText;
+    (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).catch(function(){
+      var a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();
+      try{document.execCommand('copy')}catch(e){};a.remove();
+    });
+    b.textContent='copiado!';setTimeout(function(){b.textContent='copiar'},1500);
+  };
+  p.appendChild(b);
+});
+</script>
+</body>
+</html>
