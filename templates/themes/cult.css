@@ -92,6 +92,8 @@ html[data-page="index"]::before {
   transform: translate(-50%, -50%);
   background: var(--cu-circle) center / contain no-repeat;
   opacity: 0.30; animation: cuSpin 220s linear infinite;
+  /* parallax: o JS do Cult (theme.js) preenche --cu-tx/--cu-ty conforme a inclinação do celular; `translate` soma com a rotação sem brigar com ela */
+  translate: var(--cu-tx, 0px) var(--cu-ty, 0px);
 }
 /* luz das velas lambendo a parede: oscila irregular por baixo da interface */
 html[data-page="index"] body::before {
