@@ -43,10 +43,91 @@
     fontsDone[id] = 1;
     var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = t.fonts; head().appendChild(l);
   }
+  /* ── Extras de tema (peças interativas) ──
+     O CSS do tema só desenha. Quando um tema precisa de botão ou de script (ex.: o Cult apaga e derrete as velas),
+     a peça mora aqui: nasce no rodapé da home quando o tema é ativado e é desmontada quando a pessoa troca de tema.
+     Pra criar a de outro tema: EXTRAS.idDoTema = function (host) { ...monta o que quiser dentro de host...;
+                                                                  return function () { ...desfaz tudo... }; };
+     (o visual dela fica no CSS do próprio tema, e a classe do bloco é "theme-extras"). */
+  var EXTRAS = {}, EARLY = {};
+  var extraHost = null, extraOff = null;
+
+  function syncExtras(id) {
+    if (EARLY[id]) EARLY[id]();                       // estado que precisa existir antes da 1ª pintura (sem piscar)
+    function run() {
+      if (extraOff) { try { extraOff(); } catch (e) {} extraOff = null; }
+      if (extraHost && extraHost.parentNode) extraHost.parentNode.removeChild(extraHost);
+      extraHost = null;
+      var make = id && EXTRAS[id];
+      var anchor = document.querySelector('.github-badge');          // só a home tem rodapé
+      if (!make || !anchor || doc.getAttribute('data-page') !== 'index') return;
+      extraHost = document.createElement('div');
+      extraHost.className = 'theme-extras';
+      anchor.parentNode.insertBefore(extraHost, anchor);
+      extraOff = make(extraHost);
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run); else run();
+  }
+
+  /* Cult: luas em fases + "apagar as velas" (lembrado no aparelho) + "derreter as velas".
+     Derreter NÃO fica salvo: recarregar a página traz as velas de volta. Apertar de novo, depois de derretidas,
+     chama o susto (a cruz), e o susto termina recarregando a página. */
+  var CULT_KEY = 'cult_candles_out';
+  EARLY.cult = function () {
+    try { if (localStorage.getItem(CULT_KEY) === '1') doc.classList.add('cu-out'); } catch (e) {}
+  };
+  EXTRAS.cult = function (host) {
+    var out = false, scaring = false;
+    try { out = localStorage.getItem(CULT_KEY) === '1'; } catch (e) {}
+    host.classList.add('cult-extras');
+    host.innerHTML =
+      '<div class="cult-moons" aria-hidden="true"></div>' +
+      '<div class="cult-btns">' +
+        '<button type="button" class="cult-btn" data-act="blow"></button>' +
+        '<button type="button" class="cult-btn" data-act="melt"></button>' +
+      '</div>';
+    var blow = host.querySelector('[data-act="blow"]'), melt = host.querySelector('[data-act="melt"]');
+
+    function paint() {
+      var melted = doc.classList.contains('cu-melt');
+      doc.classList.toggle('cu-out', out || melted);                 // derretida = apagada
+      blow.textContent = out ? 'acender as velas' : 'apagar as velas';
+      melt.textContent = melted ? 'restaurar as velas' : 'derreter as velas';
+    }
+    function scare() {
+      if (scaring) return;
+      scaring = true;
+      var el = document.createElement('div');
+      el.className = 'cult-scare'; el.setAttribute('aria-hidden', 'true');
+      document.body.appendChild(el);
+      var calm = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+      setTimeout(function () { location.reload(); }, calm ? 1300 : 1800);
+    }
+    host.addEventListener('click', function (e) {
+      var b = e.target.closest && e.target.closest('[data-act]');
+      if (!b) return;
+      if (b.getAttribute('data-act') === 'blow') {
+        out = !out;
+        try { if (out) localStorage.setItem(CULT_KEY, '1'); else localStorage.removeItem(CULT_KEY); } catch (err) {}
+        paint();
+      } else if (doc.classList.contains('cu-melt')) {
+        scare();
+      } else {
+        doc.classList.add('cu-melt'); paint();
+      }
+    });
+    paint();
+    return function () {
+      doc.classList.remove('cu-out', 'cu-melt');
+      var sc = document.querySelector('.cult-scare'); if (sc && sc.parentNode) sc.parentNode.removeChild(sc);
+    };
+  };
+
   function applyTheme(id) {
     var t = id && REG[id] ? REG[id] : null;
     if (t) { loadFonts(id); doc.setAttribute('data-theme', id); } else doc.removeAttribute('data-theme');
     themeStyle().textContent = t ? t.css : '';
+    syncExtras(t ? id : '');
   }
   function saveThemeOnServer(v) {
     return fetch('/api/save_theme', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ theme: v }) })
