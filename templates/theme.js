@@ -105,7 +105,45 @@
       }
     });
     paint();
+
+    /* Parallax do pentagrama: acompanha a inclinação do celular (o círculo vai pro lado contrário, como se estivesse mais longe).
+       Android/Chrome lê direto; no iPhone o navegador exige um toque antes (pedimos no 1º toque da página).
+       Respeita "reduzir movimento" e pausa com a aba escondida. */
+    var tiltOff = (function () {
+      if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return function () {};
+      var MAX = 22, tx = 0, ty = 0, cx = 0, cy = 0, base = null, raf = 0, on = false;
+      function clamp(v) { return Math.max(-1, Math.min(1, v)); }
+      function onTilt(e) {
+        if (e.gamma == null || e.beta == null) return;
+        if (!base) base = { b: e.beta, g: e.gamma };            // posição em que a pessoa segura o celular = centro
+        tx = -clamp((e.gamma - base.g) / 30) * MAX;               // inclinar pra direita (gamma+) → círculo vai pra esquerda
+        ty = -clamp((e.beta - base.b) / 30) * MAX;
+        if (!raf) raf = requestAnimationFrame(step);
+      }
+      function step() {
+        cx += (tx - cx) * 0.08; cy += (ty - cy) * 0.08;           // suaviza: nada de tremer
+        doc.style.setProperty('--cu-tx', cx.toFixed(1) + 'px');
+        doc.style.setProperty('--cu-ty', cy.toFixed(1) + 'px');
+        raf = (Math.abs(tx - cx) > 0.1 || Math.abs(ty - cy) > 0.1) && !document.hidden ? requestAnimationFrame(step) : 0;
+      }
+      function start() { if (on) return; on = true; window.addEventListener('deviceorientation', onTilt); }
+      function ask() {
+        document.removeEventListener('click', ask, true);
+        DeviceOrientationEvent.requestPermission().then(function (r) { if (r === 'granted') start(); }).catch(function () {});
+      }
+      if (typeof DeviceOrientationEvent === 'undefined') return function () {};
+      if (typeof DeviceOrientationEvent.requestPermission === 'function') document.addEventListener('click', ask, true);   // iOS
+      else start();
+      return function () {
+        document.removeEventListener('click', ask, true);
+        window.removeEventListener('deviceorientation', onTilt);
+        if (raf) cancelAnimationFrame(raf);
+        doc.style.removeProperty('--cu-tx'); doc.style.removeProperty('--cu-ty');
+      };
+    })();
+
     return function () {
+      tiltOff();
       doc.classList.remove('cu-out', 'cu-melt');
     };
   };
