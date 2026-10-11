@@ -118,7 +118,7 @@
         document.body.appendChild(dbg);
       }
       if (reduced && !DEBUG) return function () {};
-      var MAX = 70, RANGE = 12, tx = 0, ty = 0, cx = 0, cy = 0, base = null, raf = 0, on = false, got = false, probe = 0;   // MAX = px de movimento · RANGE = graus de inclinação pra chegar no máximo
+      var MAX = 45, RANGE = 15, tx = 0, ty = 0, cx = 0, cy = 0, base = null, raf = 0, on = false, got = false, probe = 0;   // MAX = px de movimento · RANGE = graus de inclinação pra chegar no máximo
       function clamp(v) { return Math.max(-1, Math.min(1, v)); }
       function onTilt(e) {
         nEv++;
@@ -127,6 +127,7 @@
         if (!base) base = { b: e.beta, g: e.gamma };            // posição em que a pessoa segura o celular = centro
         tx = -clamp((e.gamma - base.g) / RANGE) * MAX;               // inclinar pra direita (gamma+) → círculo vai pra esquerda
         ty = -clamp((e.beta - base.b) / RANGE) * MAX;
+        base.g += (e.gamma - base.g) * 0.003; base.b += (e.beta - base.b) * 0.003;   // o "centro" acompanha devagar como a pessoa segura o celular (volta pro meio sozinho)
         if (!raf) raf = requestAnimationFrame(step);
       }
       function step() {
@@ -142,6 +143,7 @@
         if (!base) base = { b: b, g: g };
         tx = clamp((g - base.g) / RANGE) * MAX;                   // no acelerômetro o sinal de x é invertido em relação ao gamma
         ty = -clamp((b - base.b) / RANGE) * MAX;
+        base.g += (g - base.g) * 0.003; base.b += (b - base.b) * 0.003;
         if (!raf) raf = requestAnimationFrame(step);
       }
       function onMouse(e) {                                       // computador (sem sensor): o mouse faz o papel da inclinação
