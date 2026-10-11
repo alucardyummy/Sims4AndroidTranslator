@@ -50,5 +50,18 @@
     ],
     "nameFont": "'New Rocker', 'UnifrakturMaguntia', 'Old English Text MT', serif",
     "fonts": "https://fonts.googleapis.com/css2?family=New+Rocker&family=Special+Elite&display=swap"
+  },
+  {
+    "id": "kamikakushi",
+    "name": "⛩️ Kamikakushi",
+    "blurb": "Santuário na névoa, lanternas de pedra e luz divina.",
+    "swatch": [
+      "#0d1210",
+      "#2b3632",
+      "#a9b2aa",
+      "#e9dcae"
+    ],
+    "nameFont": "'Shippori Mincho', 'Hiragino Mincho ProN', 'Yu Mincho', serif",
+    "fonts": "https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;700&display=swap"
   }
 ]
