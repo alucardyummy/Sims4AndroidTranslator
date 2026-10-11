@@ -70,14 +70,13 @@
   }
 
   /* Cult: luas em fases + "apagar as velas" (lembrado no aparelho) + "derreter as velas".
-     Derreter NÃO fica salvo: recarregar a página traz as velas de volta. Apertar de novo, depois de derretidas,
-     chama o susto (a cruz), e o susto termina recarregando a página. */
+     Derreter NÃO fica salvo: recarregar a página traz as velas de volta (e depois de derreter, os botões somem). */
   var CULT_KEY = 'cult_candles_out';
   EARLY.cult = function () {
     try { if (localStorage.getItem(CULT_KEY) === '1') doc.classList.add('cu-out'); } catch (e) {}
   };
   EXTRAS.cult = function (host) {
-    var out = false, scaring = false;
+    var out = false;
     try { out = localStorage.getItem(CULT_KEY) === '1'; } catch (e) {}
     host.classList.add('cult-extras');
     host.innerHTML =
@@ -92,16 +91,7 @@
       var melted = doc.classList.contains('cu-melt');
       doc.classList.toggle('cu-out', out || melted);                 // derretida = apagada
       blow.textContent = out ? 'acender as velas' : 'apagar as velas';
-      melt.textContent = melted ? 'restaurar as velas' : 'derreter as velas';
-    }
-    function scare() {
-      if (scaring) return;
-      scaring = true;
-      var el = document.createElement('div');
-      el.className = 'cult-scare'; el.setAttribute('aria-hidden', 'true');
-      document.body.appendChild(el);
-      var calm = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
-      setTimeout(function () { location.reload(); }, calm ? 1300 : 1800);
+      melt.textContent = 'derreter as velas';
     }
     host.addEventListener('click', function (e) {
       var b = e.target.closest && e.target.closest('[data-act]');
@@ -110,8 +100,6 @@
         out = !out;
         try { if (out) localStorage.setItem(CULT_KEY, '1'); else localStorage.removeItem(CULT_KEY); } catch (err) {}
         paint();
-      } else if (doc.classList.contains('cu-melt')) {
-        scare();
       } else {
         doc.classList.add('cu-melt'); paint();
       }
@@ -119,7 +107,6 @@
     paint();
     return function () {
       doc.classList.remove('cu-out', 'cu-melt');
-      var sc = document.querySelector('.cult-scare'); if (sc && sc.parentNode) sc.parentNode.removeChild(sc);
     };
   };
 
@@ -186,4 +173,4 @@
   var cached = read();
   if (cached) apply(cached);
   api.sync();
-})();
+})(); 
