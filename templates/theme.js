@@ -118,8 +118,9 @@
         document.body.appendChild(dbg);
       }
       if (reduced && !DEBUG) return function () {};
-      var MAX = 45, RANGE = 15, tx = 0, ty = 0, cx = 0, cy = 0, base = null, raf = 0, on = false, got = false, probe = 0, lastG = null, lastB = null, sign = -1, centerT = 0;   // MAX = px de movimento · RANGE = graus de inclinação pra chegar no máximo
+      var MAX = 45, RANGE = 15, DZ = 2.5, tx = 0, ty = 0, cx = 0, cy = 0, base = null, raf = 0, on = false, got = false, probe = 0, lastG = null, lastB = null, sign = -1, centerT = 0;   // MAX = px de movimento · RANGE = graus de inclinação pra chegar no máximo
       function clamp(v) { return Math.max(-1, Math.min(1, v)); }
+      function dz(d) { return d > DZ ? d - DZ : d < -DZ ? d + DZ : 0; }   // zona morta: tremidinha da mão (até ~DZ graus) não mexe o círculo
       function onTilt(e) {
         nEv++;
         if (e.gamma == null || e.beta == null) return;
@@ -130,8 +131,8 @@
       function update() {                                         // converte (leitura − centro) em deslocamento do círculo
         if (lastG == null) return;
         if (!base) base = { b: lastB, g: lastG };                 // 1ª leitura = centro provisório (o recentro abaixo corrige)
-        tx = sign * clamp((lastG - base.g) / RANGE) * MAX;        // inclinar pra direita → círculo vai pra esquerda
-        ty = -clamp((lastB - base.b) / RANGE) * MAX;
+        tx = sign * clamp(dz(lastG - base.g) / RANGE) * MAX;      // inclinar pra direita → círculo vai pra esquerda
+        ty = -clamp(dz(lastB - base.b) / RANGE) * MAX;
         if (!raf) raf = requestAnimationFrame(step);
       }
       function step() {
@@ -158,7 +159,7 @@
         window.addEventListener('devicemotion', onMotion);
         centerT = setInterval(function () {                       // recentra por tempo: ~3s pra o círculo voltar ao meio com o celular parado, em qualquer posição
           if (!base || lastG == null) return;
-          base.g += (lastG - base.g) * 0.03; base.b += (lastB - base.b) * 0.03;
+          base.g += (lastG - base.g) * 0.05; base.b += (lastB - base.b) * 0.05;
           update();
         }, 100);
         probe = setTimeout(function () {                          // 1,5s sem nenhum dado de sensor? usa o mouse (se houver)
@@ -171,7 +172,8 @@
       }
       var dbgT = 0;
       if (DEBUG) dbgT = setInterval(function () {
-        dbg.textContent = 'tilt debug\n' +
+        dbg.textContent = 'tilt debug v4 (recentro por tempo + zona morta)\n' +
+          'desvio (graus): ' + (base && lastG != null ? (lastG - base.g).toFixed(1) + ' / ' + (lastB - base.b).toFixed(1) : '-') + '\n' +
           'https: ' + window.isSecureContext + '\n' +
           'reduzir movimento: ' + reduced + '\n' +
           'translate no css: ' + (window.CSS && CSS.supports && CSS.supports('translate', '1px')) + '\n' +
