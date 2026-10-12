@@ -114,6 +114,16 @@ textarea{width:100%;height:210px;background:var(--cb);color:var(--ct);border:0;b
 #ph .ob{border:1px solid var(--fieldBd);color:var(--x-wcb);border-radius:var(--r-rmb);padding:8px;text-align:center;margin:6px 0}
 #ph .mi{color:var(--x-wmi);font-size:10px;margin:4px 0}#ph .lk{color:var(--x-wsw)}
 #ph .al{color:var(--x-wal);text-align:center;margin-top:10px;padding-top:8px;border-top:1px solid var(--fieldBd)}
+/* fundo com padrão: prévia no celulzinho + controles */
+#ph{background-image:var(--pat-o,none);background-size:var(--patsz,0px) var(--patsz,0px)}
+#ph .hm{background-image:var(--pat-h,none),linear-gradient(160deg,var(--hbg),var(--hbg2));background-size:var(--patsz,0px) var(--patsz,0px),auto;background-repeat:repeat,no-repeat}
+.shp{flex:1 1 30%;flex-direction:column;justify-content:center;gap:4px;text-align:center;font-size:12px;padding:6px 4px}
+.shp i{display:block;width:44px;height:44px;border-radius:10px;border:1px solid var(--bd)}
+.shp.on{border-color:var(--ac);box-shadow:0 0 0 2px var(--ac) inset}
+#ptile{height:84px;border-radius:14px;border:1px solid var(--bd);margin:8px 0}
+.go2{display:block;text-align:center;text-decoration:none;border:1.5px solid var(--ac);background:none;color:var(--ac);border-radius:12px;font:inherit;font-weight:700;padding:10px;margin-top:8px;width:100%}
+#csz{font-size:12px;color:var(--mu);margin:6px 2px 0}
+[hidden]{display:none!important}
 </style>
 </head>
 <body>
@@ -128,9 +138,26 @@ textarea{width:100%;height:210px;background:var(--cb);color:var(--ct);border:0;b
 <div id="groups"></div>
 <h2>3. Cantos arredondados</h2>
 <div class="box" id="radii"></div>
-<h2>4. Copie e cole no site</h2>
+<h2>4. Fundo com padrão <small style="color:var(--mu);font-weight:400">(opcional)</small></h2>
+<label class="ck"><input type="checkbox" id="pon"><span><b>Usar fundo com padrão</b> (bolinhas, estrelas, corações, rendinha…). Ele entra no CSS junto com o tema.</span></label>
+<div id="pbox" hidden>
+<div class="box"><div class="row" id="shapes"></div></div>
+<div class="box" id="pcolw"></div>
+<div class="box" id="psl"></div>
+<div class="box">
+<label class="ck" id="paltw"><input type="checkbox" id="palt"><span><b>Intercalar</b> (uma fileira deslocada, tipo tijolinho)</span></label>
+<label class="ck"><input type="checkbox" id="phome" checked><span><b>Na Home</b></span></label>
+<label class="ck"><input type="checkbox" id="poth" checked><span><b>Nas outras telas</b> (Editor, Mesclar, Criar e Info; no Editor as linhas de texto cobrem o fundo)</span></label>
+</div>
+<div id="ptile"></div>
+<button class="go2" id="ptcopy" type="button">Copiar SVG do ladrilho</button>
+<button class="go2" id="ptdl" type="button">Baixar .svg do ladrilho</button>
+<a class="go2" href="/desenhar-svg">✏️ Desenhar minha própria forma</a>
+</div>
+<h2>5. Copie e cole no site</h2>
 <label class="ck"><input type="checkbox" id="home" checked><span><b>Pintar a Home também</b> (a Home tem cores próprias; marcado, ela segue o seu tema)</span></label>
 <textarea id="out" readonly spellcheck="false"></textarea>
+<p id="csz"></p>
 <button class="go" id="copy" type="button">Copiar CSS</button>
 <div class="box"><ol style="padding-left:18px;margin:6px 0">
 <li>Entre na conta, toque na <b>bolinha do perfil</b> e abra <b>“CSS personalizado”</b>.</li>
@@ -156,6 +183,7 @@ var G=[
 var A={hbg:function(s){return s.bg},bst:function(s){return s.btn},bsa:function(s){return s.btn},bmg:function(s){return s.btn},bbd:function(s){return s.btn},bvf:function(s){return s.accent},bmb:function(s){return s.btn},hbg2:function(s){return mix(s.bg,s.accent,.14)},title:function(s){return s.accent},sub:function(s){return s.muted},btn2:function(s){return s.accent},card:function(s){return s.surface},cardBd:function(s){return s.border},cardTitle:function(s){return s.text},cardMeta:function(s){return s.muted},row:function(s){return s.bg},box:function(s){return mix(s.surface,s.text,.07)},bar:function(s){return s.bg},modal:function(s){return s.surface},modalBd:function(s){return mix(s.border,s.text,.15)},modalTitle:function(s){return s.accent},modalTx:function(s){return s.text},modalMu:function(s){return s.muted},modalAc:function(s){return s.accent},field:function(s){return mix(s.modal,s.text,.08)},fieldBd:function(s){return mix(s.modalBd,s.text,.1)},modalCard:function(s){return mix(s.modal,s.text,.05)},sw:function(s){return s.accent},ov:function(){return'#000000'},btn:function(s){return s.accent},btnTx:function(s){return lum(s.btn||s.accent)>.45?'#111111':'#ffffff'}};
 var MAIN=['bg','surface','accent','text','muted','border','danger','btn'];
 A.dim=function(s){return mix(s.muted,s.bg,.4)};
+A.pc1=function(s){return s.accent};
 // ---- textos individuais: cada um segue a cor geral até a pessoa mexer nele ----
 function dp(n,q){var o=[];[].concat(n).forEach(function(pg){q.split(',').forEach(function(x){o.push('[data-page="'+pg+'"] '+x.trim())})});return o.join(', ')}
 function hp(q){return q.split(',').map(function(x){return 'html[data-page="index"] '+x.trim()}).join(', ')}
@@ -270,6 +298,106 @@ function lum(h){var c=rgb(h).map(function(v){v/=255;return v<=.03928?v/12.92:Mat
 function auto(){['btn','btnTx'].concat(Object.keys(A).filter(function(k){return k!=='btn'&&k!=='btnTx'})).forEach(function(k){if(!T[k])S[k]=A[k](S)})}
 function tx(c){return lum(c)>.45?'#111111':'#ffffff'}
 function V(){var a=rgb(S.accent);return{'--bg':S.bg,'--surface':S.surface,'--surface2':mix(S.surface,S.text,.07),'--surface3':mix(S.bg,S.surface,.5),'--border':S.border,'--border2':mix(S.border,S.text,.15),'--border3':mix(S.border,S.text,.3),'--accent':S.accent,'--accent-dim':mix(S.accent,'#000000',.22),'--accent-faint':'rgba('+a.join(', ')+', 0.12)','--text':S.text,'--text-muted':S.muted,'--text-dim':S.dim,'--danger':S.danger,'--radius':px('radius'),'--radius-sm':px('rsm'),'--radius-xs':px('rxs')}}
+// ---- fundo com padrão: gera um SVG pequeno (ladrilho) e vira url(data:image/svg+xml) no CSS ----
+var PT={on:0,shape:'dots',size:48,scale:50,rot:0,op:35,alt:0,home:1,oth:1},CSSMAX=20000;
+function r1(n){return Math.round(n*10)/10}
+function starPts(n,ri){var o=[];for(var i=0;i<n*2;i++){var a=-Math.PI/2+i*Math.PI/n,r=i%2?ri:50;o.push(r1(Math.cos(a)*r)+' '+r1(Math.sin(a)*r))}return o.join(' ')}
+// desenho feito em /desenhar-svg (fica guardado neste aparelho)
+function mine(){try{var j=JSON.parse(localStorage.getItem('s4t_svg')||'null');if(j&&typeof j.inner==='string'&&j.w>0&&j.h>0&&!/<script|\son\w+\s*=|javascript:|url\(/i.test(j.inner))return j}catch(e){}return null}
+// formas desenhadas numa caixa de -50 a 50 (r:1 = aceita giro e intercalar; x:1 = ladrilho próprio)
+var SH={
+ dots:{n:'Bolinhas',r:1,f:function(){return"<circle r='50'/>"}},
+ stars:{n:'Estrelas',r:1,f:function(){return"<polygon points='"+starPts(5,22)+"'/>"}},
+ hearts:{n:'Corações',r:1,f:function(){return"<path d='M0 46C-46 14-52-22-28-38-12-48 0-38 0-26 0-38 12-48 28-38 52-22 46 14 0 46Z'/>"}},
+ flowers:{n:'Flores',r:1,f:function(){var o='';for(var i=0;i<5;i++)o+="<ellipse cy='-27' rx='15' ry='23' transform='rotate("+i*72+")'/>";return o+"<circle r='11'/>"}},
+ diamonds:{n:'Losangos',r:1,f:function(){return"<path d='M0-50 32 0 0 50-32 0Z'/>"}},
+ lace:{n:'Rendinha',x:1},check:{n:'Xadrez',x:1,ns:1},stripes:{n:'Listras',x:1},
+ mine:{n:'✏️ Meu desenho',r:1,f:function(){var m=mine(),k=100/Math.max(m.w,m.h);return"<g transform='translate("+r1(-m.w*k/2)+" "+r1(-m.h*k/2)+") scale("+Math.round(k*1e4)/1e4+")'>"+m.inner+"</g>"}}
+};
+function enc(s){return s.replace(/>\s+</g,'><').replace(/\s*\n\s*/g,'').replace(/%/g,'%25').replace(/</g,'%3C').replace(/>/g,'%3E').replace(/#/g,'%23').replace(/\(/g,'%28').replace(/\)/g,'%29').replace(/"/g,"'")}
+function tile(shape,W,sc,rot,alt,c,op){
+ var o='',i,sw,m=W/2;
+ if(shape==='lace'){
+  sw=Math.max(.8,W*.03);var R=W*(.2+.3*sc/100)*.98,cs=[[m,m],[0,0],[W,0],[0,W],[W,W]];
+  o="<g fill='none' stroke='"+c+"' stroke-width='"+r1(sw)+"'>"+cs.map(function(p){return"<circle cx='"+p[0]+"' cy='"+p[1]+"' r='"+r1(R)+"'/><circle cx='"+p[0]+"' cy='"+p[1]+"' r='"+r1(R*.5)+"' stroke-dasharray='"+r1(sw*1.2)+" "+r1(sw*2.4)+"'/>"}).join('')+"</g><g fill='"+c+"'>"
+   +cs.map(function(p){return"<circle cx='"+p[0]+"' cy='"+p[1]+"' r='"+r1(sw*1.8)+"'/>"}).join('')+[[m,0],[m,W],[0,m],[W,m]].map(function(p){return"<circle cx='"+p[0]+"' cy='"+p[1]+"' r='"+r1(sw*1.5)+"'/>"}).join('')+"</g>";
+ }else if(shape==='check'){
+  o="<g fill='"+c+"'><rect width='"+m+"' height='"+m+"'/><rect x='"+m+"' y='"+m+"' width='"+m+"' height='"+m+"'/></g>";
+ }else if(shape==='stripes'){
+  sw=W*sc/100*.7;
+  o="<path stroke='"+c+"' stroke-width='"+r1(sw)+"' d='"+[W/2,W*1.5].map(function(q){return'M'+(-W)+' '+(q+W)+'L'+(q+W)+' '+(-W)}).join('')+"'/>";
+ }else{
+  var pos=alt?[[.25,.25],[.75,.75]]:[[.5,.5]],s=W*(alt?.5:1)*sc/100/(1+.3*Math.min(1,Math.abs(rot)/45)),k=Math.round(s*10)/1000;
+  o="<g fill='"+c+"'>"+pos.map(function(p){return"<g transform='translate("+r1(p[0]*W)+" "+r1(p[1]*W)+")"+(rot?" rotate("+rot+")":"")+" scale("+k+")'>"+SH[shape].f()+"</g>"}).join('')+"</g>";
+ }
+ return"<svg xmlns='http://www.w3.org/2000/svg' width='"+W+"' height='"+W+"' viewBox='0 0 "+W+" "+W+"'><g opacity='"+op/100+"'>"+o+"</g></svg>";
+}
+// ladrilho atual: {W, svg, uri} ou null se o padrão está desligado
+function pat(){
+ if(!PT.on)return null;
+ if(PT.shape==='mine'&&!mine())PT.shape='dots';
+ var sh=SH[PT.shape],svg=tile(PT.shape,PT.size,PT.scale,sh.r?PT.rot:0,sh.r?PT.alt:0,S.pc1,PT.op);
+ return{W:PT.size,svg:svg,uri:'data:image/svg+xml,'+enc(svg)};
+}
+function pcss(){
+ var q=pat();if(!q)return'';
+ var z=q.W+'px '+q.W+'px',g=S.hbg!==S.hbg2,o='\n/* Fundo com padrão */\n:root { --padrao: url("'+q.uri+'"); }\n';
+ if(PT.home)o+='html[data-page="index"] body { background-color: '+S.hbg+' !important; background-image: var(--padrao)'+(g?', linear-gradient(160deg, '+S.hbg+', '+S.hbg2+')':'')+' !important; background-size: '+z+(g?', auto':'')+' !important; background-repeat: repeat'+(g?', no-repeat':'')+' !important; background-attachment: fixed !important; }\n';
+ if(PT.oth){var h=['editor','merge','create','info'].map(function(pg){return'html[data-page="'+pg+'"]'});
+  o+=h.join(', ')+' { background-image: var(--padrao) !important; background-size: '+z+' !important; background-repeat: repeat !important; }\n'+h.map(function(x){return x+' body'}).join(', ')+' { background: transparent !important; }\n'}
+ return o;
+}
+function prv(p){
+ var q=pat(),u=q?'url("'+q.uri+'")':'none',sh=SH[PT.shape];
+ p.style.setProperty('--pat-h',q&&PT.home?u:'none');p.style.setProperty('--pat-o',q&&PT.oth?u:'none');p.style.setProperty('--patsz',q?q.W+'px':'0px');
+ $('pbox').hidden=!PT.on;if(!PT.on)return;
+ $('pcolw').hidden=PT.shape==='mine';$('paltw').hidden=!sh.r;
+ document.querySelectorAll('#psl .sl').forEach(function(d){var k=d.dataset.k;d.hidden=(k==='rot'&&!sh.r)||(k==='scale'&&sh.ns)});
+ $('ptile').style.background=S.bg+' '+u+' 0 0/'+PT.size+'px '+PT.size+'px';
+ document.querySelectorAll('#shapes button').forEach(function(b){
+  var k=b.dataset.s;b.className='pre shp'+(k===PT.shape?' on':'');
+  b.querySelector('i').style.background=S.bg+' url("data:image/svg+xml,'+enc(tile(k,44,k==='lace'?50:62,0,0,k==='mine'?'#000':S.pc1,100))+'") 0 0/44px 44px';
+ });
+}
+function buildShapes(){
+ var b=$('shapes');b.innerHTML='';
+ Object.keys(SH).forEach(function(k){
+  if(k==='mine'&&!mine())return;
+  var e=document.createElement('button');e.type='button';e.dataset.s=k;e.innerHTML='<i></i>'+SH[k].n;
+  e.onclick=function(){PT.shape=k;render()};b.appendChild(e);
+ });
+}
+(function(){
+ // linha da cor (mesmo visual das outras cores; segue o Destaque até a pessoa mexer)
+ var r=document.createElement('div');r.className='pk';r.dataset.k='pc1';
+ r.innerHTML='<button type="button" class="sw2" aria-label="Escolher cor"></button><div><b>Cor da forma</b><small>Segue o Destaque até você mexer</small></div><code></code><button type="button" title="Voltar ao automático">↺</button>';
+ r.onclick=function(){openPick('pc1','Cor da forma')};
+ r.querySelector('button:last-child').onclick=function(e){e.stopPropagation();delete T.pc1;auto();render();if(P.k==='pc1')syncPick()};
+ $('pcolw').appendChild(r);
+ [['size','Tamanho do ladrilho',16,160,'px'],['scale','Tamanho da forma',20,90,'%'],['rot','Giro da forma',-45,45,'°'],['op','Força da cor',5,100,'%']].forEach(function(it){
+  var d=document.createElement('div');d.className='sl';d.dataset.k=it[0];
+  d.innerHTML='<label><span>'+it[1]+'</span><span class="vl"></span></label><input type="range" min="'+it[2]+'" max="'+it[3]+'" value="'+PT[it[0]]+'">';
+  d.querySelector('.vl').textContent=PT[it[0]]+it[4];
+  d.querySelector('input').oninput=function(){PT[it[0]]=+this.value;d.querySelector('.vl').textContent=this.value+it[4];render()};
+  $('psl').appendChild(d);
+ });
+ $('pon').onchange=function(){PT.on=this.checked?1:0;render()};
+ $('palt').onchange=function(){PT.alt=this.checked?1:0;render()};
+ $('phome').onchange=function(){PT.home=this.checked?1:0;render()};
+ $('poth').onchange=function(){PT.oth=this.checked?1:0;render()};
+ function cp(t,b,l){var ok=function(){b.textContent='Copiado! ✔';setTimeout(function(){b.textContent=l},1800)};
+  function fb(){var a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();try{document.execCommand('copy')}catch(e){}a.remove();ok()}
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(ok,fb);else fb()}
+ $('ptcopy').onclick=function(){var q=pat();if(q)cp(q.svg,this,'Copiar SVG do ladrilho')};
+ $('ptdl').onclick=function(){var q=pat();if(!q)return;var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([q.svg],{type:'image/svg+xml'}));a.download='padrao.svg';document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},500)};
+ buildShapes();
+ document.addEventListener('visibilitychange',function(){if(!document.hidden){buildShapes();render()}});
+ // veio do editor de desenho com “Usar no Montador”
+ if(location.hash==='#padrao'){PT.on=1;$('pon').checked=true;
+  if(mine()){PT.shape='mine';PT.op=100;PT.size=64; // desenho colorido: chega nítido, não apagadinho
+   [['op','%'],['size','px']].forEach(function(it){var d=document.querySelector('#psl .sl[data-k='+it[0]+']');d.querySelector('input').value=PT[it[0]];d.querySelector('.vl').textContent=PT[it[0]]+it[1]})}
+  setTimeout(function(){$('pbox').scrollIntoView({block:'start'})},60)}
+})();
 function css(){
  var v=V(),o='/* Meu tema — feito no Montador de tema */\n:root {\n',k,H='html[data-page="index"] ';
  for(k in v)o+='  '+k+': '+v[k]+';\n';o+='}\n';
@@ -306,6 +434,7 @@ function css(){
   +H+'.version { background: var(--surface) !important; border-color: var(--border2) !important; color: var(--text-muted) !important; opacity: 1 !important; }\n';
  }
  if($('home').checked)o+=txcss(1);
+ o+=pcss();
  return o;
 }
 
@@ -358,8 +487,10 @@ function render(){
  for(k in R)p.style.setProperty('--r-'+k,px(k));
  for(k in x)p.style.setProperty('--'+k,x[k]);
  for(k in S)p.style.setProperty('--x-'+k,S[k]);
+ prv(p);
  if(p.dataset.t!==tab){p.innerHTML=M[tab];p.dataset.t=tab}
  $('out').value=css();
+ var L=$('out').value.length,z=$('csz');z.textContent='Tamanho: '+L.toLocaleString('pt-BR')+' de '+CSSMAX.toLocaleString('pt-BR')+' caracteres'+(L>CSSMAX?' — passou do limite do site! Diminua o tamanho do ladrilho, desmarque “Pintar a Home” ou escolha uma forma mais simples.':'');z.style.color=L>CSSMAX?'#e5565b':'';
  document.querySelectorAll('.pk').forEach(function(d){var k=d.dataset.k;d.querySelector('.sw2').style.background=S[k];d.querySelector('code').textContent=S[k];d.querySelector('button:last-child').style.visibility=T[k]?'visible':'hidden'});
  document.querySelectorAll('.sl input[data-k]').forEach(function(i){i.value=R[i.dataset.k];i.parentNode.querySelector('.vl').textContent=rl(i.dataset.k);i.parentNode.querySelector('.rz').style.visibility=TR[i.dataset.k]?'visible':'hidden'});
  document.querySelectorAll('.tabs button').forEach(function(b){b.className=b.dataset.t===tab?'on':''});
