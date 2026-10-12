@@ -855,6 +855,11 @@ def suporte_css():
     return send_file(os.path.join(TEMPLATE_DIR, "suporte-css.html"))
 
 
+@app.route("/montar-tema")
+def montar_tema():
+    return send_file(os.path.join(TEMPLATE_DIR, "montar-tema.html"))
+
+
 @app.route("/api/instances")
 def api_instances():
     all_instances = session.get("all_instances", [])
