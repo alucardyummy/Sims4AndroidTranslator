@@ -65,7 +65,7 @@ textarea{width:100%;height:210px;background:var(--cb);color:var(--ct);border:0;b
 #ph .og{color:var(--text-muted);font-style:italic}
 #ph .bb{position:sticky;bottom:0;background:var(--bar);border-top:1px solid var(--border);padding:8px 12px}
 #ph .fi{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:6px 10px;margin-bottom:6px}
-#ph .sv{background:var(--btn);color:var(--btnTx);border-radius:var(--r-btn);padding:10px;text-align:center;font-weight:700;letter-spacing:.06em;margin:8px 12px}
+#ph .sv{background:var(--btn);color:var(--btnTx);border-radius:var(--r-rbtn);padding:10px;text-align:center;font-weight:700;letter-spacing:.06em;margin:8px 12px}
 #ph .bb .sv{margin:0}
 #ph .st{background:var(--bst);color:var(--bstTx);border-radius:var(--r-rst)}#ph .sa{background:var(--bsa);color:var(--bsaTx);border-radius:var(--r-rsa)}
 #ph .mg{background:var(--bmg);color:var(--bmgTx);border-radius:var(--r-rmg)}#ph .bd{background:var(--bbd);color:var(--bbdTx);border-radius:var(--r-rbd);margin:0;flex:1}
@@ -83,12 +83,37 @@ textarea{width:100%;height:210px;background:var(--cb);color:var(--ct);border:0;b
 #ph .ch{display:inline-block;border:1px solid var(--border2);border-radius:var(--r-cp);padding:2px 11px;margin:2px 2px 2px 12px;color:var(--text-muted)}
 #ph .ch.on{border-color:var(--accent);background:var(--accent-faint);color:var(--accent)}
 #ph .ib{display:inline-block;width:30%;margin:0 1.5%;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-ib);padding:9px 4px;text-align:center;vertical-align:top}
-#ph .ov{background:var(--ovc);min-height:100%;padding:34px 14px}#ph .mb{background:var(--modal);border:1px solid var(--modalBd);border-radius:var(--r-w);padding:14px;color:var(--modalTx)}
-#ph .mb h4{margin:0 0 8px;color:var(--modalTitle);font-size:14px}#ph .mb .fi{background:var(--field);border:1px solid var(--fieldBd);color:var(--modalTx);border-radius:var(--r-wf)}
-#ph .mu{display:block;color:var(--modalMu);margin-bottom:8px}#ph .gb,#ph .tc{background:var(--modalCard);border:1px solid var(--fieldBd);border-radius:var(--r-wf);padding:8px;margin:6px 0;text-align:center}
+#ph .ov{background:var(--ovc);min-height:100%;padding:34px 14px}#ph .mb{background:var(--modal);border:1px solid var(--modalBd);border-radius:var(--r-rw);padding:14px;color:var(--modalTx)}
+#ph .mb h4{margin:0 0 8px;color:var(--modalTitle);font-size:14px}#ph .mb .fi{background:var(--field);border:1px solid var(--fieldBd);color:var(--modalTx);border-radius:var(--r-rwf)}
+#ph .mu{display:block;color:var(--modalMu);margin-bottom:8px}#ph .gb,#ph .tc{background:var(--modalCard);border:1px solid var(--fieldBd);border-radius:var(--r-rwf);padding:8px;margin:6px 0;text-align:center}
 #ph .tc{text-align:left}#ph .tc.on{border-color:var(--modalAc)}#ph .ts{display:flex;justify-content:space-between;align-items:center;padding:6px 0}#ph .sw3{width:34px;height:18px;border-radius:99px;background:var(--sw)}
 #ph .lk{text-align:center;color:var(--modalMu);margin-top:10px}#ph .lk u{color:var(--modalAc)}#ph .mb .sv{margin:6px 0 0}
-#ph .ib small{display:block;color:var(--text-muted);font-size:9px}
+#ph .ib small{display:block;font-size:9px}
+/* textos individuais no preview */
+#ph .gr{color:var(--x-hgr)}#ph .sl2{color:var(--x-hsl)}#ph .vs{color:var(--x-hver)}#ph .ht{color:var(--x-hhint);font-size:10px;margin-top:6px}
+#ph .bn{color:var(--x-bnT)}#ph .b2{color:var(--x-btn2T)}
+#ph .st{color:var(--x-bstT)}#ph .sa{color:var(--x-bsaT)}#ph .mg{color:var(--x-bmgT)}#ph .bd{color:var(--x-bbdT)}#ph .mbn{color:var(--x-bmbT)}#ph .vf{color:var(--x-bvfT)}
+#ph .tb2 b{color:var(--x-tbt)}#ph[data-t=editor] .tb2 b{color:var(--x-etb)}#ph .tb2 div{display:flex;flex-direction:column}#ph .tsb{color:var(--x-ets);font-size:9px}
+#ph .sr{color:var(--x-ese)}#ph .og{color:var(--x-eog)}#ph .tr{color:var(--x-etr)}#ph .rn{color:var(--x-erw);font-size:9px;font-style:normal}
+#ph .nl{color:var(--x-efl)}#ph .nm2{color:var(--x-efn)}#ph .tb3 i{color:var(--x-ebt)}#ph .mn{color:var(--x-eki);font-size:11px;padding:6px 12px}
+#ph .lb{color:var(--x-sct)}
+#ph .mt b{color:var(--x-mmt)}#ph .mt small{color:var(--x-mms)}
+#ph .dz{color:var(--x-mdz)}#ph .dz small{display:block;color:var(--x-mdzs);font-size:10px;margin-top:4px}
+#ph .fn{display:flex;justify-content:space-between;margin:4px 12px;font-size:11px}#ph .fn span{color:var(--x-mfn)}#ph .fn i{color:var(--x-mfm);font-style:normal}
+#ph .cd small{color:var(--x-cfl)}#ph .inp{color:var(--x-cph)}#ph .inp.v{color:var(--x-cin)}#ph .nh{color:var(--x-cns);font-size:10px;margin-top:6px}
+#ph .cd2{display:flex;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-cc);padding:8px 12px;margin:8px 12px}#ph .cd2 b{color:var(--x-cct);flex:1;font-weight:400}#ph .cd2 i,#ph .cd2 u{color:var(--x-ccx);font-style:normal;text-decoration:none}
+#ph .ch{color:var(--x-cch)}#ph .ch.on{color:var(--x-cca)}#ph .tg{color:var(--x-ctg);padding:8px 12px;font-size:12px}
+#ph .pt{color:var(--x-cpt);font-size:10px;letter-spacing:.1em;margin:10px 12px 0}#ph .pv{margin:4px 12px}#ph .pv b{display:block;color:var(--x-cpn);font-weight:400}#ph .pv small{color:var(--x-cpm)}
+#ph .ib{color:var(--x-ibv)}#ph .ib small{color:var(--x-ibl)}#ph .lg{color:var(--x-ilg)}#ph .lh{color:var(--x-ilh);font-size:9px;text-align:center}
+#ph .so{margin:8px 12px}#ph .so b{display:block;color:var(--x-iso);font-weight:400}#ph .so small{color:var(--x-ism)}
+#ph .lt{color:var(--x-ilt);font-size:10px;text-align:center;margin-top:10px}#ph .lo{color:var(--x-ilo);text-align:center;padding:4px}
+#ph .mb .wl{display:block;color:var(--x-wlb);font-size:10px;margin-bottom:3px}#ph .mb .fi{color:var(--x-wfx)}#ph .mb .fi.e{color:var(--x-wph)}
+#ph .gb{color:var(--x-wgg)}#ph .ts span{color:var(--x-wpt)}#ph .tn{display:block;color:var(--x-wth)}#ph .td{color:var(--x-wtd)}
+#ph .un{display:block;color:var(--x-wun)}#ph .ub{display:block;color:var(--x-wub)}#ph .ud{color:var(--x-wud)}
+#ph .cs{color:var(--x-wcs);font-size:11px;letter-spacing:.05em;margin:8px 0 4px}
+#ph .ob{border:1px solid var(--fieldBd);color:var(--x-wcb);border-radius:var(--r-rmb);padding:8px;text-align:center;margin:6px 0}
+#ph .mi{color:var(--x-wmi);font-size:10px;margin:4px 0}#ph .lk{color:var(--x-wsw)}
+#ph .al{color:var(--x-wal);text-align:center;margin-top:10px;padding-top:8px;border-top:1px solid var(--fieldBd)}
 </style>
 </head>
 <body>
@@ -123,13 +148,98 @@ textarea{width:100%;height:210px;background:var(--cb);color:var(--ct);border:0;b
 <script>
 var $=function(i){return document.getElementById(i)};
 var G=[
-['Geral · todas as telas',1,[['bg','Fundo das telas','Editor, Mesclar, Criar e Info'],['surface','Cartões e caixas',''],['accent','Destaque','Títulos, ícones, números'],['text','Texto principal',''],['muted','Texto de apoio','Letrinhas menores'],['border','Bordas',''],['danger','Perigo','Apagar e erros'],['btn','Botão principal','Salvar, Mesclar, Gerar, Começar'],['btnTx','Texto do botão principal','']]],
-['Botões (um por tela)',0,[['bst','Começar (Info)','Seguem o Botão principal até você mexer'],['bsa','Salvar package (Editor)',''],['bmg','Mesclar e baixar (Mesclar)',''],['bbd','Gerar .package (Criar)',''],['bvf','Verificar (Criar)','Borda e texto'],['bmb','Botão das janelas','Salvar alterações, Entrar…']]],
-['Home',0,[['hbg','Fundo da Home (topo)',''],['hbg2','Fundo da Home (baixo)','Igual ao de cima = fundo liso'],['title','Título',''],['sub','Subtítulo',''],['btn2','Botões Mesclar / Criar','Borda e texto'],['card','Cartão de tradução salva',''],['cardBd','Borda do cartão',''],['cardTitle','Nome no cartão',''],['cardMeta','Idiomas no cartão','']]],
+['Geral · todas as telas',1,[['bg','Fundo das telas','Editor, Mesclar, Criar e Info'],['surface','Cartões e caixas',''],['accent','Destaque','Títulos, ícones, números'],['text','Texto principal','Muda todos os textos principais de uma vez. Em “Textos · …” você ajusta um por um'],['muted','Texto de apoio','Muda todos os textos de apoio de uma vez'],['dim','Texto discreto','Números, rótulos pequenos e ícones apagados'],['border','Bordas',''],['danger','Perigo','Apagar e erros'],['btn','Botão principal','Salvar, Mesclar, Gerar, Começar'],['btnTx','Texto do botão principal','Muda o texto de todos os botões de uma vez. Em “Textos · Botões” você ajusta cada um']]],
+['Botões (um por tela)',0,[['bst','Começar (Info)','Seguem o Botão principal até você mexer'],['bsa','Salvar package (Editor)',''],['bmg','Mesclar e baixar (Mesclar)',''],['bbd','Gerar .package (Criar)',''],['bvf','Verificar (Criar)','Borda (o texto segue, mas dá pra mudar em Textos · Botões)'],['bmb','Botão das janelas','Salvar alterações, Entrar…']]],
+['Home',0,[['hbg','Fundo da Home (topo)',''],['hbg2','Fundo da Home (baixo)','Igual ao de cima = fundo liso'],['title','Título',''],['sub','Subtítulo',''],['btn2','Botões Mesclar / Criar','Borda (o texto segue, mas dá pra mudar em Textos · Botões)'],['card','Cartão de tradução salva',''],['cardBd','Borda do cartão',''],['cardTitle','Nome no cartão',''],['cardMeta','Idiomas no cartão','']]],
 ['Editor',0,[['row','Linhas de texto',''],['box','Caixas original / tradução',''],['bar','Barra de baixo','']]],
 ['Janelas (perfil, entrar…)',0,[['modal','Fundo da janela',''],['modalBd','Borda da janela',''],['modalTitle','Título da janela',''],['modalTx','Texto e rótulos','O que está escrito dentro'],['modalMu','Texto de apoio','Explicações e ✕ de fechar'],['modalAc','Links e destaques','“Não tem conta? Cadastre-se”…'],['field','Campos de texto',''],['fieldBd','Bordas dos campos e cartões',''],['modalCard','Cartões dentro (temas, novidades, Google)',''],['sw','Interruptor ligado',''],['ov','Fundo escuro atrás da janela','Cobre o resto da tela']]]];
 var A={hbg:function(s){return s.bg},bst:function(s){return s.btn},bsa:function(s){return s.btn},bmg:function(s){return s.btn},bbd:function(s){return s.btn},bvf:function(s){return s.accent},bmb:function(s){return s.btn},hbg2:function(s){return mix(s.bg,s.accent,.14)},title:function(s){return s.accent},sub:function(s){return s.muted},btn2:function(s){return s.accent},card:function(s){return s.surface},cardBd:function(s){return s.border},cardTitle:function(s){return s.text},cardMeta:function(s){return s.muted},row:function(s){return s.bg},box:function(s){return mix(s.surface,s.text,.07)},bar:function(s){return s.bg},modal:function(s){return s.surface},modalBd:function(s){return mix(s.border,s.text,.15)},modalTitle:function(s){return s.accent},modalTx:function(s){return s.text},modalMu:function(s){return s.muted},modalAc:function(s){return s.accent},field:function(s){return mix(s.modal,s.text,.08)},fieldBd:function(s){return mix(s.modalBd,s.text,.1)},modalCard:function(s){return mix(s.modal,s.text,.05)},sw:function(s){return s.accent},ov:function(){return'#000000'},btn:function(s){return s.accent},btnTx:function(s){return lum(s.btn||s.accent)>.45?'#111111':'#ffffff'}};
 var MAIN=['bg','surface','accent','text','muted','border','danger','btn'];
+A.dim=function(s){return mix(s.muted,s.bg,.4)};
+// ---- textos individuais: cada um segue a cor geral até a pessoa mexer nele ----
+function dp(n,q){var o=[];[].concat(n).forEach(function(pg){q.split(',').forEach(function(x){o.push('[data-page="'+pg+'"] '+x.trim())})});return o.join(', ')}
+function hp(q){return q.split(',').map(function(x){return 'html[data-page="index"] '+x.trim()}).join(', ')}
+var dT=function(s){return s.text},dM=function(s){return s.muted},dD=function(s){return s.dim},dA=function(s){return s.accent},wT=function(s){return s.modalTx},wM=function(s){return s.modalMu},wA=function(s){return s.modalAc};
+function bt(k){return function(s){return T.btnTx?s.btnTx:tx(s[k])}}
+// item: [chave, nome, dica, padrão, seletor, regra extra(opcional)]
+var TX=[
+{t:'Textos · Botões',items:[
+ ['bnT','Botão + (Home)','',function(s){return s.btnTx}],
+ ['btn2T','Botões Mesclar / Criar (Home)','',function(s){return s.btn2}],
+ ['bstT','Começar (Info)','Segue o “Texto do botão principal” até você mexer',bt('bst')],
+ ['bsaT','Salvar package (Editor)','',bt('bsa')],
+ ['bmgT','Mesclar e baixar (Mesclar)','',bt('bmg')],
+ ['bbdT','Gerar .package (Criar)','',bt('bbd')],
+ ['bvfT','Verificar (Criar)','',function(s){return s.bvf}],
+ ['bmbT','Botões das janelas','Salvar alterações, Entrar…',bt('bmb')]]},
+{t:'Textos · Home (vale com “Pintar a Home”)',tab:'home',home:1,items:[
+ ['hgr','Saudação (“Oi, você”)','',dA,hp('.greeting')],
+ ['hsl','Título “Traduções salvas”','',dA,hp('.saves-label')],
+ ['hhint','Dicas e ícones dos cartões','',dM,hp('.hint, .btn-icon')],
+ ['hver','Selo da versão','',dM,hp('.version')]]},
+{t:'Textos · Editor',tab:'editor',items:[
+ ['etb','Título da barra de cima','',dT,dp('editor','.topbar-title')],
+ ['ets','Subtítulo da barra de cima','',dM,dp('editor','.topbar-sub')],
+ ['ese','Texto da busca','',dT,dp('editor','.search-input')],
+ ['eog','Texto original','',dM,dp('editor','.original-text')],
+ ['etr','Texto da tradução (o que você digita)','Também muda a cor do cursor',dT,dp('editor','.ta-backdrop'),function(c){return dp('editor','.edit-textarea')+' { caret-color: '+c+' !important; }\n'}],
+ ['erw','Números, chaves e contadores','',dD,dp('editor','.row-num, .key-hex, .col-header, .count-badge, .timer-badge, .note-hint')],
+ ['efl','Rótulos da barra de baixo (Nome:, .package)','',dM,dp('editor','.filename-label, .ext-label')],
+ ['efn','Nome do arquivo','',dT,dp('editor','.filename-input')],
+ ['eki','Menus e filtros','',dM,dp('editor','.kebab-item, .filter-toggle-label, .filter-checkbox-label')],
+ ['ebt','Ícones dos botões (voltar, copiar…)','',dM,dp('editor','.back-btn, .action-btn, .copy-btn')]]},
+{t:'Textos · Mesclar, Criar e Info (iguais nas 3)',tab:'merge',items:[
+ ['tbt','Título da barra de cima','',dM,dp(['merge','create','info'],'.topbar-title')],
+ ['sct','Títulos de seção','IDENTIFICAÇÃO DO MOD, DETALHES…',dD,dp(['merge','create','info'],'.section-label')]]},
+{t:'Textos · Mesclar',tab:'merge',items:[
+ ['mmt','Título das opções','',dT,dp('merge','.mode-tab-title')],
+ ['mms','Descrição das opções','',dD,dp('merge','.mode-tab-sub')],
+ ['mdz','Texto da área de selecionar','',dM,dp('merge','.drop-zone-label')],
+ ['mdzs','Dica e ícone da área de selecionar','',dD,dp('merge','.drop-zone-sub, .drop-zone-icon')],
+ ['mfn','Nome dos arquivos','',dT,dp('merge','.file-item-name, .split-result-name')],
+ ['mfm','Tamanhos e contagens','',dD,dp('merge','.file-item-size, .file-item-index, .file-count, .split-result-meta, .search-count')],
+ ['msr','Texto da busca','',dT,dp('merge','.search-input')]]},
+{t:'Textos · Criar',tab:'create',items:[
+ ['cfl','Rótulos dos campos','NAMESPACE…',dD,dp('create','.field-label')],
+ ['cin','Texto digitado nos campos','',dT,dp('create','.field input, .field textarea, .field select')],
+ ['cph','Texto-exemplo dos campos','O cinza de “ex: meu_mod”',dD,dp('create','.field input::placeholder, .field textarea::placeholder, .card-title.placeholder')],
+ ['cns','Dicas embaixo dos campos','',dD,dp('create','.ns-hint')],
+ ['cct','Título dos cartões','',dT,dp('create','.card-title')],
+ ['ccx','Números e ícones dos cartões','',dD,dp('create','.card-index, .card-chevron, .card-remove')],
+ ['cch','Pílulas de escolher','',dM,dp('create','.chip')],
+ ['cca','Pílula marcada','',dA,dp('create','.chip.active')],
+ ['ctg','Texto dos interruptores','',dM,dp('create','.toggle-label')],
+ ['cpn','Prévia: nomes','',dT,dp('create','.preview-row-name')],
+ ['cpm','Prévia: detalhes','',dD,dp('create','.preview-row-meta')],
+ ['cpt','Prévia: título e abas','',dD,dp('create','.preview-title, .preview-tab-btn')]]},
+{t:'Textos · Info',tab:'info',items:[
+ ['ibl','Rótulos das caixinhas','INSTANCE, LÍNGUA…',dD,dp('info','.block-label')],
+ ['ibv','Valores das caixinhas','',dT,dp('info','.block-value')],
+ ['ilg','Botão do idioma','',dA,dp('info','.lang-btn')],
+ ['ilh','Dica do idioma','',dD,dp('info','.lang-hint')],
+ ['iso','Opções de STBL (código)','',dT,dp('info','.stbl-option-hex')],
+ ['ism','Opções de STBL (detalhes)','',dM,dp('info','.stbl-option-meta')],
+ ['ilt','Título da lista de idiomas','',dD,dp('info','.lang-sheet-title')],
+ ['ilo','Idiomas da lista','O idioma marcado continua no Destaque',dM,dp('info','.lang-option'),function(c){return dp('info','.lang-option.selected')+' { color: var(--accent) !important; }\n'}]]},
+{t:'Textos · Janelas',tab:'modal',sh:1,items:[
+ ['wlb','Rótulos dos campos','Nome de Usuário, Senha…',wT,'.modal-box label'],
+ ['wfx','Texto digitado nos campos','',wT,'.form-input'],
+ ['wph','Texto-exemplo dos campos','O cinza de “Seu usuário”',wM,'.form-input::placeholder'],
+ ['wgg','Botão do Google','',wT,'.google-btn'],
+ ['wsw','“Não tem conta?” e “Já tem uma conta?”','',wT,'.modal-switch'],
+ ['wpt','“Notificar no celular” e seleção','',wT,'.push-toggle-label, .select-count'],
+ ['wth','Nome dos temas','',wT,'.theme-name'],
+ ['wtd','Descrição dos temas','',wM,'.theme-sub, .theme-blurb, .theme-foot'],
+ ['wun','Título das novidades','',wT,'.update-item-title'],
+ ['wub','Texto das novidades','',wT,'.update-item-body'],
+ ['wud','Data das novidades e aviso de vazio','',wM,'.update-item-date, .updates-empty'],
+ ['wcs','Título “CSS personalizado”','',wT,'.css-box > summary'],
+ ['wcb','Botões de contorno (Aplicar, Copiar, Sair)','',wT,'.css-btn:not(.css-btn-main):not(.css-danger), .modal-box .modal-btn[onclick="handleLogout()"]'],
+ ['wmi','Olhinho da senha e miudezas','Contadores, “Cancelar”',wM,'.pw-eye, .pw-eye.on, .css-meta, .nick-count, .select-cancel'],
+ ['wal','Texto dos avisos','As caixinhas “Salvo!”, “Tem certeza?”',wT,'.alert-msg']]}
+];
+TX.forEach(function(g){g.items.forEach(function(it){A[it[0]]=it[3]});G.push([g.t,0,g.items.map(function(it){return[it[0],it[1],it[2]]}),g.tab])});
+function txcss(h){var o='';TX.forEach(function(g){if(!g.home!==!h)return;g.items.forEach(function(it){if(!it[4])return;o+=it[4]+' { color: '+S[it[0]]+' !important;'+(g.sh?' text-shadow: none !important;':'')+' }\n';if(it[5])o+=it[5](S[it[0]])})});return o?'\n/* Textos'+(h?' da Home':'')+' */\n'+o:''}
 var RG=[
 ['Geral · todas as telas',1,[['radius','Cartões e caixas','Os outros lugares seguem este, até você mexer neles (Home, Mesclar, Criar, Info e janelas)'],['rsm','Botões e campos de texto','Seguem: botões grandes da Home, caixas de texto, busca e campos da janela'],['rxs','Selos e miudezas','Segue: selo da versão'],['rbtn','Botão principal','Salvar, Mesclar, Gerar, Começar']]],
 ['Botões (um por tela)',0,[['rst','Começar (Info)','Seguem o Botão principal até você mexer'],['rsa','Salvar package (Editor)',''],['rmg','Mesclar e baixar (Mesclar)',''],['rbd','Gerar .package (Criar)',''],['rvf','Verificar (Criar)',''],['rmb','Botão das janelas','']]],
@@ -159,33 +269,45 @@ function mix(a,b,t){var x=rgb(a),y=rgb(b);return hex(x.map(function(v,i){return 
 function lum(h){var c=rgb(h).map(function(v){v/=255;return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4)});return .2126*c[0]+.7152*c[1]+.0722*c[2]}
 function auto(){['btn','btnTx'].concat(Object.keys(A).filter(function(k){return k!=='btn'&&k!=='btnTx'})).forEach(function(k){if(!T[k])S[k]=A[k](S)})}
 function tx(c){return lum(c)>.45?'#111111':'#ffffff'}
-function V(){var a=rgb(S.accent);return{'--bg':S.bg,'--surface':S.surface,'--surface2':mix(S.surface,S.text,.07),'--surface3':mix(S.bg,S.surface,.5),'--border':S.border,'--border2':mix(S.border,S.text,.15),'--border3':mix(S.border,S.text,.3),'--accent':S.accent,'--accent-dim':mix(S.accent,'#000000',.22),'--accent-faint':'rgba('+a.join(', ')+', 0.12)','--text':S.text,'--text-muted':S.muted,'--text-dim':mix(S.muted,S.bg,.4),'--danger':S.danger,'--radius':px('radius'),'--radius-sm':px('rsm'),'--radius-xs':px('rxs')}}
+function V(){var a=rgb(S.accent);return{'--bg':S.bg,'--surface':S.surface,'--surface2':mix(S.surface,S.text,.07),'--surface3':mix(S.bg,S.surface,.5),'--border':S.border,'--border2':mix(S.border,S.text,.15),'--border3':mix(S.border,S.text,.3),'--accent':S.accent,'--accent-dim':mix(S.accent,'#000000',.22),'--accent-faint':'rgba('+a.join(', ')+', 0.12)','--text':S.text,'--text-muted':S.muted,'--text-dim':S.dim,'--danger':S.danger,'--radius':px('radius'),'--radius-sm':px('rsm'),'--radius-xs':px('rxs')}}
 function css(){
  var v=V(),o='/* Meu tema — feito no Montador de tema */\n:root {\n',k,H='html[data-page="index"] ';
  for(k in v)o+='  '+k+': '+v[k]+';\n';o+='}\n';
- o+='\n/* Todas as telas */\n'+[['.start-btn','bst','rst'],['.save-btn','bsa','rsa'],['.merge-btn','bmg','rmg'],['.btn-build','bbd','rbd']].map(function(b){return b[0]+' { background: '+S[b[1]]+'; color: '+tx(S[b[1]])+'; border-radius: '+px(b[2])+'; }\n'}).join('')+'[data-page="create"] .btn-preview { border-color: '+S.bvf+'; color: '+S.bvf+'; border-radius: '+px('rvf')+'; }\n'
+ o+='\n/* Todas as telas */\n'+[['.start-btn','bst','rst'],['.save-btn','bsa','rsa'],['.merge-btn','bmg','rmg'],['.btn-build','bbd','rbd']].map(function(b){return b[0]+' { background: '+S[b[1]]+'; color: '+S[b[1]+'T']+'; border-radius: '+px(b[2])+'; }\n'}).join('')+'[data-page="create"] .btn-preview { border-color: '+S.bvf+'; color: '+S.bvfT+'; border-radius: '+px('rvf')+'; }\n'
   +'[data-page="editor"] .string-row { background: '+S.row+'; }\n[data-page="editor"] .edit-textarea, [data-page="editor"] .original-text { background: '+S.box+'; border-radius: '+px('eb')+'; }\n[data-page="editor"] .search-input { border-radius: '+px('es')+'; }\n[data-page="merge"] .mode-tab { border-radius: '+px('mt')+'; }\n[data-page="merge"] .drop-zone { border-radius: '+px('mz')+'; }\n[data-page="create"] .card, [data-page="create"] .namespace-block { border-radius: '+px('cc')+'; }\n[data-page="create"] .chip { border-radius: '+px('cp')+'; }\n[data-page="info"] .info-block { border-radius: '+px('ib')+'; }\n[data-page="editor"] .bottom-bar { background: '+S.bar+'; }\n'
-  +'\n/* Janelas */\n.modal-overlay { background: rgba('+rgb(S.ov).join(', ')+', 0.6) !important; }\n.modal-box { background: '+S.modal+' !important; border: 1px solid '+S.modalBd+' !important; border-radius: '+px('rw')+' !important; color: '+S.modalTx+'; }\n.modal-title { color: '+S.modalTitle+' !important; }\n.modal-box label { color: '+S.modalTx+' !important; }\n.nick-sub, .css-help, .modal-close, .update-item-delete, .auth-divider { color: '+S.modalMu+' !important; text-shadow: none !important; }\n.modal-switch span { color: '+S.modalAc+' !important; }\n.form-input { background: '+S.field+' !important; border: 1px solid '+S.fieldBd+' !important; color: '+S.modalTx+' !important; border-radius: '+px('rwf')+' !important; }\n.google-btn { background: '+S.modalCard+' !important; border: 1px solid '+S.fieldBd+' !important; color: '+S.modalTx+' !important; }\n.theme-card, .update-item, .css-box { background: '+S.modalCard+' !important; border-color: '+S.fieldBd+' !important; color: '+S.modalTx+'; }\n.theme-card.active, .update-item.selected { border-color: '+S.modalAc+' !important; }\n.switch-slider { background: '+S.fieldBd+' !important; }\n.switch input:checked + .switch-slider { background: '+S.sw+' !important; }\n.modal-btn, .alert-btn, .css-btn-main { background: '+S.bmb+' !important; border-color: '+S.bmb+' !important; color: '+tx(S.bmb)+' !important; border-radius: '+px('rmb')+' !important; }\n';
+  +'\n/* Janelas */\n.modal-overlay { background: rgba('+rgb(S.ov).join(', ')+', 0.6) !important; }\n.modal-box { background: '+S.modal+' !important; border: 1px solid '+S.modalBd+' !important; border-radius: '+px('rw')+' !important; color: '+S.modalTx+'; }\n.modal-title { color: '+S.modalTitle+' !important; }\n.modal-box label { color: '+S.modalTx+' !important; }\n.nick-sub, .css-help, .modal-close, .update-item-delete, .auth-divider { color: '+S.modalMu+' !important; text-shadow: none !important; }\n.modal-switch span { color: '+S.modalAc+' !important; }\n.form-input { background: '+S.field+' !important; border: 1px solid '+S.fieldBd+' !important; color: '+S.modalTx+' !important; border-radius: '+px('rwf')+' !important; }\n.google-btn { background: '+S.modalCard+' !important; border: 1px solid '+S.fieldBd+' !important; color: '+S.modalTx+' !important; }\n.theme-card, .update-item, .css-box { background: '+S.modalCard+' !important; border-color: '+S.fieldBd+' !important; color: '+S.modalTx+'; }\n.theme-card.active, .update-item.selected { border-color: '+S.modalAc+' !important; }\n.switch-slider { background: '+S.fieldBd+' !important; }\n.switch input:checked + .switch-slider { background: '+S.sw+' !important; }\n.modal-btn, .alert-btn, .css-btn-main { background: '+S.bmb+' !important; border-color: '+S.bmb+' !important; color: '+S.bmbT+' !important; border-radius: '+px('rmb')+' !important; }\n'
+  +'.modal-box .modal-btn[onclick=\"handleLogout()\"] { background: transparent !important; border-color: '+S.fieldBd+' !important; color: '+S.modalTx+' !important; }\n'
+  +'.css-btn:not(.css-btn-main):not(.css-danger) { background: transparent !important; border-color: '+S.fieldBd+' !important; color: '+S.modalTx+' !important; border-radius: '+px('rmb')+' !important; }\n'
+  +'.css-btn.css-danger { background: '+S.danger+' !important; border-color: '+S.danger+' !important; color: '+tx(S.danger)+' !important; }\n'
+  +'.modal-switch, .theme-name, .update-item-title, .update-item-body, .push-toggle-label, .select-count, .css-box > summary { color: '+S.modalTx+' !important; text-shadow: none !important; }\n'
+  +'.modal-switch span { color: '+S.modalAc+' !important; }\n'
+  +'.theme-sub, .theme-blurb, .theme-foot, .updates-empty, .update-item-date, .css-meta, .nick-count, .select-cancel, .pw-eye, .pw-eye.on { color: '+S.modalMu+' !important; text-shadow: none !important; }\n'
+  +'.select-delete, .select-all-btn, #topbar-select .select-delete, #topbar-select .select-all-btn { color: '+S.modalAc+' !important; }\n'
+  +'.form-input::placeholder { color: '+S.modalMu+' !important; opacity: .7; }\n'
+  +'.css-help code { background: '+S.field+' !important; color: '+S.modalTx+' !important; }\n'
+  +'.auth-divider::before, .auth-divider::after { background: '+S.fieldBd+' !important; }\n'
+  +'.nick-preview { color: '+S.modalAc+' !important; text-shadow: none !important; }\n'
+  +'.nick-error { color: '+S.danger+' !important; text-shadow: none !important; }\n'
+  +'.sel-circle.checked { background: '+S.modalAc+' !important; border-color: '+S.modalAc+' !important; }\n'
+  +'.alert-overlay { background: rgba('+rgb(S.ov).join(', ')+', 0.6) !important; }\n'
+  +'.alert-box { background: '+S.modal+' !important; border: 1px solid '+S.modalBd+' !important; border-radius: '+px('rw')+' !important; backdrop-filter: none !important; }\n'
+  +'.alert-msg { color: '+S.modalTx+' !important; }\n'
+  +'.alert-icon.err { color: '+S.danger+' !important; border-color: '+S.danger+' !important; }\n'+txcss(0);
  if($('home').checked){
   o+='\n/* Home */\n'+H+'body { background: '+(S.hbg===S.hbg2?S.hbg:'linear-gradient(160deg, '+S.hbg+', '+S.hbg2+')')+' !important; background-attachment: fixed !important; }\n'
   +H+'.title { -webkit-text-fill-color: '+S.title+' !important; }\n'+H+'.subtitle { color: '+S.sub+' !important; }\n'+H+'.greeting, '+H+'.saves-label { color: var(--accent) !important; }\n'
   +H+'.profile-circle, '+H+'.bell-btn, '+H+'.theme-btn { border: 1px solid var(--border2) !important; background: var(--surface) !important; color: var(--accent) !important; }\n'
-  +H+'.btn-new { background: '+S.btn+' !important; color: '+S.btnTx+' !important; border: none !important; }\n'
-  +H+'.btn-merge, '+H+'.btn-create { background: var(--surface) !important; border: 1px solid '+S.btn2+' !important; color: '+S.btn2+' !important; }\n'
+  +H+'.btn-new { background: '+S.btn+' !important; color: '+S.bnT+' !important; border: none !important; }\n'
+  +H+'.btn-merge, '+H+'.btn-create { background: var(--surface) !important; border: 1px solid '+S.btn2+' !important; color: '+S.btn2T+' !important; }\n'
   +H+'.btn-new, '+H+'.btn-merge, '+H+'.btn-create { border-radius: '+px('hb')+' !important; }\n'+H+'.save-item { border-radius: '+px('hc')+' !important; }\n'+H+'.version { border-radius: '+px('hv')+' !important; }\n'
   +H+'.save-item { background: '+S.card+' !important; border: 1px solid '+S.cardBd+' !important; box-shadow: none !important; }\n'
   +H+'.save-title { color: '+S.cardTitle+' !important; }\n'+H+'.save-meta { color: '+S.cardMeta+' !important; }\n'
   +H+'.hint, '+H+'.btn-icon { color: var(--text-muted) !important; }\n'+H+'.btn-icon.delete { color: var(--danger) !important; }\n'
   +H+'.version { background: var(--surface) !important; border-color: var(--border2) !important; color: var(--text-muted) !important; opacity: 1 !important; }\n';
  }
+ if($('home').checked)o+=txcss(1);
  return o;
 }
-var M={
-home:'<div class="hm"><div class="tb"><i class="pc"></i><span class="gr">Oi, você</span></div><div class="ti">SIMS 4 TRANSLATOR</div><div class="su">TRADUÇÃO DE MODS .PACKAGE</div><div class="bn">+</div><div class="b2">MESCLAR VÁRIOS .PACKAGES</div><div class="b2">CRIAR MOD DO ZERO</div><div class="sl2">TRADUÇÕES SALVAS</div><div class="si"><b>janu</b><small>POR_BR → POR_BR</small></div><div class="si"><b>DevDev3</b><small>ENG_US → POR_BR</small></div><div class="vs">v1.0 · MIT</div></div>',
-editor:'<div class="tb2"><span>←</span><b>Editor</b><span class="cb">0/14</span></div><div class="sr">Buscar por key, original…</div><div class="rw"><div class="og">Scent To Be – Difusor</div><div class="tr">Scent To Be – Difusor</div></div><div class="rw"><div class="og">Desligar</div><div class="tr">Desligar</div></div><div class="rw"><div class="og">Sândalo Romântico</div><div class="tr">Sândalo Romântico</div></div><div class="rw"><div class="og">Canela Revigorante</div><div class="tr">Canela Revigorante</div></div><div class="bb"><div class="fi">Nome: janu</div><div class="tb3"><i>⇄</i><i>◈</i><i>JSON</i></div><div class="sv sa">SALVAR PACKAGE</div></div>',
-merge:'<div class="tb2"><span>←</span><b>MESCLAR .PACKAGES</b></div><div class="mt on"><b>Mesclar rapidinho</b><small>Junta tudo num arquivo só.</small></div><div class="mt"><b>Mesclar com memória</b><small>Dá pra separar depois.</small></div><div class="dz">SELECIONAR ARQUIVOS</div><div class="sv mg">MESCLAR E BAIXAR</div>',
-create:'<div class="tb2"><span>←</span><b>CRIAR MOD</b></div><div class="lb">IDENTIFICAÇÃO DO MOD</div><div class="cd"><small>NAMESPACE</small><div class="inp">ex: meu_mod</div></div><div class="lb">TRAÇOS</div><div><span class="ch on">Personalidade</span><span class="ch">Bônus</span><span class="ch">Social</span></div><div class="ad">+ Adicionar traço</div><div style="height:30px"></div><div class="ab"><div class="vf">Verificar</div><div class="sv bd">GERAR .PACKAGE →</div></div>',
-info:'<div class="fl"><div class="tb2"><span>←</span><b>MEUMOD.PACKAGE</b></div><div class="lb">DETALHES</div><div style="padding:8px 0"><div class="ib"><small>INSTANCE</small>0x0002D0</div><div class="ib"><small>LÍNGUA</small>POR_BR ▾</div><div class="ib"><small>GROUP</small>00000000</div></div><div class="sv st" style="margin-top:auto">COMEÇAR →</div></div>'};
 
 // ---- seletor de cor próprio: quadrado (saturação/brilho) + matiz + código + cores prontas ----
 var P={k:null,h:0,s:1,v:1,old:'#000000'},PAL=['#ff4fa3','#ff6b6b','#e8743b','#ffb454','#ffd84d','#b6ff5c','#5fd68a','#3f8f7c','#9cb8b2','#35e0ff','#35c4e0','#5b8def','#7a3cff','#b79bff','#d68bff','#f4eaff','#ffffff','#cfcfcf','#8d9a96','#555555','#2a302e','#1a1d1c','#0f0f0f','#000000'];
@@ -193,7 +315,7 @@ function hsv2hex(h,s,v){var f=function(n){var k=(n+h/60)%6;return v-v*s*Math.max
 function hex2hsv(c){var r=rgb(c).map(function(x){return x/255}),mx=Math.max.apply(0,r),mn=Math.min.apply(0,r),d=mx-mn,h=0;
  if(d){h=mx===r[0]?((r[1]-r[2])/d)%6:mx===r[1]?(r[2]-r[0])/d+2:(r[0]-r[1])/d+4;h*=60;if(h<0)h+=360}
  return{h:h,s:mx?d/mx:0,v:mx}}
-function setColor(k,c){S[k]=c;if(MAIN.indexOf(k)<0||k==='btn')T[k]=1;if(MAIN.indexOf(k)>-1)auto();render()}
+function setColor(k,c){S[k]=c;if(MAIN.indexOf(k)<0||k==='btn')T[k]=1;auto();render()}
 function syncPick(){
  var c=S[P.k],hs=hex2hsv(c);if(hs.s>0&&hs.v>0)P.h=hs.h;P.s=hs.s;P.v=hs.v;draw(c)}
 function draw(c){
@@ -220,7 +342,13 @@ function fillSws(){
 }
 $('sws').onclick=function(e){var c=e.target.dataset&&e.target.dataset.c;if(c&&P.k){setColor(P.k,c);syncPick()}};
 function openPick(k,name){P.k=k;P.old=S[k];$('stt').textContent=name;$('old').style.background=S[k];fillSws();syncPick();$('sheet').hidden=false;document.body.classList.add('sp')}
-M.modal='<div class=\"ov\"><div class=\"mb\"><h4>Meu perfil</h4><small class=\"mu\">Texto de apoio da janela</small><div class=\"fi\">Apelido</div><div class=\"gb\">Entrar com Google</div><div class=\"ts\"><span>Notificações</span><i class=\"sw3\"></i></div><div class=\"tc on\">Cartão de tema (ativo)</div><div class="sv mbn">SALVAR ALTERAÇÕES</div><div class="lk">Não tem conta? <u>Cadastre-se</u></div></div></div>';
+var M={
+home:'<div class="hm"><div class="tb"><i class="pc"></i><span class="gr">Oi, você</span></div><div class="ti">SIMS 4 TRANSLATOR</div><div class="su">TRADUÇÃO DE MODS .PACKAGE</div><div class="bn">+</div><div class="b2">MESCLAR VÁRIOS .PACKAGES</div><div class="b2">CRIAR MOD DO ZERO</div><div class="sl2">TRADUÇÕES SALVAS</div><div class="si"><b>janu</b><small>POR_BR → POR_BR</small></div><div class="si"><b>DevDev3</b><small>ENG_US → POR_BR</small></div><div class="ht">toque num cartão pra abrir</div><div class="vs">v1.0 · MIT</div></div>',
+editor:'<div class="tb2"><span>←</span><div><b>Editor</b><small class="tsb">MEUMOD.package</small></div><span class="cb">0/14</span></div><div class="sr">Buscar por key, original…</div><div class="rw"><div class="og"><small class="rn">#1 · 0x3F2A</small><br>Scent To Be – Difusor</div><div class="tr">Scent To Be – Difusor</div></div><div class="rw"><div class="og">Desligar</div><div class="tr">Desligar</div></div><div class="rw"><div class="og">Sândalo Romântico</div><div class="tr">Sândalo Romântico</div></div><div class="mn">Copiar · Favoritar · Anotar</div><div class="bb"><div class="fi"><span class="nl">Nome:</span> <span class="nm2">janu</span></div><div class="tb3"><i>⇄</i><i>◈</i><i>JSON</i></div><div class="sv sa">SALVAR PACKAGE</div></div>',
+merge:'<div class="tb2"><span>←</span><b>MESCLAR .PACKAGES</b></div><div class="lb">COMO MESCLAR</div><div class="mt on"><b>Mesclar rapidinho</b><small>Junta tudo num arquivo só.</small></div><div class="mt"><b>Mesclar com memória</b><small>Dá pra separar depois.</small></div><div class="dz">SELECIONAR ARQUIVOS<small class="dzs">.package · vários de uma vez</small></div><div class="fn"><span>mod_a.package</span><i>2,4 MB</i></div><div class="fn"><span>mod_b.package</span><i>310 KB</i></div><div class="sv mg">MESCLAR E BAIXAR</div>',
+create:'<div class="tb2"><span>←</span><b>CRIAR MOD</b></div><div class="lb">IDENTIFICAÇÃO DO MOD</div><div class="cd"><small>NAMESPACE</small><div class="inp">ex: meu_mod</div><div class="inp v">meu_mod</div><div class="nh">Só letras minúsculas e _</div></div><div class="lb">TRAÇOS</div><div class="cd2"><i>1</i><b>Personalidade</b><u>⌄</u></div><div><span class="ch on">Personalidade</span><span class="ch">Bônus</span><span class="ch">Social</span></div><div class="tg">Mostrar avançado</div><div class="ad">+ Adicionar traço</div><div class="pt">PRÉVIA</div><div class="pv"><b>trait_a</b><small>0x12AB · 3 strings</small></div><div style="height:30px"></div><div class="ab"><div class="vf">Verificar</div><div class="sv bd">GERAR .PACKAGE →</div></div>',
+info:'<div class="fl"><div class="tb2"><span>←</span><b>MEUMOD.PACKAGE</b></div><div class="lb">DETALHES</div><div style="padding:8px 0"><div class="ib"><small>INSTANCE</small>0x0002D0</div><div class="ib"><small>LÍNGUA</small><span class="lg">POR_BR ▾</span></div><div class="ib"><small>GROUP</small>00000000</div></div><div class="lh">toque na língua pra trocar</div><div class="so"><b>0x220557DA</b><small>12 strings · POR_BR</small></div><div class="lt">IDIOMA</div><div class="lo">Português</div><div class="sv st" style="margin-top:auto">COMEÇAR →</div></div>',
+modal:'<div class="ov"><div class="mb"><h4>Meu perfil</h4><small class="mu">Texto de apoio da janela</small><small class="wl">Apelido</small><div class="fi">janu</div><div class="fi e">Como a gente te chama?</div><div class="gb">Entrar com Google</div><div class="ts"><span>Notificar no celular</span><i class="sw3"></i></div><div class="tc on"><b class="tn">Coquette</b><small class="td">Rosa e renda</small></div><div class="tc"><b class="un">Novidade da versão</b><span class="ub">Montador de tema novo</span><small class="ud">12/10</small></div><div class="cs">CSS personalizado +</div><div class="ob">Aplicar</div><div class="mi">👁 senha · 0/20000</div><div class="sv mbn">SALVAR ALTERAÇÕES</div><div class="lk">Não tem conta? <u>Cadastre-se</u></div><div class="al">Salvo com sucesso!</div></div></div>'};
 var TN={home:'Home',editor:'Editor',merge:'Mesclar',create:'Criar',info:'Info',modal:'Janela'};
 function render(){
  var v=V(),p=$('ph'),k;
@@ -229,6 +357,7 @@ function render(){
  ['bst','bsa','bmg','bbd','bmb'].forEach(function(b){x[b]=S[b];x[b+'Tx']=tx(S[b])});x.bvf=S.bvf;['modalTx','modalMu','modalAc','field','fieldBd','modalCard','sw'].forEach(function(k){x[k]=S[k]});x.ovc='rgba('+rgb(S.ov).join(',')+',.6)';
  for(k in R)p.style.setProperty('--r-'+k,px(k));
  for(k in x)p.style.setProperty('--'+k,x[k]);
+ for(k in S)p.style.setProperty('--x-'+k,S[k]);
  if(p.dataset.t!==tab){p.innerHTML=M[tab];p.dataset.t=tab}
  $('out').value=css();
  document.querySelectorAll('.pk').forEach(function(d){var k=d.dataset.k;d.querySelector('.sw2').style.background=S[k];d.querySelector('code').textContent=S[k];d.querySelector('button:last-child').style.visibility=T[k]?'visible':'hidden'});
@@ -238,6 +367,7 @@ function render(){
 function load(c,r){S={};T={};for(var k in c)S[k]=c[k];auto();var q=Math.min(100,Math.round(r/40*100));R=RM(q);TR={};autoR();$('all').textContent=ml(q);$('allr').value=q;render()}
 G.forEach(function(g){
  var d=document.createElement('details');d.className='box';if(g[1])d.open=true;
+ if(g[3])d.addEventListener('toggle',function(){if(d.open&&tab!==g[3]){tab=g[3];render();$('ph').scrollTop=0}});
  d.innerHTML='<summary>'+g[0]+'</summary>';
  g[2].forEach(function(it){
   var r=document.createElement('div');r.className='pk';r.dataset.k=it[0];
