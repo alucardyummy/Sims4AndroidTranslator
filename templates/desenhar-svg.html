@@ -40,25 +40,37 @@ textarea{width:100%;height:190px;background:var(--cb);color:var(--ct);border:0;b
 .go2{width:100%;border:1.5px solid var(--ac);border-radius:12px;background:none;color:var(--ac);font:inherit;font-weight:700;padding:10px;margin-top:8px;display:block;text-align:center;text-decoration:none}
 .back{display:inline-block;margin:2px 0 4px;text-decoration:none;font-size:14px}
 #msg{color:var(--ac);font-size:13px;min-height:1.4em;margin:6px 2px 0}
+
+:root{--ig:#7a9e97}
+.ic{display:inline-block;width:1.25em;height:1.25em;vertical-align:-.28em;color:var(--ig);flex:none}
+.ie{display:inline-block;width:1em;height:1em;vertical-align:-.14em;color:currentColor}
+.back .ic{margin-right:2px}
+.tools button b{line-height:1}
+.tools button b .ic,.acts button .ic{width:24px;height:24px;vertical-align:top}
+.acts button .ic{width:22px;height:22px;vertical-align:middle}
+.tools button .ic,.acts button .ic,.go .ic{box-sizing:content-box;padding:2px;border-radius:50%}
+.tools button.on .ic,.acts button.on .ic,.go .ic{background:#fff}
+h1 .ic{width:1.1em;height:1.1em;vertical-align:-.15em}
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true" focusable="false"><defs><symbol id="i-back" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5.5"/><path d="M11.5 6l-6 6 6 6"/></g></symbol><symbol id="i-pointer" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.8v14.4l3.8-3.4 2.6 5.4 2.6-1.3-2.6-5.2 5-.3z" fill="currentColor" fill-opacity=".25"/></g></symbol><symbol id="i-pencil" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l1-4.6L16.2 4.2a2.2 2.2 0 013.1 0l.5.5a2.2 2.2 0 010 3.1L8.6 19z" fill="currentColor" fill-opacity=".25"/><path d="M13.6 6.8l3.6 3.6"/></g></symbol><symbol id="i-line" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 17.5l11-11"/><circle cx="5" cy="19" r="2.3" fill="currentColor" fill-opacity=".25"/><circle cx="19" cy="5" r="2.3" fill="currentColor" fill-opacity=".25"/></g></symbol><symbol id="i-rect" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5.5" width="17" height="13" rx="4.5" fill="currentColor" fill-opacity=".25"/></g></symbol><symbol id="i-circle" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5" fill="currentColor" fill-opacity=".25"/><path d="M8.2 10.2a4.2 4.2 0 012.6-2.7" stroke-width="1.6"/></g></symbol><symbol id="i-star" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.2l2.6 5.5 6 .8-4.4 4.2 1.1 6-5.3-2.9-5.3 2.9 1.1-6L3.4 9.5l6-.8z" fill="currentColor" fill-opacity=".25"/></g></symbol><symbol id="i-heart" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.5C5 15.6 3.2 12.2 3.2 9a4.6 4.6 0 018.8-1.6A4.6 4.6 0 0120.8 9c0 3.2-1.8 6.6-8.8 11.5z" fill="currentColor" fill-opacity=".25"/></g></symbol><symbol id="i-hex" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.2l7.6 4.4v8.8L12 20.8l-7.6-4.4V7.6z" fill="currentColor" fill-opacity=".25"/></g></symbol><symbol id="i-undo" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5L4.5 9.5 9 14"/><path d="M4.5 9.5h10a5 5 0 010 10H10"/></g></symbol><symbol id="i-redo" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l4.5 4.5L15 14"/><path d="M19.5 9.5h-10a5 5 0 000 10H14"/></g></symbol><symbol id="i-copy" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="8.5" y="8.5" width="12" height="12" rx="3.5" fill="currentColor" fill-opacity=".25"/><path d="M15.5 8.5v-2a3 3 0 00-3-3h-6a3 3 0 00-3 3v6a3 3 0 003 3h2"/></g></symbol><symbol id="i-front" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="11" height="11" rx="3" fill="currentColor" fill-opacity=".1"/><rect x="9.5" y="9.5" width="11" height="11" rx="3" fill="currentColor" fill-opacity=".55"/></g></symbol><symbol id="i-backw" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="11" height="11" rx="3" fill="currentColor" fill-opacity=".55"/><rect x="9.5" y="9.5" width="11" height="11" rx="3" fill="currentColor" fill-opacity=".1"/></g></symbol><symbol id="i-lock" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="10.5" width="15" height="10.5" rx="4" fill="currentColor" fill-opacity=".25"/><path d="M8 10.5V8a4 4 0 018 0v2.5"/><circle cx="12" cy="15" r="1.3" fill="currentColor" stroke="none"/><path d="M12 16.2v1.6" stroke-width="1.6"/></g></symbol><symbol id="i-trash" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M9.5 7V5.5A1.5 1.5 0 0111 4h2a1.5 1.5 0 011.5 1.5V7"/><path d="M6 7l.9 11.2a2.5 2.5 0 002.5 2.3h5.2a2.5 2.5 0 002.5-2.3L18 7" fill="currentColor" fill-opacity=".25"/><circle cx="10" cy="13" r="1" fill="currentColor" stroke="none"/><circle cx="14" cy="13" r="1" fill="currentColor" stroke="none"/><path d="M10.4 16a2 2 0 003.2 0" stroke-width="1.6"/></g></symbol><symbol id="i-palette" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5C7 3.5 3 7.2 3 12s3.6 8.5 8.6 8.5c1.5 0 2-1 1.6-2-.5-1.2.2-2.4 1.6-2.4H17a4 4 0 004-4c0-5-4-8.6-9-8.6z" fill="currentColor" fill-opacity=".25"/><circle cx="7.6" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="10" cy="7.9" r="1.3" fill="currentColor" stroke="none"/><circle cx="14.4" cy="7.7" r="1.3" fill="currentColor" stroke="none"/><circle cx="17.2" cy="11" r="1.3" fill="currentColor" stroke="none"/></g></symbol><symbol id="i-check" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9" fill="currentColor" fill-opacity=".25"/><path d="M7.8 12.4l3 3 5.4-6"/></g></symbol><symbol id="i-smile" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9" fill="currentColor" fill-opacity=".25"/><circle cx="9" cy="10.4" r="1.2" fill="currentColor" stroke="none"/><circle cx="15" cy="10.4" r="1.2" fill="currentColor" stroke="none"/><path d="M8.6 14a4 4 0 006.8 0"/></g></symbol></defs></svg>
 <main>
-<a class="back" href="/montar-tema">← Montador de tema</a>
-<h1>✏️ Desenhar SVG</h1>
+<a class="back" href="/montar-tema"><svg class="ic" aria-hidden="true"><use href="#i-back"/></svg> Montador de tema</a>
+<h1><svg class="ic" aria-hidden="true"><use href="#i-pencil"/></svg> Desenhar SVG</h1>
 <p class="sub">Desenhe formas com o dedo e o código SVG sai pronto. Dá pra mandar o desenho direto pro <b>fundo com padrão</b> do Montador.</p>
 
 <div class="stk">
   <div class="tools" id="tools"></div>
   <div id="cvw"><svg id="cv" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><g id="grid"></g><g id="art"></g><g id="ui"></g></svg></div>
   <div class="acts">
-    <button id="bu" type="button" title="Desfazer">↶</button>
-    <button id="br" type="button" title="Refazer">↷</button>
-    <button id="bd" type="button" title="Duplicar">⧉</button>
-    <button id="bf" type="button" title="Trazer pra frente">⤒</button>
-    <button id="bb" type="button" title="Mandar pra trás">⤓</button>
-    <button id="bl" type="button" title="Manter proporção ao redimensionar">🔒</button>
-    <button id="bx" type="button" title="Apagar">🗑</button>
+    <button id="bu" type="button" title="Desfazer" aria-label="Desfazer"><svg class="ic" aria-hidden="true"><use href="#i-undo"/></svg></button>
+    <button id="br" type="button" title="Refazer" aria-label="Refazer"><svg class="ic" aria-hidden="true"><use href="#i-redo"/></svg></button>
+    <button id="bd" type="button" title="Duplicar" aria-label="Duplicar"><svg class="ic" aria-hidden="true"><use href="#i-copy"/></svg></button>
+    <button id="bf" type="button" title="Trazer pra frente" aria-label="Trazer pra frente"><svg class="ic" aria-hidden="true"><use href="#i-front"/></svg></button>
+    <button id="bb" type="button" title="Mandar pra trás" aria-label="Mandar pra trás"><svg class="ic" aria-hidden="true"><use href="#i-backw"/></svg></button>
+    <button id="bl" type="button" title="Manter proporção ao redimensionar" aria-label="Manter proporção ao redimensionar"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg></button>
+    <button id="bx" type="button" title="Apagar" aria-label="Apagar"><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg></button>
   </div>
 </div>
 <p class="hint" id="hint"></p>
@@ -89,7 +101,7 @@ textarea{width:100%;height:190px;background:var(--cb);color:var(--ct);border:0;b
 <button class="go" id="cp" type="button">Copiar SVG</button>
 <button class="go2" id="dl" type="button">Baixar .svg</button>
 <button class="go2" id="css" type="button">Copiar como fundo CSS</button>
-<button class="go" id="use" type="button" style="margin-top:14px">🎨 Usar como padrão no Montador de tema</button>
+<button class="go" id="use" type="button" style="margin-top:14px"><svg class="ic" aria-hidden="true"><use href="#i-palette"/></svg> Usar como padrão no Montador de tema</button>
 <p id="msg"></p>
 <p class="hint">O rascunho fica salvo neste aparelho, então você pode sair e voltar.</p>
 </main>
@@ -102,7 +114,7 @@ var N=100,objs=[],sel=null,tool='move',nid=1,snapOn=true,gridOn=true,lock=false,
 // estilo que as próximas formas vão usar (também é o que o painel mostra com nada selecionado)
 var D={fill:'#ff4fa3',stroke:'#7a3cff',sw:2,fo:1,so:0,op:1,rx:0,n:5,pn:6};
 var NAMES={rect:'Retângulo',ell:'Círculo',star:'Estrela',heart:'Coração',poly:'Polígono',line:'Linha',pen:'Lápis'};
-var TOOLS=[['move','☝','Mover'],['pen','✏️','Lápis'],['line','╱','Linha'],['rect','▭','Retângulo'],['ell','◯','Círculo'],['star','★','Estrela'],['heart','♥','Coração'],['poly','⬡','Polígono']];
+var TOOLS=[['move','pointer','Mover'],['pen','pencil','Lápis'],['line','line','Linha'],['rect','rect','Retângulo'],['ell','circle','Círculo'],['star','star','Estrela'],['heart','heart','Coração'],['poly','hex','Polígono']];
 var HINTS={move:'Toque numa forma pra selecionar. Arraste pra mover; use as bolinhas pra redimensionar e girar.',pen:'Arraste o dedo pra desenhar à mão livre.',line:'Arraste pra riscar uma linha reta. Um toque solta uma linha pronta.',rect:'Arraste pra criar. Um toque solta uma forma pronta.',ell:'Arraste pra criar. Um toque solta uma forma pronta.',star:'Arraste pra criar. Um toque solta uma forma pronta.',heart:'Arraste pra criar. Um toque solta uma forma pronta.',poly:'Arraste pra criar. Um toque solta uma forma pronta.'};
 function f(n){return +(+n).toFixed(2)}
 function rad(d){return d*Math.PI/180}
@@ -113,7 +125,8 @@ function rot(x,y,a){var c=Math.cos(a),s=Math.sin(a);return[x*c-y*s,x*s+y*c]}
 function ppu(){var w=cv.getBoundingClientRect().width;return w?N/w:N/340} // unidades do desenho por pixel da tela
 function pt(e){var r=cv.getBoundingClientRect();return[(e.clientX-r.left)*N/(r.width||340),(e.clientY-r.top)*N/(r.height||340)]}
 function byId(id){for(var i=0;i<objs.length;i++)if(objs[i].id===id)return objs[i]}
-function say(t){$('msg').textContent=t;clearTimeout(say.t);say.t=setTimeout(function(){$('msg').textContent=''},2600)}
+function I(n){return'<svg class="ic" aria-hidden="true"><use href="#i-'+n+'"/></svg>'}
+function say(t){$('msg').innerHTML=t;clearTimeout(say.t);say.t=setTimeout(function(){$('msg').textContent=''},2600)}
 
 // coração: pontos de Bézier numa caixa qualquer; a caixa real é medida por amostragem
 var H=[[0,46],[-46,14],[-52,-22],[-28,-38],[-12,-48],[0,-38],[0,-26],[0,-38],[12,-48],[28,-38],[52,-22],[46,14],[0,46]],HB=(function(){
@@ -360,17 +373,17 @@ function buildSizes(){
  [32,64,100,200].forEach(function(v){var e=document.createElement('button');e.type='button';e.className='chip'+(v===N?' on':'');e.textContent=v+' × '+v;
   e.onclick=function(){N=v;buildSizes();drawGrid();redraw();sync();commit()};b.appendChild(e)});
 }
-TOOLS.forEach(function(t){var b=document.createElement('button');b.type='button';b.dataset.t=t[0];b.innerHTML='<b>'+t[1]+'</b>'+t[2];b.onclick=function(){setTool(t[0])};$('tools').appendChild(b)});
+TOOLS.forEach(function(t){var b=document.createElement('button');b.type='button';b.dataset.t=t[0];b.innerHTML='<b>'+I(t[1])+'</b>'+t[2];b.onclick=function(){setTool(t[0])};$('tools').appendChild(b)});
 // exportar
 function cpTxt(t,ok){
  function fb(){var a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();try{document.execCommand('copy')}catch(e){}a.remove();say(ok)}
  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(function(){say(ok)},fb);else fb();
 }
-function empty(){if(!objs.length){say('Desenhe alguma coisa primeiro 🙂');return true}}
+function empty(){if(!objs.length){say('Desenhe alguma coisa primeiro '+I('smile'));return true}}
 function enc(s){return s.replace(/>\s+</g,'><').replace(/\s*\n\s*/g,'').replace(/%/g,'%25').replace(/</g,'%3C').replace(/>/g,'%3E').replace(/#/g,'%23').replace(/\(/g,'%28').replace(/\)/g,'%29').replace(/"/g,"'")}
-$('cp').onclick=function(){if(!empty())cpTxt(svgOut(),'SVG copiado! ✔')};
+$('cp').onclick=function(){if(!empty())cpTxt(svgOut(),'SVG copiado! '+I('check'))};
 $('dl').onclick=function(){if(empty())return;var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([svgOut()],{type:'image/svg+xml'}));a.download='desenho.svg';document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},500)};
-$('css').onclick=function(){if(empty())return;cpTxt('background-image: url("data:image/svg+xml,'+enc(svgOut())+'");\nbackground-size: '+Math.min(N,100)+'px '+Math.min(N,100)+'px;','CSS copiado! ✔')};
+$('css').onclick=function(){if(empty())return;cpTxt('background-image: url("data:image/svg+xml,'+enc(svgOut())+'");\nbackground-size: '+Math.min(N,100)+'px '+Math.min(N,100)+'px;','CSS copiado! '+I('check'))};
 $('use').onclick=function(){
  if(empty())return;
  try{localStorage.setItem('s4t_svg',JSON.stringify({w:N,h:N,inner:inner(),svg:svgOut(),t:Date.now()}))}catch(e){say('Não consegui guardar o desenho neste aparelho.');return}
@@ -383,4 +396,4 @@ window.addEventListener('resize',function(){redraw()});
 })();
 </script>
 </body>
-</html>
+</html> 
