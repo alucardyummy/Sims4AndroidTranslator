@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Montar meu tema · Sims 4 Translator</title>
+<style>
+:root{--bg:#f6f3fb;--card:#fff;--tx:#2a2238;--mu:#6d6384;--ac:#8a5cf0;--bd:#e3dcf2;--cb:#1f1a2e;--ct:#f1eaff}
+@media(prefers-color-scheme:dark){:root{--bg:#141020;--card:#1d1730;--tx:#efe9fb;--mu:#a99ec4;--ac:#b79bff;--bd:#322950;--cb:#0f0b1a}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+main{max-width:640px;margin:0 auto;padding:20px 16px 80px}
+h1{font-size:25px;line-height:1.2;margin:.4em 0 .2em}
+h2{font-size:18px;margin:1.8em 0 .5em;color:var(--ac)}
+p{margin:.5em 0}.sub{color:var(--mu);margin-top:0}
+a{color:var(--ac)}
+.box{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:12px 14px;margin:12px 0}
+.row{display:flex;flex-wrap:wrap;gap:8px}
+.pre{flex:1 1 44%;display:flex;align-items:center;gap:8px;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:12px;padding:8px 10px;font:inherit;font-size:14px;cursor:pointer;text-align:left}
+.pre:active{border-color:var(--ac)}
+.sw{display:flex;flex-shrink:0}.sw i{width:14px;height:26px}.sw i:first-child{border-radius:7px 0 0 7px}.sw i:last-child{border-radius:0 7px 7px 0}
+.pk{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px dashed var(--bd)}
+.pk:last-child{border:0}
+.pk input[type=color]{width:46px;height:40px;border:1px solid var(--bd);border-radius:10px;padding:2px;background:var(--card);flex-shrink:0}
+.pk b{display:block;font-size:15px}.pk small{color:var(--mu);font-size:13px;line-height:1.3;display:block}
+.pk code{margin-left:auto;font-size:12px;color:var(--mu)}
+input[type=range]{width:100%}
+details summary{cursor:pointer;color:var(--ac);margin:8px 0}
+label.ck{display:flex;gap:8px;align-items:flex-start;margin:10px 0;font-size:15px}
+/* prévia */
+#prev{border-radius:var(--radius);padding:16px;border:1px solid var(--border);background:var(--bg);color:var(--text)}
+#prev .c{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:10px}
+#prev h3{margin:0 0 4px;color:var(--accent);font-size:17px}
+#prev .m{color:var(--text-muted);font-size:14px;margin:0 0 10px}
+#prev .inp{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:9px 12px;color:var(--text-dim);margin-bottom:10px;font-size:14px}
+#prev .b{display:inline-block;border-radius:var(--radius-sm);padding:9px 16px;font-size:14px;font-weight:600;margin:0 6px 6px 0}
+#prev .b1{background:var(--accent);color:var(--on)}
+#prev .b2{border:1px solid var(--accent);color:var(--accent)}
+#prev .ch{display:inline-block;border:1px solid var(--border2);border-radius:99px;padding:3px 12px;font-size:13px;color:var(--text-muted);margin-right:6px}
+#prev .ch.on{background:var(--accent-faint);border-color:var(--accent);color:var(--accent)}
+#prev .dg{color:var(--danger);font-size:14px;margin-top:6px}
+textarea{width:100%;height:230px;background:var(--cb);color:var(--ct);border:0;border-radius:12px;padding:12px;font:12.5px/1.5 ui-monospace,Menlo,Consolas,monospace;resize:vertical}
+button.main{width:100%;border:0;border-radius:12px;background:var(--ac);color:#fff;font:inherit;font-weight:700;padding:12px;margin-top:8px;cursor:pointer}
+button.alt{border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:12px;font:inherit;padding:8px 12px;cursor:pointer;margin-top:8px}
+ol{padding-left:20px}li{margin:.4em 0}
+</style>
+</head>
+<body>
+<main>
+<h1><svg width="26" height="26" viewBox="0 0 24 24" style="vertical-align:-.3em"><path d="M12 3C6.9 3 3 7 3 12.2 3 17.3 7 21 12 21c1.6 0 2.4-.9 2.4-2 0-1.4-1.1-1.7-1.1-2.9 0-1.1.9-1.9 2.1-1.9H18c1.7 0 3-1.3 3-3C21 6.7 17 3 12 3z" fill="#9cb8b2"/><circle cx="8" cy="12" r="1.5" fill="#cfe3dd"/><circle cx="11.6" cy="7.7" r="1.5" fill="#5f877c"/><circle cx="16.2" cy="9" r="1.5" fill="#cfe3dd"/><circle cx="8.8" cy="16" r="1.5" fill="#7fa59b"/><ellipse cx="6.4" cy="8.8" rx="1" ry="2.2" transform="rotate(35 6.4 8.8)" fill="#fff" opacity=".4"/></svg> Montar meu tema</h1>
+<p class="sub">Escolha as cores, veja o resultado na hora e copie o código pronto. Sem digitar nada! 🪄</p>
+
+<h2>1. Comece por um modelo</h2>
+<p>Toque num para carregar as cores. Depois você ajusta o que quiser.</p>
+<div class="row" id="presets"></div>
+
+<h2>2. Ajuste as cores</h2>
+<div class="box" id="pickers"></div>
+<details><summary>Mais cores (opcional)</summary><div class="box" id="more"></div></details>
+<div class="box">
+<b>Arredondamento dos cantos</b> <span id="rv" style="color:var(--mu)"></span>
+<input type="range" id="radius" min="0" max="36" step="1">
+<small style="color:var(--mu)">Esquerda = cantinhos quadrados · direita = bem redondinho.</small>
+</div>
+<label class="ck"><input type="checkbox" id="home" checked><span><b>Pintar também a Home</b><br><small style="color:var(--mu)">A Home tem cores próprias (verde-água). Deixe marcado pra ela seguir o seu tema.</small></span></label>
+
+<h2>3. Veja como fica 👀</h2>
+<div id="prev">
+  <div class="c">
+    <h3>Título de exemplo</h3>
+    <p class="m">Esse é o texto de apoio, as letrinhas menores.</p>
+    <div class="inp">Campo de digitar…</div>
+    <span class="b b1">Botão principal</span><span class="b b2">Secundário</span><br>
+    <span class="ch on">escolhido</span><span class="ch">pílula</span><span class="ch">outra</span>
+    <div class="dg">Apagar (cor de perigo)</div>
+  </div>
+</div>
+
+<h2>4. Copie e cole no site</h2>
+<textarea id="out" readonly spellcheck="false"></textarea>
+<button class="main" id="copy" type="button">Copiar CSS</button>
+<div class="box">
+<ol>
+<li>Entre na sua conta no site.</li>
+<li>Toque na <b>bolinha do perfil</b> e abra <b>“CSS personalizado”</b>.</li>
+<li>Cole o texto copiado na caixa e toque em <b>Aplicar</b> pra espiar.</li>
+<li>Gostou? Toque em <b>Salvar CSS</b>. (Aplicar sozinho some quando você recarrega!)</li>
+</ol>
+</div>
+<p>Quer ir além e mudar botões, fontes, bordas…? Veja o <a href="/suporte-css">Guia do CSS</a>. 🧸</p>
+</main>
+
+<script>
+var $=function(i){return document.getElementById(i)};
+var PRESETS=[
+ {n:'Verdinho (padrão)',c:{bg:'#0f0f0f',surface:'#1a1d1c',accent:'#9cb8b2',text:'#e9efed',muted:'#8d9a96',border:'#2a302e',danger:'#e5565b'},r:16},
+ {n:'Rosa neon',c:{bg:'#120b1f',surface:'#1f1433',accent:'#ff4fa3',text:'#f4eaff',muted:'#b79fd6',border:'#3a2660',danger:'#ff6b6b'},r:22},
+ {n:'Roxo noturno',c:{bg:'#141020',surface:'#1d1730',accent:'#b79bff',text:'#efe9fb',muted:'#a99ec4',border:'#322950',danger:'#ff7b7b'},r:18},
+ {n:'Oceano',c:{bg:'#0b1822',surface:'#12273a',accent:'#35c4e0',text:'#e6f4fa',muted:'#8fb3c4',border:'#1f4057',danger:'#ff7a7a'},r:14},
+ {n:'Pêssego claro',c:{bg:'#fff4ec',surface:'#ffffff',accent:'#e8743b',text:'#3a2a22',muted:'#8a6f60',border:'#f0d9c9',danger:'#d64545'},r:20},
+ {n:'Menta clara',c:{bg:'#eef6f3',surface:'#ffffff',accent:'#3f8f7c',text:'#1d2d28',muted:'#5f7a71',border:'#d2e4dd',danger:'#d64545'},r:16}
+];
+var MAIN=[['bg','Fundo','O fundo das telas'],['surface','Cartões','Caixas, botões e listas'],['accent','Destaque','Títulos, ícones e botões principais'],['text','Texto','As letras principais']];
+var MORE=[['muted','Texto de apoio','Letras menores e discretas'],['border','Bordas','As linhas das caixas'],['danger','Perigo','Apagar e erros']];
+var S={},R=16;
+function rgb(h){h=h.replace('#','');return[0,2,4].map(function(i){return parseInt(h.substr(i,2),16)})}
+function hex(a){return'#'+a.map(function(v){v=Math.max(0,Math.min(255,Math.round(v)));return(v<16?'0':'')+v.toString(16)}).join('')}
+function mix(a,b,t){var x=rgb(a),y=rgb(b);return hex(x.map(function(v,i){return v+(y[i]-v)*t}))}
+function lum(h){var c=rgb(h).map(function(v){v/=255;return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4)});return .2126*c[0]+.7152*c[1]+.0722*c[2]}
+function vars(){
+ var on=lum(S.accent)>.45?'#111111':'#ffffff',a=rgb(S.accent);
+ return{'--bg':S.bg,'--surface':S.surface,'--surface2':mix(S.surface,S.text,.07),'--surface3':mix(S.bg,S.surface,.5),
+ '--border':S.border,'--border2':mix(S.border,S.text,.15),'--border3':mix(S.border,S.text,.3),
+ '--accent':S.accent,'--accent-dim':mix(S.accent,'#000000',.22),'--accent-faint':'rgba('+a.join(', ')+', 0.12)',
+ '--text':S.text,'--text-muted':S.muted,'--text-dim':mix(S.muted,S.bg,.4),'--danger':S.danger,
+ '--radius':R+'px','--radius-sm':Math.round(R*.65)+'px','--radius-xs':Math.round(R*.4)+'px','--on':on};
+}
+function css(){
+ var v=vars(),o='/* Meu tema — feito no Montador de tema */\n:root {\n',k;
+ for(k in v){if(k!=='--on')o+='  '+k+': '+v[k]+';\n'}
+ o+='}\n';
+ if($('home').checked){
+  o+='\n/* Home: segue as cores acima */\n'
+  +'html[data-page="index"] body { background: var(--bg) !important; background-attachment: fixed !important; }\n'
+  +'html[data-page="index"] .title { -webkit-text-fill-color: var(--accent) !important; }\n'
+  +'html[data-page="index"] .subtitle { color: var(--text-muted) !important; }\n'
+  +'html[data-page="index"] .greeting { color: var(--accent) !important; }\n'
+  +'html[data-page="index"] .profile-circle, html[data-page="index"] .bell-btn, html[data-page="index"] .theme-btn { border: 1px solid var(--border2) !important; background: var(--surface) !important; color: var(--accent) !important; }\n'
+  +'html[data-page="index"] .btn-new { background: var(--accent) !important; color: '+v['--on']+' !important; border: none !important; }\n'
+  +'html[data-page="index"] .btn-merge, html[data-page="index"] .btn-create { background: var(--surface) !important; border: 1px solid var(--accent) !important; color: var(--accent) !important; }\n'
+  +'html[data-page="index"] .hint { color: var(--text-muted) !important; }\n'
+  +'html[data-page="index"] .saves-label { color: var(--accent) !important; }\n'
+  +'html[data-page="index"] .save-item { background: var(--surface) !important; border: 1px solid var(--border) !important; box-shadow: none !important; }\n'
+  +'html[data-page="index"] .save-title { color: var(--text) !important; }\n'
+  +'html[data-page="index"] .save-meta { color: var(--text-muted) !important; }\n'
+  +'html[data-page="index"] .btn-icon { color: var(--text-muted) !important; }\n'
+  +'html[data-page="index"] .btn-icon.delete { color: var(--danger) !important; }\n'
+  +'html[data-page="index"] .version { background: var(--surface) !important; border-color: var(--border2) !important; color: var(--text-muted) !important; opacity: 1 !important; }\n'
+  +'.modal-box { background: var(--surface) !important; border: 1px solid var(--border2) !important; }\n'
+  +'.modal-title { color: var(--accent) !important; }\n'
+  +'.form-input { background: var(--surface2) !important; border: 1px solid var(--border2) !important; color: var(--text) !important; }\n'
+  +'.modal-btn { background: var(--accent) !important; color: '+v['--on']+' !important; border: none !important; }\n';
+ }
+ return o;
+}
+function render(){
+ var v=vars(),p=$('prev'),k;
+ for(k in v)p.style.setProperty(k,v[k]);
+ $('rv').textContent=R+'px';$('out').value=css();
+ document.querySelectorAll('.pk code').forEach(function(c){c.textContent=S[c.dataset.k]});
+}
+function pickers(box,list){
+ list.forEach(function(it){
+  var d=document.createElement('div');d.className='pk';
+  d.innerHTML='<input type="color" data-k="'+it[0]+'"><div><b>'+it[1]+'</b><small>'+it[2]+'</small></div><code data-k="'+it[0]+'"></code>';
+  d.firstChild.oninput=function(){S[it[0]]=this.value;render()};
+  box.appendChild(d);
+ });
+}
+function load(c,r){for(var k in c)S[k]=c[k];R=r;$('radius').value=r;document.querySelectorAll('.pk input').forEach(function(i){i.value=S[i.dataset.k]});render()}
+PRESETS.forEach(function(p,i){
+ var b=document.createElement('button');b.type='button';b.className='pre';
+ b.innerHTML='<span class="sw"><i style="background:'+p.c.bg+'"></i><i style="background:'+p.c.surface+'"></i><i style="background:'+p.c.accent+'"></i></span>'+p.n;
+ b.onclick=function(){load(p.c,p.r)};$('presets').appendChild(b);
+});
+pickers($('pickers'),MAIN);pickers($('more'),MORE);
+$('radius').oninput=function(){R=+this.value;render()};
+$('home').onchange=render;
+$('copy').onclick=function(){
+ var t=$('out').value,b=this,ok=function(){b.textContent='Copiado! ✔';setTimeout(function(){b.textContent='Copiar CSS'},1800)};
+ if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(ok,function(){fb()})}else fb();
+ function fb(){var o=$('out');o.removeAttribute('readonly');o.select();try{document.execCommand('copy')}catch(e){}o.setAttribute('readonly','');ok()}
+};
+load(PRESETS[0].c,PRESETS[0].r);
+</script>
+</body>
+</html>
