@@ -860,6 +860,11 @@ def montar_tema():
     return send_file(os.path.join(TEMPLATE_DIR, "montar-tema.html"))
 
 
+@app.route("/desenhar-svg")
+def desenhar_svg():
+    return send_file(os.path.join(TEMPLATE_DIR, "desenhar-svg.html"))
+
+
 @app.route("/api/instances")
 def api_instances():
     all_instances = session.get("all_instances", [])
