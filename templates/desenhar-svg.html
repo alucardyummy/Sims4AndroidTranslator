@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Desenhar SVG · Sims 4 Translator</title>
+<style>
+:root{--pg:#f6f3fb;--cd:#fff;--tx:#2a2238;--mu:#6d6384;--ac:#8a5cf0;--bd:#e3dcf2;--cb:#1f1a2e;--ct:#f1eaff;--ck1:#e9e4f5;--ck2:#fff}
+@media(prefers-color-scheme:dark){:root{--pg:#141020;--cd:#1d1730;--tx:#efe9fb;--mu:#a99ec4;--ac:#b79bff;--bd:#322950;--cb:#0f0b1a;--ck1:#241c3a;--ck2:#2e2548}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--pg);color:var(--tx);font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+main{max-width:620px;margin:0 auto;padding:14px 14px 70px}
+h1{font-size:22px;margin:.2em 0}h2{font-size:17px;margin:1.4em 0 .4em;color:var(--ac)}
+p{margin:.4em 0}.sub{color:var(--mu);margin-top:0}a{color:var(--ac)}
+.stk{position:sticky;top:0;z-index:5;background:var(--pg);padding:8px 0;border-bottom:1px solid var(--bd)}
+.tools{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px}
+.tools button{flex:0 0 auto;min-width:54px;border:1px solid var(--bd);background:var(--cd);color:var(--tx);border-radius:12px;padding:4px 6px;font:inherit;font-size:11px;line-height:1.2;touch-action:manipulation}
+.tools button b{display:block;font-size:19px;font-weight:400}
+.tools button.on{background:var(--ac);border-color:var(--ac);color:#fff}
+.tools button:disabled{opacity:.35}
+#cvw{display:flex;justify-content:center}
+#cv{width:min(100%,50vh);aspect-ratio:1;border-radius:14px;border:2px solid var(--bd);touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;
+ background:conic-gradient(var(--ck1) 25%,var(--ck2) 0 50%,var(--ck1) 0 75%,var(--ck2) 0) 0 0/16px 16px}
+.acts{display:flex;gap:6px;margin-top:6px}
+.acts button{flex:1;border:1px solid var(--bd);background:var(--cd);color:var(--tx);border-radius:10px;padding:7px 0;font:inherit;font-size:16px;touch-action:manipulation}
+.acts button:disabled{opacity:.35}.acts button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+.box{background:var(--cd);border:1px solid var(--bd);border-radius:14px;padding:6px 12px;margin:8px 0}
+.hint{color:var(--mu);font-size:12px;margin:6px 2px}
+.r{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px dashed var(--bd)}.r:last-child{border:0}
+.r label{flex:1;font-size:14px}.r .v{color:var(--mu);font-size:12px;min-width:38px;text-align:right}
+.r input[type=range]{flex:1.4;accent-color:var(--ac);min-width:0}
+.r input[type=color]{width:46px;height:36px;border:2px solid var(--bd);border-radius:10px;padding:0;background:none}
+.r input[type=checkbox]{width:20px;height:20px;accent-color:var(--ac)}
+.r[hidden],[hidden]{display:none!important}
+.row{display:flex;flex-wrap:wrap;gap:8px}
+.chip{flex:1 1 20%;border:1px solid var(--bd);background:var(--cd);color:var(--tx);border-radius:99px;padding:6px 8px;font:inherit;font-size:13px}
+.chip.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+textarea{width:100%;height:190px;background:var(--cb);color:var(--ct);border:0;border-radius:12px;padding:12px;font:12px/1.5 ui-monospace,Menlo,monospace;resize:vertical}
+.go{width:100%;border:0;border-radius:12px;background:var(--ac);color:#fff;font:inherit;font-weight:700;padding:12px;margin-top:8px;display:block;text-align:center;text-decoration:none}
+.go2{width:100%;border:1.5px solid var(--ac);border-radius:12px;background:none;color:var(--ac);font:inherit;font-weight:700;padding:10px;margin-top:8px;display:block;text-align:center;text-decoration:none}
+.back{display:inline-block;margin:2px 0 4px;text-decoration:none;font-size:14px}
+#msg{color:var(--ac);font-size:13px;min-height:1.4em;margin:6px 2px 0}
+</style>
+</head>
+<body>
+<main>
+<a class="back" href="/montar-tema">← Montador de tema</a>
+<h1>✏️ Desenhar SVG</h1>
+<p class="sub">Desenhe formas com o dedo e o código SVG sai pronto. Dá pra mandar o desenho direto pro <b>fundo com padrão</b> do Montador.</p>
+
+<div class="stk">
+  <div class="tools" id="tools"></div>
+  <div id="cvw"><svg id="cv" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><g id="grid"></g><g id="art"></g><g id="ui"></g></svg></div>
+  <div class="acts">
+    <button id="bu" type="button" title="Desfazer">↶</button>
+    <button id="br" type="button" title="Refazer">↷</button>
+    <button id="bd" type="button" title="Duplicar">⧉</button>
+    <button id="bf" type="button" title="Trazer pra frente">⤒</button>
+    <button id="bb" type="button" title="Mandar pra trás">⤓</button>
+    <button id="bl" type="button" title="Manter proporção ao redimensionar">🔒</button>
+    <button id="bx" type="button" title="Apagar">🗑</button>
+  </div>
+</div>
+<p class="hint" id="hint"></p>
+
+<h2>Forma</h2>
+<div class="box" id="pnl">
+  <div class="hint" id="who" style="margin:4px 0"></div>
+  <div class="r"><input type="checkbox" id="fo"><label for="fo">Preencher</label><input type="color" id="fill"></div>
+  <div class="r"><input type="checkbox" id="so"><label for="so">Contorno</label><input type="color" id="stroke"></div>
+  <div class="r"><label>Espessura do contorno</label><input type="range" id="sw" min="0" max="20" step="0.5"><span class="v" id="swv"></span></div>
+  <div class="r"><label>Opacidade</label><input type="range" id="op" min="10" max="100" step="5"><span class="v" id="opv"></span></div>
+  <div class="r" id="rrx"><label>Cantos arredondados</label><input type="range" id="rx" min="0" max="100"><span class="v" id="rxv"></span></div>
+  <div class="r" id="rn"><label id="nl">Pontas</label><input type="range" id="n" min="3" max="12"><span class="v" id="nv"></span></div>
+  <div class="r" id="rrot"><label>Giro</label><input type="range" id="rot" min="-180" max="180" step="5"><span class="v" id="rotv"></span></div>
+</div>
+
+<h2>Tela</h2>
+<div class="box">
+  <div class="r"><label>Tamanho do desenho</label></div>
+  <div class="row" id="sizes" style="padding-bottom:8px"></div>
+  <div class="r"><input type="checkbox" id="gridOn" checked><label for="gridOn">Mostrar grade</label></div>
+  <div class="r"><input type="checkbox" id="snapOn" checked><label for="snapOn">Encaixar na grade (e girar de 15 em 15°)</label></div>
+</div>
+<p class="hint">Trocar o tamanho só muda o “quadro”; as formas continuam onde estavam.</p>
+
+<h2>Código SVG</h2>
+<textarea id="code" readonly spellcheck="false"></textarea>
+<button class="go" id="cp" type="button">Copiar SVG</button>
+<button class="go2" id="dl" type="button">Baixar .svg</button>
+<button class="go2" id="css" type="button">Copiar como fundo CSS</button>
+<button class="go" id="use" type="button" style="margin-top:14px">🎨 Usar como padrão no Montador de tema</button>
+<p id="msg"></p>
+<p class="hint">O rascunho fica salvo neste aparelho, então você pode sair e voltar.</p>
+</main>
+
+<script>
+(function(){
+var $=function(i){return document.getElementById(i)};
+var cv=$('cv'),art=$('art'),ui=$('ui'),gridG=$('grid');
+var N=100,objs=[],sel=null,tool='move',nid=1,snapOn=true,gridOn=true,lock=false,drag=null;
+// estilo que as próximas formas vão usar (também é o que o painel mostra com nada selecionado)
+var D={fill:'#ff4fa3',stroke:'#7a3cff',sw:2,fo:1,so:0,op:1,rx:0,n:5,pn:6};
+var NAMES={rect:'Retângulo',ell:'Círculo',star:'Estrela',heart:'Coração',poly:'Polígono',line:'Linha',pen:'Lápis'};
+var TOOLS=[['move','☝','Mover'],['pen','✏️','Lápis'],['line','╱','Linha'],['rect','▭','Retângulo'],['ell','◯','Círculo'],['star','★','Estrela'],['heart','♥','Coração'],['poly','⬡','Polígono']];
+var HINTS={move:'Toque numa forma pra selecionar. Arraste pra mover; use as bolinhas pra redimensionar e girar.',pen:'Arraste o dedo pra desenhar à mão livre.',line:'Arraste pra riscar uma linha reta. Um toque solta uma linha pronta.',rect:'Arraste pra criar. Um toque solta uma forma pronta.',ell:'Arraste pra criar. Um toque solta uma forma pronta.',star:'Arraste pra criar. Um toque solta uma forma pronta.',heart:'Arraste pra criar. Um toque solta uma forma pronta.',poly:'Arraste pra criar. Um toque solta uma forma pronta.'};
+function f(n){return +(+n).toFixed(2)}
+function rad(d){return d*Math.PI/180}
+function step(){return N/20}
+function sn(v){return snapOn?Math.round(v/step())*step():v}
+function ctr(o){return[o.x+o.w/2,o.y+o.h/2]}
+function rot(x,y,a){var c=Math.cos(a),s=Math.sin(a);return[x*c-y*s,x*s+y*c]}
+function ppu(){var w=cv.getBoundingClientRect().width;return w?N/w:N/340} // unidades do desenho por pixel da tela
+function pt(e){var r=cv.getBoundingClientRect();return[(e.clientX-r.left)*N/(r.width||340),(e.clientY-r.top)*N/(r.height||340)]}
+function byId(id){for(var i=0;i<objs.length;i++)if(objs[i].id===id)return objs[i]}
+function say(t){$('msg').textContent=t;clearTimeout(say.t);say.t=setTimeout(function(){$('msg').textContent=''},2600)}
+
+// coração: pontos de Bézier numa caixa qualquer; a caixa real é medida por amostragem
+var H=[[0,46],[-46,14],[-52,-22],[-28,-38],[-12,-48],[0,-38],[0,-26],[0,-38],[12,-48],[28,-38],[52,-22],[46,14],[0,46]],HB=(function(){
+ var x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;
+ for(var s=0;s<4;s++)for(var t=0;t<=1.0001;t+=.02){var p=[0,1].map(function(a){var q0=H[s*3][a],q1=H[s*3+1][a],q2=H[s*3+2][a],q3=H[s*3+3][a],u=1-t;return u*u*u*q0+3*u*u*t*q1+3*u*t*t*q2+t*t*t*q3});x0=Math.min(x0,p[0]);x1=Math.max(x1,p[0]);y0=Math.min(y0,p[1]);y1=Math.max(y1,p[1])}
+ return{x:x0,y:y0,w:x1-x0,h:y1-y0}})();
+
+// ---------- desenhar cada tipo de forma ----------
+function geo(o){
+ var t=o.t,c=ctr(o),i,a,rr,p=[];
+ if(t==='rect'){rr=o.rx/100*Math.min(o.w,o.h)/2;return['rect','x="'+f(o.x)+'" y="'+f(o.y)+'" width="'+f(o.w)+'" height="'+f(o.h)+'"'+(rr?' rx="'+f(rr)+'"':'')]}
+ if(t==='ell')return['ellipse','cx="'+f(c[0])+'" cy="'+f(c[1])+'" rx="'+f(o.w/2)+'" ry="'+f(o.h/2)+'"'];
+ if(t==='line')return['line','x1="'+f(o.x1)+'" y1="'+f(o.y1)+'" x2="'+f(o.x2)+'" y2="'+f(o.y2)+'"'];
+ if(t==='star'||t==='poly'){
+  var n=o.n,m=t==='star'?n*2:n;
+  for(i=0;i<m;i++){a=rad(-90+i*360/m);rr=t==='star'&&i%2?.42:1;p.push(f(c[0]+o.w/2*Math.cos(a)*rr)+','+f(c[1]+o.h/2*Math.sin(a)*rr))}
+  return['polygon','points="'+p.join(' ')+'"'];
+ }
+ if(t==='heart'){
+  var q=H.map(function(h){return f(o.x+(h[0]-HB.x)/HB.w*o.w)+' '+f(o.y+(h[1]-HB.y)/HB.h*o.h)});
+  return['path','d="M'+q[0]+'C'+q.slice(1,4).join(' ')+' '+q.slice(4,7).join(' ')+' '+q.slice(7,10).join(' ')+' '+q.slice(10).join(' ')+'Z"'];
+ }
+ if(t==='pen'){return['path','d="'+penD(o.pts.map(function(u){return[o.x+u[0]*o.w,o.y+u[1]*o.h]}))+'"']}
+}
+function penD(p){
+ if(p.length<2)return'M'+f(p[0][0])+' '+f(p[0][1]);
+ var d='M'+f(p[0][0])+' '+f(p[0][1]);
+ if(p.length===2)return d+'L'+f(p[1][0])+' '+f(p[1][1]);
+ for(var i=1;i<p.length-1;i++)d+='Q'+f(p[i][0])+' '+f(p[i][1])+' '+f((p[i][0]+p[i+1][0])/2)+' '+f((p[i][1]+p[i+1][1])/2);
+ return d+'L'+f(p[p.length-1][0])+' '+f(p[p.length-1][1]);
+}
+// modo: 'out' = SVG final · 'cv' = na tela (com data-id) · 'hit' = área de toque invisível mais larga
+function el(o,mode){
+ var g=geo(o),c=o.t==='line'?null:ctr(o),open=o.t==='line'||o.t==='pen',s;
+ if(mode==='hit'){
+  s=' fill="'+(open?'none':'transparent')+'" stroke="transparent" stroke-width="'+f(Math.max(o.sw,14*ppu()))+'"';
+ }else{
+  s=' fill="'+(o.fo&&!open?o.fill:'none')+'" stroke="'+(o.so?o.stroke:'none')+'"';
+  if(o.so)s+=' stroke-width="'+f(o.sw)+'" stroke-linecap="round" stroke-linejoin="round"';
+  if(o.op<1)s+=' opacity="'+f(o.op)+'"';
+ }
+ if(o.r&&c)s+=' transform="rotate('+f(o.r)+' '+f(c[0])+' '+f(c[1])+')"';
+ if(mode!=='out')s+=' data-id="'+o.id+'"';
+ return'<'+g[0]+' '+g[1]+s+'/>';
+}
+function inner(){return objs.map(function(o){return el(o,'out')}).join('')}
+function svgOut(){
+ return'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+N+' '+N+'" width="'+N+'" height="'+N+'">\n'+objs.map(function(o){return'  '+el(o,'out')}).join('\n')+(objs.length?'\n':'')+'</svg>';
+}
+
+// ---------- tela ----------
+function drawGrid(){
+ gridG.innerHTML='';if(!gridOn)return;
+ var h='',s=N/10;
+ for(var v=s;v<N-.01;v+=s)h+='M'+f(v)+' 0V'+N+'M0 '+f(v)+'H'+N;
+ gridG.innerHTML='<path d="'+h+'" fill="none" stroke="rgba(128,128,128,.35)" stroke-width="1" vector-effect="non-scaling-stroke"/>';
+}
+function drawUI(){
+ var k=ppu(),h='';ui.innerHTML='';
+ if(drag&&drag.k==='pen'){
+  ui.innerHTML='<path d="'+penD(drag.pts)+'" fill="none" stroke="'+D.stroke+'" stroke-width="'+f(Math.max(D.sw,1.5))+'" stroke-linecap="round" stroke-linejoin="round"/>';return;
+ }
+ if(tool!=='move'||!sel)return;
+ var o=sel,hd=function(name,x,y){return'<circle cx="'+f(x)+'" cy="'+f(y)+'" r="'+f(20*k)+'" fill="transparent" data-h="'+name+'"/><circle cx="'+f(x)+'" cy="'+f(y)+'" r="'+f(9*k)+'" fill="#fff" stroke="#8a5cf0" stroke-width="2" vector-effect="non-scaling-stroke" pointer-events="none"/>'};
+ if(o.t==='line'){
+  h='<line x1="'+f(o.x1)+'" y1="'+f(o.y1)+'" x2="'+f(o.x2)+'" y2="'+f(o.y2)+'" stroke="#8a5cf0" stroke-width="1" stroke-dasharray="4 3" vector-effect="non-scaling-stroke" pointer-events="none"/>'+hd('p1',o.x1,o.y1)+hd('p2',o.x2,o.y2);
+ }else{
+  var c=ctr(o);
+  h='<g transform="rotate('+f(o.r)+' '+f(c[0])+' '+f(c[1])+')"><rect x="'+f(o.x)+'" y="'+f(o.y)+'" width="'+f(o.w)+'" height="'+f(o.h)+'" fill="none" stroke="#8a5cf0" stroke-width="1" stroke-dasharray="4 3" vector-effect="non-scaling-stroke" pointer-events="none"/>'
+   +'<line x1="'+f(c[0])+'" y1="'+f(o.y)+'" x2="'+f(c[0])+'" y2="'+f(o.y-26*k)+'" stroke="#8a5cf0" stroke-width="1" vector-effect="non-scaling-stroke" pointer-events="none"/>'
+   +hd('rot',c[0],o.y-26*k)+hd('nw',o.x,o.y)+hd('ne',o.x+o.w,o.y)+hd('se',o.x+o.w,o.y+o.h)+hd('sw',o.x,o.y+o.h)+'</g>';
+ }
+ ui.innerHTML=h;
+}
+var raf=0;
+function redraw(){
+ var h='';
+ objs.forEach(function(o){h+=el(o,'cv');if(!o.fo||o.t==='line'||o.t==='pen')h+=el(o,'hit')});
+ art.innerHTML=h;
+ cv.setAttribute('viewBox','0 0 '+N+' '+N);
+ drawUI();
+ if(!raf)raf=requestAnimationFrame(function(){raf=0;$('code').value=svgOut();});
+}
+// ---------- painel ----------
+var RANGES={sw:['swv',function(v){return v}],op:['opv',function(v){return Math.round(v*100)+'%'}],rx:['rxv',function(v){return v+'%'}],n:['nv',function(v){return v}],rot:['rotv',function(v){return v+'°'}]};
+function sync(){
+ var s=sel||D,t=sel?sel.t:null;
+ $('who').textContent=sel?'Editando: '+NAMES[t]+(t==='pen'||t==='line'?' (a cor é a do contorno)':''):'Nenhuma forma selecionada — vale pras próximas que você criar.';
+ $('fo').checked=!!s.fo;$('so').checked=!!s.so;$('fill').value=s.fill;$('stroke').value=s.stroke;
+ $('sw').max=Math.max(4,Math.round(N/5));
+ ['sw','op','rx','n'].forEach(function(k){var v=k==='op'?Math.round(s.op*100):s[k];if(k==='op'){$('op').value=v;$('opv').textContent=v+'%'}else{$(k).value=v;$(RANGES[k][0]).textContent=RANGES[k][1](v)}});
+ $('rot').value=sel?sel.r:0;$('rotv').textContent=(sel?sel.r:0)+'°';
+ $('rrx').hidden=sel?t!=='rect':false;
+ $('rn').hidden=sel?!(t==='star'||t==='poly'):true;
+ $('nl').textContent=t==='poly'?'Lados':'Pontas';
+ $('rrot').hidden=!sel||t==='line';
+ $('fo').disabled=t==='line'||t==='pen';$('fill').disabled=$('fo').disabled;
+ var has=!!sel;['bd','bf','bb','bx'].forEach(function(i){$(i).disabled=!has});
+}
+function setProp(k,v){
+ if(k==='n'&&sel&&sel.t==='poly')D.pn=v;else D[k]=v;
+ if(sel)sel[k]=v;
+ if(sel&&k==='fill'&&sel.t!=='line'&&sel.t!=='pen'){sel.fo=1;D.fo=1}
+ if(k==='stroke'){D.so=1;if(sel){sel.so=1;if(!sel.sw){sel.sw=2;D.sw=2}}}
+ if(k==='sw'&&v>0){D.so=1;if(sel)sel.so=1}
+ redraw();sync();
+}
+// ---------- histórico + rascunho ----------
+var hist=[],hi=-1;
+function save(){try{localStorage.setItem('s4t_draw',JSON.stringify({N:N,objs:objs,D:D}))}catch(e){}}
+function updUndo(){$('bu').disabled=hi<=0;$('br').disabled=hi>=hist.length-1}
+function commit(){
+ var s=JSON.stringify({N:N,objs:objs});if(hist[hi]===s)return;
+ hist=hist.slice(0,hi+1);hist.push(s);if(hist.length>80)hist.shift();hi=hist.length-1;save();updUndo();
+}
+function restore(s){
+ var j=JSON.parse(s),id=sel&&sel.id;N=j.N;objs=j.objs;nid=objs.reduce(function(m,o){return Math.max(m,o.id)},0)+1;sel=id?byId(id)||null:null;
+ buildSizes();drawGrid();redraw();sync();updUndo();save();
+}
+$('bu').onclick=function(){if(hi>0){hi--;restore(hist[hi])}};
+$('br').onclick=function(){if(hi<hist.length-1){hi++;restore(hist[hi])}};
+// ---------- criar / mexer ----------
+function mk(t,x,y,w,h){
+ var o={id:nid++,t:t,x:x,y:y,w:w,h:h,r:0,fill:D.fill,stroke:D.stroke,sw:D.sw,fo:D.fo,so:D.so,op:D.op,rx:D.rx,n:t==='poly'?D.pn:D.n};
+ if(t==='pen'||t==='line'){o.fo=0;o.so=1;if(!(o.sw>0))o.sw=2}
+ return o;
+}
+function select(o){sel=o||null;redraw();sync()}
+function setTool(t){tool=t;drag=null;if(t!=='move')sel=null;
+ document.querySelectorAll('#tools button').forEach(function(b){b.className=b.dataset.t===t?'on':''});
+ $('hint').textContent=HINTS[t];redraw();sync()}
+function rdp(p,e){ // simplifica o traço à mão livre
+ if(p.length<3)return p;
+ var a=p[0],b=p[p.length-1],dm=0,im=0,i;
+ for(i=1;i<p.length-1;i++){var d=Math.abs((b[1]-a[1])*p[i][0]-(b[0]-a[0])*p[i][1]+b[0]*a[1]-b[1]*a[0])/(Math.hypot(b[0]-a[0],b[1]-a[1])||1e-6);if(d>dm){dm=d;im=i}}
+ if(dm>e){var l=rdp(p.slice(0,im+1),e),r=rdp(p.slice(im),e);return l.slice(0,-1).concat(r)}
+ return[a,b];
+}
+function finishPen(){
+ var p=drag.pts;drag=null;
+ if(p.length<2){redraw();return}
+ p=rdp(p,1.2*ppu());
+ var x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;p.forEach(function(q){x0=Math.min(x0,q[0]);y0=Math.min(y0,q[1]);x1=Math.max(x1,q[0]);y1=Math.max(y1,q[1])});
+ var w=Math.max(x1-x0,.001),h=Math.max(y1-y0,.001),o=mk('pen',x0,y0,w,h);
+ o.pts=p.map(function(q){return[(q[0]-x0)/w,(q[1]-y0)/h]});objs.push(o);sel=null;commit();redraw();
+}
+cv.addEventListener('pointerdown',function(e){
+ e.preventDefault();var p=pt(e),h=e.target.dataset&&e.target.dataset.h,id=e.target.dataset&&e.target.dataset.id;
+ try{cv.setPointerCapture(e.pointerId)}catch(_){}
+ if(h&&sel){startHandle(h,p);return}
+ if(tool==='move'){
+  var o=id?byId(+id):null;select(o);
+  if(o){drag={k:'move',p0:p,o0:JSON.parse(JSON.stringify(o)),o:o}}
+  return;
+ }
+ if(tool==='pen'){drag={k:'pen',pts:[p]};return}
+ drag={k:'draw',p0:[sn(p[0]),sn(p[1])],o:null,moved:false};
+});
+function startHandle(h,p){
+ var o=sel,c=o.t==='line'?null:ctr(o);
+ drag={k:h==='rot'?'rot':(h==='p1'||h==='p2')?'pt':'rs',h:h,o:o,o0:JSON.parse(JSON.stringify(o))};
+ if(drag.k==='rs'){
+  var sx=h.indexOf('e')>=0?1:-1,sy=h.indexOf('s')>=0?1:-1,a=rad(o.r),op=rot(-sx*o.w/2,-sy*o.h/2,a);
+  drag.sx=sx;drag.sy=sy;drag.P0=[c[0]+op[0],c[1]+op[1]];  // canto oposto, que fica parado
+ }
+}
+cv.addEventListener('pointermove',function(e){
+ if(!drag)return;e.preventDefault();var p=pt(e),o=drag.o,mn=N*.02;
+ if(drag.k==='pen'){var l=drag.pts[drag.pts.length-1];if(Math.hypot(p[0]-l[0],p[1]-l[1])>=2.5*ppu())drag.pts.push(p);drawUI();return}
+ if(drag.k==='move'){
+  var dx=p[0]-drag.p0[0],dy=p[1]-drag.p0[1],o0=drag.o0;
+  if(o.t==='line'){var nx=sn(o0.x1+dx),ny=sn(o0.y1+dy);o.x1=nx;o.y1=ny;o.x2=o0.x2+(nx-o0.x1);o.y2=o0.y2+(ny-o0.y1)}
+  else{o.x=sn(o0.x+dx);o.y=sn(o0.y+dy)}
+  redraw();return;
+ }
+ if(drag.k==='pt'){var q=[sn(p[0]),sn(p[1])];if(drag.h==='p1'){o.x1=q[0];o.y1=q[1]}else{o.x2=q[0];o.y2=q[1]}redraw();return}
+ if(drag.k==='rot'){
+  var c=ctr(o),a=Math.atan2(p[1]-c[1],p[0]-c[0])*180/Math.PI+90;
+  if(snapOn)a=Math.round(a/15)*15;a=Math.round(a);while(a>180)a-=360;while(a<=-180)a+=360;o.r=a;redraw();sync();return;
+ }
+ if(drag.k==='rs'){
+  var a2=rad(o.r),L=rot(p[0]-drag.P0[0],p[1]-drag.P0[1],-a2),w=Math.max(mn,L[0]*drag.sx),h=Math.max(mn,L[1]*drag.sy);
+  if(lock){var s=Math.max(w/drag.o0.w,h/drag.o0.h);w=Math.max(mn,drag.o0.w*s);h=Math.max(mn,drag.o0.h*s)}
+  var cc=rot(drag.sx*w/2,drag.sy*h/2,a2),nc=[drag.P0[0]+cc[0],drag.P0[1]+cc[1]];
+  o.w=w;o.h=h;o.x=nc[0]-w/2;o.y=nc[1]-h/2;redraw();return;
+ }
+ if(drag.k==='draw'){
+  var q2=[sn(p[0]),sn(p[1])],s0=drag.p0,dw=q2[0]-s0[0],dh=q2[1]-s0[1];
+  if(!drag.moved&&Math.hypot(p[0]-drag.p0[0],p[1]-drag.p0[1])<4*ppu())return;
+  drag.moved=true;
+  if(tool==='line'){
+   if(!drag.o){drag.o=mk('line',0,0,0,0);objs.push(drag.o)}
+   drag.o.x1=s0[0];drag.o.y1=s0[1];drag.o.x2=q2[0];drag.o.y2=q2[1];
+  }else{
+   var sq=tool!=='rect';if(sq){var m=Math.max(Math.abs(dw),Math.abs(dh));dw=Math.sign(dw||1)*m;dh=Math.sign(dh||1)*m}
+   var bx=Math.min(s0[0],s0[0]+dw),by=Math.min(s0[1],s0[1]+dh);
+   if(!drag.o){drag.o=mk(tool,0,0,1,1);objs.push(drag.o)}
+   drag.o.x=bx;drag.o.y=by;drag.o.w=Math.max(Math.abs(dw),mn);drag.o.h=Math.max(Math.abs(dh),mn);
+  }
+  redraw();
+ }
+});
+function end(e){
+ if(!drag)return;var d=drag;
+ if(d.k==='pen'){finishPen();return}
+ if(d.k==='draw'){
+  if(!d.moved){ // toque simples: solta a forma pronta, no tamanho padrão
+   var z=N*.3,s0=d.p0,o;
+   if(tool==='line'){o=mk('line',0,0,0,0);o.x1=s0[0]-z/2;o.y1=s0[1];o.x2=s0[0]+z/2;o.y2=s0[1]}
+   else{o=mk(tool,s0[0]-z/2,s0[1]-z/2,z,z)}
+   objs.push(o);d.o=o;
+  }
+  var o2=d.o;drag=null;if(o2){tool='move';document.querySelectorAll('#tools button').forEach(function(b){b.className=b.dataset.t==='move'?'on':''});$('hint').textContent=HINTS.move;sel=o2;commit();redraw();sync()}
+  return;
+ }
+ drag=null;commit();redraw();sync();
+}
+cv.addEventListener('pointerup',end);cv.addEventListener('pointercancel',end);
+
+// ---------- botões ----------
+$('bd').onclick=function(){if(!sel)return;var o=JSON.parse(JSON.stringify(sel));o.id=nid++;var d=N*.05;if(o.t==='line'){o.x1+=d;o.y1+=d;o.x2+=d;o.y2+=d}else{o.x+=d;o.y+=d}objs.push(o);sel=o;commit();redraw();sync()};
+$('bf').onclick=function(){if(!sel)return;objs.splice(objs.indexOf(sel),1);objs.push(sel);commit();redraw()};
+$('bb').onclick=function(){if(!sel)return;objs.splice(objs.indexOf(sel),1);objs.unshift(sel);commit();redraw()};
+$('bx').onclick=function(){if(!sel)return;objs.splice(objs.indexOf(sel),1);sel=null;commit();redraw();sync()};
+$('bl').onclick=function(){lock=!lock;this.className=lock?'on':'';say(lock?'Proporção travada ao redimensionar.':'Proporção livre ao redimensionar.')};
+document.addEventListener('keydown',function(e){ // atalhos pra quem testa no computador
+ if(/INPUT|TEXTAREA/.test((e.target||{}).tagName||''))return;
+ if((e.key==='Delete'||e.key==='Backspace')&&sel){$('bx').onclick();e.preventDefault()}
+ if((e.ctrlKey||e.metaKey)&&e.key==='z'){(e.shiftKey?$('br'):$('bu')).onclick();e.preventDefault()}
+});
+// painel
+$('fo').onchange=function(){setProp('fo',this.checked?1:0)};$('so').onchange=function(){setProp('so',this.checked?1:0)};
+$('fill').oninput=function(){setProp('fill',this.value)};$('stroke').oninput=function(){setProp('stroke',this.value)};
+$('fill').onchange=$('stroke').onchange=function(){commit()};
+$('fo').addEventListener('change',commit);$('so').addEventListener('change',commit);
+[['sw',function(v){return +v}],['op',function(v){return v/100}],['rx',function(v){return +v}],['n',function(v){return +v}]].forEach(function(it){
+ $(it[0]).oninput=function(){setProp(it[0],it[1](this.value))};$(it[0]).onchange=commit;
+});
+$('rot').oninput=function(){if(sel){sel.r=+this.value;redraw();$('rotv').textContent=this.value+'°'}};$('rot').onchange=commit;
+$('gridOn').onchange=function(){gridOn=this.checked;drawGrid()};
+$('snapOn').onchange=function(){snapOn=this.checked};
+function buildSizes(){
+ var b=$('sizes');b.innerHTML='';
+ [32,64,100,200].forEach(function(v){var e=document.createElement('button');e.type='button';e.className='chip'+(v===N?' on':'');e.textContent=v+' × '+v;
+  e.onclick=function(){N=v;buildSizes();drawGrid();redraw();sync();commit()};b.appendChild(e)});
+}
+TOOLS.forEach(function(t){var b=document.createElement('button');b.type='button';b.dataset.t=t[0];b.innerHTML='<b>'+t[1]+'</b>'+t[2];b.onclick=function(){setTool(t[0])};$('tools').appendChild(b)});
+// exportar
+function cpTxt(t,ok){
+ function fb(){var a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();try{document.execCommand('copy')}catch(e){}a.remove();say(ok)}
+ if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(function(){say(ok)},fb);else fb();
+}
+function empty(){if(!objs.length){say('Desenhe alguma coisa primeiro 🙂');return true}}
+function enc(s){return s.replace(/>\s+</g,'><').replace(/\s*\n\s*/g,'').replace(/%/g,'%25').replace(/</g,'%3C').replace(/>/g,'%3E').replace(/#/g,'%23').replace(/\(/g,'%28').replace(/\)/g,'%29').replace(/"/g,"'")}
+$('cp').onclick=function(){if(!empty())cpTxt(svgOut(),'SVG copiado! ✔')};
+$('dl').onclick=function(){if(empty())return;var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([svgOut()],{type:'image/svg+xml'}));a.download='desenho.svg';document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},500)};
+$('css').onclick=function(){if(empty())return;cpTxt('background-image: url("data:image/svg+xml,'+enc(svgOut())+'");\nbackground-size: '+Math.min(N,100)+'px '+Math.min(N,100)+'px;','CSS copiado! ✔')};
+$('use').onclick=function(){
+ if(empty())return;
+ try{localStorage.setItem('s4t_svg',JSON.stringify({w:N,h:N,inner:inner(),svg:svgOut(),t:Date.now()}))}catch(e){say('Não consegui guardar o desenho neste aparelho.');return}
+ location.href='/montar-tema#padrao';
+};
+// ---------- começo: recupera o rascunho ----------
+try{var j=JSON.parse(localStorage.getItem('s4t_draw')||'null');if(j&&Array.isArray(j.objs)){N=[32,64,100,200].indexOf(j.N)>=0?j.N:100;objs=j.objs;if(j.D)for(var k in D)if(j.D[k]!==undefined)D[k]=j.D[k];nid=objs.reduce(function(m,o){return Math.max(m,o.id||0)},0)+1}}catch(e){}
+buildSizes();drawGrid();setTool('move');commit();
+window.addEventListener('resize',function(){redraw()});
+})();
+</script>
+</body>
+</html>
