@@ -124,11 +124,18 @@ textarea{width:100%;height:210px;background:var(--cb);color:var(--ct);border:0;b
 .go2{display:block;text-align:center;text-decoration:none;border:1.5px solid var(--ac);background:none;color:var(--ac);border-radius:12px;font:inherit;font-weight:700;padding:10px;margin-top:8px;width:100%}
 #csz{font-size:12px;color:var(--mu);margin:6px 2px 0}
 [hidden]{display:none!important}
+:root{--ig:#7a9e97}
+.ic{display:inline-block;width:1.25em;height:1.25em;vertical-align:-.28em;color:var(--ig);flex:none}
+.ie{display:inline-block;width:1em;height:1em;vertical-align:-.14em;color:currentColor}
+h1 .ic{width:1.1em;height:1.1em;vertical-align:-.15em}
+.pk button .ic,.sl .rz .ic{width:20px;height:20px;vertical-align:middle}
+.go .ic{box-sizing:content-box;padding:2px;border-radius:50%;background:#fff}
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true" focusable="false"><defs><symbol id="i-palette" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5C7 3.5 3 7.2 3 12s3.6 8.5 8.6 8.5c1.5 0 2-1 1.6-2-.5-1.2.2-2.4 1.6-2.4H17a4 4 0 004-4c0-5-4-8.6-9-8.6z" fill="currentColor" fill-opacity=".25"/><circle cx="7.6" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="10" cy="7.9" r="1.3" fill="currentColor" stroke="none"/><circle cx="14.4" cy="7.7" r="1.3" fill="currentColor" stroke="none"/><circle cx="17.2" cy="11" r="1.3" fill="currentColor" stroke="none"/></g></symbol><symbol id="i-pencil" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l1-4.6L16.2 4.2a2.2 2.2 0 013.1 0l.5.5a2.2 2.2 0 010 3.1L8.6 19z" fill="currentColor" fill-opacity=".25"/><path d="M13.6 6.8l3.6 3.6"/></g></symbol><symbol id="i-reset" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><g transform="translate(1.6 0)"><path d="M1 4v6h6"/><path d="M3.5 15a9 9 0 102.1-9.4L1 10"/></g></g></symbol><symbol id="i-check" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9" fill="currentColor" fill-opacity=".25"/><path d="M7.8 12.4l3 3 5.4-6"/></g></symbol><symbol id="i-eye" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.8"/></g></symbol></defs></svg>
 <main>
-<h1>🎨 Montar meu tema</h1>
+<h1><svg class="ic" aria-hidden="true"><use href="#i-palette"/></svg> Montar meu tema</h1>
 <p class="sub">Mexa nas cores e nos cantos e veja as telas do site mudando <b>na hora</b>. Depois é só copiar.</p>
 <div class="stk"><div class="tabs" id="tabs"></div><div id="ph"></div></div>
 
@@ -152,7 +159,7 @@ textarea{width:100%;height:210px;background:var(--cb);color:var(--ct);border:0;b
 <div id="ptile"></div>
 <button class="go2" id="ptcopy" type="button">Copiar SVG do ladrilho</button>
 <button class="go2" id="ptdl" type="button">Baixar .svg do ladrilho</button>
-<a class="go2" href="/desenhar-svg">✏️ Desenhar minha própria forma</a>
+<a class="go2" href="/desenhar-svg"><svg class="ic" aria-hidden="true"><use href="#i-pencil"/></svg> Desenhar minha própria forma</a>
 </div>
 <h2>5. Copie e cole no site</h2>
 <label class="ck"><input type="checkbox" id="home" checked><span><b>Pintar a Home também</b> (a Home tem cores próprias; marcado, ela segue o seu tema)</span></label>
@@ -175,11 +182,11 @@ textarea{width:100%;height:210px;background:var(--cb);color:var(--ct);border:0;b
 <script>
 var $=function(i){return document.getElementById(i)};
 var G=[
-['Geral · todas as telas',1,[['bg','Fundo das telas','Editor, Mesclar, Criar e Info'],['surface','Cartões e caixas',''],['accent','Destaque','Títulos, ícones, números'],['text','Texto principal','Muda todos os textos principais de uma vez. Em “Textos · …” você ajusta um por um'],['muted','Texto de apoio','Muda todos os textos de apoio de uma vez'],['dim','Texto discreto','Números, rótulos pequenos e ícones apagados'],['border','Bordas',''],['danger','Perigo','Apagar e erros'],['btn','Botão principal','Salvar, Mesclar, Gerar, Começar'],['btnTx','Texto do botão principal','Muda o texto de todos os botões de uma vez. Em “Textos · Botões” você ajusta cada um']]],
+['Geral · todas as telas',0,[['bg','Fundo das telas','Editor, Mesclar, Criar e Info'],['surface','Cartões e caixas',''],['accent','Destaque','Títulos, ícones, números'],['text','Texto principal','Muda todos os textos principais de uma vez. Em “Textos · …” você ajusta um por um'],['muted','Texto de apoio','Muda todos os textos de apoio de uma vez'],['dim','Texto discreto','Números, rótulos pequenos e ícones apagados'],['border','Bordas',''],['danger','Perigo','Apagar e erros'],['btn','Botão principal','Salvar, Mesclar, Gerar, Começar'],['btnTx','Texto do botão principal','Muda o texto de todos os botões de uma vez. Em “Textos · Botões” você ajusta cada um']]],
 ['Botões (um por tela)',0,[['bst','Começar (Info)','Seguem o Botão principal até você mexer'],['bsa','Salvar package (Editor)',''],['bmg','Mesclar e baixar (Mesclar)',''],['bbd','Gerar .package (Criar)',''],['bvf','Verificar (Criar)','Borda (o texto segue, mas dá pra mudar em Textos · Botões)'],['bmb','Botão das janelas','Salvar alterações, Entrar…']]],
 ['Home',0,[['hbg','Fundo da Home (topo)',''],['hbg2','Fundo da Home (baixo)','Igual ao de cima = fundo liso'],['title','Título',''],['sub','Subtítulo',''],['btn2','Botões Mesclar / Criar','Borda (o texto segue, mas dá pra mudar em Textos · Botões)'],['card','Cartão de tradução salva',''],['cardBd','Borda do cartão',''],['cardTitle','Nome no cartão',''],['cardMeta','Idiomas no cartão','']]],
 ['Editor',0,[['row','Linhas de texto',''],['box','Caixas original / tradução',''],['bar','Barra de baixo','']]],
-['Janelas (perfil, entrar…)',0,[['modal','Fundo da janela',''],['modalBd','Borda da janela',''],['modalTitle','Título da janela',''],['modalTx','Texto e rótulos','O que está escrito dentro'],['modalMu','Texto de apoio','Explicações e ✕ de fechar'],['modalAc','Links e destaques','“Não tem conta? Cadastre-se”…'],['field','Campos de texto',''],['fieldBd','Bordas dos campos e cartões',''],['modalCard','Cartões dentro (temas, novidades, Google)',''],['sw','Interruptor ligado',''],['ov','Fundo escuro atrás da janela','Cobre o resto da tela']]]];
+['Janelas (perfil, entrar…)',0,[['modal','Fundo da janela',''],['modalBd','Borda da janela',''],['modalTitle','Título da janela',''],['modalTx','Texto e rótulos','O que está escrito dentro'],['modalMu','Texto de apoio','Explicações e o X de fechar'],['modalAc','Links e destaques','“Não tem conta? Cadastre-se”…'],['field','Campos de texto',''],['fieldBd','Bordas dos campos e cartões',''],['modalCard','Cartões dentro (temas, novidades, Google)',''],['sw','Interruptor ligado',''],['ov','Fundo escuro atrás da janela','Cobre o resto da tela']]]];
 var A={hbg:function(s){return s.bg},bst:function(s){return s.btn},bsa:function(s){return s.btn},bmg:function(s){return s.btn},bbd:function(s){return s.btn},bvf:function(s){return s.accent},bmb:function(s){return s.btn},hbg2:function(s){return mix(s.bg,s.accent,.14)},title:function(s){return s.accent},sub:function(s){return s.muted},btn2:function(s){return s.accent},card:function(s){return s.surface},cardBd:function(s){return s.border},cardTitle:function(s){return s.text},cardMeta:function(s){return s.muted},row:function(s){return s.bg},box:function(s){return mix(s.surface,s.text,.07)},bar:function(s){return s.bg},modal:function(s){return s.surface},modalBd:function(s){return mix(s.border,s.text,.15)},modalTitle:function(s){return s.accent},modalTx:function(s){return s.text},modalMu:function(s){return s.muted},modalAc:function(s){return s.accent},field:function(s){return mix(s.modal,s.text,.08)},fieldBd:function(s){return mix(s.modalBd,s.text,.1)},modalCard:function(s){return mix(s.modal,s.text,.05)},sw:function(s){return s.accent},ov:function(){return'#000000'},btn:function(s){return s.accent},btnTx:function(s){return lum(s.btn||s.accent)>.45?'#111111':'#ffffff'}};
 var MAIN=['bg','surface','accent','text','muted','border','danger','btn'];
 A.dim=function(s){return mix(s.muted,s.bg,.4)};
@@ -269,7 +276,7 @@ var TX=[
 TX.forEach(function(g){g.items.forEach(function(it){A[it[0]]=it[3]});G.push([g.t,0,g.items.map(function(it){return[it[0],it[1],it[2]]}),g.tab])});
 function txcss(h){var o='';TX.forEach(function(g){if(!g.home!==!h)return;g.items.forEach(function(it){if(!it[4])return;o+=it[4]+' { color: '+S[it[0]]+' !important;'+(g.sh?' text-shadow: none !important;':'')+' }\n';if(it[5])o+=it[5](S[it[0]])})});return o?'\n/* Textos'+(h?' da Home':'')+' */\n'+o:''}
 var RG=[
-['Geral · todas as telas',1,[['radius','Cartões e caixas','Os outros lugares seguem este, até você mexer neles (Home, Mesclar, Criar, Info e janelas)'],['rsm','Botões e campos de texto','Seguem: botões grandes da Home, caixas de texto, busca e campos da janela'],['rxs','Selos e miudezas','Segue: selo da versão'],['rbtn','Botão principal','Salvar, Mesclar, Gerar, Começar']]],
+['Geral · todas as telas',0,[['radius','Cartões e caixas','Os outros lugares seguem este, até você mexer neles (Home, Mesclar, Criar, Info e janelas)'],['rsm','Botões e campos de texto','Seguem: botões grandes da Home, caixas de texto, busca e campos da janela'],['rxs','Selos e miudezas','Segue: selo da versão'],['rbtn','Botão principal','Salvar, Mesclar, Gerar, Começar']]],
 ['Botões (um por tela)',0,[['rst','Começar (Info)','Seguem o Botão principal até você mexer'],['rsa','Salvar package (Editor)',''],['rmg','Mesclar e baixar (Mesclar)',''],['rbd','Gerar .package (Criar)',''],['rvf','Verificar (Criar)',''],['rmb','Botão das janelas','']]],
 ['Home',0,[['hb','Botões grandes (+, Mesclar, Criar)',''],['hc','Cartões de tradução salva',''],['hv','Selo da versão','']]],
 ['Editor',0,[['eb','Caixas original / tradução',''],['es','Campo de busca','']]],
@@ -312,7 +319,7 @@ var SH={
  flowers:{n:'Flores',r:1,f:function(){var o='';for(var i=0;i<5;i++)o+="<ellipse cy='-27' rx='15' ry='23' transform='rotate("+i*72+")'/>";return o+"<circle r='11'/>"}},
  diamonds:{n:'Losangos',r:1,f:function(){return"<path d='M0-50 32 0 0 50-32 0Z'/>"}},
  lace:{n:'Rendinha',x:1},check:{n:'Xadrez',x:1,ns:1},stripes:{n:'Listras',x:1},
- mine:{n:'✏️ Meu desenho',r:1,f:function(){var m=mine(),k=100/Math.max(m.w,m.h);return"<g transform='translate("+r1(-m.w*k/2)+" "+r1(-m.h*k/2)+") scale("+Math.round(k*1e4)/1e4+")'>"+m.inner+"</g>"}}
+ mine:{n:'<svg class="ic" aria-hidden="true"><use href="#i-pencil"/></svg> Meu desenho',r:1,f:function(){var m=mine(),k=100/Math.max(m.w,m.h);return"<g transform='translate("+r1(-m.w*k/2)+" "+r1(-m.h*k/2)+") scale("+Math.round(k*1e4)/1e4+")'>"+m.inner+"</g>"}}
 };
 function enc(s){return s.replace(/>\s+</g,'><').replace(/\s*\n\s*/g,'').replace(/%/g,'%25').replace(/</g,'%3C').replace(/>/g,'%3E').replace(/#/g,'%23').replace(/\(/g,'%28').replace(/\)/g,'%29').replace(/"/g,"'")}
 function tile(shape,W,sc,rot,alt,c,op){
@@ -370,7 +377,7 @@ function buildShapes(){
 (function(){
  // linha da cor (mesmo visual das outras cores; segue o Destaque até a pessoa mexer)
  var r=document.createElement('div');r.className='pk';r.dataset.k='pc1';
- r.innerHTML='<button type="button" class="sw2" aria-label="Escolher cor"></button><div><b>Cor da forma</b><small>Segue o Destaque até você mexer</small></div><code></code><button type="button" title="Voltar ao automático">↺</button>';
+ r.innerHTML='<button type="button" class="sw2" aria-label="Escolher cor"></button><div><b>Cor da forma</b><small>Segue o Destaque até você mexer</small></div><code></code><button type="button" title="Voltar ao automático"><svg class="ic" aria-hidden="true"><use href="#i-reset"/></svg></button>';
  r.onclick=function(){openPick('pc1','Cor da forma')};
  r.querySelector('button:last-child').onclick=function(e){e.stopPropagation();delete T.pc1;auto();render();if(P.k==='pc1')syncPick()};
  $('pcolw').appendChild(r);
@@ -385,7 +392,7 @@ function buildShapes(){
  $('palt').onchange=function(){PT.alt=this.checked?1:0;render()};
  $('phome').onchange=function(){PT.home=this.checked?1:0;render()};
  $('poth').onchange=function(){PT.oth=this.checked?1:0;render()};
- function cp(t,b,l){var ok=function(){b.textContent='Copiado! ✔';setTimeout(function(){b.textContent=l},1800)};
+ function cp(t,b,l){var ok=function(){b.innerHTML='Copiado! <svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>';setTimeout(function(){b.textContent=l},1800)};
   function fb(){var a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();try{document.execCommand('copy')}catch(e){}a.remove();ok()}
   if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(ok,fb);else fb()}
  $('ptcopy').onclick=function(){var q=pat();if(q)cp(q.svg,this,'Copiar SVG do ladrilho')};
@@ -477,7 +484,7 @@ editor:'<div class="tb2"><span>←</span><div><b>Editor</b><small class="tsb">ME
 merge:'<div class="tb2"><span>←</span><b>MESCLAR .PACKAGES</b></div><div class="lb">COMO MESCLAR</div><div class="mt on"><b>Mesclar rapidinho</b><small>Junta tudo num arquivo só.</small></div><div class="mt"><b>Mesclar com memória</b><small>Dá pra separar depois.</small></div><div class="dz">SELECIONAR ARQUIVOS<small class="dzs">.package · vários de uma vez</small></div><div class="fn"><span>mod_a.package</span><i>2,4 MB</i></div><div class="fn"><span>mod_b.package</span><i>310 KB</i></div><div class="sv mg">MESCLAR E BAIXAR</div>',
 create:'<div class="tb2"><span>←</span><b>CRIAR MOD</b></div><div class="lb">IDENTIFICAÇÃO DO MOD</div><div class="cd"><small>NAMESPACE</small><div class="inp">ex: meu_mod</div><div class="inp v">meu_mod</div><div class="nh">Só letras minúsculas e _</div></div><div class="lb">TRAÇOS</div><div class="cd2"><i>1</i><b>Personalidade</b><u>⌄</u></div><div><span class="ch on">Personalidade</span><span class="ch">Bônus</span><span class="ch">Social</span></div><div class="tg">Mostrar avançado</div><div class="ad">+ Adicionar traço</div><div class="pt">PRÉVIA</div><div class="pv"><b>trait_a</b><small>0x12AB · 3 strings</small></div><div style="height:30px"></div><div class="ab"><div class="vf">Verificar</div><div class="sv bd">GERAR .PACKAGE →</div></div>',
 info:'<div class="fl"><div class="tb2"><span>←</span><b>MEUMOD.PACKAGE</b></div><div class="lb">DETALHES</div><div style="padding:8px 0"><div class="ib"><small>INSTANCE</small>0x0002D0</div><div class="ib"><small>LÍNGUA</small><span class="lg">POR_BR ▾</span></div><div class="ib"><small>GROUP</small>00000000</div></div><div class="lh">toque na língua pra trocar</div><div class="so"><b>0x220557DA</b><small>12 strings · POR_BR</small></div><div class="lt">IDIOMA</div><div class="lo">Português</div><div class="sv st" style="margin-top:auto">COMEÇAR →</div></div>',
-modal:'<div class="ov"><div class="mb"><h4>Meu perfil</h4><small class="mu">Texto de apoio da janela</small><small class="wl">Apelido</small><div class="fi">janu</div><div class="fi e">Como a gente te chama?</div><div class="gb">Entrar com Google</div><div class="ts"><span>Notificar no celular</span><i class="sw3"></i></div><div class="tc on"><b class="tn">Coquette</b><small class="td">Rosa e renda</small></div><div class="tc"><b class="un">Novidade da versão</b><span class="ub">Montador de tema novo</span><small class="ud">12/10</small></div><div class="cs">CSS personalizado +</div><div class="ob">Aplicar</div><div class="mi">👁 senha · 0/20000</div><div class="sv mbn">SALVAR ALTERAÇÕES</div><div class="lk">Não tem conta? <u>Cadastre-se</u></div><div class="al">Salvo com sucesso!</div></div></div>'};
+modal:'<div class="ov"><div class="mb"><h4>Meu perfil</h4><small class="mu">Texto de apoio da janela</small><small class="wl">Apelido</small><div class="fi">janu</div><div class="fi e">Como a gente te chama?</div><div class="gb">Entrar com Google</div><div class="ts"><span>Notificar no celular</span><i class="sw3"></i></div><div class="tc on"><b class="tn">Coquette</b><small class="td">Rosa e renda</small></div><div class="tc"><b class="un">Novidade da versão</b><span class="ub">Montador de tema novo</span><small class="ud">12/10</small></div><div class="cs">CSS personalizado +</div><div class="ob">Aplicar</div><div class="mi"><svg class="ie" aria-hidden="true"><use href="#i-eye"/></svg> senha · 0/20000</div><div class="sv mbn">SALVAR ALTERAÇÕES</div><div class="lk">Não tem conta? <u>Cadastre-se</u></div><div class="al">Salvo com sucesso!</div></div></div>'};
 var TN={home:'Home',editor:'Editor',merge:'Mesclar',create:'Criar',info:'Info',modal:'Janela'};
 function render(){
  var v=V(),p=$('ph'),k;
@@ -502,7 +509,7 @@ G.forEach(function(g){
  d.innerHTML='<summary>'+g[0]+'</summary>';
  g[2].forEach(function(it){
   var r=document.createElement('div');r.className='pk';r.dataset.k=it[0];
-  r.innerHTML='<button type="button" class="sw2" aria-label="Escolher cor"></button><div><b>'+it[1]+'</b>'+(it[2]?'<small>'+it[2]+'</small>':'')+'</div><code></code><button type="button" title="Voltar ao automático">↺</button>';
+  r.innerHTML='<button type="button" class="sw2" aria-label="Escolher cor"></button><div><b>'+it[1]+'</b>'+(it[2]?'<small>'+it[2]+'</small>':'')+'</div><code></code><button type="button" title="Voltar ao automático"><svg class="ic" aria-hidden="true"><use href="#i-reset"/></svg></button>';
   r.onclick=function(){openPick(it[0],it[1])};
   r.querySelector('button:last-child').onclick=function(e){e.stopPropagation();delete T[it[0]];auto();render();if(P.k===it[0])syncPick()};
   d.appendChild(r);
@@ -515,7 +522,7 @@ $('allr').oninput=function(){var r=+this.value;R=RM(r);TR={};autoR();$('all').te
 RG.forEach(function(g){
  var d=document.createElement('details');d.className='box';if(g[1])d.open=true;d.innerHTML='<summary>'+g[0]+'</summary>';
  g[2].forEach(function(it){
-  var e=document.createElement('div');e.className='sl';e.innerHTML='<label><span class="nm">'+it[1]+' <button type="button" class="rz" title="Voltar a seguir o Geral" style="border:0;background:none;color:var(--ac);font-size:15px;padding:0 2px;visibility:hidden">↺</button></span><span class="vl"></span></label><input type="range" min="0" max="100" data-k="'+it[0]+'">'+(it[2]?'<small style="color:var(--mu)">'+it[2]+'</small>':'');
+  var e=document.createElement('div');e.className='sl';e.innerHTML='<label><span class="nm">'+it[1]+' <button type="button" class="rz" title="Voltar a seguir o Geral" style="border:0;background:none;color:var(--ac);font-size:15px;padding:0 2px;visibility:hidden"><svg class="ic" aria-hidden="true"><use href="#i-reset"/></svg></button></span><span class="vl"></span></label><input type="range" min="0" max="100" data-k="'+it[0]+'">'+(it[2]?'<small style="color:var(--mu)">'+it[2]+'</small>':'');
   e.querySelector('input').oninput=function(){R[it[0]]=+this.value;if(DR[it[0]])TR[it[0]]=1;else autoR();render()};
   e.querySelector('.rz').onclick=function(){delete TR[it[0]];autoR();render()};d.appendChild(e);
  });
@@ -530,7 +537,7 @@ PRE.forEach(function(p){
 Object.keys(TN).forEach(function(k){var b=document.createElement('button');b.type='button';b.dataset.t=k;b.textContent=TN[k];b.onclick=function(){tab=k;render();$('ph').scrollTop=0};$('tabs').appendChild(b)});
 $('home').onchange=render;
 $('copy').onclick=function(){
- var t=$('out').value,b=this,ok=function(){b.textContent='Copiado! ✔';setTimeout(function(){b.textContent='Copiar CSS'},1800)};
+ var t=$('out').value,b=this,ok=function(){b.innerHTML='Copiado! <svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>';setTimeout(function(){b.textContent='Copiar CSS'},1800)};
  function fb(){var o=$('out');o.removeAttribute('readonly');o.select();try{document.execCommand('copy')}catch(e){}o.setAttribute('readonly','');ok()}
  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(ok,fb)}else fb();
 };
