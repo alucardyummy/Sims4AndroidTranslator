@@ -158,12 +158,37 @@
   .link-actions { display: flex; gap: 8px; }
   .link-actions button { margin-top: 12px; padding: 10px; font-size: 14px; }
   .link-actions .btn-ghost { background: transparent; border: 1px solid #333; color: #bbb; }
-  .pv { border: 1px solid #2c2c2c; border-radius: 10px; padding: 0.7rem 0.85rem; background: rgba(196,174,232,0.06); }
+  /* A prévia usa o tom do card do site (tema padrão), pra a cor escolhida ser julgada no fundo certo. */
+  .pv { border: 1px solid rgba(255,255,255,0.18); border-radius: 10px; padding: 0.7rem 0.85rem; background: #4b5a5b; }
   .pv-title { font-size: 13px; font-weight: 700; color: #c4aee8; margin-bottom: 3px; word-break: break-word; }
-  .pv-body { font-size: 12px; line-height: 1.45; color: #e9efed; word-break: break-word; white-space: pre-line; }
-  .pv-date { font-size: 10.5px; color: #777; margin-top: 5px; }
+  .pv-body { font-size: 12px; line-height: 1.45; color: #fff; word-break: break-word; white-space: pre-line; }
+  .pv-date { font-size: 10.5px; color: rgba(255,255,255,0.5); margin-top: 5px; }
   .pv-empty { color: #555 !important; font-weight: 400; }
   .pv .update-link { color: #9cb8b2; text-decoration: underline; text-underline-offset: 2px; }
+  .pv .update-color .update-link { color: inherit; }
+  .tools { display: flex; flex-wrap: wrap; gap: 8px; }
+  #csheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; max-width: 620px; margin: 0 auto;
+    background: #161616; border: 1px solid #2c2c2c; border-bottom: none; border-radius: 22px 22px 0 0;
+    padding: 12px 16px 16px; box-shadow: 0 -12px 40px rgba(0,0,0,0.55); }
+  body.csp { padding-bottom: 440px; }
+  .chd { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 10px; color: #ddd; font-size: 14px; }
+  .chd span { font-size: 11.5px; color: #777; text-align: right; }
+  #csv { position: relative; height: 130px; border-radius: 14px; touch-action: none; cursor: crosshair; }
+  #chu { position: relative; height: 22px; border-radius: 99px; margin: 12px 0; touch-action: none;
+    background: linear-gradient(90deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00); }
+  .cth { position: absolute; width: 22px; height: 22px; border-radius: 50%; border: 3px solid #fff;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.6); transform: translate(-50%,-50%); pointer-events: none; }
+  #chut { top: 50%; }
+  .chxr { display: flex; gap: 10px; align-items: center; }
+  .ccp { display: flex; border-radius: 10px; overflow: hidden; border: 1px solid #333; flex: none; }
+  .ccp i { width: 30px; height: 38px; display: block; }
+  #chx { flex: 1; min-width: 0; width: auto; margin: 0; padding: 9px 12px; font-family: ui-monospace, Menlo, monospace; font-size: 15px; text-transform: lowercase; }
+  #csws { display: grid; grid-template-columns: repeat(8, 1fr); gap: 7px; margin-top: 12px; }
+  #csws i { aspect-ratio: 1; border-radius: 9px; border: 1px solid rgba(128,128,128,0.4); cursor: pointer; display: block; }
+  #csws small { grid-column: 1 / -1; color: #888; font-size: 11px; margin-top: 4px; }
+  .cact { display: flex; gap: 8px; }
+  .cact button { margin-top: 14px; padding: 11px 8px; font-size: 14px; }
+  .cact .btn-ghost { background: transparent; border: 1px solid #333; color: #bbb; }
   .confirm-actions .btn-no { background: #2c2c2c; color: #ccc; }
   .confirm-actions .btn-yes { background: #c94f4f; }
 </style>
@@ -224,10 +249,17 @@
     <textarea id="body" rows="3" placeholder="Ex: Já dá pra baixar a versão nova." oninput="updateBodyCounter()"></textarea>
     <div id="body-counter" class="counter">0 caracteres</div>
 
-    <button type="button" id="link-open-btn" class="link-open" onclick="openLinkPanel()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 0 0-7.07-7.07l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 0 0 7.07 7.07l1.5-1.5"/></svg>
-      Inserir link no texto
-    </button>
+    <div class="tools">
+      <button type="button" id="link-open-btn" class="link-open" onclick="openLinkPanel()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 0 0-7.07-7.07l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 0 0 7.07 7.07l1.5-1.5"/></svg>
+        Inserir link no texto
+      </button>
+      <button type="button" id="color-open-btn" class="link-open" onclick="openColorSheet()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.8-.8 1.8-1.7 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.2 0-.9.8-1.7 1.7-1.7H17a4 4 0 0 0 4-4C21 6.9 17 3 12 3z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10.5" cy="7" r="1"/><circle cx="15.5" cy="7.5" r="1"/></svg>
+        Cor do texto
+      </button>
+    </div>
+    <div id="tool-err" class="link-err"></div>
     <div id="link-panel" class="link-panel" hidden>
       <div class="link-hint">Selecione uma parte da mensagem e toque em “Inserir link no texto”: ela vira o nome. Ou deixe sem seleção e escreva o nome abaixo. No site só o nome aparece, sublinhado.</div>
       <label for="link-name">Nome que aparece</label>
@@ -269,6 +301,22 @@
     <div id="updates-list" style="display:flex; flex-direction:column; gap:8px;"></div>
   </div>
 
+<div id="csheet" hidden>
+  <div class="chd"><b>Cor do texto</b><span>arraste ou toque — a prévia muda na hora</span></div>
+  <div id="csv"><i class="cth" id="csvt"></i></div>
+  <div id="chu"><i class="cth" id="chut"></i></div>
+  <div class="chxr">
+    <span class="ccp"><i id="c-old" title="antes"></i><i id="c-new" title="agora"></i></span>
+    <input id="chx" maxlength="7" autocapitalize="off" autocomplete="off" spellcheck="false" aria-label="Código da cor">
+  </div>
+  <div id="csws"></div>
+  <div class="cact">
+    <button type="button" class="btn-ghost" onclick="ckClear()">Tirar cor</button>
+    <button type="button" class="btn-ghost" onclick="ckCancel()">Cancelar</button>
+    <button type="button" onclick="ckDone()">Pronto</button>
+  </div>
+</div>
+
 <script>
   const selectedIds = new Set();
   let editingId = null;
@@ -288,27 +336,43 @@
     return /^\/(?![\/\\])/.test(u) || /^https?:\/\//i.test(u);
   }
 
-  function stripLinks(s) {
-    return (s || '').replace(LINK_RE, (m, name, url) => isSafeLink(url) ? name : m);
+  // {#rrggbb|trecho}: cor do texto. Vem antes do link na limpeza porque o
+  // trecho colorido pode ter link dentro (e o nome do link pode ter cor).
+  const COLOR_RE = /\{(#[0-9a-fA-F]{6})\|([^{}]+)\}/g;
+  const RICH_SRC = COLOR_RE.source + '|' + LINK_RE.source; // 1=cor 2=trecho | 3=nome 4=endereço
+
+  function stripMarkup(s) {
+    const semCor = (s || '').replace(COLOR_RE, '$2');
+    return semCor.replace(LINK_RE, (m, name, url) => isSafeLink(url) ? name : m);
+  }
+
+  function renderRich(src, parent) {
+    const re = new RegExp(RICH_SRC, 'g');
+    let last = 0, m;
+    while ((m = re.exec(src)) !== null) {
+      if (m.index > last) parent.appendChild(document.createTextNode(src.slice(last, m.index)));
+      if (m[1]) {
+        const span = document.createElement('span');
+        span.className = 'update-color';
+        span.style.color = m[1];
+        renderRich(m[2], span);
+        parent.appendChild(span);
+      } else if (isSafeLink(m[4])) {
+        const span = document.createElement('span');
+        span.className = 'update-link';
+        renderRich(m[3], span);
+        parent.appendChild(span);
+      } else {
+        parent.appendChild(document.createTextNode(m[0]));
+      }
+      last = m.index + m[0].length;
+    }
+    if (last < src.length) parent.appendChild(document.createTextNode(src.slice(last)));
   }
 
   function renderBodyPreview(text, target) {
     target.textContent = '';
-    const re = new RegExp(LINK_RE.source, 'g');
-    let last = 0, m;
-    while ((m = re.exec(text)) !== null) {
-      if (m.index > last) target.appendChild(document.createTextNode(text.slice(last, m.index)));
-      if (isSafeLink(m[2])) {
-        const span = document.createElement('span');
-        span.className = 'update-link';
-        span.textContent = m[1];
-        target.appendChild(span);
-      } else {
-        target.appendChild(document.createTextNode(m[0]));
-      }
-      last = m.index + m[0].length;
-    }
-    if (last < text.length) target.appendChild(document.createTextNode(text.slice(last)));
+    renderRich(text, target);
   }
 
   function updatePreview() {
@@ -340,6 +404,8 @@
   }
 
   function openLinkPanel() {
+    if (ck) ckDone();
+    document.getElementById('tool-err').textContent = '';
     const ta = document.getElementById('body');
     const start = ta.selectionStart, end = ta.selectionEnd;
     // Se o cursor está dentro de um link que já existe, abre ele pra editar.
@@ -350,8 +416,10 @@
       name = existing.name;
       try { url = decodeURI(existing.url); } catch (e) { url = existing.url; }
     } else {
-      linkRange = { start, end };
-      name = ta.value.slice(start, end).replace(/\s+/g, ' ').trim();
+      // Não deixa a seleção cortar uma cor ou um link no meio (senão a marcação quebra).
+      const [a, b] = ckSafeRange(ta.value, start, end);
+      linkRange = { start: a, end: b };
+      name = ta.value.slice(a, b).replace(LINK_RE, '$1').replace(/\s+/g, ' ').trim();
     }
     document.getElementById('link-name').value = name;
     document.getElementById('link-url').value = url;
@@ -401,6 +469,210 @@
     updateBodyCounter();
   }
 
+  // ── Cor do texto: {#rrggbb|trecho} ────────────────────────────────────
+  // Funciona como o link: a cor fica na própria mensagem (então volta sozinha
+  // ao editar) e no site/prévia aparece só o trecho colorido. Pode ter link
+  // dentro do trecho e cor dentro do nome de um link; cor dentro de cor o
+  // seletor desfaz sozinho.
+  const CK_PAL = ['#ff4fa3','#ff6b6b','#e8743b','#ffb454','#ffd84d','#b6ff5c','#5fd68a','#3f8f7c',
+                  '#9cb8b2','#35e0ff','#35c4e0','#5b8def','#7a3cff','#b79bff','#d68bff','#f4eaff',
+                  '#ffffff','#cfcfcf','#8d9a96','#555555','#2a302e','#1a1d1c','#2e1a5e','#000000'];
+  const CP = { h: 0, s: 1, v: 1 };
+  let ck = null; // enquanto o seletor está aberto: { base, plan }
+  const ckEl = id => document.getElementById(id);
+
+  function ckHex(r, g, b) { return '#' + [r, g, b].map(x => Math.round(x).toString(16).padStart(2, '0')).join(''); }
+  function ckRgb(c) { return [1, 3, 5].map(i => parseInt(c.slice(i, i + 2), 16)); }
+  function ckHsv2hex(h, s, v) {
+    const f = n => { const k = (n + h / 60) % 6; return v - v * s * Math.max(0, Math.min(k, 4 - k, 1)); };
+    return ckHex(f(5) * 255, f(3) * 255, f(1) * 255);
+  }
+  function ckHex2hsv(c) {
+    const r = ckRgb(c).map(x => x / 255), mx = Math.max(...r), mn = Math.min(...r), d = mx - mn;
+    let h = 0;
+    if (d) {
+      h = mx === r[0] ? ((r[1] - r[2]) / d) % 6 : mx === r[1] ? (r[2] - r[0]) / d + 2 : (r[0] - r[1]) / d + 4;
+      h *= 60; if (h < 0) h += 360;
+    }
+    return { h, s: mx ? d / mx : 0, v: mx };
+  }
+
+  function ckTokens(text) {
+    const re = new RegExp(RICH_SRC, 'g'), out = [];
+    let m;
+    while ((m = re.exec(text)) !== null) {
+      out.push(m[1]
+        ? { color: true, start: m.index, end: m.index + m[0].length, hex: m[1].toLowerCase(), inner: m[2] }
+        : { color: false, start: m.index, end: m.index + m[0].length });
+    }
+    return out;
+  }
+  function ckLinksIn(content) {
+    const re = new RegExp(LINK_RE.source, 'g'), out = [];
+    let m;
+    while ((m = re.exec(content)) !== null) out.push({ start: m.index, end: m.index + m[0].length });
+    return out;
+  }
+
+  // Abre a seleção até as bordas de qualquer link/cor que ela corte. Seleção toda
+  // dentro do trecho colorido fica como está (o que entrar lá vai pra dentro dele).
+  function ckSafeRange(text, s, e) {
+    const toks = ckTokens(text);
+    if (toks.find(t => t.color && s >= t.start + 9 && e <= t.end - 1)) return [s, e];
+    let a = s, b = e;
+    for (const t of toks) {
+      if (a > t.start && a < t.end) a = t.start;
+      if (b > t.start && b < t.end) b = t.end;
+    }
+    return [a, b];
+  }
+
+  // Decide o que fazer com a seleção, sem nunca cortar um link ou uma cor no meio.
+  function ckPlan(text, s, e) {
+    const toks = ckTokens(text);
+    if (s === e) { // só o cursor: se estiver dentro de um trecho colorido, troca a cor dele
+      const t = toks.find(t => t.color && s > t.start && s < t.end);
+      if (!t) return { error: 'Selecione o trecho da mensagem que quer colorir.' };
+      return { kind: 'recolor', t, hex: t.hex };
+    }
+    // seleção inteira dentro de um trecho colorido: divide (antes / selecionado / depois)
+    const host = toks.find(t => t.color && s >= t.start + 9 && e <= t.end - 1);
+    if (host) {
+      let a = s - host.start - 9, b = e - host.start - 9;
+      for (const lk of ckLinksIn(host.inner)) {
+        if (a > lk.start && a < lk.end) a = lk.start;
+        if (b > lk.start && b < lk.end) b = lk.end;
+      }
+      if (a === 0 && b === host.inner.length) return { kind: 'recolor', t: host, hex: host.hex };
+      return { kind: 'split', t: host, a, b, hex: host.hex };
+    }
+    // caso geral: abre a seleção até as bordas de qualquer link/cor que ela corte
+    let a = s, b = e;
+    for (const t of toks) {
+      if (a > t.start && a < t.end) a = t.start;
+      if (b > t.start && b < t.end) b = t.end;
+    }
+    const inner = text.slice(a, b).replace(COLOR_RE, '$2'); // cores antigas dentro viram só texto
+    if (!inner.trim()) return { error: 'Selecione um trecho que tenha texto.' };
+    if (/[{}]/.test(inner)) return { error: 'O trecho não pode ter { ou }.' };
+    const first = toks.find(t => t.color && t.start >= a && t.end <= b);
+    return { kind: 'wrap', a, b, inner, hex: first ? first.hex : null };
+  }
+
+  // Monta o novo texto a partir do original (hex = null tira a cor).
+  function ckBuild(base, plan, hex) {
+    const w = (c, t) => '{' + c + '|' + t + '}';
+    if (plan.kind === 'recolor') {
+      const t = plan.t;
+      return base.slice(0, t.start) + (hex ? w(hex, t.inner) : t.inner) + base.slice(t.end);
+    }
+    if (plan.kind === 'split') {
+      const t = plan.t, c = t.inner;
+      const before = c.slice(0, plan.a), mid = c.slice(plan.a, plan.b), after = c.slice(plan.b);
+      return base.slice(0, t.start) + (before ? w(t.hex, before) : '') + (hex ? w(hex, mid) : mid) +
+             (after ? w(t.hex, after) : '') + base.slice(t.end);
+    }
+    return base.slice(0, plan.a) + (hex ? w(hex, plan.inner) : plan.inner) + base.slice(plan.b);
+  }
+
+  function ckApply(hex) {
+    if (!ck) return;
+    ckEl('body').value = ckBuild(ck.base, ck.plan, hex);
+    updateBodyCounter(); // atualiza contador e prévia
+  }
+
+  function ckDraw(c) {
+    ckEl('csv').style.background = 'linear-gradient(to top,#000,rgba(0,0,0,0)),linear-gradient(to right,#fff,' + ckHsv2hex(CP.h, 1, 1) + ')';
+    ckEl('csvt').style.left = CP.s * 100 + '%';
+    ckEl('csvt').style.top = (1 - CP.v) * 100 + '%';
+    ckEl('csvt').style.background = c;
+    ckEl('chut').style.left = CP.h / 360 * 100 + '%';
+    ckEl('chut').style.background = ckHsv2hex(CP.h, 1, 1);
+    ckEl('c-new').style.background = c;
+    if (document.activeElement !== ckEl('chx')) ckEl('chx').value = c;
+  }
+
+  function ckSetFrom(c) {
+    const h = ckHex2hsv(c);
+    if (h.s > 0 && h.v > 0) CP.h = h.h;
+    CP.s = h.s; CP.v = h.v;
+  }
+
+  function ckFromHSV() {
+    const c = ckHsv2hex(CP.h, CP.s, CP.v);
+    ckApply(c);
+    ckDraw(c);
+  }
+
+  function ckFillSws() {
+    const used = [], re = new RegExp(COLOR_RE.source, 'g');
+    let m;
+    while ((m = re.exec(ck.base)) !== null) {
+      const c = m[1].toLowerCase();
+      if (used.indexOf(c) < 0 && CK_PAL.indexOf(c) < 0) used.push(c);
+    }
+    const sw = c => '<i data-c="' + c + '" style="background:' + c + '"></i>';
+    ckEl('csws').innerHTML = CK_PAL.map(sw).join('') +
+      (used.length ? '<small>Cores desta mensagem</small>' + used.slice(0, 16).map(sw).join('') : '');
+  }
+
+  function openColorSheet() {
+    const err = ckEl('tool-err');
+    err.textContent = '';
+    if (ck) ckDone();
+    closeLinkPanel();
+    const ta = ckEl('body');
+    const plan = ckPlan(ta.value, ta.selectionStart, ta.selectionEnd);
+    if (plan.error) { err.textContent = plan.error; return; }
+    ck = { base: ta.value, plan };
+    const atual = plan.hex || '#ffffff'; // sem cor própria = o branco padrão do site
+    ckSetFrom(atual);
+    ckEl('c-old').style.background = atual;
+    ckFillSws();
+    ckDraw(atual);
+    ckEl('csheet').hidden = false;
+    document.body.classList.add('csp');
+    const pv = document.querySelector('.pv'); // deixa a prévia visível acima da folha
+    if (pv) window.scrollTo({ top: Math.max(0, pv.getBoundingClientRect().top + window.scrollY - 70), behavior: 'smooth' });
+  }
+
+  function ckClose() {
+    ckEl('csheet').hidden = true;
+    document.body.classList.remove('csp');
+    ck = null;
+  }
+  function ckDone() { ckClose(); }
+  function ckCancel() {
+    if (ck) { ckEl('body').value = ck.base; updateBodyCounter(); }
+    ckClose();
+  }
+  function ckClear() {
+    if (ck) { ckEl('body').value = ckBuild(ck.base, ck.plan, null); updateBodyCounter(); }
+    ckClose();
+  }
+
+  function ckDrag(el, fn) {
+    el.addEventListener('pointerdown', e => { e.preventDefault(); if (el.setPointerCapture) el.setPointerCapture(e.pointerId); el._d = 1; fn(e); });
+    el.addEventListener('pointermove', e => { if (el._d) fn(e); });
+    el.addEventListener('pointerup', () => { el._d = 0; });
+    el.addEventListener('pointercancel', () => { el._d = 0; });
+  }
+  function ckPos(e, el) {
+    const r = el.getBoundingClientRect();
+    return [Math.max(0, Math.min(1, (e.clientX - r.left) / (r.width || 1))),
+            Math.max(0, Math.min(1, (e.clientY - r.top) / (r.height || 1)))];
+  }
+  ckDrag(ckEl('csv'), e => { const q = ckPos(e, ckEl('csv')); CP.s = q[0]; CP.v = 1 - q[1]; ckFromHSV(); });
+  ckDrag(ckEl('chu'), e => { CP.h = ckPos(e, ckEl('chu'))[0] * 359.99; ckFromHSV(); });
+  ckEl('csws').addEventListener('click', e => {
+    const c = e.target.dataset && e.target.dataset.c;
+    if (c && ck) { ckSetFrom(c); ckApply(c); ckDraw(c); }
+  });
+  ckEl('chx').addEventListener('input', function () {
+    const c = this.value.trim().replace(/^#?/, '#').toLowerCase();
+    if (/^#[0-9a-f]{6}$/.test(c) && ck) { ckSetFrom(c); ckApply(c); ckDraw(c); }
+  });
+
   // O push (Web Push) aceita no máximo ~4 KB de payload. O servidor monta o
   // JSON com json.dumps (ensure_ascii), então cada caractere não-ASCII
   // (acento, emoji) ocupa 6 bytes (\uXXXX; emoji = 12). O contador estima
@@ -408,7 +680,7 @@
   const PUSH_PAYLOAD_LIMIT = 3800; // margem de segurança sobre os ~4078 bytes
   function estimatePayloadBytes() {
     const title = document.getElementById('title').value.trim();
-    const body = stripLinks(document.getElementById('body').value.trim());
+    const body = stripMarkup(document.getElementById('body').value.trim());
     const url = document.getElementById('url').value.trim() || '/';
     const json = JSON.stringify({ title, body, url, tag: 'update-000000' });
     let bytes = 0;
@@ -421,7 +693,7 @@
   function updateBodyCounter() {
     const counter = document.getElementById('body-counter');
     updatePreview();
-    const chars = [...stripLinks(document.getElementById('body').value)].length;
+    const chars = [...stripMarkup(document.getElementById('body').value)].length;
     const bytes = estimatePayloadBytes();
     const pct = bytes / PUSH_PAYLOAD_LIMIT;
 
@@ -645,7 +917,7 @@
           </span>
           <div style="min-width:0; flex:1;">
             <div style="font-size:13px; font-weight:600; color:#eee; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(u.title)}</div>
-            <div style="font-size:12px; color:#999; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(stripLinks(u.body))}</div>
+            <div style="font-size:12px; color:#999; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(stripMarkup(u.body))}</div>
           </div>
           <button data-id="${u.id}" class="edit-btn" style="all:unset; cursor:pointer; padding:4px 6px; flex-shrink:0; display:flex; align-items:center;">
             <svg width="15" height="15" viewBox="0 0 190 190" xmlns="http://www.w3.org/2000/svg">

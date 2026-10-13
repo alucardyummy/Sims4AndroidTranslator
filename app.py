@@ -394,20 +394,23 @@ def push_unsubscribe():
     return {"ok": True}
 
 
-# Links dentro do texto da novidade: o admin escreve [nome](endereço) e o site
-# mostra só o "nome" sublinhado. No banco o texto fica com a marcação; já o
-# push (notificação do sistema, que não aceita link no meio do texto) leva só
-# o nome, em texto simples.
+# Marcações dentro do texto da novidade: o admin escreve [nome](endereço) pra
+# link e {#rrggbb|trecho} pra cor, e o site mostra só o nome/trecho (sublinhado
+# ou colorido). No banco o texto fica com a marcação; já o push (notificação do
+# sistema, que não aceita link nem cor no meio do texto) leva texto simples.
 _UPDATE_LINK_RE = re.compile(r"\[([^\[\]\n]{1,120})\]\(([^()\s]{1,500})\)")
+_UPDATE_COLOR_RE = re.compile(r"\{#[0-9a-fA-F]{6}\|([^{}]+)\}")
 
 
-def strip_update_links(text):
+def strip_update_markup(text):
+    text = _UPDATE_COLOR_RE.sub(r"\1", text or "")
+
     def _sub(m):
         url = m.group(2)
         if re.match(r"^/(?![/\\])", url) or re.match(r"(?i)^https?://", url):
             return m.group(1)
         return m.group(0)
-    return _UPDATE_LINK_RE.sub(_sub, text or "")
+    return _UPDATE_LINK_RE.sub(_sub, text)
 
 
 @app.route("/api/updates")
@@ -569,7 +572,7 @@ def admin_edit_update():
     # na barra (renotify/silent no service worker). Quem já dispensou não
     # recebe nada de volta — a edição não "ressuscita" notificação fechada.
     try:
-        _push_edit_update(update_id, title, strip_update_links(body), url)
+        _push_edit_update(update_id, title, strip_update_markup(body), url)
     except Exception as e:
         print("Aviso: falha ao mandar edit push:", e)
 
@@ -705,7 +708,7 @@ def admin_notify_update():
     # novidade empilha separada na barra em vez de substituir a anterior,
     # e dá pra fechar/editar uma específica sem mexer nas outras.
     tag = f"update-{new_id}" if new_id else "update"
-    payload = json.dumps({"title": title, "body": strip_update_links(body), "url": url, "tag": tag})
+    payload = json.dumps({"title": title, "body": strip_update_markup(body), "url": url, "tag": tag})
 
     dead_ids = []
     for sub in subs:

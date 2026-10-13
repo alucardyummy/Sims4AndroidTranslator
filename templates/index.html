@@ -381,6 +381,7 @@
   html[data-theme] { --update-text: var(--text); --update-link: var(--accent); }
   .update-item-body { font-size: 12px; line-height: 1.45; color: var(--update-text); white-space: pre-line; }
   .update-item-body a.update-link { color: var(--update-link); text-decoration: underline; text-underline-offset: 2px; }
+  .update-item-body .update-color a.update-link { color: inherit; }
   .update-item-date { font-size: 10.5px; color: var(--text-muted); margin-top: 5px; }
   .update-item-delete {
     position: absolute; top: 0.55rem; right: 0.5rem;
@@ -2851,36 +2852,49 @@ function renderUpdates() {
 // Monta um item de novidade igual ao visual original (título/corpo/data
 // empilhados), com o botão de lixeira no canto e — em modo seleção — um
 // círculo à esquerda, tudo igual ao sistema das saves.
-// Links no texto da novidade: [nome](endereço) vira só o "nome" sublinhado.
-// Monta com nós do DOM (nunca com HTML em string) e só aceita caminho do
-// próprio site (/algo) ou http(s)://, então nada de javascript: e afins.
+// Marcações no texto da novidade: [nome](endereço) vira só o "nome" sublinhado
+// e {#rrggbb|trecho} vira o trecho colorido. Monta com nós do DOM (nunca com
+// HTML em string): link só aceita caminho do próprio site (/algo) ou http(s)://,
+// e a cor só aceita #rrggbb, então nada de javascript:, style solto e afins.
 function renderUpdateBody(text) {
   const frag = document.createDocumentFragment();
-  const src = text || '';
-  const re = /\[([^\[\]\n]{1,120})\]\(([^()\s]{1,500})\)/g;
+  fillUpdateRich(String(text == null ? '' : text), frag);
+  return frag;
+}
+
+function fillUpdateRich(src, parent) {
+  // grupos: 1=cor 2=trecho colorido | 3=nome do link 4=endereço
+  const re = /\{(#[0-9a-fA-F]{6})\|([^{}]+)\}|\[([^\[\]\n]{1,120})\]\(([^()\s]{1,500})\)/g;
   let last = 0, m;
   while ((m = re.exec(src)) !== null) {
-    if (m.index > last) frag.appendChild(document.createTextNode(src.slice(last, m.index)));
-    const href = m[2];
-    const okInternal = /^\/(?![\/\\])/.test(href);
-    const okExternal = /^https?:\/\//i.test(href);
-    if (okInternal || okExternal) {
-      const a = document.createElement('a');
-      a.className = 'update-link';
-      a.href = href;
-      a.textContent = m[1];
-      if (okExternal && !href.startsWith(location.origin)) {
-        a.target = '_blank';
-        a.rel = 'noopener noreferrer';
-      }
-      frag.appendChild(a);
+    if (m.index > last) parent.appendChild(document.createTextNode(src.slice(last, m.index)));
+    if (m[1]) {
+      const span = document.createElement('span');
+      span.className = 'update-color';
+      span.style.color = m[1];
+      fillUpdateRich(m[2], span);
+      parent.appendChild(span);
     } else {
-      frag.appendChild(document.createTextNode(m[0]));
+      const href = m[4];
+      const okInternal = /^\/(?![\/\\])/.test(href);
+      const okExternal = /^https?:\/\//i.test(href);
+      if (okInternal || okExternal) {
+        const a = document.createElement('a');
+        a.className = 'update-link';
+        a.href = href;
+        fillUpdateRich(m[3], a);
+        if (okExternal && !href.startsWith(location.origin)) {
+          a.target = '_blank';
+          a.rel = 'noopener noreferrer';
+        }
+        parent.appendChild(a);
+      } else {
+        parent.appendChild(document.createTextNode(m[0]));
+      }
     }
     last = m.index + m[0].length;
   }
-  if (last < src.length) frag.appendChild(document.createTextNode(src.slice(last)));
-  return frag;
+  if (last < src.length) parent.appendChild(document.createTextNode(src.slice(last)));
 }
 
 function buildUpdateItem(u) {
