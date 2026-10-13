@@ -29,8 +29,30 @@ p{margin:.4em 0}.sub{color:var(--mu);margin-top:0}a{color:var(--ac)}
 .r{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px dashed var(--bd)}.r:last-child{border:0}
 .r label{flex:1;font-size:14px}.r .v{color:var(--mu);font-size:12px;min-width:38px;text-align:right}
 .r input[type=range]{flex:1.4;accent-color:var(--ac);min-width:0}
-.r input[type=color]{width:46px;height:36px;border:2px solid var(--bd);border-radius:10px;padding:0;background:none}
+.sw2{width:46px;height:36px;border-radius:12px;border:2px solid var(--bd);box-shadow:inset 0 0 0 2px rgba(255,255,255,.18);flex-shrink:0;padding:0;cursor:pointer}.sw2:disabled{opacity:.35}
+body.sp{padding-bottom:330px}body.sp #cv{width:min(100%,26vh)}
+#sheet{position:fixed;left:0;right:0;bottom:0;z-index:20;max-width:620px;margin:0 auto;background:var(--cd);border:1px solid var(--bd);border-radius:22px 22px 0 0;padding:10px 14px 14px;box-shadow:0 -10px 40px rgba(0,0,0,.35)}
+#sheet[hidden]{display:none}#sheet .hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+#sv{position:relative;height:130px;border-radius:14px;touch-action:none;cursor:crosshair}
+#hu{position:relative;height:22px;border-radius:99px;margin:10px 0;touch-action:none;background:linear-gradient(90deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)}
+.th{position:absolute;width:22px;height:22px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.4),0 2px 6px rgba(0,0,0,.4);transform:translate(-50%,-50%);pointer-events:none}
+#hut{top:50%}
+.hxr{display:flex;gap:8px;align-items:center}.hxr .cp{display:flex;border-radius:10px;overflow:hidden;border:1px solid var(--bd)}.hxr .cp i{width:26px;height:36px}
+.hxw{flex:1;min-width:0;display:flex;align-items:center;border:1px solid var(--bd);border-radius:10px;background:var(--pg)}.hxw #hx{flex:1;border:0;background:transparent;padding-left:2px}#hxc{flex:none;border:0;background:none;color:var(--mu);padding:0 4px 0 10px;height:36px;display:flex;align-items:center;touch-action:manipulation}#hxc.ok{color:var(--ac)}
+#hx{flex:1;min-width:0;border:1px solid var(--bd);border-radius:10px;background:var(--pg);color:var(--tx);font:15px ui-monospace,Menlo,monospace;padding:8px 10px;text-transform:lowercase}
+#done{border:0;border-radius:10px;background:var(--ac);color:#fff;font:inherit;font-weight:700;padding:9px 16px}
+#sws{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;margin-top:10px}#sws i{aspect-ratio:1;border-radius:9px;border:1px solid rgba(128,128,128,.35);cursor:pointer}
+#sws small{grid-column:1/-1;color:var(--mu);font-size:11px;margin-top:2px}
 .r input[type=checkbox]{width:20px;height:20px;accent-color:var(--ac)}
+#pnl.lockd .r{pointer-events:none;opacity:.45}
+#lst{max-height:210px;overflow-y:auto}
+.lrow{display:flex;gap:6px;align-items:center;margin:5px 0}
+.lrow .nm{flex:1;min-width:0;display:flex;gap:8px;align-items:center;text-align:left;border:1px solid var(--bd);background:var(--cd);color:var(--tx);border-radius:10px;padding:8px 10px;font:inherit;font-size:14px;touch-action:manipulation}
+.lrow .nm.on{background:var(--ac);border-color:var(--ac);color:#fff}
+.lrow .nm .ic{box-sizing:content-box;padding:2px;border-radius:50%}.lrow .nm.on .ic{background:#fff}
+.lrow.lk .nm{opacity:.5}
+.lrow .lb{flex:0 0 auto;border:1px solid var(--bd);background:var(--cd);border-radius:10px;padding:8px 10px;touch-action:manipulation}
+.lrow.lk .lb{background:var(--ac);border-color:var(--ac)}.lrow.lk .lb .ic{background:#fff;border-radius:50%;box-sizing:content-box;padding:2px}
 .r[hidden],[hidden]{display:none!important}
 .row{display:flex;flex-wrap:wrap;gap:8px}
 .chip{flex:1 1 20%;border:1px solid var(--bd);background:var(--cd);color:var(--tx);border-radius:99px;padding:6px 8px;font:inherit;font-size:13px}
@@ -41,6 +63,7 @@ textarea{width:100%;height:190px;background:var(--cb);color:var(--ct);border:0;b
 .back{display:inline-block;margin:2px 0 4px;text-decoration:none;font-size:14px}
 #msg{color:var(--ac);font-size:13px;min-height:1.4em;margin:6px 2px 0}
 
+/* ícones SVG fofinhos (verde do tema padrão do site; só nos ícones, o fundo das páginas não muda) */
 :root{--ig:#7a9e97}
 .ic{display:inline-block;width:1.25em;height:1.25em;vertical-align:-.28em;color:var(--ig);flex:none}
 .ie{display:inline-block;width:1em;height:1em;vertical-align:-.14em;color:currentColor}
@@ -54,7 +77,7 @@ h1 .ic{width:1.1em;height:1.1em;vertical-align:-.15em}
 </style>
 </head>
 <body>
-<svg width="0" height="0" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true" focusable="false"><defs><symbol id="i-back" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5.5"/><path d="M11.5 6l-6 6 6 6"/></g></symbol><symbol id="i-pointer" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.8v14.4l3.8-3.4 2.6 5.4 2.6-1.3-2.6-5.2 5-.3z" fill="currentColor" fill-opacity=".25"/></g></symbol><symbol id="i-pencil" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l1-4.6L16.2 4.2a2.2 2.2 0 013.1 0l.5.5a2.2 2.2 0 010 3.1L8.6 19z" fill="currentColor" fill-opacity=".25"/><path d="M13.6 6.8l3.6 3.6"/></g></symbol><symbol id="i-line" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 17.5l11-11"/><circle cx="5" cy="19" r="2.3" fill="currentColor" fill-opacity=".25"/><circle cx="19" cy="5" r="2.3" fill="currentColor" fill-opacity=".25"/></g></symbol><symbol id="i-rect" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5.5" width="17" height="13" rx="4.5" fill="currentColor" fill-opacity=".25"/></g></symbol><symbol id="i-circle" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5" fill="currentColor" fill-opacity=".25"/><path d="M8.2 10.2a4.2 4.2 0 012.6-2.7" stroke-width="1.6"/></g></symbol><symbol id="i-star" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.2l2.6 5.5 6 .8-4.4 4.2 1.1 6-5.3-2.9-5.3 2.9 1.1-6L3.4 9.5l6-.8z" fill="currentColor" fill-opacity=".25"/></g></symbol><symbol id="i-heart" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.5C5 15.6 3.2 12.2 3.2 9a4.6 4.6 0 018.8-1.6A4.6 4.6 0 0120.8 9c0 3.2-1.8 6.6-8.8 11.5z" fill="currentColor" fill-opacity=".25"/></g></symbol><symbol id="i-hex" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.2l7.6 4.4v8.8L12 20.8l-7.6-4.4V7.6z" fill="currentColor" fill-opacity=".25"/></g></symbol><symbol id="i-undo" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5L4.5 9.5 9 14"/><path d="M4.5 9.5h10a5 5 0 010 10H10"/></g></symbol><symbol id="i-redo" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l4.5 4.5L15 14"/><path d="M19.5 9.5h-10a5 5 0 000 10H14"/></g></symbol><symbol id="i-copy" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="8.5" y="8.5" width="12" height="12" rx="3.5" fill="currentColor" fill-opacity=".25"/><path d="M15.5 8.5v-2a3 3 0 00-3-3h-6a3 3 0 00-3 3v6a3 3 0 003 3h2"/></g></symbol><symbol id="i-front" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="11" height="11" rx="3" fill="currentColor" fill-opacity=".1"/><rect x="9.5" y="9.5" width="11" height="11" rx="3" fill="currentColor" fill-opacity=".55"/></g></symbol><symbol id="i-backw" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="11" height="11" rx="3" fill="currentColor" fill-opacity=".55"/><rect x="9.5" y="9.5" width="11" height="11" rx="3" fill="currentColor" fill-opacity=".1"/></g></symbol><symbol id="i-lock" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="10.5" width="15" height="10.5" rx="4" fill="currentColor" fill-opacity=".25"/><path d="M8 10.5V8a4 4 0 018 0v2.5"/><circle cx="12" cy="15" r="1.3" fill="currentColor" stroke="none"/><path d="M12 16.2v1.6" stroke-width="1.6"/></g></symbol><symbol id="i-trash" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M9.5 7V5.5A1.5 1.5 0 0111 4h2a1.5 1.5 0 011.5 1.5V7"/><path d="M6 7l.9 11.2a2.5 2.5 0 002.5 2.3h5.2a2.5 2.5 0 002.5-2.3L18 7" fill="currentColor" fill-opacity=".25"/><circle cx="10" cy="13" r="1" fill="currentColor" stroke="none"/><circle cx="14" cy="13" r="1" fill="currentColor" stroke="none"/><path d="M10.4 16a2 2 0 003.2 0" stroke-width="1.6"/></g></symbol><symbol id="i-palette" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5C7 3.5 3 7.2 3 12s3.6 8.5 8.6 8.5c1.5 0 2-1 1.6-2-.5-1.2.2-2.4 1.6-2.4H17a4 4 0 004-4c0-5-4-8.6-9-8.6z" fill="currentColor" fill-opacity=".25"/><circle cx="7.6" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="10" cy="7.9" r="1.3" fill="currentColor" stroke="none"/><circle cx="14.4" cy="7.7" r="1.3" fill="currentColor" stroke="none"/><circle cx="17.2" cy="11" r="1.3" fill="currentColor" stroke="none"/></g></symbol><symbol id="i-check" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9" fill="currentColor" fill-opacity=".25"/><path d="M7.8 12.4l3 3 5.4-6"/></g></symbol><symbol id="i-smile" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9" fill="currentColor" fill-opacity=".25"/><circle cx="9" cy="10.4" r="1.2" fill="currentColor" stroke="none"/><circle cx="15" cy="10.4" r="1.2" fill="currentColor" stroke="none"/><path d="M8.6 14a4 4 0 006.8 0"/></g></symbol></defs></svg>
+<svg width="0" height="0" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true" focusable="false"><defs><symbol id="i-back" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5.5"/><path d="M11.5 6l-6 6 6 6"/></g></symbol><symbol id="i-pointer" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.8v14.4l3.8-3.4 2.6 5.4 2.6-1.3-2.6-5.2 5-.3z" fill="currentColor" fill-opacity=".25"/></g></symbol><symbol id="i-pencil" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l1-4.6L16.2 4.2a2.2 2.2 0 013.1 0l.5.5a2.2 2.2 0 010 3.1L8.6 19z" fill="currentColor" fill-opacity=".25"/><path d="M13.6 6.8l3.6 3.6"/></g></symbol><symbol id="i-line" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 17.5l11-11"/><circle cx="5" cy="19" r="2.3" fill="currentColor" fill-opacity=".25"/><circle cx="19" cy="5" r="2.3" fill="currentColor" fill-opacity=".25"/></g></symbol><symbol id="i-rect" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5.5" width="17" height="13" rx="4.5" fill="currentColor" fill-opacity=".25"/></g></symbol><symbol id="i-circle" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5" fill="currentColor" fill-opacity=".25"/><path d="M8.2 10.2a4.2 4.2 0 012.6-2.7" stroke-width="1.6"/></g></symbol><symbol id="i-star" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.2l2.6 5.5 6 .8-4.4 4.2 1.1 6-5.3-2.9-5.3 2.9 1.1-6L3.4 9.5l6-.8z" fill="currentColor" fill-opacity=".25"/></g></symbol><symbol id="i-heart" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.5C5 15.6 3.2 12.2 3.2 9a4.6 4.6 0 018.8-1.6A4.6 4.6 0 0120.8 9c0 3.2-1.8 6.6-8.8 11.5z" fill="currentColor" fill-opacity=".25"/></g></symbol><symbol id="i-hex" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.2l7.6 4.4v8.8L12 20.8l-7.6-4.4V7.6z" fill="currentColor" fill-opacity=".25"/></g></symbol><symbol id="i-undo" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5L4.5 9.5 9 14"/><path d="M4.5 9.5h10a5 5 0 010 10H10"/></g></symbol><symbol id="i-redo" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l4.5 4.5L15 14"/><path d="M19.5 9.5h-10a5 5 0 000 10H14"/></g></symbol><symbol id="i-copy" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="8.5" y="8.5" width="12" height="12" rx="3.5" fill="currentColor" fill-opacity=".25"/><path d="M15.5 8.5v-2a3 3 0 00-3-3h-6a3 3 0 00-3 3v6a3 3 0 003 3h2"/></g></symbol><symbol id="i-front" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="11" height="11" rx="3" fill="currentColor" fill-opacity=".1"/><rect x="9.5" y="9.5" width="11" height="11" rx="3" fill="currentColor" fill-opacity=".55"/></g></symbol><symbol id="i-backw" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="11" height="11" rx="3" fill="currentColor" fill-opacity=".55"/><rect x="9.5" y="9.5" width="11" height="11" rx="3" fill="currentColor" fill-opacity=".1"/></g></symbol><symbol id="i-lock" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="10.5" width="15" height="10.5" rx="4" fill="currentColor" fill-opacity=".25"/><path d="M8 10.5V8a4 4 0 018 0v2.5"/><circle cx="12" cy="15" r="1.3" fill="currentColor" stroke="none"/><path d="M12 16.2v1.6" stroke-width="1.6"/></g></symbol><symbol id="i-trash" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M9.5 7V5.5A1.5 1.5 0 0111 4h2a1.5 1.5 0 011.5 1.5V7"/><path d="M6 7l.9 11.2a2.5 2.5 0 002.5 2.3h5.2a2.5 2.5 0 002.5-2.3L18 7" fill="currentColor" fill-opacity=".25"/><circle cx="10" cy="13" r="1" fill="currentColor" stroke="none"/><circle cx="14" cy="13" r="1" fill="currentColor" stroke="none"/><path d="M10.4 16a2 2 0 003.2 0" stroke-width="1.6"/></g></symbol><symbol id="i-palette" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5C7 3.5 3 7.2 3 12s3.6 8.5 8.6 8.5c1.5 0 2-1 1.6-2-.5-1.2.2-2.4 1.6-2.4H17a4 4 0 004-4c0-5-4-8.6-9-8.6z" fill="currentColor" fill-opacity=".25"/><circle cx="7.6" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="10" cy="7.9" r="1.3" fill="currentColor" stroke="none"/><circle cx="14.4" cy="7.7" r="1.3" fill="currentColor" stroke="none"/><circle cx="17.2" cy="11" r="1.3" fill="currentColor" stroke="none"/></g></symbol><symbol id="i-check" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9" fill="currentColor" fill-opacity=".25"/><path d="M7.8 12.4l3 3 5.4-6"/></g></symbol><symbol id="i-smile" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9" fill="currentColor" fill-opacity=".25"/><circle cx="9" cy="10.4" r="1.2" fill="currentColor" stroke="none"/><circle cx="15" cy="10.4" r="1.2" fill="currentColor" stroke="none"/><path d="M8.6 14a4 4 0 006.8 0"/></g></symbol><symbol id="i-fliph" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18" stroke-dasharray="2.2 3"/><path d="M9 7.5L3.5 18H9z" fill="currentColor" fill-opacity=".25"/><path d="M15 7.5L20.5 18H15z"/></g></symbol><symbol id="i-flipv" viewBox="0 0 24 24"><g transform="rotate(90 12 12)" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18" stroke-dasharray="2.2 3"/><path d="M9 7.5L3.5 18H9z" fill="currentColor" fill-opacity=".25"/><path d="M15 7.5L20.5 18H15z"/></g></symbol><symbol id="i-unlock" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="10.5" width="15" height="10.5" rx="4" fill="currentColor" fill-opacity=".25"/><path d="M8 10.5V8a4 4 0 017.7-1.5"/><circle cx="12" cy="15" r="1.3" fill="currentColor" stroke="none"/><path d="M12 16.2v1.6" stroke-width="1.6"/></g></symbol><symbol id="i-frame" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V5.5A1.5 1.5 0 015.5 4H9"/><path d="M15 4h3.5A1.5 1.5 0 0120 5.5V9"/><path d="M20 15v3.5a1.5 1.5 0 01-1.5 1.5H15"/><path d="M9 20H5.5A1.5 1.5 0 014 18.5V15"/><rect x="9" y="9" width="6" height="6" rx="1.5" fill="currentColor" fill-opacity=".25"/></g></symbol></defs></svg>
 <main>
 <a class="back" href="/montar-tema"><svg class="ic" aria-hidden="true"><use href="#i-back"/></svg> Montador de tema</a>
 <h1><svg class="ic" aria-hidden="true"><use href="#i-pencil"/></svg> Desenhar SVG</h1>
@@ -69,21 +92,28 @@ h1 .ic{width:1.1em;height:1.1em;vertical-align:-.15em}
     <button id="bd" type="button" title="Duplicar" aria-label="Duplicar"><svg class="ic" aria-hidden="true"><use href="#i-copy"/></svg></button>
     <button id="bf" type="button" title="Trazer pra frente" aria-label="Trazer pra frente"><svg class="ic" aria-hidden="true"><use href="#i-front"/></svg></button>
     <button id="bb" type="button" title="Mandar pra trás" aria-label="Mandar pra trás"><svg class="ic" aria-hidden="true"><use href="#i-backw"/></svg></button>
-    <button id="bl" type="button" title="Manter proporção ao redimensionar" aria-label="Manter proporção ao redimensionar"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg></button>
+    <button id="bh" type="button" title="Inverter pro lado (espelhar)" aria-label="Inverter pro lado"><svg class="ic" aria-hidden="true"><use href="#i-fliph"/></svg></button>
+    <button id="bv" type="button" title="Inverter pra cima/baixo (espelhar)" aria-label="Inverter pra cima ou pra baixo"><svg class="ic" aria-hidden="true"><use href="#i-flipv"/></svg></button>
+    <button id="bl" type="button" title="Cadeado: trava a forma selecionada; sem seleção, destrava as travadas" aria-label="Travar forma"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg></button>
     <button id="bx" type="button" title="Apagar" aria-label="Apagar"><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg></button>
   </div>
 </div>
 <p class="hint" id="hint"></p>
 
+<h2>Formas do desenho</h2>
+<div class="box" id="lst"></div>
+<p class="hint">Cadeado de cada forma: travada, ela fica invisível pro toque e só destrava aqui na lista.</p>
+
 <h2>Forma</h2>
 <div class="box" id="pnl">
   <div class="hint" id="who" style="margin:4px 0"></div>
-  <div class="r"><input type="checkbox" id="fo"><label for="fo">Preencher</label><input type="color" id="fill"></div>
-  <div class="r"><input type="checkbox" id="so"><label for="so">Contorno</label><input type="color" id="stroke"></div>
+  <div class="r"><input type="checkbox" id="fo"><label for="fo">Preencher</label><button type="button" class="sw2" id="fill" aria-label="Escolher a cor do preenchimento"></button></div>
+  <div class="r"><input type="checkbox" id="so"><label for="so">Contorno</label><button type="button" class="sw2" id="stroke" aria-label="Escolher a cor do contorno"></button></div>
   <div class="r"><label>Espessura do contorno</label><input type="range" id="sw" min="0" max="20" step="0.5"><span class="v" id="swv"></span></div>
   <div class="r"><label>Opacidade</label><input type="range" id="op" min="10" max="100" step="5"><span class="v" id="opv"></span></div>
   <div class="r" id="rrx"><label>Cantos arredondados</label><input type="range" id="rx" min="0" max="100"><span class="v" id="rxv"></span></div>
   <div class="r" id="rn"><label id="nl">Pontas</label><input type="range" id="n" min="3" max="12"><span class="v" id="nv"></span></div>
+  <div class="r"><input type="checkbox" id="kp"><label for="kp">Manter proporção ao redimensionar pelas bolinhas</label></div>
   <div class="r" id="rrot"><label>Giro</label><input type="range" id="rot" min="-180" max="180" step="5"><span class="v" id="rotv"></span></div>
 </div>
 
@@ -91,10 +121,13 @@ h1 .ic{width:1.1em;height:1.1em;vertical-align:-.15em}
 <div class="box">
   <div class="r"><label>Tamanho do desenho</label></div>
   <div class="row" id="sizes" style="padding-bottom:8px"></div>
+  <div class="r"><label>Tamanho livre</label><input type="range" id="nsz" min="8" max="512" step="1"><span class="v" id="nszv" style="min-width:64px"></span></div>
+  <div class="row" style="padding:2px 0 8px"><button class="chip" id="ctr" type="button">Centralizar desenho</button><button class="chip" id="fit" type="button">Ajustar quadro ao desenho</button></div>
   <div class="r"><input type="checkbox" id="gridOn" checked><label for="gridOn">Mostrar grade</label></div>
-  <div class="r"><input type="checkbox" id="snapOn" checked><label for="snapOn">Encaixar na grade (e girar de 15 em 15°)</label></div>
+  <div class="r"><input type="checkbox" id="guOn" checked><label for="guOn">Linhas de alinhamento (só avisam, não grudam)</label></div>
+  <div class="r"><input type="checkbox" id="snapOn" checked><label for="snapOn">Encaixar na grade ao criar e ao puxar pontas (e girar de 15 em 15°). Mover é sempre livre.</label></div>
 </div>
-<p class="hint">Trocar o tamanho só muda o “quadro”; as formas continuam onde estavam.</p>
+<p class="hint">Trocar o tamanho só muda o “quadro”; as formas continuam onde estavam. “Centralizar” e “Ajustar quadro” não mexem nas formas travadas.</p>
 
 <h2>Código SVG</h2>
 <textarea id="code" readonly spellcheck="false"></textarea>
@@ -105,20 +138,28 @@ h1 .ic{width:1.1em;height:1.1em;vertical-align:-.15em}
 <p id="msg"></p>
 <p class="hint">O rascunho fica salvo neste aparelho, então você pode sair e voltar.</p>
 </main>
+<div id="sheet" hidden>
+<div class="hd"><b id="stt"></b><span style="color:var(--mu);font-size:12px">toque ou arraste</span></div>
+<div id="sv"><i class="th" id="svt"></i></div>
+<div id="hu"><i class="th" id="hut"></i></div>
+<div class="hxr"><span class="cp"><i id="old"></i><i id="new"></i></span><span class="hxw"><button id="hxc" type="button" title="Copiar cor" aria-label="Copiar cor"></button><input id="hx" maxlength="7" autocapitalize="off" spellcheck="false"></span><button id="done" type="button">Pronto</button></div>
+<div id="sws"></div>
+</div>
 
 <script>
 (function(){
 var $=function(i){return document.getElementById(i)};
 var cv=$('cv'),art=$('art'),ui=$('ui'),gridG=$('grid');
-var N=100,objs=[],sel=null,tool='move',nid=1,snapOn=true,gridOn=true,lock=false,drag=null;
+var N=100,G=10,objs=[],sel=null,tool='move',nid=1,snapOn=true,guOn=true,gl=null,gridOn=true,lock=false,drag=null;
 // estilo que as próximas formas vão usar (também é o que o painel mostra com nada selecionado)
 var D={fill:'#ff4fa3',stroke:'#7a3cff',sw:2,fo:1,so:0,op:1,rx:0,n:5,pn:6};
 var NAMES={rect:'Retângulo',ell:'Círculo',star:'Estrela',heart:'Coração',poly:'Polígono',line:'Linha',pen:'Lápis'};
-var TOOLS=[['move','pointer','Mover'],['pen','pencil','Lápis'],['line','line','Linha'],['rect','rect','Retângulo'],['ell','circle','Círculo'],['star','star','Estrela'],['heart','heart','Coração'],['poly','hex','Polígono']];
-var HINTS={move:'Toque numa forma pra selecionar. Arraste pra mover; use as bolinhas pra redimensionar e girar.',pen:'Arraste o dedo pra desenhar à mão livre.',line:'Arraste pra riscar uma linha reta. Um toque solta uma linha pronta.',rect:'Arraste pra criar. Um toque solta uma forma pronta.',ell:'Arraste pra criar. Um toque solta uma forma pronta.',star:'Arraste pra criar. Um toque solta uma forma pronta.',heart:'Arraste pra criar. Um toque solta uma forma pronta.',poly:'Arraste pra criar. Um toque solta uma forma pronta.'};
+var TOOLS=[['move','pointer','Mover'],['frame','frame','Tudo'],['pen','pencil','Lápis'],['line','line','Linha'],['rect','rect','Retângulo'],['ell','circle','Círculo'],['star','star','Estrela'],['heart','heart','Coração'],['poly','hex','Polígono']];
+var HINTS={move:'Toque numa forma pra selecionar. Arraste pra mover; use as bolinhas ou dois dedos (pinça pra aumentar/diminuir, giro pra girar) em qualquer lugar do quadro.',pen:'Arraste o dedo pra desenhar à mão livre.',line:'Arraste pra riscar uma linha reta. Um toque solta uma linha pronta.',rect:'Arraste pra criar. Um toque solta uma forma pronta.',ell:'Arraste pra criar. Um toque solta uma forma pronta.',star:'Arraste pra criar. Um toque solta uma forma pronta.',heart:'Arraste pra criar. Um toque solta uma forma pronta.',poly:'Arraste pra criar. Um toque solta uma forma pronta.'};
+HINTS.frame='Mexe no desenho inteiro, igual nas formas: um dedo arrasta, dois dedos abrem/fecham pra aumentar/diminuir e giram. Formas travadas não mexem.';
 function f(n){return +(+n).toFixed(2)}
 function rad(d){return d*Math.PI/180}
-function step(){return N/20}
+function step(){return N/G/2}
 function sn(v){return snapOn?Math.round(v/step())*step():v}
 function ctr(o){return[o.x+o.w/2,o.y+o.h/2]}
 function rot(x,y,a){var c=Math.cos(a),s=Math.sin(a);return[x*c-y*s,x*s+y*c]}
@@ -169,8 +210,9 @@ function el(o,mode){
   if(o.op<1)s+=' opacity="'+f(o.op)+'"';
  }
  if(o.r&&c)s+=' transform="rotate('+f(o.r)+' '+f(c[0])+' '+f(c[1])+')"';
- if(mode!=='out')s+=' data-id="'+o.id+'"';
- return'<'+g[0]+' '+g[1]+s+'/>';
+ if(mode!=='out'){if(o.lk)s+=' pointer-events="none"';else s+=' data-id="'+o.id+'"'}
+ var r='<'+g[0]+' '+g[1]+s+'/>';
+ return o.lk&&mode!=='out'?'<g pointer-events="none">'+r+'</g>':r;
 }
 function inner(){return objs.map(function(o){return el(o,'out')}).join('')}
 function svgOut(){
@@ -180,26 +222,50 @@ function svgOut(){
 // ---------- tela ----------
 function drawGrid(){
  gridG.innerHTML='';if(!gridOn)return;
- var h='',s=N/10;
+ var h='',s=N/G;
  for(var v=s;v<N-.01;v+=s)h+='M'+f(v)+' 0V'+N+'M0 '+f(v)+'H'+N;
  gridG.innerHTML='<path d="'+h+'" fill="none" stroke="rgba(128,128,128,.35)" stroke-width="1" vector-effect="non-scaling-stroke"/>';
 }
+function guideHTML(){
+ if(!gl)return'';var h='';
+ gl.v.forEach(function(x){h+='<line x1="'+f(x)+'" y1="0" x2="'+f(x)+'" y2="'+N+'" stroke="#ff2d95" stroke-width="1" stroke-dasharray="4 3" vector-effect="non-scaling-stroke" pointer-events="none"/>'});
+ gl.h.forEach(function(y){h+='<line x1="0" y1="'+f(y)+'" x2="'+N+'" y2="'+f(y)+'" stroke="#ff2d95" stroke-width="1" stroke-dasharray="4 3" vector-effect="non-scaling-stroke" pointer-events="none"/>'});
+ return h;
+}
+function bnd(o){
+ if(o.t==='line')return{x0:Math.min(o.x1,o.x2),x1:Math.max(o.x1,o.x2),y0:Math.min(o.y1,o.y2),y1:Math.max(o.y1,o.y2)};
+ var c=ctr(o),a=rad(o.r||0),x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+ [[-1,-1],[1,-1],[1,1],[-1,1]].forEach(function(q){var v=rot(q[0]*o.w/2,q[1]*o.h/2,a),x=c[0]+v[0],y=c[1]+v[1];x0=Math.min(x0,x);x1=Math.max(x1,x);y0=Math.min(y0,y);y1=Math.max(y1,y)});
+ return{x0:x0,x1:x1,y0:y0,y1:y1};
+}
+// alinhamento: bordas e centro da forma contra bordas/centro das outras formas e do quadro
+function guides(o,snap){
+ var T=6*ppu(),b=bnd(o),tx=[0,N/2,N],ty=[0,N/2,N];
+ objs.forEach(function(p){if(p===o)return;var q=bnd(p);tx.push(q.x0,(q.x0+q.x1)/2,q.x1);ty.push(q.y0,(q.y0+q.y1)/2,q.y1)});
+ function best(m,t){var d=null;m.forEach(function(a){t.forEach(function(c){var e=c-a;if(Math.abs(e)<T&&(d===null||Math.abs(e)<Math.abs(d)))d=e})});return d}
+ var dx=best([b.x0,(b.x0+b.x1)/2,b.x1],tx),dy=best([b.y0,(b.y0+b.y1)/2,b.y1],ty);
+ if(snap&&(dx||dy))shiftAll([o],dx||0,dy||0);
+ b=bnd(o);var g={v:[],h:[]},E=snap?.01*ppu()+.005:3*ppu();
+ [b.x0,(b.x0+b.x1)/2,b.x1].forEach(function(a){if(tx.some(function(c){return Math.abs(c-a)<E})&&g.v.indexOf(a)<0)g.v.push(a)});
+ [b.y0,(b.y0+b.y1)/2,b.y1].forEach(function(a){if(ty.some(function(c){return Math.abs(c-a)<E})&&g.h.indexOf(a)<0)g.h.push(a)});
+ return g;
+}
 function drawUI(){
- var k=ppu(),h='';ui.innerHTML='';
+ var k=ppu(),h='';ui.innerHTML=guideHTML();
  if(drag&&drag.k==='pen'){
   ui.innerHTML='<path d="'+penD(drag.pts)+'" fill="none" stroke="'+D.stroke+'" stroke-width="'+f(Math.max(D.sw,1.5))+'" stroke-linecap="round" stroke-linejoin="round"/>';return;
  }
- if(tool!=='move'||!sel)return;
- var o=sel,hd=function(name,x,y){return'<circle cx="'+f(x)+'" cy="'+f(y)+'" r="'+f(20*k)+'" fill="transparent" data-h="'+name+'"/><circle cx="'+f(x)+'" cy="'+f(y)+'" r="'+f(9*k)+'" fill="#fff" stroke="#8a5cf0" stroke-width="2" vector-effect="non-scaling-stroke" pointer-events="none"/>'};
+ if(tool!=='move'||!sel||sel.lk)return;
+ var o=sel,hd=function(name,x,y){if(o.lk)return'';return'<circle cx="'+f(x)+'" cy="'+f(y)+'" r="'+f(20*k)+'" fill="transparent" data-h="'+name+'"/><circle cx="'+f(x)+'" cy="'+f(y)+'" r="'+f(9*k)+'" fill="#fff" stroke="#8a5cf0" stroke-width="2" vector-effect="non-scaling-stroke" pointer-events="none"/>'};
  if(o.t==='line'){
   h='<line x1="'+f(o.x1)+'" y1="'+f(o.y1)+'" x2="'+f(o.x2)+'" y2="'+f(o.y2)+'" stroke="#8a5cf0" stroke-width="1" stroke-dasharray="4 3" vector-effect="non-scaling-stroke" pointer-events="none"/>'+hd('p1',o.x1,o.y1)+hd('p2',o.x2,o.y2);
  }else{
   var c=ctr(o);
   h='<g transform="rotate('+f(o.r)+' '+f(c[0])+' '+f(c[1])+')"><rect x="'+f(o.x)+'" y="'+f(o.y)+'" width="'+f(o.w)+'" height="'+f(o.h)+'" fill="none" stroke="#8a5cf0" stroke-width="1" stroke-dasharray="4 3" vector-effect="non-scaling-stroke" pointer-events="none"/>'
-   +'<line x1="'+f(c[0])+'" y1="'+f(o.y)+'" x2="'+f(c[0])+'" y2="'+f(o.y-26*k)+'" stroke="#8a5cf0" stroke-width="1" vector-effect="non-scaling-stroke" pointer-events="none"/>'
+   +(o.lk?'':'<line x1="'+f(c[0])+'" y1="'+f(o.y)+'" x2="'+f(c[0])+'" y2="'+f(o.y-26*k)+'" stroke="#8a5cf0" stroke-width="1" vector-effect="non-scaling-stroke" pointer-events="none"/>')
    +hd('rot',c[0],o.y-26*k)+hd('nw',o.x,o.y)+hd('ne',o.x+o.w,o.y)+hd('se',o.x+o.w,o.y+o.h)+hd('sw',o.x,o.y+o.h)+'</g>';
  }
- ui.innerHTML=h;
+ ui.innerHTML+=h;
 }
 var raf=0;
 function redraw(){
@@ -215,7 +281,7 @@ var RANGES={sw:['swv',function(v){return v}],op:['opv',function(v){return Math.r
 function sync(){
  var s=sel||D,t=sel?sel.t:null;
  $('who').textContent=sel?'Editando: '+NAMES[t]+(t==='pen'||t==='line'?' (a cor é a do contorno)':''):'Nenhuma forma selecionada — vale pras próximas que você criar.';
- $('fo').checked=!!s.fo;$('so').checked=!!s.so;$('fill').value=s.fill;$('stroke').value=s.stroke;
+ $('fo').checked=!!s.fo;$('so').checked=!!s.so;$('fill').style.background=s.fill;$('stroke').style.background=s.stroke;
  $('sw').max=Math.max(4,Math.round(N/5));
  ['sw','op','rx','n'].forEach(function(k){var v=k==='op'?Math.round(s.op*100):s[k];if(k==='op'){$('op').value=v;$('opv').textContent=v+'%'}else{$(k).value=v;$(RANGES[k][0]).textContent=RANGES[k][1](v)}});
  $('rot').value=sel?sel.r:0;$('rotv').textContent=(sel?sel.r:0)+'°';
@@ -224,9 +290,14 @@ function sync(){
  $('nl').textContent=t==='poly'?'Lados':'Pontas';
  $('rrot').hidden=!sel||t==='line';
  $('fo').disabled=t==='line'||t==='pen';$('fill').disabled=$('fo').disabled;
- var has=!!sel;['bd','bf','bb','bx'].forEach(function(i){$(i).disabled=!has});
+ var has=!!sel,lk=!!(sel&&sel.lk);$('bd').disabled=!has;['bf','bb','bh','bv','bx'].forEach(function(i){$(i).disabled=!has||lk});
+ $('bl').disabled=!sel;buildList();
+ $('pnl').classList.toggle('lockd',lk);
+  if(lk&&!$('sheet').hidden)pkClose();
+ if(!$('sheet').hidden&&!P.busy){if(P.k==='fill'&&$('fill').disabled)pkClose();else pkSync()}
 }
 function setProp(k,v){
+ if(sel&&sel.lk)return;
  if(k==='n'&&sel&&sel.t==='poly')D.pn=v;else D[k]=v;
  if(sel)sel[k]=v;
  if(sel&&k==='fill'&&sel.t!=='line'&&sel.t!=='pen'){sel.fo=1;D.fo=1}
@@ -236,14 +307,14 @@ function setProp(k,v){
 }
 // ---------- histórico + rascunho ----------
 var hist=[],hi=-1;
-function save(){try{localStorage.setItem('s4t_draw',JSON.stringify({N:N,objs:objs,D:D}))}catch(e){}}
+function save(){try{localStorage.setItem('s4t_draw',JSON.stringify({N:N,G:G,objs:objs,D:D}))}catch(e){}}
 function updUndo(){$('bu').disabled=hi<=0;$('br').disabled=hi>=hist.length-1}
 function commit(){
  var s=JSON.stringify({N:N,objs:objs});if(hist[hi]===s)return;
- hist=hist.slice(0,hi+1);hist.push(s);if(hist.length>80)hist.shift();hi=hist.length-1;save();updUndo();
+ hist=hist.slice(0,hi+1);hist.push(s);if(hist.length>80)hist.shift();hi=hist.length-1;save();updUndo();buildList();
 }
 function restore(s){
- var j=JSON.parse(s),id=sel&&sel.id;N=j.N;objs=j.objs;nid=objs.reduce(function(m,o){return Math.max(m,o.id)},0)+1;sel=id?byId(id)||null:null;
+ var j=JSON.parse(s),id=sel&&sel.id;N=j.N;objs=j.objs;nid=objs.reduce(function(m,o){return Math.max(m,o.id)},0)+1;sel=id?byId(id)||null:null;if(sel&&sel.lk)sel=null;
  buildSizes();drawGrid();redraw();sync();updUndo();save();
 }
 $('bu').onclick=function(){if(hi>0){hi--;restore(hist[hi])}};
@@ -254,7 +325,7 @@ function mk(t,x,y,w,h){
  if(t==='pen'||t==='line'){o.fo=0;o.so=1;if(!(o.sw>0))o.sw=2}
  return o;
 }
-function select(o){sel=o||null;redraw();sync()}
+function select(o){if(o&&o.lk)o=null;sel=o||null;redraw();sync()}
 function setTool(t){tool=t;drag=null;if(t!=='move')sel=null;
  document.querySelectorAll('#tools button').forEach(function(b){b.className=b.dataset.t===t?'on':''});
  $('hint').textContent=HINTS[t];redraw();sync()}
@@ -273,13 +344,81 @@ function finishPen(){
  var w=Math.max(x1-x0,.001),h=Math.max(y1-y0,.001),o=mk('pen',x0,y0,w,h);
  o.pts=p.map(function(q){return[(q[0]-x0)/w,(q[1]-y0)/h]});objs.push(o);sel=null;commit();redraw();
 }
+// ---- gesto de dois dedos (como no PicsArt): pinça = tamanho, giro = rotação, arrastar = mover ----
+// vale em qualquer lugar do quadro, na forma selecionada; tamanho praticamente sem limite
+var ptrs={},gest=null,mute=false,mainId=null,GMIN=.004,GMAX=100;
+function pcount(){return Object.keys(ptrs).length}
+function startGest(){
+ var ids=Object.keys(ptrs),a=ptrs[ids[0]],b=ptrs[ids[1]];
+ drag=null;mute=false;
+ gest={ids:ids,o:sel,o0:JSON.parse(JSON.stringify(sel)),c0:[(a[0]+b[0])/2,(a[1]+b[1])/2],
+  d0:Math.max(Math.hypot(b[0]-a[0],b[1]-a[1]),12*ppu()),a0:Math.atan2(b[1]-a[1],b[0]-a[0])};
+}
+function moveGest(){
+ var g=gest,o=g.o,o0=g.o0,a=ptrs[g.ids[0]],b=ptrs[g.ids[1]];if(!a||!b)return;
+ var c=[(a[0]+b[0])/2,(a[1]+b[1])/2],an=Math.atan2(b[1]-a[1],b[0]-a[0]),k=Math.hypot(b[0]-a[0],b[1]-a[1])/g.d0,
+  da=an-g.a0,dx=c[0]-g.c0[0],dy=c[1]-g.c0[1],
+  big=o0.t==='line'?Math.hypot(o0.x2-o0.x1,o0.y2-o0.y1):Math.max(o0.w,o0.h);
+ if(big>0)k=Math.max(Math.min(1,N*GMIN/big),Math.min(Math.max(1,N*GMAX/big),k)); // só segura os extremos (0,4% a 100× o quadro)
+ if(o0.t==='line'){ // gira e escala em volta do meio da linha
+  var m=[(o0.x1+o0.x2)/2+dx,(o0.y1+o0.y2)/2+dy],v=rot((o0.x1-o0.x2)/2*k,(o0.y1-o0.y2)/2*k,da);
+  o.x1=m[0]+v[0];o.y1=m[1]+v[1];o.x2=m[0]-v[0];o.y2=m[1]-v[1];
+ }else{ // gira e escala em volta do centro da forma; o meio dos dedos arrasta
+  var c0=ctr(o0),w=o0.w*k,h=o0.h*k,r=o0.r+da*180/Math.PI;
+  o.w=w;o.h=h;o.x=c0[0]+dx-w/2;o.y=c0[1]+dy-h/2;
+  while(r>180)r-=360;while(r<=-180)r+=360;
+  if(snapOn){var q=Math.round(r/15)*15;if(Math.abs(r-q)<3.5)r=q} // ímã leve nos ângulos de 15°
+  r=Math.round(r);while(r>180)r-=360;while(r<=-180)r+=360;o.r=r;
+ }
+ gl=guOn?guides(o,false):null;
+ redraw();sync();
+}
+var fp={},fg=null;
+// ferramenta "Tudo": mesmo gesto das formas (arrastar, abrir/fechar, girar), mas no desenho inteiro; travadas ficam de fora
+function fbase(){
+ var k=Object.keys(fp);if(!k.length){fg=null;return}
+ var a=fp[k[0]],b=fp[k[1]],two=!!b;
+ fg={two:two,c0:two?[(a[0]+b[0])/2,(a[1]+b[1])/2]:a,d0:two?Math.max(Math.hypot(b[0]-a[0],b[1]-a[1]),12*ppu()):1,a0:two?Math.atan2(b[1]-a[1],b[0]-a[0]):0,
+  list:objs.filter(function(o){return !o.lk}).map(function(o){return{o:o,s:JSON.parse(JSON.stringify(o))}})};
+}
+function fApply(){
+ var g=fg,k=Object.keys(fp),a=fp[k[0]],b=fp[k[1]];if(!g||!a)return;
+ var two=g.two&&!!b,c=two?[(a[0]+b[0])/2,(a[1]+b[1])/2]:a,
+  sc=two?Math.max(.05,Math.min(20,Math.hypot(b[0]-a[0],b[1]-a[1])/g.d0)):1,da=two?Math.atan2(b[1]-a[1],b[0]-a[0])-g.a0:0;
+ function map(x,y){var v=rot((x-g.c0[0])*sc,(y-g.c0[1])*sc,da);return[c[0]+v[0],c[1]+v[1]]}
+ g.list.forEach(function(it){
+  var o=it.o,s0=it.s,p,q;
+  if(s0.t==='line'){p=map(s0.x1,s0.y1);q=map(s0.x2,s0.y2);o.x1=p[0];o.y1=p[1];o.x2=q[0];o.y2=q[1]}
+  else{
+   var cc=ctr(s0),n=map(cc[0],cc[1]),w=s0.w*sc,h=s0.h*sc,r=s0.r+da*180/Math.PI;
+   while(r>180)r-=360;while(r<=-180)r+=360;r=Math.round(r);while(r>180)r-=360;while(r<=-180)r+=360;
+   o.w=w;o.h=h;o.x=n[0]-w/2;o.y=n[1]-h/2;o.r=r;
+  }
+ });
+ redraw();
+}
+cv.addEventListener('pointerdown',function(e){
+ if(tool!=='frame')return;e.stopImmediatePropagation();e.preventDefault();
+ fp[e.pointerId]=pt(e);try{cv.setPointerCapture(e.pointerId)}catch(_){}
+ fbase();
+});
+cv.addEventListener('pointermove',function(e){
+ if(tool!=='frame')return;e.stopImmediatePropagation();e.preventDefault();
+ if(!fp[e.pointerId])return;fp[e.pointerId]=pt(e);fApply();
+});
+function fEnd(e){if(!fp[e.pointerId])return;e.stopImmediatePropagation();delete fp[e.pointerId];fbase();commit();redraw();sync()}
+cv.addEventListener('pointerup',fEnd);cv.addEventListener('pointercancel',fEnd);
 cv.addEventListener('pointerdown',function(e){
  e.preventDefault();var p=pt(e),h=e.target.dataset&&e.target.dataset.h,id=e.target.dataset&&e.target.dataset.id;
- try{cv.setPointerCapture(e.pointerId)}catch(_){}
- if(h&&sel){startHandle(h,p);return}
+ ptrs[e.pointerId]=p;try{cv.setPointerCapture(e.pointerId)}catch(_){}
+ var n=pcount();
+ if(n===1){mute=false;mainId=e.pointerId}
+ else{if(n===2&&tool==='move'&&sel&&!sel.lk&&!gest)startGest();return} // 2º dedo: gesto na forma selecionada
+ if(h&&sel&&!sel.lk){startHandle(h,p);return}
  if(tool==='move'){
-  var o=id?byId(+id):null;select(o);
-  if(o){drag={k:'move',p0:p,o0:JSON.parse(JSON.stringify(o)),o:o}}
+  var o=id?byId(+id):null;if(o&&o.lk)o=null;
+  if(o){select(o);drag=o.lk?{k:'none'}:{k:'move',p0:p,o0:JSON.parse(JSON.stringify(o)),o:o}} // travada: só seleciona
+  else drag={k:'desel'}; // só desmarca ao soltar, pra dar pra fazer o gesto de dois dedos em área vazia
   return;
  }
  if(tool==='pen'){drag={k:'pen',pts:[p]};return}
@@ -294,24 +433,28 @@ function startHandle(h,p){
  }
 }
 cv.addEventListener('pointermove',function(e){
- if(!drag)return;e.preventDefault();var p=pt(e),o=drag.o,mn=N*.02;
+ if(ptrs[e.pointerId])ptrs[e.pointerId]=pt(e);
+ if(gest){e.preventDefault();moveGest();return}
+ if(mute||e.pointerId!==mainId)return;
+ if(!drag)return;e.preventDefault();var p=pt(e),o=drag.o,mn=N*.02,mr=N*.004;
  if(drag.k==='pen'){var l=drag.pts[drag.pts.length-1];if(Math.hypot(p[0]-l[0],p[1]-l[1])>=2.5*ppu())drag.pts.push(p);drawUI();return}
  if(drag.k==='move'){
   var dx=p[0]-drag.p0[0],dy=p[1]-drag.p0[1],o0=drag.o0;
-  if(o.t==='line'){var nx=sn(o0.x1+dx),ny=sn(o0.y1+dy);o.x1=nx;o.y1=ny;o.x2=o0.x2+(nx-o0.x1);o.y2=o0.y2+(ny-o0.y1)}
-  else{o.x=sn(o0.x+dx);o.y=sn(o0.y+dy)}
+  if(o.t==='line'){o.x1=o0.x1+dx;o.y1=o0.y1+dy;o.x2=o0.x2+dx;o.y2=o0.y2+dy} // mover é livre, sem encaixe
+  else{o.x=o0.x+dx;o.y=o0.y+dy}
+  gl=guOn?guides(o,false):null; // só avisa, não gruda: o movimento continua livre
   redraw();return;
  }
- if(drag.k==='pt'){var q=[sn(p[0]),sn(p[1])];if(drag.h==='p1'){o.x1=q[0];o.y1=q[1]}else{o.x2=q[0];o.y2=q[1]}redraw();return}
+ if(drag.k==='pt'){var q=[sn(p[0]),sn(p[1])];if(drag.h==='p1'){o.x1=q[0];o.y1=q[1]}else{o.x2=q[0];o.y2=q[1]}gl=guOn?guides(o,false):null;redraw();return}
  if(drag.k==='rot'){
   var c=ctr(o),a=Math.atan2(p[1]-c[1],p[0]-c[0])*180/Math.PI+90;
-  if(snapOn)a=Math.round(a/15)*15;a=Math.round(a);while(a>180)a-=360;while(a<=-180)a+=360;o.r=a;redraw();sync();return;
+  if(snapOn)a=Math.round(a/15)*15;a=Math.round(a);while(a>180)a-=360;while(a<=-180)a+=360;o.r=a;gl=guOn?guides(o,false):null;redraw();sync();return;
  }
  if(drag.k==='rs'){
-  var a2=rad(o.r),L=rot(p[0]-drag.P0[0],p[1]-drag.P0[1],-a2),w=Math.max(mn,L[0]*drag.sx),h=Math.max(mn,L[1]*drag.sy);
-  if(lock){var s=Math.max(w/drag.o0.w,h/drag.o0.h);w=Math.max(mn,drag.o0.w*s);h=Math.max(mn,drag.o0.h*s)}
+  var a2=rad(o.r),L=rot(p[0]-drag.P0[0],p[1]-drag.P0[1],-a2),w=Math.max(mr,L[0]*drag.sx),h=Math.max(mr,L[1]*drag.sy);
+  if(lock){var s=Math.max(w/drag.o0.w,h/drag.o0.h);w=Math.max(mr,drag.o0.w*s);h=Math.max(mr,drag.o0.h*s)}
   var cc=rot(drag.sx*w/2,drag.sy*h/2,a2),nc=[drag.P0[0]+cc[0],drag.P0[1]+cc[1]];
-  o.w=w;o.h=h;o.x=nc[0]-w/2;o.y=nc[1]-h/2;redraw();return;
+  o.w=w;o.h=h;o.x=nc[0]-w/2;o.y=nc[1]-h/2;gl=guOn?guides(o,false):null;redraw();return;
  }
  if(drag.k==='draw'){
   var q2=[sn(p[0]),sn(p[1])],s0=drag.p0,dw=q2[0]-s0[0],dh=q2[1]-s0[1];
@@ -326,11 +469,23 @@ cv.addEventListener('pointermove',function(e){
    if(!drag.o){drag.o=mk(tool,0,0,1,1);objs.push(drag.o)}
    drag.o.x=bx;drag.o.y=by;drag.o.w=Math.max(Math.abs(dw),mn);drag.o.h=Math.max(Math.abs(dh),mn);
   }
-  redraw();
+  gl=guOn&&drag.o?guides(drag.o,false):null;redraw();
  }
 });
 function end(e){
- if(!drag)return;var d=drag;
+ delete ptrs[e.pointerId];var left=pcount();
+ if(gest){
+  if(left<2){gest=null;mute=true;drag=null;gl=null;commit();redraw();sync()} // o dedo que sobrou não arrasta mais nada
+  if(!left){mute=false;mainId=null}
+  return;
+ }
+ if(mute){if(!left){mute=false;mainId=null}return}
+ if(e.pointerId===mainId)endMain(e); // dedos extras são ignorados
+ if(!left)mainId=null;
+}
+function endMain(e){
+ if(!drag)return;var d=drag;gl=null;
+ if(d.k==='desel'){drag=null;select(null);return}
  if(d.k==='pen'){finishPen();return}
  if(d.k==='draw'){
   if(!d.moved){ // toque simples: solta a forma pronta, no tamanho padrão
@@ -347,32 +502,81 @@ function end(e){
 cv.addEventListener('pointerup',end);cv.addEventListener('pointercancel',end);
 
 // ---------- botões ----------
-$('bd').onclick=function(){if(!sel)return;var o=JSON.parse(JSON.stringify(sel));o.id=nid++;var d=N*.05;if(o.t==='line'){o.x1+=d;o.y1+=d;o.x2+=d;o.y2+=d}else{o.x+=d;o.y+=d}objs.push(o);sel=o;commit();redraw();sync()};
+$('bd').onclick=function(){if(!sel)return;var o=JSON.parse(JSON.stringify(sel));o.id=nid++;o.lk=0;var d=N*.05;if(o.t==='line'){o.x1+=d;o.y1+=d;o.x2+=d;o.y2+=d}else{o.x+=d;o.y+=d}objs.push(o);sel=o;commit();redraw();sync()};
 $('bf').onclick=function(){if(!sel)return;objs.splice(objs.indexOf(sel),1);objs.push(sel);commit();redraw()};
 $('bb').onclick=function(){if(!sel)return;objs.splice(objs.indexOf(sel),1);objs.unshift(sel);commit();redraw()};
 $('bx').onclick=function(){if(!sel)return;objs.splice(objs.indexOf(sel),1);sel=null;commit();redraw();sync()};
-$('bl').onclick=function(){lock=!lock;this.className=lock?'on':'';say(lock?'Proporção travada ao redimensionar.':'Proporção livre ao redimensionar.')};
-document.addEventListener('keydown',function(e){ // atalhos pra quem testa no computador
- if(/INPUT|TEXTAREA/.test((e.target||{}).tagName||''))return;
- if((e.key==='Delete'||e.key==='Backspace')&&sel){$('bx').onclick();e.preventDefault()}
- if((e.ctrlKey||e.metaKey)&&e.key==='z'){(e.shiftKey?$('br'):$('bu')).onclick();e.preventDefault()}
-});
+// inverter: retângulo/círculo/estrela/polígono/coração são simétricos na esquerda-direita,
+// então espelhar = ajustar o giro; linha e lápis também espelham os pontos
+function flip(vert){
+ if(!sel)return;var o=sel;
+ if(o.t==='line'){
+  var cx=(o.x1+o.x2)/2,cy=(o.y1+o.y2)/2;
+  if(vert){o.y1=2*cy-o.y1;o.y2=2*cy-o.y2}else{o.x1=2*cx-o.x1;o.x2=2*cx-o.x2}
+ }else{
+  if(o.t==='pen')o.pts=o.pts.map(function(u){return[1-u[0],u[1]]});
+  var a=vert?180-o.r:-o.r;a=Math.round(a);while(a>180)a-=360;while(a<=-180)a+=360;o.r=a;
+ }
+ commit();redraw();sync();
+}
+$('bh').onclick=function(){flip(false)};
+$('bv').onclick=function(){flip(true)};
+$('bl').onclick=function(){ // trava a forma selecionada; pra destravar, só pela lista
+ if(!sel)return;
+ sel.lk=1;sel=null;commit();redraw();sync();
+};
+var LI={rect:'rect',ell:'circle',star:'star',heart:'heart',poly:'hex',line:'line',pen:'pencil'};
+function buildList(){
+ var b=$('lst'),n={},names={},ord=objs.slice().sort(function(a,c){return a.id-c.id});
+ ord.forEach(function(o){n[o.t]=(n[o.t]||0)+1;names[o.id]=NAMES[o.t]+' '+n[o.t]});
+ b.innerHTML='';
+ if(!objs.length){b.innerHTML='<div class="hint" style="margin:6px 0">Nenhuma forma ainda. Desenhe alguma coisa lá em cima.</div>';return}
+ objs.slice().reverse().forEach(function(o){ // de cima pra baixo, como no desenho
+  var r=document.createElement('div');r.className='lrow'+(o.lk?' lk':'');
+  var m=document.createElement('button');m.type='button';m.className='nm'+(sel===o?' on':'');m.innerHTML=I(LI[o.t])+'<span>'+names[o.id]+'</span>';
+  m.onclick=function(){if(o.lk)return;setTool('move');select(o)};
+  var l=document.createElement('button');l.type='button';l.className='lb';l.title=o.lk?'Travada — toque pra destravar':'Destravada — toque pra travar';l.setAttribute('aria-label',l.title);l.innerHTML=I(o.lk?'lock':'unlock');
+  l.onclick=function(){o.lk=o.lk?0:1;if(o.lk&&sel===o)sel=null;commit();redraw();sync()};
+  r.appendChild(m);r.appendChild(l);b.appendChild(r);
+ });
+}
+['bf','bb','bh','bv','bx'].forEach(function(id){var fn=$(id).onclick;$(id).onclick=function(){if(sel&&sel.lk){say('Forma travada. Abra o cadeado pra mexer.');return}fn.call(this)}});
 // painel
 $('fo').onchange=function(){setProp('fo',this.checked?1:0)};$('so').onchange=function(){setProp('so',this.checked?1:0)};
-$('fill').oninput=function(){setProp('fill',this.value)};$('stroke').oninput=function(){setProp('stroke',this.value)};
-$('fill').onchange=$('stroke').onchange=function(){commit()};
+$('fill').onclick=function(){pkOpen('fill','Cor do preenchimento')};$('stroke').onclick=function(){pkOpen('stroke','Cor do contorno')};
 $('fo').addEventListener('change',commit);$('so').addEventListener('change',commit);
 [['sw',function(v){return +v}],['op',function(v){return v/100}],['rx',function(v){return +v}],['n',function(v){return +v}]].forEach(function(it){
  $(it[0]).oninput=function(){setProp(it[0],it[1](this.value))};$(it[0]).onchange=commit;
 });
-$('rot').oninput=function(){if(sel){sel.r=+this.value;redraw();$('rotv').textContent=this.value+'°'}};$('rot').onchange=commit;
+$('kp').onchange=function(){lock=this.checked};
+$('rot').oninput=function(){if(sel&&!sel.lk){sel.r=+this.value;redraw();$('rotv').textContent=this.value+'°'}};$('rot').onchange=commit;
 $('gridOn').onchange=function(){gridOn=this.checked;drawGrid()};
+$('guOn').onchange=function(){guOn=this.checked;gl=null;redraw()};
 $('snapOn').onchange=function(){snapOn=this.checked};
+function setN(v){N=v;buildSizes();drawGrid();redraw();sync()}
 function buildSizes(){
- var b=$('sizes');b.innerHTML='';
+ var b=$('sizes');b.innerHTML='';$('nsz').value=N;$('nszv').textContent=N+' × '+N;
  [32,64,100,200].forEach(function(v){var e=document.createElement('button');e.type='button';e.className='chip'+(v===N?' on':'');e.textContent=v+' × '+v;
-  e.onclick=function(){N=v;buildSizes();drawGrid();redraw();sync();commit()};b.appendChild(e)});
+  e.onclick=function(){setN(v);commit()};b.appendChild(e)});
 }
+$('nsz').oninput=function(){setN(+this.value)};$('nsz').onchange=commit;
+function bbox(){ // caixa que cobre as formas destravadas
+ var x0=1e9,y0=1e9,x1=-1e9,y1=-1e9,list=objs.filter(function(o){return !o.lk});
+ function add(x,y){x0=Math.min(x0,x);y0=Math.min(y0,y);x1=Math.max(x1,x);y1=Math.max(y1,y)}
+ list.forEach(function(o){
+  if(o.t==='line'){add(o.x1,o.y1);add(o.x2,o.y2);return}
+  var c=ctr(o),a=rad(o.r||0);
+  [[-1,-1],[1,-1],[1,1],[-1,1]].forEach(function(q){var v=rot(q[0]*o.w/2,q[1]*o.h/2,a);add(c[0]+v[0],c[1]+v[1])});
+ });
+ return list.length?{x0:x0,y0:y0,x1:x1,y1:y1,list:list}:null;
+}
+function shiftAll(list,dx,dy){list.forEach(function(o){if(o.t==='line'){o.x1+=dx;o.x2+=dx;o.y1+=dy;o.y2+=dy}else{o.x+=dx;o.y+=dy}})}
+$('ctr').onclick=function(){var b=bbox();if(!b)return;shiftAll(b.list,N/2-(b.x0+b.x1)/2,N/2-(b.y0+b.y1)/2);commit();redraw()};
+$('fit').onclick=function(){
+ var b=bbox();if(!b)return;
+ var w=b.x1-b.x0,h=b.y1-b.y0,m=Math.max(2,Math.max(w,h)*.05),n=Math.round(Math.max(8,Math.min(512,Math.max(w,h)+2*m)));
+ shiftAll(b.list,n/2-(b.x0+b.x1)/2,n/2-(b.y0+b.y1)/2);setN(n);commit();
+};
 TOOLS.forEach(function(t){var b=document.createElement('button');b.type='button';b.dataset.t=t[0];b.innerHTML='<b>'+I(t[1])+'</b>'+t[2];b.onclick=function(){setTool(t[0])};$('tools').appendChild(b)});
 // exportar
 function cpTxt(t,ok){
@@ -389,10 +593,60 @@ $('use').onclick=function(){
  try{localStorage.setItem('s4t_svg',JSON.stringify({w:N,h:N,inner:inner(),svg:svgOut(),t:Date.now()}))}catch(e){say('Não consegui guardar o desenho neste aparelho.');return}
  location.href='/montar-tema#padrao';
 };
+// ---------- seletor de cor (o mesmo do Montador de tema): quadrado + matiz + código + cores prontas ----------
+var P={k:null,h:0,s:1,v:1,busy:0},PAL=['#ff4fa3','#ff6b6b','#e8743b','#ffb454','#ffd84d','#b6ff5c','#5fd68a','#3f8f7c','#9cb8b2','#35e0ff','#35c4e0','#5b8def','#7a3cff','#b79bff','#d68bff','#f4eaff','#ffffff','#cfcfcf','#8d9a96','#555555','#2a302e','#1a1d1c','#0f0f0f','#000000'];
+function pkRgb(h){h=h.replace('#','');return[0,2,4].map(function(i){return parseInt(h.substr(i,2),16)})}
+function pkHex(a){return'#'+a.map(function(v){v=Math.max(0,Math.min(255,Math.round(v)));return(v<16?'0':'')+v.toString(16)}).join('')}
+function pkHsv2hex(h,s,v){var g=function(n){var k=(n+h/60)%6;return v-v*s*Math.max(0,Math.min(k,4-k,1))};return pkHex([g(5)*255,g(3)*255,g(1)*255])}
+function pkHex2hsv(c){var r=pkRgb(c).map(function(x){return x/255}),mx=Math.max.apply(0,r),mn=Math.min.apply(0,r),d=mx-mn,h=0;
+ if(d){h=mx===r[0]?((r[1]-r[2])/d)%6:mx===r[1]?(r[2]-r[0])/d+2:(r[0]-r[1])/d+4;h*=60;if(h<0)h+=360}
+ return{h:h,s:mx?d/mx:0,v:mx}}
+function pkOk(c){return/^#[0-9a-f]{6}$/i.test(c||'')}
+function pkCur(){var c=(sel||D)[P.k];return pkOk(c)?c:'#000000'}
+function pkPaint(c){
+ $('sv').style.background='linear-gradient(to top,#000,rgba(0,0,0,0)),linear-gradient(to right,#fff,'+pkHsv2hex(P.h,1,1)+')';
+ $('svt').style.left=P.s*100+'%';$('svt').style.top=(1-P.v)*100+'%';$('svt').style.background=c;
+ $('hut').style.left=P.h/360*100+'%';$('hut').style.background=pkHsv2hex(P.h,1,1);
+ $('new').style.background=c;if(document.activeElement!==$('hx'))$('hx').value=c;
+}
+function pkSync(){var c=pkCur(),hs=pkHex2hsv(c);if(hs.s>0&&hs.v>0)P.h=hs.h;P.s=hs.s;P.v=hs.v;pkPaint(c)}
+function pkSet(c){P.busy=1;setProp(P.k,c);P.busy=0;pkPaint(c)}
+function pkFromHSV(){pkSet(pkHsv2hex(P.h,P.s,P.v))}
+function pkDrag(el,fn){
+ el.addEventListener('pointerdown',function(e){e.preventDefault();try{el.setPointerCapture(e.pointerId)}catch(_){}el._d=1;fn(e)});
+ el.addEventListener('pointermove',function(e){if(el._d)fn(e)});
+ var up=function(){if(el._d){el._d=0;commit()}};el.addEventListener('pointerup',up);el.addEventListener('pointercancel',up);
+}
+function pkPos(e,el){var r=el.getBoundingClientRect();return[Math.max(0,Math.min(1,(e.clientX-r.left)/(r.width||1))),Math.max(0,Math.min(1,(e.clientY-r.top)/(r.height||1)))]}
+pkDrag($('sv'),function(e){var q=pkPos(e,$('sv'));P.s=q[0];P.v=1-q[1];pkFromHSV()});
+pkDrag($('hu'),function(e){P.h=pkPos(e,$('hu'))[0]*359.99;pkFromHSV()});
+$('hx').oninput=function(){var m=this.value.trim().replace(/^#?/,'#');if(pkOk(m)){m=m.toLowerCase();var h=pkHex2hsv(m);if(h.s>0&&h.v>0)P.h=h.h;P.s=h.s;P.v=h.v;pkSet(m);commit()}};
+function pkFill(){ // cores prontas + as que já estão no desenho
+ var seen={},mine=[];function add(c){if(pkOk(c)&&!seen[c.toLowerCase()]){seen[c.toLowerCase()]=1;mine.push(c.toLowerCase())}}
+ objs.forEach(function(o){add(o.fill);add(o.stroke)});add(D.fill);add(D.stroke);
+ var q=function(c){return'<i data-c="'+c+'" style="background:'+c+'"></i>'};
+ $('sws').innerHTML=PAL.map(q).join('')+(mine.length?'<small>Cores do seu desenho</small>'+mine.slice(0,16).map(q).join(''):'');
+}
+$('sws').onclick=function(e){var c=e.target.dataset&&e.target.dataset.c;if(c&&P.k){pkSet(c);pkSync();commit()}};
+function pkOpen(k,name){P.k=k;$('stt').textContent=name;$('old').style.background=pkCur();pkFill();pkSync();$('sheet').hidden=false;document.body.classList.add('sp');redraw()}
+function pkClose(){$('sheet').hidden=true;document.body.classList.remove('sp');P.k=null;redraw()}
+$('done').onclick=function(){commit();pkClose()};
 // ---------- começo: recupera o rascunho ----------
-try{var j=JSON.parse(localStorage.getItem('s4t_draw')||'null');if(j&&Array.isArray(j.objs)){N=[32,64,100,200].indexOf(j.N)>=0?j.N:100;objs=j.objs;if(j.D)for(var k in D)if(j.D[k]!==undefined)D[k]=j.D[k];nid=objs.reduce(function(m,o){return Math.max(m,o.id||0)},0)+1}}catch(e){}
+try{var j=JSON.parse(localStorage.getItem('s4t_draw')||'null');if(j&&Array.isArray(j.objs)){N=(j.N>=8&&j.N<=512)?Math.round(j.N):100;if(j.G>=2&&j.G<=40)G=Math.round(j.G);objs=j.objs;if(j.D)for(var k in D)if(j.D[k]!==undefined)D[k]=j.D[k];nid=objs.reduce(function(m,o){return Math.max(m,o.id||0)},0)+1}}catch(e){}
 buildSizes();drawGrid();setTool('move');commit();
 window.addEventListener('resize',function(){redraw()});
+})();
+</script>
+<script>
+(function(){ // botão de copiar a cor (fica antes do #)
+var b=document.getElementById('hxc'),h=document.getElementById('hx'),COPY='<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="8.5" y="8.5" width="12" height="12" rx="3.5" fill="currentColor" fill-opacity=".25"/><path d="M15.5 8.5v-2a3 3 0 00-3-3h-6a3 3 0 00-3 3v6a3 3 0 003 3h2"/></g></svg>',OK='<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',tm;
+if(!b||!h)return;b.innerHTML=COPY;
+function fb(t){var a=document.createElement('textarea');a.value=t;a.style.cssText='position:fixed;opacity:0';document.body.appendChild(a);a.select();try{document.execCommand('copy')}catch(e){}a.remove()}
+b.onclick=function(){
+ var t=h.value.trim().replace(/^#?/,'#');if(!/^#[0-9a-f]{6}$/i.test(t))return;t=t.toLowerCase();
+ if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).catch(function(){fb(t)});else fb(t);
+ b.innerHTML=OK;b.classList.add('ok');clearTimeout(tm);tm=setTimeout(function(){b.innerHTML=COPY;b.classList.remove('ok')},1200);
+};
 })();
 </script>
 </body>
