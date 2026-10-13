@@ -7,7 +7,9 @@
 <style>
 :root{--pg:#f6f3fb;--cd:#fff;--tx:#2a2238;--mu:#6d6384;--ac:#8a5cf0;--bd:#e3dcf2;--cb:#1f1a2e;--ct:#f1eaff;--ck1:#e9e4f5;--ck2:#fff}
 @media(prefers-color-scheme:dark){:root{--pg:#141020;--cd:#1d1730;--tx:#efe9fb;--mu:#a99ec4;--ac:#b79bff;--bd:#322950;--cb:#0f0b1a;--ck1:#241c3a;--ck2:#2e2548}}
-*{box-sizing:border-box}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+::selection{background:rgba(122,158,151,.45);color:inherit}
+::-moz-selection{background:rgba(122,158,151,.45);color:inherit}
 body{margin:0;background:var(--pg);color:var(--tx);font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
 main{max-width:620px;margin:0 auto;padding:14px 14px 70px}
 h1{font-size:22px;margin:.2em 0}h2{font-size:17px;margin:1.4em 0 .4em;color:var(--ac)}
