@@ -34,6 +34,7 @@ body.sp{padding-bottom:330px}body.sp #ph{height:min(30vh,260px)}
 .th{position:absolute;width:22px;height:22px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.4),0 2px 6px rgba(0,0,0,.4);transform:translate(-50%,-50%);pointer-events:none}
 #hut{top:50%}
 .hxr{display:flex;gap:8px;align-items:center}.hxr .cp{display:flex;border-radius:10px;overflow:hidden;border:1px solid var(--bd)}.hxr .cp i{width:26px;height:36px}
+.hxw{flex:1;min-width:0;display:flex;align-items:center;border:1px solid var(--bd);border-radius:10px;background:var(--pg)}.hxw #hx{flex:1;border:0;background:transparent;padding-left:2px}#hxc{flex:none;border:0;background:none;color:var(--mu);padding:0 4px 0 10px;height:36px;display:flex;align-items:center;touch-action:manipulation}#hxc.ok{color:var(--ac)}
 #hx{flex:1;min-width:0;border:1px solid var(--bd);border-radius:10px;background:var(--pg);color:var(--tx);font:15px ui-monospace,Menlo,monospace;padding:8px 10px;text-transform:lowercase}
 #done{border:0;border-radius:10px;background:var(--ac);color:#fff;font:inherit;font-weight:700;padding:9px 16px}
 #sws{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;margin-top:10px}#sws i{aspect-ratio:1;border-radius:9px;border:1px solid rgba(128,128,128,.35);cursor:pointer}
@@ -176,7 +177,7 @@ h1 .ic{width:1.1em;height:1.1em;vertical-align:-.15em}
 <div class="hd"><b id="stt"></b><span style="color:var(--mu);font-size:12px">toque ou arraste</span></div>
 <div id="sv"><i class="th" id="svt"></i></div>
 <div id="hu"><i class="th" id="hut"></i></div>
-<div class="hxr"><span class="cp"><i id="old"></i><i id="new"></i></span><input id="hx" maxlength="7" autocapitalize="off" spellcheck="false"><button id="done" type="button">Pronto</button></div>
+<div class="hxr"><span class="cp"><i id="old"></i><i id="new"></i></span><span class="hxw"><button id="hxc" type="button" title="Copiar cor" aria-label="Copiar cor"></button><input id="hx" maxlength="7" autocapitalize="off" spellcheck="false"></span><button id="done" type="button">Pronto</button></div>
 <div id="sws"></div>
 </div>
 <script>
@@ -542,6 +543,18 @@ $('copy').onclick=function(){
  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(ok,fb)}else fb();
 };
 load(PRE[0][1],PRE[0][2]);
+</script>
+<script>
+(function(){ // botão de copiar a cor (fica antes do #)
+var b=document.getElementById('hxc'),h=document.getElementById('hx'),COPY='<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="8.5" y="8.5" width="12" height="12" rx="3.5" fill="currentColor" fill-opacity=".25"/><path d="M15.5 8.5v-2a3 3 0 00-3-3h-6a3 3 0 00-3 3v6a3 3 0 003 3h2"/></g></svg>',OK='<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',tm;
+if(!b||!h)return;b.innerHTML=COPY;
+function fb(t){var a=document.createElement('textarea');a.value=t;a.style.cssText='position:fixed;opacity:0';document.body.appendChild(a);a.select();try{document.execCommand('copy')}catch(e){}a.remove()}
+b.onclick=function(){
+ var t=h.value.trim().replace(/^#?/,'#');if(!/^#[0-9a-f]{6}$/i.test(t))return;t=t.toLowerCase();
+ if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).catch(function(){fb(t)});else fb(t);
+ b.innerHTML=OK;b.classList.add('ok');clearTimeout(tm);tm=setTimeout(function(){b.innerHTML=COPY;b.classList.remove('ok')},1200);
+};
+})();
 </script>
 </body>
 </html> 
