@@ -382,6 +382,10 @@
   .update-item-body { font-size: 12px; line-height: 1.45; color: var(--update-text); white-space: pre-line; }
   .update-item-body a.update-link { color: var(--update-link); text-decoration: underline; text-underline-offset: 2px; }
   .update-item-body .update-color a.update-link { color: inherit; }
+  /* A cor escolhida no admin vale só no tema padrão. Nos temas prontos (data-theme) o texto
+     segue o tema; !important é o que vence a cor gravada no próprio texto (style inline). */
+  html[data-theme] .update-item-body .update-color { color: inherit !important; }
+  html[data-theme] .update-item-body .update-color a.update-link { color: var(--update-link); }
   .update-item-date { font-size: 10.5px; color: var(--text-muted); margin-top: 5px; }
   .update-item-delete {
     position: absolute; top: 0.55rem; right: 0.5rem;
