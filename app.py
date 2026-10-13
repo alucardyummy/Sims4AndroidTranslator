@@ -394,6 +394,22 @@ def push_unsubscribe():
     return {"ok": True}
 
 
+# Links dentro do texto da novidade: o admin escreve [nome](endereço) e o site
+# mostra só o "nome" sublinhado. No banco o texto fica com a marcação; já o
+# push (notificação do sistema, que não aceita link no meio do texto) leva só
+# o nome, em texto simples.
+_UPDATE_LINK_RE = re.compile(r"\[([^\[\]\n]{1,120})\]\(([^()\s]{1,500})\)")
+
+
+def strip_update_links(text):
+    def _sub(m):
+        url = m.group(2)
+        if re.match(r"^/(?![/\\])", url) or re.match(r"(?i)^https?://", url):
+            return m.group(1)
+        return m.group(0)
+    return _UPDATE_LINK_RE.sub(_sub, text or "")
+
+
 @app.route("/api/updates")
 def get_updates():
     # Só devolve a lista de novidades pra quem realmente tem uma inscrição
@@ -553,7 +569,7 @@ def admin_edit_update():
     # na barra (renotify/silent no service worker). Quem já dispensou não
     # recebe nada de volta — a edição não "ressuscita" notificação fechada.
     try:
-        _push_edit_update(update_id, title, body, url)
+        _push_edit_update(update_id, title, strip_update_links(body), url)
     except Exception as e:
         print("Aviso: falha ao mandar edit push:", e)
 
@@ -689,7 +705,7 @@ def admin_notify_update():
     # novidade empilha separada na barra em vez de substituir a anterior,
     # e dá pra fechar/editar uma específica sem mexer nas outras.
     tag = f"update-{new_id}" if new_id else "update"
-    payload = json.dumps({"title": title, "body": body, "url": url, "tag": tag})
+    payload = json.dumps({"title": title, "body": strip_update_links(body), "url": url, "tag": tag})
 
     dead_ids = []
     for sub in subs:

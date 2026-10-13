@@ -376,6 +376,7 @@
   .update-item.selected { border-color: var(--accent-dim); background: rgba(0,0,0,0.08); }
   .update-item-title { font-family: var(--font-title, 'Syne', sans-serif); font-size: 13px; font-weight: 700; color: #c4aee8; margin-bottom: 3px; }
   .update-item-body { font-size: 12px; line-height: 1.45; color: var(--text); }
+  .update-item-body a.update-link { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
   .update-item-date { font-size: 10.5px; color: var(--text-muted); margin-top: 5px; }
   .update-item-delete {
     position: absolute; top: 0.55rem; right: 0.5rem;
@@ -2846,6 +2847,38 @@ function renderUpdates() {
 // Monta um item de novidade igual ao visual original (título/corpo/data
 // empilhados), com o botão de lixeira no canto e — em modo seleção — um
 // círculo à esquerda, tudo igual ao sistema das saves.
+// Links no texto da novidade: [nome](endereço) vira só o "nome" sublinhado.
+// Monta com nós do DOM (nunca com HTML em string) e só aceita caminho do
+// próprio site (/algo) ou http(s)://, então nada de javascript: e afins.
+function renderUpdateBody(text) {
+  const frag = document.createDocumentFragment();
+  const src = text || '';
+  const re = /\[([^\[\]\n]{1,120})\]\(([^()\s]{1,500})\)/g;
+  let last = 0, m;
+  while ((m = re.exec(src)) !== null) {
+    if (m.index > last) frag.appendChild(document.createTextNode(src.slice(last, m.index)));
+    const href = m[2];
+    const okInternal = /^\/(?![\/\\])/.test(href);
+    const okExternal = /^https?:\/\//i.test(href);
+    if (okInternal || okExternal) {
+      const a = document.createElement('a');
+      a.className = 'update-link';
+      a.href = href;
+      a.textContent = m[1];
+      if (okExternal && !href.startsWith(location.origin)) {
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+      }
+      frag.appendChild(a);
+    } else {
+      frag.appendChild(document.createTextNode(m[0]));
+    }
+    last = m.index + m[0].length;
+  }
+  if (last < src.length) frag.appendChild(document.createTextNode(src.slice(last)));
+  return frag;
+}
+
 function buildUpdateItem(u) {
   const item = document.createElement('div');
   item.className = 'update-item' + (selectedUpdateIds.has(u.id) ? ' selected' : '');
@@ -2856,8 +2889,9 @@ function buildUpdateItem(u) {
   const info = document.createElement('div');
   info.innerHTML =
     '<div class="update-item-title">' + escapeHtml(u.title) + '</div>' +
-    '<div class="update-item-body">' + escapeHtml(u.body || '') + '</div>' +
+    '<div class="update-item-body"></div>' +
     '<div class="update-item-date">' + formatUpdateDate(u.created_at) + '</div>';
+  info.querySelector('.update-item-body').appendChild(renderUpdateBody(u.body));
 
   const deleteBtn = document.createElement('button');
   deleteBtn.className = 'update-item-delete';
@@ -2889,12 +2923,16 @@ function buildUpdateItem(u) {
     if (updateSelectMode) beginDragSelect(updateDragConfig, u.id, false);
   }, { passive: true });
 
-  item.addEventListener('click', () => {
+  item.addEventListener('click', (e) => {
+    // Em modo seleção (ou logo após o toque longo) tocar num link só marca o
+    // item, sem abrir a página.
+    const onLink = e.target.closest && e.target.closest('a');
     if (updateSelectMode) {
+      if (onLink) e.preventDefault();
       toggleUpdateSelect(u.id);
       return;
     }
-    if (didLongPress) { didLongPress = false; }
+    if (didLongPress) { didLongPress = false; if (onLink) e.preventDefault(); }
   });
 
   return item;

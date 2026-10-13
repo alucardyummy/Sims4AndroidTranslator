@@ -145,6 +145,25 @@
   .confirm-box p { margin: 0 0 20px; font-size: 14px; color: #ddd; line-height: 1.4; }
   .confirm-actions { display: flex; gap: 10px; }
   .confirm-actions button { margin-top: 0; width: 100%; }
+  [hidden] { display: none !important; }
+  .link-open {
+    width: auto; margin-top: 10px; padding: 8px 12px; background: transparent;
+    border: 1px solid #333; color: #bbb; font-size: 13px; font-weight: 500;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .link-open svg { width: 15px; height: 15px; }
+  .link-panel { margin-top: 10px; padding: 4px 14px 14px; background: #111; border: 1px solid #2c2c2c; border-radius: 10px; }
+  .link-hint { font-size: 12px; color: #777; margin-top: 12px; line-height: 1.5; }
+  .link-err { font-size: 12px; color: #ff9b9b; margin-top: 8px; min-height: 0; }
+  .link-actions { display: flex; gap: 8px; }
+  .link-actions button { margin-top: 12px; padding: 10px; font-size: 14px; }
+  .link-actions .btn-ghost { background: transparent; border: 1px solid #333; color: #bbb; }
+  .pv { border: 1px solid #2c2c2c; border-radius: 10px; padding: 0.7rem 0.85rem; background: rgba(196,174,232,0.06); }
+  .pv-title { font-size: 13px; font-weight: 700; color: #c4aee8; margin-bottom: 3px; word-break: break-word; }
+  .pv-body { font-size: 12px; line-height: 1.45; color: #e9efed; word-break: break-word; }
+  .pv-date { font-size: 10.5px; color: #777; margin-top: 5px; }
+  .pv-empty { color: #555 !important; font-weight: 400; }
+  .pv .update-link { color: #9cb8b2; text-decoration: underline; text-underline-offset: 2px; }
   .confirm-actions .btn-no { background: #2c2c2c; color: #ccc; }
   .confirm-actions .btn-yes { background: #c94f4f; }
 </style>
@@ -205,6 +224,30 @@
     <textarea id="body" rows="3" placeholder="Ex: Já dá pra baixar a versão nova." oninput="updateBodyCounter()"></textarea>
     <div id="body-counter" class="counter">0 caracteres</div>
 
+    <button type="button" id="link-open-btn" class="link-open" onclick="openLinkPanel()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 0 0-7.07-7.07l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 0 0 7.07 7.07l1.5-1.5"/></svg>
+      Inserir link no texto
+    </button>
+    <div id="link-panel" class="link-panel" hidden>
+      <div class="link-hint">Selecione uma parte da mensagem e toque em “Inserir link no texto”: ela vira o nome. Ou deixe sem seleção e escreva o nome abaixo. No site só o nome aparece, sublinhado.</div>
+      <label for="link-name">Nome que aparece</label>
+      <input type="text" id="link-name" placeholder="Ex: clique aqui" maxlength="120">
+      <label for="link-url">Endereço do link</label>
+      <input type="text" id="link-url" placeholder="Ex: /suporte-css ou https://exemplo.com">
+      <div id="link-err" class="link-err"></div>
+      <div class="link-actions">
+        <button type="button" onclick="applyLink()">Aplicar</button>
+        <button type="button" class="btn-ghost" onclick="closeLinkPanel()">Cancelar</button>
+      </div>
+    </div>
+
+    <label>Prévia (como aparece no site)</label>
+    <div class="pv">
+      <div class="pv-title" id="pv-title"></div>
+      <div class="pv-body" id="pv-body"></div>
+      <div class="pv-date">agora</div>
+    </div>
+
     <label for="url">Link ao clicar (opcional)</label>
     <input type="text" id="url" placeholder="/ (padrão)" oninput="updateBodyCounter()">
 
@@ -236,6 +279,128 @@
     cancelEdit();
   };
 
+  // ── Links dentro do texto: [nome](endereço) ──────────────────────────
+  // No texto fica a marcação [nome](endereço); no site (e na prévia) aparece
+  // só o nome, sublinhado. O push leva só o nome, em texto simples.
+  const LINK_RE = /\[([^\[\]\n]{1,120})\]\(([^()\s]{1,500})\)/g;
+
+  function isSafeLink(u) {
+    return /^\/(?![\/\\])/.test(u) || /^https?:\/\//i.test(u);
+  }
+
+  function stripLinks(s) {
+    return (s || '').replace(LINK_RE, (m, name, url) => isSafeLink(url) ? name : m);
+  }
+
+  function renderBodyPreview(text, target) {
+    target.textContent = '';
+    const re = new RegExp(LINK_RE.source, 'g');
+    let last = 0, m;
+    while ((m = re.exec(text)) !== null) {
+      if (m.index > last) target.appendChild(document.createTextNode(text.slice(last, m.index)));
+      if (isSafeLink(m[2])) {
+        const span = document.createElement('span');
+        span.className = 'update-link';
+        span.textContent = m[1];
+        target.appendChild(span);
+      } else {
+        target.appendChild(document.createTextNode(m[0]));
+      }
+      last = m.index + m[0].length;
+    }
+    if (last < text.length) target.appendChild(document.createTextNode(text.slice(last)));
+  }
+
+  function updatePreview() {
+    const title = document.getElementById('title').value.trim();
+    const body = document.getElementById('body').value.trim();
+    const t = document.getElementById('pv-title');
+    const b = document.getElementById('pv-body');
+    t.textContent = title || 'Título da novidade';
+    t.classList.toggle('pv-empty', !title);
+    if (body) {
+      renderBodyPreview(body, b);
+      b.classList.remove('pv-empty');
+    } else {
+      b.textContent = 'A mensagem aparece aqui.';
+      b.classList.add('pv-empty');
+    }
+  }
+
+  let linkRange = null; // trecho da mensagem que o link vai substituir
+
+  function findLinkAt(text, start, end) {
+    const re = new RegExp(LINK_RE.source, 'g');
+    let m;
+    while ((m = re.exec(text)) !== null) {
+      const a = m.index, b = m.index + m[0].length;
+      if (start >= a && end <= b) return { start: a, end: b, name: m[1], url: m[2] };
+    }
+    return null;
+  }
+
+  function openLinkPanel() {
+    const ta = document.getElementById('body');
+    const start = ta.selectionStart, end = ta.selectionEnd;
+    // Se o cursor está dentro de um link que já existe, abre ele pra editar.
+    const existing = findLinkAt(ta.value, start, end);
+    let name = '', url = '';
+    if (existing) {
+      linkRange = { start: existing.start, end: existing.end };
+      name = existing.name;
+      try { url = decodeURI(existing.url); } catch (e) { url = existing.url; }
+    } else {
+      linkRange = { start, end };
+      name = ta.value.slice(start, end).replace(/\s+/g, ' ').trim();
+    }
+    document.getElementById('link-name').value = name;
+    document.getElementById('link-url').value = url;
+    document.getElementById('link-err').textContent = '';
+    document.getElementById('link-panel').hidden = false;
+    document.getElementById(name ? 'link-url' : 'link-name').focus();
+  }
+
+  function closeLinkPanel() {
+    document.getElementById('link-panel').hidden = true;
+    linkRange = null;
+  }
+
+  function normalizeLinkUrl(raw) {
+    let u = raw.trim();
+    if (!u) return { error: 'Preenche o endereço do link.' };
+    const internal = /^\/(?![\/\\])/.test(u);
+    const external = /^https?:\/\//i.test(u);
+    if (!internal && !external) {
+      // outro "esquema" (javascript:, mailto:...) ou //dominio: não aceita
+      if (/^[a-z][a-z0-9+.\-]*:(?!\d)/i.test(u) || u.startsWith('//') || u.startsWith('\\')) {
+        return { error: 'Use um caminho do site (ex: /suporte-css) ou um link que comece com http:// ou https://.' };
+      }
+      u = 'https://' + u;
+    }
+    u = u.replace(/\s/g, '%20').replace(/\(/g, '%28').replace(/\)/g, '%29');
+    if (u.length > 500) return { error: 'Esse endereço é grande demais.' };
+    return { url: u };
+  }
+
+  function applyLink() {
+    const err = document.getElementById('link-err');
+    err.textContent = '';
+    const name = document.getElementById('link-name').value.replace(/[\[\]]/g, '').replace(/\s+/g, ' ').trim();
+    if (!name) { err.textContent = 'Escreve o nome que vai aparecer.'; return; }
+    const res = normalizeLinkUrl(document.getElementById('link-url').value);
+    if (res.error) { err.textContent = res.error; return; }
+
+    const ta = document.getElementById('body');
+    const range = linkRange || { start: ta.value.length, end: ta.value.length };
+    const markup = '[' + name + '](' + res.url + ')';
+    ta.value = ta.value.slice(0, range.start) + markup + ta.value.slice(range.end);
+    const pos = range.start + markup.length;
+    closeLinkPanel();
+    ta.focus();
+    ta.setSelectionRange(pos, pos);
+    updateBodyCounter();
+  }
+
   // O push (Web Push) aceita no máximo ~4 KB de payload. O servidor monta o
   // JSON com json.dumps (ensure_ascii), então cada caractere não-ASCII
   // (acento, emoji) ocupa 6 bytes (\uXXXX; emoji = 12). O contador estima
@@ -243,7 +408,7 @@
   const PUSH_PAYLOAD_LIMIT = 3800; // margem de segurança sobre os ~4078 bytes
   function estimatePayloadBytes() {
     const title = document.getElementById('title').value.trim();
-    const body = document.getElementById('body').value.trim();
+    const body = stripLinks(document.getElementById('body').value.trim());
     const url = document.getElementById('url').value.trim() || '/';
     const json = JSON.stringify({ title, body, url, tag: 'update-000000' });
     let bytes = 0;
@@ -255,7 +420,8 @@
 
   function updateBodyCounter() {
     const counter = document.getElementById('body-counter');
-    const chars = [...document.getElementById('body').value].length;
+    updatePreview();
+    const chars = [...stripLinks(document.getElementById('body').value)].length;
     const bytes = estimatePayloadBytes();
     const pct = bytes / PUSH_PAYLOAD_LIMIT;
 
@@ -295,6 +461,7 @@
 
   const secretInput = document.getElementById('secret');
   const rememberBox = document.getElementById('remember');
+  updateBodyCounter();
 
   const savedSecret = localStorage.getItem('admin_notify_secret');
   if (savedSecret) {
@@ -478,7 +645,7 @@
           </span>
           <div style="min-width:0; flex:1;">
             <div style="font-size:13px; font-weight:600; color:#eee; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(u.title)}</div>
-            <div style="font-size:12px; color:#999; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(u.body)}</div>
+            <div style="font-size:12px; color:#999; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(stripLinks(u.body))}</div>
           </div>
           <button data-id="${u.id}" class="edit-btn" style="all:unset; cursor:pointer; padding:4px 6px; flex-shrink:0; display:flex; align-items:center;">
             <svg width="15" height="15" viewBox="0 0 190 190" xmlns="http://www.w3.org/2000/svg">
