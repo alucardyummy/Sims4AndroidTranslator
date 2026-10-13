@@ -40,13 +40,14 @@ h1 .i{width:1.1em;height:1.1em;margin-right:.15em}nav{columns:2;font-size:14px}
 <a href="#receita">3. Como o CSS é escrito</a><br>
 <a href="#cores">4. Cores</a><br>
 <a href="#var">5. Variáveis mágicas</a><br>
-<a href="#telas">6. Mirando numa tela</a><br>
-<a href="#home">7. Mapa da Home</a><br>
-<a href="#janelas">8. Janelas e avisos</a><br>
-<a href="#outras">9. Info, Editor, Mesclar, Criar</a><br>
-<a href="#truques">10. Truques</a><br>
-<a href="#prontos">11. Receitas prontas</a><br>
-<a href="#ruim">12. Deu ruim?</a>
+<a href="#fontes">6. Trocar as fontes</a><br>
+<a href="#telas">7. Mirando numa tela</a><br>
+<a href="#home">8. Mapa da Home</a><br>
+<a href="#janelas">9. Janelas e avisos</a><br>
+<a href="#outras">10. Info, Editor, Mesclar, Criar</a><br>
+<a href="#truques">11. Truques</a><br>
+<a href="#prontos">12. Receitas prontas</a><br>
+<a href="#ruim">13. Deu ruim?</a>
 </nav>
 
 <div class="box tip"><b>Não quer mexer com código?</b> Use o <a href="/montar-tema" style="color:var(--ac)">Montador de tema</a>: escolha as cores tocando na tela e copie o CSS pronto.</div>
@@ -120,10 +121,55 @@ h1 .i{width:1.1em;height:1.1em;margin-right:.15em}nav{columns:2;font-size:14px}
 <dt><code>--text-dim</code></dt><dd>cor do texto bem discreto</dd>
 <dt><code>--danger</code></dt><dd>vermelho de erro e de apagar</dd>
 <dt><code>--radius</code>, <code>--radius-sm</code>, <code>--radius-xs</code></dt><dd>quão redondos são os cantos (grande, médio, pequeno)</dd>
+<dt><code>--font-title</code>, <code>--font-body</code>, <code>--font-mono</code></dt><dd>as fontes (títulos e botões, texto normal, números e códigos). Têm uma seção só pra elas, logo abaixo</dd>
 </dl>
-<div class="box tip"><b>Detalhe:</b> a home é <b>clarinha</b> por padrão (verde-água) e as outras telas são <b>escuras</b>. Por isso a mesma variável pode ter “cor de partida” diferente em cada uma. Se quiser mudar uma tela só, veja a próxima seção.</div>
+<div class="box tip"><b>Detalhe:</b> a home é <b>clarinha</b> por padrão (verde-água) e as outras telas são <b>escuras</b>. Por isso a mesma variável pode ter “cor de partida” diferente em cada uma. Se quiser mudar uma tela só, veja a seção “Mirando numa tela só”. E pra trocar as <b>letras</b>, a seção logo abaixo.</div>
 
-<h2 id="telas">6. Mirando numa tela só</h2>
+<h2 id="fontes">6. Trocar as fontes <svg class="i" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M3.5 19.5l5-13 5 13M5.6 14.2h6.8" fill="none" stroke="#7fa59b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M14.5 19.5l3-7.6 3 7.6M15.6 16.8h4" fill="none" stroke="#9cb8b2" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></h2>
+<p>O site usa <b>3 fontes</b>, cada uma com um “papel”. Dá pra trocar todas de uma vez, igualzinho às cores:</p>
+<pre><code>:root {
+  --font-title: Georgia, serif;
+  --font-body: "Trebuchet MS", sans-serif;
+  --font-mono: "Courier New", monospace;
+}</code></pre>
+<dl>
+<dt><code>--font-title</code></dt><dd>títulos e botões grandes: nome das telas, rótulos, “SALVAR PACKAGE”… (a do site é a <code>Syne</code>)</dd>
+<dt><code>--font-body</code></dt><dd>o texto normal: frases, avisos, campos de digitar e botões pequenos (a do site é a <code>DM Sans</code>)</dd>
+<dt><code>--font-mono</code></dt><dd>números e códigos: o contador “0/14”, o “0xed218d42”, o nome do arquivo (a do site é a <code>DM Mono</code>)</dd>
+</dl>
+<p>Não precisa mudar as três: escreva só a que quiser. As que você não escrever ficam do jeito de sempre. Funciona em <b>todas as telas</b>, e os <b>temas prontos</b> também obedecem (se você não escrever nada, cada tema usa as fontes dele).</p>
+<h3>Que nome eu escrevo?</h3>
+<dl>
+<dt>Fontes do site</dt><dd><code>Syne</code>, <code>DM Sans</code> e <code>DM Mono</code>. A Home não carrega a DM Mono, então lá ela cai na monoespaçada do aparelho</dd>
+<dt>Fontes do seu aparelho</dt><dd><code>Georgia</code>, <code>"Times New Roman"</code>, <code>"Trebuchet MS"</code>, <code>Verdana</code>, <code>"Courier New"</code>, <code>"Comic Sans MS"</code>. Nome com espaço vai <b>entre aspas</b></dd>
+<dt>Sempre termine com um tipo genérico</dt><dd><code>serif</code> (com perninhas), <code>sans-serif</code> (sem perninhas), <code>monospace</code> (máquina de escrever), <code>cursive</code> (de mão) ou <code>system-ui</code> (a do aparelho). Cada aparelho tem as suas fontes (no Android, por exemplo, nem toda fonte de computador existe): se a primeira não existir, o site usa o tipo genérico</dd>
+</dl>
+<h3>Usar uma fonte de fora (Google Fonts, etc.)</h3>
+<p>O site <b>não aceita <code>@import</code></b> (é por segurança), mas aceita <code>@font-face</code> com link <code>https://</code>. É como se você “instalasse” a fonte e desse um nome pra ela:</p>
+<pre><code>@font-face {
+  font-family: "Minha Fonte";
+  src: url("https://exemplo.com/minha-fonte.woff2") format("woff2");
+  font-display: swap;
+}
+:root { --font-title: "Minha Fonte", serif; }</code></pre>
+<p>O link tem que ser o <b>endereço direto do arquivo</b> da fonte (termina em <code>.woff2</code>, <code>.woff</code>, <code>.ttf</code> ou <code>.otf</code>). Pra pegar uma do <b>Google Fonts</b>:</p>
+<ol>
+<li>No navegador, abra <code>https://fonts.googleapis.com/css2?family=Nome+Da+Fonte</code> (troque pelo nome da fonte; espaço vira <code>+</code>).</li>
+<li>Vai aparecer um texto cheio de <code>@font-face</code>. Copie <b>tudo</b>.</li>
+<li>Cole no CSS personalizado, <b>antes</b> do resto, e use o nome que está em <code>font-family</code> nas variáveis acima.</li>
+</ol>
+<div class="box tip"><b>Dica pra caber nos 20.000 caracteres:</b> o Google manda um bloco pra cada alfabeto (<code>/* cyrillic */</code>, <code>/* latin-ext */</code>…). Apague todos e deixe só o <code>/* latin */</code>: ele já tem todos os acentos do português. No <a href="/montar-tema" style="color:var(--ac)">Montador de tema</a> dá pra colar esse texto, que ele confere e monta o CSS pra você.</div>
+<div class="box warn"><b>Não vale:</b> <code>@import</code>, links <code>http://</code> (sem o “s”) e fonte embutida no próprio CSS (<code>data:</code>). Se a fonte não aparecer, o site usa a de reserva, então nada quebra: confira se o link abre o arquivo, se o nome está igual nos dois lugares e se tem aspas.</div>
+<h3>Mudar a fonte de um pedaço só</h3>
+<pre><code>/* só o título da Home */
+html[data-page="index"] .title { font-family: Georgia, serif !important; }
+
+/* a letra do Editor: sempre os DOIS juntos */
+[data-page="editor"] .edit-textarea,
+[data-page="editor"] .ta-backdrop { font-family: "Courier New", monospace !important; }</code></pre>
+<p>No Editor, o texto que você vê é desenhado por uma camada por cima da caixa (<code>.ta-backdrop</code>) e a caixa de digitar (<code>.edit-textarea</code>) fica com letra transparente. Por isso <b>fonte e tamanho têm que ser iguais nas duas</b>, senão o texto e o cursor se desencontram. O apelido bonito da janela do perfil (<code>.nick-preview</code>) usa uma letra de mão própria, que não muda com as variáveis: pra trocar, <code>.nick-preview { font-family: ... !important; }</code>.</p>
+
+<h2 id="telas">7. Mirando numa tela só</h2>
 <p>Cada tela tem um nome secreto. Pra mirar nela, escreva <code>[data-page="nome"]</code> antes do resto:</p>
 <dl>
 <dt><code>index</code></dt><dd>a Home</dd>
@@ -144,8 +190,8 @@ html[data-page="index"] {
 }</code></pre>
 <p>Dá pra mirar também num <b>tema pronto</b> (os da paleta <svg class="i" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M12 3C6.9 3 3 7 3 12.2 3 17.3 7 21 12 21c1.6 0 2.4-.9 2.4-2 0-1.4-1.1-1.7-1.1-2.9 0-1.1.9-1.9 2.1-1.9H18c1.7 0 3-1.3 3-3C21 6.7 17 3 12 3z" fill="#9cb8b2"/><circle cx="8" cy="12" r="1.5" fill="#cfe3dd"/><circle cx="11.6" cy="7.7" r="1.5" fill="#5f877c"/><circle cx="16.2" cy="9" r="1.5" fill="#cfe3dd"/><circle cx="8.8" cy="16" r="1.5" fill="#7fa59b"/><ellipse cx="6.4" cy="8.8" rx="1" ry="2.2" transform="rotate(35 6.4 8.8)" fill="#fff" opacity=".4"/></svg>), com <code>[data-theme="cult"]</code>, por exemplo.</p>
 
-<h2 id="home">7. Mapa da Home <svg class="i" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M3 7l6-2.2v14.2l-6 2.2z" fill="#cfe3dd"/><path d="M9 4.8l6 2.2v14.2l-6-2.2z" fill="#9cb8b2"/><path d="M15 7l6-2.2v14.2l-6 2.2z" fill="#7fa59b"/><path d="M12 8.3c-1.7 0-2.8 1.3-2.8 2.7 0 1.8 2.8 4.2 2.8 4.2s2.8-2.4 2.8-4.2c0-1.4-1.1-2.7-2.8-2.7z" fill="#5f877c"/><circle cx="12" cy="11" r="1" fill="#cfe3dd"/></svg></h2>
-<p>Cada pedaço da tela tem um nome. É só colocar um ponto na frente: <code>.title</code>, <code>.btn-new</code>… Na Home, use <code>html[data-page="index"] .nome</code> (e <code>!important</code> se não pegar, veja a seção 12).</p>
+<h2 id="home">8. Mapa da Home <svg class="i" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M3 7l6-2.2v14.2l-6 2.2z" fill="#cfe3dd"/><path d="M9 4.8l6 2.2v14.2l-6-2.2z" fill="#9cb8b2"/><path d="M15 7l6-2.2v14.2l-6 2.2z" fill="#7fa59b"/><path d="M12 8.3c-1.7 0-2.8 1.3-2.8 2.7 0 1.8 2.8 4.2 2.8 4.2s2.8-2.4 2.8-4.2c0-1.4-1.1-2.7-2.8-2.7z" fill="#5f877c"/><circle cx="12" cy="11" r="1" fill="#cfe3dd"/></svg></h2>
+<p>Cada pedaço da tela tem um nome. É só colocar um ponto na frente: <code>.title</code>, <code>.btn-new</code>… Na Home, use <code>html[data-page="index"] .nome</code> (e <code>!important</code> se não pegar, veja a seção 13).</p>
 <dl>
 <dt><code>.screen</code></dt><dd>a tela inteira da Home</dd>
 <dt><code>.topbar</code></dt><dd>a barrinha de cima</dd>
@@ -178,7 +224,7 @@ html[data-page="index"] {
   border-radius: 999px !important;
 }</code></pre>
 
-<h2 id="janelas">8. Janelas e avisos <svg class="i" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><rect x="3" y="4.5" width="18" height="15" rx="3.2" fill="#9cb8b2"/><path d="M3 9.3V7.7a3.2 3.2 0 0 1 3.2-3.2h11.6A3.2 3.2 0 0 1 21 7.7v1.6z" fill="#7fa59b"/><circle cx="6.2" cy="6.9" r=".8" fill="#cfe3dd"/><circle cx="8.6" cy="6.9" r=".8" fill="#cfe3dd"/><rect x="6" y="12" width="12" height="1.6" rx=".8" fill="#cfe3dd"/><rect x="6" y="15.2" width="7.5" height="1.6" rx=".8" fill="#cfe3dd" opacity=".6"/></svg></h2>
+<h2 id="janelas">9. Janelas e avisos <svg class="i" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><rect x="3" y="4.5" width="18" height="15" rx="3.2" fill="#9cb8b2"/><path d="M3 9.3V7.7a3.2 3.2 0 0 1 3.2-3.2h11.6A3.2 3.2 0 0 1 21 7.7v1.6z" fill="#7fa59b"/><circle cx="6.2" cy="6.9" r=".8" fill="#cfe3dd"/><circle cx="8.6" cy="6.9" r=".8" fill="#cfe3dd"/><rect x="6" y="12" width="12" height="1.6" rx=".8" fill="#cfe3dd"/><rect x="6" y="15.2" width="7.5" height="1.6" rx=".8" fill="#cfe3dd" opacity=".6"/></svg></h2>
 <p>As janelinhas que abrem por cima (perfil, entrar, temas, novidades…) usam as mesmas peças. Mudando uma, mudam <b>todas</b>:</p>
 <dl>
 <dt><code>.modal-overlay</code></dt><dd>o fundo escuro atrás da janela</dd>
@@ -197,7 +243,22 @@ html[data-page="index"] {
 <p>Em <b>todas as telas</b> também existem:</p>
 <dl>
 <dt><code>.toast</code></dt><dd>o avisinho que aparece rapidinho embaixo (<code>.toast.success</code> verde, <code>.toast.error</code> vermelho)</dd>
-<dt><code>.loading-overlay</code></dt><dd>a tela de carregamento; <code>.loading-phrase</code> são as frases que ficam trocando</dd>
+<dt><code>.loading-overlay</code></dt><dd>a tela de carregamento; <code>.loading-phrase</code> são as frases que ficam trocando (<code>.loading-phrase-container</code> é a caixa delas) e <code>.loading-gif</code> é a animação. Em Mesclar, Criar e Info o texto fixo (“Mesclando…”, “Gerando mod…”) é o <code>.loading-text</code></dd>
+</dl>
+<p><b>Dentro das janelas da Home</b> (perfil, entrar, temas, novidades). Use <code>html[data-page="index"]</code> na frente se quiser só na Home:</p>
+<dl>
+<dt><code>.auth-tab</code>, <code>.auth-divider</code></dt><dd>as abas “Entrar na Conta” / criar conta e o “ou” que separa o formulário do botão do Google</dd>
+<dt><code>.form-group</code>, <code>.pw-wrap</code>, <code>.pw-eye</code>, <code>.modal-switch</code></dt><dd>cada campo do formulário (rótulo + <code>.form-input</code>), o campo de senha com o olhinho de mostrar/esconder e os links tipo “Esqueceu a senha?”</dd>
+<dt><code>.custom-select</code></dt><dd>as listas de escolher (como a pergunta de recuperação da conta): o botão é <code>.custom-select-btn</code>, a lista que abre é <code>.custom-select-drop</code> e cada opção é <code>.cs-option</code></dd>
+<dt><code>.nick-sub</code>, <code>.nick-preview</code>, <code>.nick-count</code>, <code>.nick-error</code></dt><dd>escolher o apelido: a explicação, o apelido grande em letra de mão, o contador “0/8” e o aviso de erro</dd>
+<dt><code>.push-toggle-row</code>, <code>.push-toggle-label</code></dt><dd>a linha “Notificar no celular” com o interruptor</dd>
+<dt><code>.theme-sub</code>, <code>.theme-list</code>, <code>.theme-name</code>, <code>.theme-blurb</code>, <code>.theme-swatch</code>, <code>.theme-foot</code></dt><dd>a janela da paleta de temas: a frase de cima, a lista, o nome e a frasezinha de cada tema, as bolinhas de cor dele e o “Mais temas em breve.”</dd>
+<dt><code>.updates-list</code>, <code>.updates-empty</code>, <code>.update-item-title</code>, <code>.update-item-body</code>, <code>.update-item-date</code></dt><dd>a lista de novidades e as partes de cada uma (título, texto e data)</dd>
+<dt><code>.css-inner</code>, <code>.css-help</code>, <code>.css-meta</code>, <code>.css-actions</code>, <code>.css-btn-main</code>, <code>.css-danger</code></dt><dd>por dentro da caixa do CSS personalizado: o miolo, o textinho de ajuda, o contador “0/20000”, a linha dos botões, o <b>Salvar CSS</b> e o <b>Restaurar padrão</b></dd>
+<dt><code>.alert-overlay</code>, <code>.alert-icon</code>, <code>.alert-actions</code></dt><dd>os avisos de “OK / Tem certeza?”: o fundo escuro, o “!” e a linha dos botões</dd>
+<dt><code>.draft-banner-text</code>, <code>.draft-banner-actions</code>, <code>.draft-banner-btn</code></dt><dd>por dentro do aviso “Você tem uma tradução não salva”: o texto, a linha dos botões e cada botão (Recuperar e Descartar)</dd>
+<dt><code>.select-count</code>, <code>.select-all-btn</code>, <code>.select-cancel</code>, <code>.select-delete</code></dt><dd>a barra do modo seleção: “0 selecionados”, “Tudo”, “Cancelar” e a lixeira</dd>
+<dt><code>.logo-area</code>, <code>.saves-list</code>, <code>.sk-circle</code>, <code>.sk-lines</code></dt><dd>a área do título com o “beta”, a lista das traduções salvas e as partes do esqueleto cinza de carregamento (bolinha e linhas)</dd>
 </dl>
 <pre><code>.modal-box {
   background: #1f1433 !important;
@@ -205,7 +266,7 @@ html[data-page="index"] {
 }
 .modal-title { color: hotpink !important; }</code></pre>
 
-<h2 id="outras">9. Info, Editor, Mesclar e Criar <svg class="i" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="#cfe3dd" fill-opacity=".75" stroke="#5f877c" stroke-width="1.8"/><path d="M15.4 15.4l4.9 4.9" stroke="#7fa59b" stroke-width="3.2" stroke-linecap="round"/><path d="M7.4 9.2A3.4 3.4 0 0 1 10 7" stroke="#fff" stroke-width="1.4" stroke-linecap="round" fill="none" opacity=".85"/></svg></h2>
+<h2 id="outras">10. Info, Editor, Mesclar e Criar <svg class="i" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="#cfe3dd" fill-opacity=".75" stroke="#5f877c" stroke-width="1.8"/><path d="M15.4 15.4l4.9 4.9" stroke="#7fa59b" stroke-width="3.2" stroke-linecap="round"/><path d="M7.4 9.2A3.4 3.4 0 0 1 10 7" stroke="#fff" stroke-width="1.4" stroke-linecap="round" fill="none" opacity=".85"/></svg></h2>
 <p>Agora o passeio guiado: vamos descendo cada tela de cima pra baixo, dizendo o nome de cada pedaço. Todas essas telas têm em comum: <code>.topbar</code> (barra de cima), <code>.back-btn</code> (a setinha ←), <code>.topbar-title</code> (o título ao lado dela), <code>.section-label</code> (os rótulos cinzinhas tipo “DETALHES”) e <code>.separator</code> (a linha que separa). Pra mudar só uma tela, comece com <code>[data-page="..."]</code>.</p>
 
 <h3><svg class="i" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" fill="#cfe3dd"/><path d="M14 3v3.5A1.5 1.5 0 0 0 15.5 8H19z" fill="#9cb8b2"/><path d="M8.5 12.5h7M8.5 15.5h7M8.5 18h4" stroke="#7fa59b" stroke-width="1.3" stroke-linecap="round" fill="none"/></svg> Info <code>[data-page="info"]</code></h3>
@@ -215,6 +276,8 @@ html[data-page="index"] {
 <dt>“DETALHES”</dt><dd>é um <code>.section-label</code>. As três caixinhas lado a lado ficam dentro de <code>.three-cols</code>, e cada uma é um <code>.info-block</code>, com o nome em cima (<code>.block-label</code>: “INSTANCE”, “GROUP”) e o valor embaixo (<code>.block-value</code>).</dd>
 <dt>Caixinha do meio</dt><dd>“LÍNGUA DESTINO” tem o botão <code>.lang-btn</code> (“POR_BR ▾”) e a dica <code>.lang-hint</code> (“toque p/ escolher”). Ao tocar abre a gaveta <code>.lang-sheet</code>, com as opções em <code>.lang-option</code>.</dd>
 <dt>Embaixo</dt><dd>o botão <code>.start-btn</code> (“COMEÇAR →”).</dd>
+<dt><code>.lang-sheet-title</code>, <code>.lang-dropdown</code>, <code>.lang-option-check</code></dt><dd>por dentro da gaveta de idiomas: o título “Idioma de destino”, a lista e o ✓ da opção escolhida</dd>
+<dt><code>.stbl-selector</code></dt><dd>quando o .package tem <b>mais de uma tabela de textos</b>, aparece este seletor. Cada escolha é um <code>.stbl-option</code>, com o código <code>.stbl-option-hex</code>, o detalhe <code>.stbl-option-meta</code> (group…), o selinho de idioma <code>.stbl-lang-badge</code> e o ✓ <code>.stbl-option-check</code></dd>
 </dl>
 <pre><code>[data-page="info"] .info-block { background: #2a1a45; border-radius: 24px; }
 [data-page="info"] .start-btn { background: hotpink; color: #fff; }</code></pre>
@@ -241,8 +304,28 @@ html[data-page="index"] {
 </dl>
 <p><b>Barra de baixo</b> (<code>.bottom-bar</code>): “Nome:” + <code>.filename-input</code> + “.package”; a linha “<svg class="i" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M18.60 12.00L20.90 12.00" stroke="#9cb8b2" stroke-width="3.1" stroke-linecap="round"/><path d="M16.67 16.67L18.29 18.29" stroke="#9cb8b2" stroke-width="3.1" stroke-linecap="round"/><path d="M12.00 18.60L12.00 20.90" stroke="#9cb8b2" stroke-width="3.1" stroke-linecap="round"/><path d="M7.33 16.67L5.71 18.29" stroke="#9cb8b2" stroke-width="3.1" stroke-linecap="round"/><path d="M5.40 12.00L3.10 12.00" stroke="#9cb8b2" stroke-width="3.1" stroke-linecap="round"/><path d="M7.33 7.33L5.71 5.71" stroke="#9cb8b2" stroke-width="3.1" stroke-linecap="round"/><path d="M12.00 5.40L12.00 3.10" stroke="#9cb8b2" stroke-width="3.1" stroke-linecap="round"/><path d="M16.67 7.33L18.29 5.71" stroke="#9cb8b2" stroke-width="3.1" stroke-linecap="round"/><path fill-rule="evenodd" d="M12 5.4a6.6 6.6 0 1 0 0 13.2 6.6 6.6 0 0 0 0-13.2zm0 4a2.6 2.6 0 1 1 0 5.2 2.6 2.6 0 0 1 0-5.2z" fill="#9cb8b2"/><path d="M7.4 9.2A5.2 5.2 0 0 1 10 7" stroke="#fff" opacity=".5" stroke-width="1.2" stroke-linecap="round" fill="none"/></svg> Alterar instância base” (<code>.instance-toggle-row</code>); e os botões <code>.import-btn</code> (⇄ e ◈), <code>.json-mode-btn</code> (JSON) e <code>.save-btn</code> (“SALVAR PACKAGE”).</p>
 <pre><code>[data-page="editor"] .string-row { border-bottom: 1px solid hotpink; }
-[data-page="editor"] .edit-textarea { font-size: 17px; }
+[data-page="editor"] .edit-textarea,
+[data-page="editor"] .ta-backdrop { font-size: 17px; }
 [data-page="editor"] .fav-btn.active { color: gold; }</code></pre>
+<p><b>Mais coisas do Editor</b> (é só colocar <code>[data-page="editor"]</code> na frente):</p>
+<dl>
+<dt><code>.ta-backdrop</code></dt><dd>a camada que desenha o texto colorido por cima da <code>.edit-textarea</code> (é ela que pinta os <code>{ }</code>). <b>Sempre mude as duas juntas</b> quando mexer em fonte ou tamanho de letra</dd>
+<dt><code>.empty-state</code></dt><dd>a tela “Carregando strings…” (com <code>.empty-icon</code> e <code>.empty-text</code>)</dd>
+<dt><code>.col-headers</code>, <code>.filter-toggle-label</code>, <code>.filter-arrow</code>, <code>.filter-collapsible</code>, <code>.filter-checkbox-label</code></dt><dd>a faixa “ORIGINAL / TRADUÇÃO”, o “Filtrar por ▼”, o painel que abre e cada caixinha dele</dd>
+<dt><code>.selection-toolbar</code></dt><dd>a barra que aparece quando você seleciona linhas: <code>.selection-toolbar-count</code> (“1 selecionada”), <code>.selection-toolbar-translate</code> (“◈ Traduzir”) e <code>.selection-toolbar-close</code> (✕)</dd>
+<dt><code>.note-row</code>, <code>.note-textarea</code>, <code>.note-hint</code>, <code>.note-dot</code></dt><dd>as anotações: a linha, a caixa de escrever, o aviso “Só fica salva no editor” e a bolinha que mostra que a linha tem nota</dd>
+<dt><code>.kebab-item</code>, <code>.kebab-item-icon</code>, <code>.engine-menu</code>, <code>.engine-option</code></dt><dd>os itens do menu ⋮ e a lista de tradutores (Google etc.)</dd>
+<dt><code>.filename-row</code>, <code>.filename-label</code>, <code>.ext-label</code></dt><dd>a linha do nome do arquivo na barra de baixo (“Nome:”, a caixa e o “.package”)</dd>
+<dt><code>.instance-toggle-label</code>, <code>.instance-collapsible</code>, <code>.instance-prefix</code>, <code>.instance-input</code>, <code>.instance-hint</code></dt><dd>“⚙ Alterar instância base”: o rótulo, o painel que abre, o “XX”, a caixa de digitar e a dica</dd>
+<dt><code>.json-panel</code>, <code>.json-toolbar-label</code>, <code>.json-textarea</code>, <code>.json-apply-btn</code>, <code>.json-save-btn</code>, <code>.json-import-btn</code>, <code>.json-clear-btn</code>, <code>.json-error-msg</code>, <code>.package-return-btn</code></dt><dd>o modo JSON: o painel, o rótulo, a caixa de texto e os botões (✓ APLICAR, SALVAR JSON, ⇪ IMPORTAR, limpar, o aviso de erro e o PACKAGE pra voltar)</dd>
+<dt><code>.import-sheet</code></dt><dd>a gaveta “Carregar traduções”: <code>.import-sheet-title</code>, <code>.import-sheet-sub</code>, os botões de origem <code>.import-source-btn</code> (“💾 De um save”), a lista <code>.import-save-item</code>, a área de escolher arquivo <code>.import-file-area</code> e o <code>.import-cancel</code></dd>
+<dt><code>.tall-sheet</code></dt><dd>a gaveta “Traduzir tudo”: <code>.tall-title</code>, <code>.tall-sub</code>, o seletor <code>.tall-engine-btn</code>, a barra <code>.tall-progress-track</code> com o <code>.tall-progress-fill</code> dentro, o <code>.tall-status</code> (“Aguardando…”), o <code>.translate-all-btn</code> (“▶ INICIAR”) e o <code>.tall-cancel-btn</code></dd>
+<dt><code>.success-sheet</code></dt><dd>a tela de “Clique Abaixo para Salvar sua Tradução!”: <code>.success-icon</code> (✦), <code>.success-title</code>, <code>.success-sub</code>, <code>.success-new</code> (“BAIXAR ARQUIVO”), <code>.success-back</code> (“Continuar editando”) e <code>.success-downloads-note</code></dd>
+<dt><code>.confirm-modal</code></dt><dd>o aviso “Trocar Modelo”: <code>.confirm-modal-text</code>, <code>.confirm-modal-btn</code> (e <code>.confirm-modal-btn-switch</code>, o de trocar)</dd>
+<dt><code>.modal-backdrop</code>, <code>.modal-icon</code>, <code>.modal-msg</code>, <code>.modal-btn-confirm</code>, <code>.modal-btn-cancel</code></dt><dd>os avisos de confirmação do Editor: o fundo, o ◈, a mensagem e os dois botões</dd>
+<dt><code>.editor-draft-banner</code></dt><dd>o aviso de rascunho “Você tem uma tradução recente não salva para este pacote” (com <code>.editor-draft-banner-text</code> e os botões <code>.editor-draft-banner-btn</code>)</dd>
+<dt><code>.toast-wrap</code></dt><dd>onde aparecem os avisinhos rápidos (<code>.toast-success</code>, <code>.toast-info</code>, <code>.toast-error</code>)</dd>
+</dl>
 
 <h3><svg class="i" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M9 4a2 2 0 1 1 4 0v2h4a1 1 0 0 1 1 1v4h-2a2 2 0 1 0 0 4h2v4a1 1 0 0 1-1 1h-4v-2a2 2 0 1 0-4 0v2H5a1 1 0 0 1-1-1v-4h2a2 2 0 1 0 0-4H4V7a1 1 0 0 1 1-1h4z" fill="#9cb8b2" stroke="#7fa59b" stroke-width="1" stroke-linejoin="round"/><ellipse cx="7.6" cy="8.4" rx="1.6" ry=".9" fill="#fff" opacity=".4"/><circle cx="15.5" cy="17" r="1" fill="#cfe3dd"/></svg> Mesclar <code>[data-page="merge"]</code></h3>
 <dl>
@@ -253,6 +336,8 @@ html[data-page="index"] {
 <dt><code>.file-item</code></dt><dd>cada arquivo da lista, com <code>.file-item-index</code> (o número), <code>.file-item-name</code>, <code>.file-item-size</code> (“42.4 MB”) e <code>.file-item-remove</code> (o ✕)</dd>
 <dt><code>.file-count</code></dt><dd>o “2 arquivos · ~84.37 MB”</dd>
 <dt><code>.merge-btn</code></dt><dd>o botão “MESCLAR E BAIXAR”. Sem arquivos ele fica apagadinho: é o <code>.merge-btn:disabled</code></dd>
+<dt><code>.file-list</code>, <code>.search-count</code></dt><dd>a lista dos arquivos e o contador da busca</dd>
+<dt><code>.split-badge</code></dt><dd>no modo <b>Separar</b>, o selo “Arquivos encontrados”. Cada arquivo achado é um <code>.split-result-item</code>, com <code>.split-result-name</code> (o nome), <code>.split-result-meta</code> (“tamanho · recursos”) e <code>.split-download-btn</code> (baixar)</dd>
 </dl>
 <pre><code>[data-page="merge"] .mode-tab.selected { border-color: hotpink; }
 [data-page="merge"] .merge-btn { background: hotpink; }
@@ -268,21 +353,26 @@ html[data-page="index"] {
 <dt><code>.chip-group</code> e <code>.chip</code></dt><dd>as “pílulas” de escolher (Personalidade, Bônus…, Teen+, Todas…). A escolhida é <code>.chip.active</code></dd>
 <dt><code>.toggle</code></dt><dd>os interruptores de liga/desliga (<code>.toggle-slider</code> é a bolinha)</dd>
 <dt><code>.action-bar</code></dt><dd>a barra de baixo, com <code>.btn-preview</code> (“Verificar”) e <code>.btn-build</code> (“GERAR .PACKAGE →”)</dd>
+<dt><code>.card-list</code></dt><dd>a lista onde ficam os <code>.card</code></dd>
+<dt><code>.toggle-row</code>, <code>.toggle-label</code></dt><dd>a linha com o interruptor (“NPCs podem usar autonomamente”) e o texto dela</dd>
+<dt><code>.error-block</code></dt><dd>a caixa vermelha de erro</dd>
+<dt><code>.preview-panel</code></dt><dd>o painel “Pré-visualização”: <code>.preview-header</code> (<code>.preview-title</code> e <code>.preview-count</code>), as abas <code>.preview-tab-btn</code> (Traços, Interações), cada <code>.preview-section</code> e as linhas <code>.preview-row</code>, com <code>.preview-row-name</code> e <code>.preview-row-meta</code></dd>
 </dl>
 <pre><code>[data-page="create"] .chip.active { background: hotpink; color: #fff; }
 [data-page="create"] .card { border-radius: 30px; }
 [data-page="create"] .btn-build { background: linear-gradient(135deg, hotpink, #7a3cff); }</code></pre>
 
-<h2 id="truques">10. Truques fáceis <svg class="i" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4.5 19.5l11-11" stroke="#7fa59b" stroke-width="3.4" stroke-linecap="round"/><path d="M4.5 19.5l3-3" stroke="#cfe3dd" stroke-width="3.4" stroke-linecap="round"/><path d="M17.5 2.5l1.1 2.9 2.9 1.1-2.9 1.1-1.1 2.9-1.1-2.9-2.9-1.1 2.9-1.1z" fill="#9cb8b2"/><path d="M17.5 4.6l.6 1.6 1.6.6-1.6.6-.6 1.6-.6-1.6-1.6-.6 1.6-.6z" fill="#cfe3dd"/><circle cx="5.5" cy="6" r="1.1" fill="#cfe3dd"/><circle cx="20" cy="14" r=".9" fill="#7fa59b"/></svg></h2>
+<h2 id="truques">11. Truques fáceis <svg class="i" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4.5 19.5l11-11" stroke="#7fa59b" stroke-width="3.4" stroke-linecap="round"/><path d="M4.5 19.5l3-3" stroke="#cfe3dd" stroke-width="3.4" stroke-linecap="round"/><path d="M17.5 2.5l1.1 2.9 2.9 1.1-2.9 1.1-1.1 2.9-1.1-2.9-2.9-1.1 2.9-1.1z" fill="#9cb8b2"/><path d="M17.5 4.6l.6 1.6 1.6.6-1.6.6-.6 1.6-.6-1.6-1.6-.6 1.6-.6z" fill="#cfe3dd"/><circle cx="5.5" cy="6" r="1.1" fill="#cfe3dd"/><circle cx="20" cy="14" r=".9" fill="#7fa59b"/></svg></h2>
 <h3>Cantos mais redondos no site todo</h3>
 <pre><code>:root { --radius: 30px; --radius-sm: 20px; }</code></pre>
 <h3>Esconder uma coisa</h3>
 <pre><code>.version { display: none !important; }</code></pre>
 <h3>Letra maior (bom pra enxergar melhor)</h3>
-<pre><code>body { font-size: 18px; }</code></pre>
+<pre><code>html { zoom: 1.2; }</code></pre>
+<p>Aumenta o site todo (letras, botões e espaços) em 20%. Teste <code>1.1</code>, <code>1.15</code>, <code>1.3</code>… até ficar bom. Não adianta mexer no <code>font-size</code> do <code>body</code>: quase tudo no site tem tamanho próprio, então nada muda. Pra aumentar só a letra do Editor, veja a receita lá embaixo.</p>
 <h3>Trocar o tipo de letra</h3>
-<p>O site já traz <code>Syne</code>, <code>DM Sans</code> e <code>DM Mono</code>. Dá pra usar elas, ou as do seu aparelho, como <code>Georgia</code> ou <code>"Courier New"</code>.</p>
-<pre><code>body { font-family: Georgia, serif !important; }</code></pre>
+<p>Use as variáveis da seção <a href="#fontes" style="color:var(--ac)">6. Trocar as fontes</a>. Se escrever só <code>font-family</code> no <code>body</code>, só muda o que não tem fonte própria (menos da metade dos textos).</p>
+<pre><code>:root { --font-title: Georgia, serif; --font-body: Georgia, serif; }</code></pre>
 <h3>Imagem de fundo</h3>
 <pre><code>html[data-page="index"] body {
   background: url("https://exemplo.com/foto.jpg") center / cover fixed !important;
@@ -291,7 +381,7 @@ html[data-page="index"] {
 <h3>Tirar as animações</h3>
 <pre><code>* { animation: none !important; transition: none !important; }</code></pre>
 
-<h2 id="prontos">11. Receitas prontas (copiar e colar) <svg class="i" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 20.5v-7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v7z" fill="#9cb8b2"/><path d="M4 13.5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2V15c-1 0-1.3 1.3-2.6 1.3S15.3 15 14 15s-1.3 1.3-2.6 1.3S9.1 15 8 15s-1.3 1.3-2.6 1.3C4.7 16.3 4.5 15 4 15z" fill="#cfe3dd"/><rect x="11" y="7" width="2" height="4.5" rx="1" fill="#7fa59b"/><path d="M12 2.8c1.3 1.1 1.3 2.6 0 3.6-1.3-1-1.3-2.5 0-3.6z" fill="#cfe3dd"/><path d="M12 4.2c.5.5.5 1.1 0 1.6-.5-.5-.5-1.1 0-1.6z" fill="#fff"/><path d="M6.5 18.5h11" stroke="#fff" opacity=".35" stroke-width="1.1" stroke-linecap="round"/></svg></h2>
+<h2 id="prontos">12. Receitas prontas (copiar e colar) <svg class="i" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 20.5v-7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v7z" fill="#9cb8b2"/><path d="M4 13.5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2V15c-1 0-1.3 1.3-2.6 1.3S15.3 15 14 15s-1.3 1.3-2.6 1.3S9.1 15 8 15s-1.3 1.3-2.6 1.3C4.7 16.3 4.5 15 4 15z" fill="#cfe3dd"/><rect x="11" y="7" width="2" height="4.5" rx="1" fill="#7fa59b"/><path d="M12 2.8c1.3 1.1 1.3 2.6 0 3.6-1.3-1-1.3-2.5 0-3.6z" fill="#cfe3dd"/><path d="M12 4.2c.5.5.5 1.1 0 1.6-.5-.5-.5-1.1 0-1.6z" fill="#fff"/><path d="M6.5 18.5h11" stroke="#fff" opacity=".35" stroke-width="1.1" stroke-linecap="round"/></svg></h2>
 <h3>Tudo rosa</h3>
 <pre><code>:root {
   --accent: #ff4fa3;
@@ -309,9 +399,10 @@ html[data-page="index"] {
 <pre><code>button { border-radius: 999px !important; }</code></pre>
 <h3>Editor com letra grande e fundo diferente</h3>
 <pre><code>[data-page="editor"] body { background: #101820; }
-[data-page="editor"] .edit-textarea { font-size: 17px; }</code></pre>
+[data-page="editor"] .edit-textarea,
+[data-page="editor"] .ta-backdrop { font-size: 17px; }</code></pre>
 
-<h2 id="ruim">12. Deu ruim? <svg class="i" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill-rule="evenodd" d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zm0 5.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7z" fill="#9cb8b2"/><path d="M15.25 15.25l2.6 2.6M8.75 15.25l-2.6 2.6M15.25 8.75l2.6-2.6M8.75 8.75l-2.6-2.6" stroke="#cfe3dd" stroke-width="3.2"/><path d="M6.5 8.5A6.5 6.5 0 0 1 9 6" stroke="#fff" opacity=".5" stroke-width="1.2" stroke-linecap="round" fill="none"/></svg></h2>
+<h2 id="ruim">13. Deu ruim? <svg class="i" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill-rule="evenodd" d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zm0 5.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7z" fill="#9cb8b2"/><path d="M15.25 15.25l2.6 2.6M8.75 15.25l-2.6 2.6M15.25 8.75l2.6-2.6M8.75 8.75l-2.6-2.6" stroke="#cfe3dd" stroke-width="3.2"/><path d="M6.5 8.5A6.5 6.5 0 0 1 9 6" stroke="#fff" opacity=".5" stroke-width="1.2" stroke-linecap="round" fill="none"/></svg></h2>
 <dl>
 <dt>“Não mudou nada!”</dt>
 <dd>O site tem várias regras com <code>!important</code> (principalmente a Home e as janelas). Coloque <code>!important</code> antes do ponto e vírgula: <code>color: red !important;</code>. Se tiver um <b>tema pronto</b> ligado, ele também pode ganhar: use <code>!important</code> ou teste com o tema padrão.</dd>
@@ -320,9 +411,11 @@ html[data-page="index"] {
 <dt>“Uma coisa sumiu / o site ficou impossível de usar!”</dt>
 <dd>Calma! Abra o site com <code>?safe=1</code> no final do endereço. Isso desliga tema e CSS pessoal só naquela visita, e dá pra ir no perfil corrigir ou apertar <b>Restaurar padrão</b>.</dd>
 <dt>“Disse que o CSS não é permitido”</dt>
-<dd>Por segurança, não vale: <code>@import</code>, <code>javascript:</code>, <code>expression(...)</code>, <code>image-set(...)</code> e afins. E em <code>url(...)</code> só <code>https://</code>, <code>/img/</code> e <code>data:image/</code>.</dd>
+<dd>Por segurança, não vale: <code>@import</code>, <code>javascript:</code>, <code>expression(...)</code>, <code>image-set(...)</code> e afins. E em <code>url(...)</code> só <code>https://</code>, <code>/img/</code> e <code>data:image/</code> (fonte embutida não vale). Pra fonte de fora use <code>@font-face</code>, não <code>@import</code>: veja a seção “Trocar as fontes”.</dd>
+<dt>“Minha fonte não aparece!”</dt>
+<dd>Confira: o link começa com <code>https://</code> e abre direto o arquivo da fonte? O nome em <code>font-family</code> do <code>@font-face</code> é <b>igualzinho</b> ao que você escreveu em <code>--font-title</code> (e nome com espaço está entre aspas)? Enquanto não carrega, o site usa a fonte de reserva (o tipo genérico no fim, tipo <code>serif</code>).</dd>
 <dt>“Deu erro de ‘muito grande’”</dt>
-<dd>Passou de 20.000 caracteres. Apague os comentários e as coisas que não usa.</dd>
+<dd>Passou de 20.000 caracteres. Apague os comentários e as coisas que não usa. Se for fonte do Google, deixe só o bloco <code>/* latin */</code>.</dd>
 <dt>“Escrevi certinho e não funciona”</dt>
 <dd>Confira: tem <code>;</code> no fim de cada linha? Fechou todas as chaves <code>{ }</code>? Uma chave faltando estraga o resto do CSS.</dd>
 </dl>

@@ -21,8 +21,8 @@
 
 /* ── Paleta e fontes (todas as páginas) ── */
 :root {
-  --vp-black: 'UnifrakturMaguntia', 'Old English Text MT', 'Times New Roman', serif;
-  --vp-serif: 'IM Fell English', 'Palatino Linotype', Georgia, serif;
+  --vp-black: var(--font-title, 'UnifrakturMaguntia', 'Old English Text MT', 'Times New Roman', serif);
+  --vp-serif: var(--font-body, 'IM Fell English', 'Palatino Linotype', Georgia, serif);
 
   --vp-velvet: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='360' height='360'%3E%3Cfilter id='v' x='0' y='0' width='100%25' height='100%25' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.010 0.019' numOctaves='3' seed='11' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.29 0 0 0 0 0.08 0 0 0 0 0.14 0 0 0 1.7 -0.78'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23v)'/%3E%3C/svg%3E");
   --vp-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g' x='0' y='0' width='100%25' height='100%25' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.85 0 0 0 0 0.62 0 0 0 0 0.68 0 0 0 0.30 -0.10'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");

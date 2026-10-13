@@ -131,6 +131,14 @@ textarea{width:100%;height:210px;background:var(--cb);color:var(--ct);border:0;b
 h1 .ic{width:1.1em;height:1.1em;vertical-align:-.15em}
 .pk button .ic,.sl .rz .ic{width:20px;height:20px;vertical-align:middle}
 .go .ic{box-sizing:content-box;padding:2px;border-radius:50%;background:#fff}
+/* fontes: preview + painel */
+#ph{font-family:var(--ft-body,inherit)}
+#ph .ti,#ph .tb2 b,#ph .bn,#ph .b2,#ph .sv,#ph .mb h4,#ph .lb,#ph .sl2,#ph .mt b,#ph .dz{font-family:var(--ft-title,inherit)}
+#ph .rn,#ph .cb,#ph .tsb,#ph .nh,#ph .fn i,#ph .inp,#ph .ns{font-family:var(--ft-mono,inherit)}
+.ff{display:block;margin:10px 0}.ff b{display:block}.ff small{display:block;color:var(--mu);margin-bottom:4px}
+.ff select,#fcn,#fcl,#fcc{width:100%;box-sizing:border-box;border:1px solid var(--bd);border-radius:10px;background:var(--pg);color:var(--tx);font:inherit;padding:9px 10px}
+#fcc{height:84px;font:11px/1.4 ui-monospace,Menlo,monospace;resize:vertical}
+#fcu input,#fcu textarea{margin-top:6px}#fmsg{font-size:12px;color:var(--mu);margin:6px 2px 0}#fmsg.bad{color:#e5565b}
 </style>
 </head>
 <body>
@@ -146,7 +154,23 @@ h1 .ic{width:1.1em;height:1.1em;vertical-align:-.15em}
 <div id="groups"></div>
 <h2>3. Cantos arredondados</h2>
 <div class="box" id="radii"></div>
-<h2>4. Fundo com padrão <small style="color:var(--mu);font-weight:400">(opcional)</small></h2>
+<h2>4. Fontes <small style="color:var(--mu);font-weight:400">(opcional)</small></h2>
+<div class="box" id="fonts">
+<p style="margin:0;color:var(--mu)">Cada tipo de texto do site tem a sua fonte. Deixe em <b>Padrão do site</b> pra não mudar nada.</p>
+<label class="ff"><b>Títulos e botões</b><small>Nome das telas, botões grandes, rótulos</small><select id="ft"></select></label>
+<label class="ff"><b>Texto</b><small>Frases, campos, avisos e tudo que não é título</small><select id="fb"></select></label>
+<label class="ff"><b>Números e códigos</b><small>Contador, código das linhas (0x…), nome do arquivo</small><select id="fm"></select></label>
+<details class="box" id="fcu"><summary>Usar uma fonte de fora (Google Fonts, etc.)</summary>
+<p style="color:var(--mu);font-size:12px;margin:6px 0">O site não deixa usar <code>@import</code>, mas deixa <code>@font-face</code> com link <b>https://</b>. Dê um nome e cole o link direto do arquivo (.woff2, .woff, .ttf ou .otf):</p>
+<input id="fcn" placeholder="Nome da fonte (ex.: Minha Fonte)" autocapitalize="off" spellcheck="false">
+<input id="fcl" placeholder="https://…/minha-fonte.woff2" autocapitalize="off" spellcheck="false">
+<p style="color:var(--mu);font-size:12px;margin:10px 0 0">Ou, do Google Fonts: abra o link <code>fonts.googleapis.com/css2?family=Nome+Da+Fonte</code> no navegador, copie tudo que aparecer e cole aqui:</p>
+<textarea id="fcc" placeholder="@font-face { font-family: 'Nome'; src: url(https://…) … }" spellcheck="false"></textarea>
+<p style="color:var(--mu);font-size:12px;margin:6px 0 0">Depois escolha a fonte nas listas acima (ela aparece no fim, em “Suas fontes”). Fonte de fora conta nos 20.000 caracteres.</p>
+</details>
+<p id="fmsg"></p>
+</div>
+<h2>5. Fundo com padrão <small style="color:var(--mu);font-weight:400">(opcional)</small></h2>
 <label class="ck"><input type="checkbox" id="pon"><span><b>Usar fundo com padrão</b> (bolinhas, estrelas, corações, rendinha…). Ele entra no CSS junto com o tema.</span></label>
 <div id="pbox" hidden>
 <div class="box"><div class="row" id="shapes"></div></div>
@@ -162,7 +186,7 @@ h1 .ic{width:1.1em;height:1.1em;vertical-align:-.15em}
 <button class="go2" id="ptdl" type="button">Baixar .svg do ladrilho</button>
 <a class="go2" href="/desenhar-svg"><svg class="ic" aria-hidden="true"><use href="#i-pencil"/></svg> Desenhar minha própria forma</a>
 </div>
-<h2>5. Copie e cole no site</h2>
+<h2>6. Copie e cole no site</h2>
 <label class="ck"><input type="checkbox" id="home" checked><span><b>Pintar a Home também</b> (a Home tem cores próprias; marcado, ela segue o seu tema)</span></label>
 <textarea id="out" readonly spellcheck="false"></textarea>
 <p id="csz"></p>
@@ -173,6 +197,7 @@ h1 .ic{width:1.1em;height:1.1em;vertical-align:-.15em}
 <li>Gostou? <b>Salvar CSS</b> (só Aplicar some quando recarrega!).</li></ol></div>
 <p>Quer ir além? Veja o <a href="/suporte-css">Guia do CSS</a>.</p>
 </main>
+<style id="ffp"></style>
 <div id="sheet" hidden>
 <div class="hd"><b id="stt"></b><span style="color:var(--mu);font-size:12px">toque ou arraste</span></div>
 <div id="sv"><i class="th" id="svt"></i></div>
@@ -407,8 +432,8 @@ function buildShapes(){
   setTimeout(function(){$('pbox').scrollIntoView({block:'start'})},60)}
 })();
 function css(){
- var v=V(),o='/* Meu tema — feito no Montador de tema */\n:root {\n',k,H='html[data-page="index"] ';
- for(k in v)o+='  '+k+': '+v[k]+';\n';o+='}\n';
+ var v=V(),o='/* Meu tema — feito no Montador de tema */\n'+ffFace()+':root {\n',k,H='html[data-page="index"] ';
+ for(k in v)o+='  '+k+': '+v[k]+';\n';o+=ffVars()+'}\n';
  o+='\n/* Todas as telas */\n'+[['.start-btn','bst','rst'],['.save-btn','bsa','rsa'],['.merge-btn','bmg','rmg'],['.btn-build','bbd','rbd']].map(function(b){return b[0]+' { background: '+S[b[1]]+'; color: '+S[b[1]+'T']+'; border-radius: '+px(b[2])+'; }\n'}).join('')+'[data-page="create"] .btn-preview { border-color: '+S.bvf+'; color: '+S.bvfT+'; border-radius: '+px('rvf')+'; }\n'
   +'[data-page="editor"] .string-row { background: '+S.row+'; }\n[data-page="editor"] .edit-textarea, [data-page="editor"] .original-text { background: '+S.box+'; border-radius: '+px('eb')+'; }\n[data-page="editor"] .search-input { border-radius: '+px('es')+'; }\n[data-page="merge"] .mode-tab { border-radius: '+px('mt')+'; }\n[data-page="merge"] .drop-zone { border-radius: '+px('mz')+'; }\n[data-page="create"] .card, [data-page="create"] .namespace-block { border-radius: '+px('cc')+'; }\n[data-page="create"] .chip { border-radius: '+px('cp')+'; }\n[data-page="info"] .info-block { border-radius: '+px('ib')+'; }\n[data-page="editor"] .bottom-bar { background: '+S.bar+'; }\n'
   +'\n/* Janelas */\n.modal-overlay { background: rgba('+rgb(S.ov).join(', ')+', 0.6) !important; }\n.modal-box { background: '+S.modal+' !important; border: 1px solid '+S.modalBd+' !important; border-radius: '+px('rw')+' !important; color: '+S.modalTx+'; }\n.modal-title { color: '+S.modalTitle+' !important; }\n.modal-box label { color: '+S.modalTx+' !important; }\n.nick-sub, .css-help, .modal-close, .update-item-delete, .auth-divider { color: '+S.modalMu+' !important; text-shadow: none !important; }\n.modal-switch span { color: '+S.modalAc+' !important; }\n.form-input { background: '+S.field+' !important; border: 1px solid '+S.fieldBd+' !important; color: '+S.modalTx+' !important; border-radius: '+px('rwf')+' !important; }\n.google-btn { background: '+S.modalCard+' !important; border: 1px solid '+S.fieldBd+' !important; color: '+S.modalTx+' !important; }\n.theme-card, .update-item, .css-box { background: '+S.modalCard+' !important; border-color: '+S.fieldBd+' !important; color: '+S.modalTx+'; }\n.theme-card.active, .update-item.selected { border-color: '+S.modalAc+' !important; }\n.switch-slider { background: '+S.fieldBd+' !important; }\n.switch input:checked + .switch-slider { background: '+S.sw+' !important; }\n.modal-btn, .alert-btn, .css-btn-main { background: '+S.bmb+' !important; border-color: '+S.bmb+' !important; color: '+S.bmbT+' !important; border-radius: '+px('rmb')+' !important; }\n'
@@ -496,6 +521,7 @@ function render(){
  for(k in x)p.style.setProperty('--'+k,x[k]);
  for(k in S)p.style.setProperty('--x-'+k,S[k]);
  prv(p);
+ ffPrev(p);
  if(p.dataset.t!==tab){p.innerHTML=M[tab];p.dataset.t=tab}
  $('out').value=css();
  var L=$('out').value.length,z=$('csz');z.textContent='Tamanho: '+L.toLocaleString('pt-BR')+' de '+CSSMAX.toLocaleString('pt-BR')+' caracteres'+(L>CSSMAX?' — passou do limite do site! Diminua o tamanho do ladrilho, desmarque “Pintar a Home” ou escolha uma forma mais simples.':'');z.style.color=L>CSSMAX?'#e5565b':'';
@@ -542,6 +568,49 @@ $('copy').onclick=function(){
  function fb(){var o=$('out');o.removeAttribute('readonly');o.select();try{document.execCommand('copy')}catch(e){}o.setAttribute('readonly','');ok()}
  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(ok,fb)}else fb();
 };
+// ---- fontes ----
+var FF=[['','Padrão do site'],["'Syne', sans-serif",'Syne (do site)'],["'DM Sans', sans-serif",'DM Sans (do site)'],["'DM Mono', monospace",'DM Mono (do site)'],
+["Georgia, serif",'Georgia (serifada)'],["'Times New Roman', Times, serif",'Times (serifada clássica)'],["'Trebuchet MS', sans-serif",'Trebuchet (redondinha)'],["Verdana, sans-serif",'Verdana (larga)'],
+["'Courier New', monospace",'Courier (máquina de escrever)'],["'Comic Sans MS', 'Comic Neue', cursive",'Comic (divertida)'],["system-ui, sans-serif",'Fonte do aparelho'],["ui-rounded, system-ui, sans-serif",'Arredondada do aparelho'],["cursive",'Cursiva do aparelho'],["serif",'Serifada do aparelho'],["monospace",'Monoespaçada do aparelho']];
+var FR={ft:['title','sans-serif'],fb:['body','sans-serif'],fm:['mono','monospace']},FC=[],FBLK=[],FSEL={ft:'',fb:'',fm:''};
+function ffName(n){return String(n||'').replace(/[^\w\u00C0-\u024F \-]/g,'').trim().slice(0,40)}
+function ffFmt(u){var m=/\.(woff2|woff|ttf|otf)(?:[?#].*)?$/i.exec(u);return m?({woff2:'woff2',woff:'woff',ttf:'truetype',otf:'opentype'})[m[1].toLowerCase()]:''}
+function ffScan(){
+ var msg='',bad=false;FC=[];FBLK=[];
+ var n=ffName($('fcn').value),l=$('fcl').value.trim();
+ if(n||l){
+  if(!n)msg='Falta dar um nome pra fonte do link.';
+  else if(!/^https:\/\/[^\s"'()<>\\]+$/.test(l)){msg=l?'O link precisa começar com https:// e ser o link direto do arquivo da fonte.':'Falta o link da fonte.';bad=!!l}
+  else{var f=ffFmt(l);FC.push(n);FBLK.push('@font-face {\n  font-family: "'+n+'";\n  src: url("'+l+'")'+(f?' format("'+f+'")':'')+';\n  font-display: swap;\n}\n')}
+ }
+ var c=$('fcc').value,bl=c.match(/@font-face\s*\{[^{}]*\}/gi)||[],drop=0;
+ bl.forEach(function(b){
+  var us=b.match(/url\(\s*["']?[^"')\s]*["']?\s*\)/gi)||[],ok=us.length>0&&us.every(function(u){return /^url\(\s*["']?https:\/\//i.test(u)});
+  if(!ok||/@import|javascript:|expression\s*\(/i.test(b)){drop++;return}
+  var m=/font-family\s*:\s*["']?([^;"']+)/i.exec(b);if(!m)return;var nm=ffName(m[1]);if(!nm)return;
+  if(FC.indexOf(nm)<0)FC.push(nm);FBLK.push(b.replace(/\s+$/,'')+'\n');
+ });
+ if(c.trim()&&!bl.length){msg='Não achei nenhum @font-face no que você colou.';bad=true}
+ else if(drop){msg=drop+' bloco(s) ignorado(s): só valem links https:// (nada de http:// ou arquivo embutido).';bad=true}
+ else if(!msg&&FC.length)msg='Fontes de fora prontas: '+FC.join(', ')+'.';
+ var e=$('fmsg');e.textContent=msg;e.className=bad?'bad':'';
+}
+function ffOpts(){
+ Object.keys(FR).forEach(function(id){
+  var sel=$(id),cur=FSEL[id];sel.innerHTML='';
+  FF.forEach(function(f){var o=document.createElement('option');o.value=f[0];o.textContent=f[1];sel.appendChild(o)});
+  if(FC.length){var g=document.createElement('optgroup');g.label='Suas fontes';FC.forEach(function(n){var o=document.createElement('option');o.value='__c:'+n;o.textContent=n;g.appendChild(o)});sel.appendChild(g)}
+  var ok=[].some.call(sel.options,function(o){return o.value===cur});if(!ok)cur='';sel.value=cur;FSEL[id]=cur;
+ });
+}
+function ffVal(id){var v=FSEL[id];if(!v)return '';if(v.indexOf('__c:')===0)return '"'+v.slice(4)+'", '+FR[id][1];return v}
+function ffVars(){var o='';Object.keys(FR).forEach(function(id){var v=ffVal(id);if(v)o+='  --font-'+FR[id][0]+': '+v+';\n'});return o}
+function ffFace(){var used=Object.keys(FR).map(function(id){return FSEL[id]}).filter(function(v){return v.indexOf('__c:')===0}).map(function(v){return v.slice(4)});
+ if(!used.length)return '';return '/* Fontes de fora */\n'+FBLK.filter(function(b){var m=/font-family\s*:\s*["']?([^;"']+)/i.exec(b);return m&&used.indexOf(ffName(m[1]))>=0}).join('')+'\n'}
+function ffPrev(p){$('ffp').textContent=FBLK.join('');Object.keys(FR).forEach(function(id){var v=ffVal(id),k='--ft-'+FR[id][0];if(v)p.style.setProperty(k,v);else p.style.removeProperty(k)})}
+Object.keys(FR).forEach(function(id){$(id).onchange=function(){FSEL[id]=this.value;render()}});
+['fcn','fcl','fcc'].forEach(function(id){$(id).oninput=function(){ffScan();ffOpts();render()}});
+ffScan();ffOpts();
 load(PRE[0][1],PRE[0][2]);
 </script>
 <script>
