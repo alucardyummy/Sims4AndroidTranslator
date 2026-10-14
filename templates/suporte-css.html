@@ -192,6 +192,31 @@ html[data-page="index"] {
 }</code></pre>
 <p>Dá pra mirar também num <b>tema pronto</b> (os da paleta <svg class="i" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M12 3C6.9 3 3 7 3 12.2 3 17.3 7 21 12 21c1.6 0 2.4-.9 2.4-2 0-1.4-1.1-1.7-1.1-2.9 0-1.1.9-1.9 2.1-1.9H18c1.7 0 3-1.3 3-3C21 6.7 17 3 12 3z" fill="#9cb8b2"/><circle cx="8" cy="12" r="1.5" fill="#cfe3dd"/><circle cx="11.6" cy="7.7" r="1.5" fill="#5f877c"/><circle cx="16.2" cy="9" r="1.5" fill="#cfe3dd"/><circle cx="8.8" cy="16" r="1.5" fill="#7fa59b"/><ellipse cx="6.4" cy="8.8" rx="1" ry="2.2" transform="rotate(35 6.4 8.8)" fill="#fff" opacity=".4"/></svg>), com <code>[data-theme="cult"]</code>, por exemplo.</p>
 
+<h3 id="temas-prontos">Os temas prontos e como mirar em cada um</h3>
+<p>Quando um tema pronto está ligado, a tag <code>&lt;html&gt;</code> ganha <code>data-theme="nome"</code>. Com o tema <b>Padrão</b> o atributo <b>não existe</b> (então <code>html:not([data-theme])</code> pega só o Padrão). Os nomes são:</p>
+<dl>
+<dt><code>coquette</code></dt><dd>Coquette: laços, renda e rosa-algodão</dd>
+<dt><code>vampiro</code></dt><dd>Vampiro: veludo vinho, morcegos e noite sem fim</dd>
+<dt><code>slavic</code></dt><dd>Slavic: pinheiros na névoa, neve caindo e vermelho-sangue</dd>
+<dt><code>cult</code></dt><dd>Cult: velas, cruz invertida e sangue seco no subsolo</dd>
+<dt><code>kamikakushi</code></dt><dd>Kamikakushi: santuário na névoa, lanternas de pedra e luz divina</dd>
+</dl>
+<p>Exemplo: pintar o título só no Vampiro, e só na Home:</p>
+<pre><code>html[data-theme="vampiro"][data-page="index"] .title {
+  color: #ff5c7a !important;
+}</code></pre>
+<div class="box tip"><b>Quem ganha?</b> O tema pronto é carregado <b>antes</b> do seu CSS, então o seu vem por cima. Só que os temas usam bastante <code>!important</code> (principalmente na Home e nas janelas). Se o seu CSS não pegou, ponha <code>!important</code> e, se precisar, na frente <code>html[data-theme="nome"]</code> para ficar mais forte que o do tema.</div>
+<div class="box tip"><b>Fundo do tema:</b> o fundo dos temas é pintado no <code>body</code>. Se você trocar o <code>background</code> do <code>body</code>, use <code>!important</code>.</div>
+
+<h3 id="tema-cult">Extras do tema Cult</h3>
+<p>O Cult é o único que tem peças interativas. Na Home, no rodapé, ele cria um bloco <code>.theme-extras</code> (também com a classe <code>.cult-extras</code>) com dois botões, que só existem enquanto o Cult está ligado:</p>
+<dl>
+<dt><code>.cult-btns</code>, <code>.cult-btn</code></dt><dd>a faixa e os botões <b>apagar as velas</b> / <b>acender as velas</b> e <b>derreter as velas</b></dd>
+<dt><code>.cult-moons</code></dt><dd>o enfeite de luas do bloco</dd>
+<dt><code>html.cu-out</code></dt><dd>classe que aparece no <code>&lt;html&gt;</code> quando as velas estão <b>apagadas</b> (a escolha fica salva no aparelho). Use para mudar o visual do "escuro": <code>html.cu-out .title { ... }</code></dd>
+<dt><code>html.cu-melt</code></dt><dd>velas <b>derretidas</b>. É permanente até recarregar a página e esconde os botões; também liga <code>cu-out</code></dd>
+</dl>
+
 <h2 id="home">8. Mapa da Home <svg class="i" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M3 7l6-2.2v14.2l-6 2.2z" fill="#cfe3dd"/><path d="M9 4.8l6 2.2v14.2l-6-2.2z" fill="#9cb8b2"/><path d="M15 7l6-2.2v14.2l-6 2.2z" fill="#7fa59b"/><path d="M12 8.3c-1.7 0-2.8 1.3-2.8 2.7 0 1.8 2.8 4.2 2.8 4.2s2.8-2.4 2.8-4.2c0-1.4-1.1-2.7-2.8-2.7z" fill="#5f877c"/><circle cx="12" cy="11" r="1" fill="#cfe3dd"/></svg></h2>
 <p>Cada pedaço da tela tem um nome. É só colocar um ponto na frente: <code>.title</code>, <code>.btn-new</code>… Na Home, use <code>html[data-page="index"] .nome</code> (e <code>!important</code> se não pegar, veja a seção 13).</p>
 <dl>
