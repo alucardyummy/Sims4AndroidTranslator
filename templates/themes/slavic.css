@@ -56,7 +56,7 @@ html[data-page="index"] {
 }
 
 /* o fundo: céu, neblina e três fileiras de pinheiros */
-html[data-page="index"] body {
+html[data-page="index"] #theme-bg {
   background-image:
     var(--sl-bg-image),
     var(--sl-near),
@@ -92,7 +92,6 @@ html[data-page="index"] body {
     no-repeat,
     repeat-x,
     no-repeat, no-repeat, no-repeat, no-repeat;
-  background-attachment: fixed;
   background-color: #0f1215;
 }
 /* pontilhado de serigrafia, só na metade de baixo (onde a neblina é mais clara) */
@@ -295,7 +294,7 @@ html[data-page="index"] .error-msg { background: rgba(138,16,22,0.20); border-co
 /* ═════════════ DEMAIS PÁGINAS (editor, mesclar, criar, info) ═════════════
    Sem neve caindo aqui (atrapalha a leitura e gasta bateria enquanto você traduz):
    só a neblina, os pinheiros ao longe e o pontilhado, tudo bem discreto. */
-html:not([data-page="index"]) body {
+html:not([data-page="index"]) #theme-bg {
   background-image:
     var(--sl-far),
     linear-gradient(0deg, rgba(150,160,168,0.20) 0%, transparent 100%),
@@ -305,7 +304,6 @@ html:not([data-page="index"]) body {
   background-size: auto 28vh, 100% 34vh, auto, auto, auto;
   background-position: 0 100%, 0 100%, center, center, center;
   background-repeat: repeat-x, no-repeat, no-repeat, no-repeat, no-repeat;
-  background-attachment: fixed;
   background-color: #0e1114;
 }
 html:not([data-page="index"]) .loading-overlay { background: rgba(8,10,12,0.95) !important; }
