@@ -386,6 +386,17 @@
      segue o tema; !important é o que vence a cor gravada no próprio texto (style inline). */
   html[data-theme] .update-item-body .update-color { color: inherit !important; }
   html[data-theme] .update-item-body .update-color a.update-link { color: var(--update-link); }
+  /* Formatação das novidades (negrito, itálico...) vale em qualquer tema. */
+  .update-item-body .fx-b { font-weight: 700; }
+  .update-item-body .fx-i { font-style: italic; }
+  .update-item-body .fx-u { text-decoration: underline; }
+  .update-item-body .fx-s { text-decoration: line-through; }
+  .update-item-body .fx-u.fx-s { text-decoration: underline line-through; }
+  .update-item-body .fx-g { font-size: 1.3em; line-height: 1.25; }
+  .update-item-body .fx-p { font-size: 0.8em; }
+  .update-item-body .update-hl { padding: 0 0.2em; border-radius: 4px; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+  /* Cor da letra e cor de destaque, como a cor, só no tema padrão. */
+  html[data-theme] .update-item-body .update-hl { background-color: transparent !important; padding: 0; }
   .update-item-date { font-size: 10.5px; color: var(--text-muted); margin-top: 5px; }
   .update-item-delete {
     position: absolute; top: 0.55rem; right: 0.5rem;
@@ -2856,26 +2867,45 @@ function renderUpdates() {
 // Monta um item de novidade igual ao visual original (título/corpo/data
 // empilhados), com o botão de lixeira no canto e — em modo seleção — um
 // círculo à esquerda, tudo igual ao sistema das saves.
-// Marcações no texto da novidade: [nome](endereço) vira só o "nome" sublinhado
-// e {#rrggbb|trecho} vira o trecho colorido. Monta com nós do DOM (nunca com
-// HTML em string): link só aceita caminho do próprio site (/algo) ou http(s)://,
-// e a cor só aceita #rrggbb, então nada de javascript:, style solto e afins.
+// Marcações no texto da novidade: [nome](endereço) vira só o "nome" sublinhado e
+// {atributos|trecho} vira o trecho formatado (b negrito, i itálico, u sublinhado, s riscado,
+// g maior, p menor, #rrggbb cor da letra, m#rrggbb cor de destaque; separados por vírgula).
+// Monta com nós do DOM (nunca com HTML em string): link só aceita caminho do próprio site
+// (/algo) ou http(s)://, e cor só aceita #rrggbb, então nada de javascript:, style solto e afins.
 function renderUpdateBody(text) {
   const frag = document.createDocumentFragment();
   fillUpdateRich(String(text == null ? '' : text), frag);
   return frag;
 }
 
+// Quem usa destaque sem cor de letra ganha uma letra clara ou escura, pra não sumir no fundo.
+function updateInkFor(hex) {
+  const n = parseInt(hex.slice(1), 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255;
+  return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255 > 0.55 ? '#111111' : '#ffffff';
+}
+
+function styleUpdateFx(span, attrs) {
+  const cls = ['update-fx'];
+  let color = null, hl = null;
+  attrs.split(',').forEach(a => {
+    if ('biusgp'.indexOf(a) >= 0 && a.length === 1) cls.push('fx-' + a);
+    else if (a.charAt(0) === '#') color = a;
+    else if (a.charAt(0) === 'm') hl = a.slice(1);
+  });
+  if (hl) { span.style.backgroundColor = hl; cls.push('update-hl'); if (!color) color = updateInkFor(hl); }
+  if (color) { span.style.color = color; cls.push('update-color'); }
+  span.className = cls.join(' ');
+}
+
 function fillUpdateRich(src, parent) {
-  // grupos: 1=cor 2=trecho colorido | 3=nome do link 4=endereço
-  const re = /\{(#[0-9a-fA-F]{6})\|([^{}]+)\}|\[([^\[\]\n]{1,120})\]\(([^()\s]{1,500})\)/g;
+  // grupos: 1=atributos 2=trecho formatado | 3=nome do link 4=endereço
+  const re = /\{((?:[biusgp]|m?#[0-9a-fA-F]{6})(?:,(?:[biusgp]|m?#[0-9a-fA-F]{6}))*)\|([^{}]+)\}|\[([^\[\]\n]{1,120})\]\(([^()\s]{1,500})\)/g;
   let last = 0, m;
   while ((m = re.exec(src)) !== null) {
     if (m.index > last) parent.appendChild(document.createTextNode(src.slice(last, m.index)));
     if (m[1]) {
       const span = document.createElement('span');
-      span.className = 'update-color';
-      span.style.color = m[1];
+      styleUpdateFx(span, m[1]);
       fillUpdateRich(m[2], span);
       parent.appendChild(span);
     } else {

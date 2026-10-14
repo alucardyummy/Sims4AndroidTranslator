@@ -166,6 +166,17 @@
   .pv-empty { color: #555 !important; font-weight: 400; }
   .pv .update-link { color: #9cb8b2; text-decoration: underline; text-underline-offset: 2px; }
   .pv .update-color .update-link { color: inherit; }
+  .pv .fx-b { font-weight: 700; }
+  .pv .fx-i { font-style: italic; }
+  .pv .fx-u { text-decoration: underline; }
+  .pv .fx-s { text-decoration: line-through; }
+  .pv .fx-u.fx-s { text-decoration: underline line-through; }
+  .pv .fx-g { font-size: 1.3em; line-height: 1.25; }
+  .pv .fx-p { font-size: 0.8em; }
+  .pv .update-hl { padding: 0 0.2em; border-radius: 4px; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+  .fxbar { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+  .fxb { width: auto; min-width: 44px; margin-top: 0; padding: 9px 0; background: #161616; border: 1px solid #333; color: #ddd; font-size: 15px; font-weight: 600; }
+  .fxb.on { background: #2d2748; border-color: #8a7fa6; color: #fff; }
   .tools { display: flex; flex-wrap: wrap; gap: 8px; }
   #csheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; max-width: 620px; margin: 0 auto;
     background: #161616; border: 1px solid #2c2c2c; border-bottom: none; border-radius: 22px 22px 0 0;
@@ -249,15 +260,28 @@
     <textarea id="body" rows="3" placeholder="Ex: Já dá pra baixar a versão nova." oninput="updateBodyCounter()"></textarea>
     <div id="body-counter" class="counter">0 caracteres</div>
 
+    <div class="fxbar" id="fxbar">
+      <button type="button" class="fxb" data-fx="b" title="Negrito" aria-label="Negrito" onmousedown="event.preventDefault()" onclick="fxTog('b')"><b>B</b></button>
+      <button type="button" class="fxb" data-fx="i" title="Itálico" aria-label="Itálico" onmousedown="event.preventDefault()" onclick="fxTog('i')"><i>I</i></button>
+      <button type="button" class="fxb" data-fx="u" title="Sublinhado" aria-label="Sublinhado" onmousedown="event.preventDefault()" onclick="fxTog('u')"><u>U</u></button>
+      <button type="button" class="fxb" data-fx="s" title="Riscado" aria-label="Riscado" onmousedown="event.preventDefault()" onclick="fxTog('s')"><s>S</s></button>
+      <button type="button" class="fxb" data-fx="g" title="Letra maior" aria-label="Letra maior" onmousedown="event.preventDefault()" onclick="fxSize('g')">A+</button>
+      <button type="button" class="fxb" data-fx="p" title="Letra menor" aria-label="Letra menor" onmousedown="event.preventDefault()" onclick="fxSize('p')">A−</button>
+    </div>
     <div class="tools">
+      <button type="button" id="color-open-btn" class="link-open" onclick="openColorSheet('c')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.8-.8 1.8-1.7 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.2 0-.9.8-1.7 1.7-1.7H17a4 4 0 0 0 4-4C21 6.9 17 3 12 3z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10.5" cy="7" r="1"/><circle cx="15.5" cy="7.5" r="1"/></svg>
+        Cor da letra
+      </button>
+      <button type="button" id="hl-open-btn" class="link-open" onclick="openColorSheet('h')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l-6 6v3h9l3-3"/><path d="M22 12l-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4"/></svg>
+        Destaque
+      </button>
       <button type="button" id="link-open-btn" class="link-open" onclick="openLinkPanel()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 0 0-7.07-7.07l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 0 0 7.07 7.07l1.5-1.5"/></svg>
-        Inserir link no texto
+        Link
       </button>
-      <button type="button" id="color-open-btn" class="link-open" onclick="openColorSheet()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.8-.8 1.8-1.7 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.2 0-.9.8-1.7 1.7-1.7H17a4 4 0 0 0 4-4C21 6.9 17 3 12 3z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10.5" cy="7" r="1"/><circle cx="15.5" cy="7.5" r="1"/></svg>
-        Cor do texto
-      </button>
+      <button type="button" id="clear-fx-btn" class="link-open" onmousedown="event.preventDefault()" onclick="fxClear()">Limpar formatação</button>
     </div>
     <div id="tool-err" class="link-err"></div>
     <div id="link-panel" class="link-panel" hidden>
@@ -302,7 +326,7 @@
   </div>
 
 <div id="csheet" hidden>
-  <div class="chd"><b>Cor do texto</b><span>arraste ou toque · vale só no tema padrão do site</span></div>
+  <div class="chd"><b id="csheet-title">Cor da letra</b><span>arraste ou toque · vale só no tema padrão do site</span></div>
   <div id="csv"><i class="cth" id="csvt"></i></div>
   <div id="chu"><i class="cth" id="chut"></i></div>
   <div class="chxr">
@@ -336,14 +360,36 @@
     return /^\/(?![\/\\])/.test(u) || /^https?:\/\//i.test(u);
   }
 
-  // {#rrggbb|trecho}: cor do texto. Vem antes do link na limpeza porque o
-  // trecho colorido pode ter link dentro (e o nome do link pode ter cor).
-  const COLOR_RE = /\{(#[0-9a-fA-F]{6})\|([^{}]+)\}/g;
-  const RICH_SRC = COLOR_RE.source + '|' + LINK_RE.source; // 1=cor 2=trecho | 3=nome 4=endereço
+  // {atributos|trecho}: formatação do texto. Atributos separados por vírgula:
+  //   b negrito · i itálico · u sublinhado · s riscado · g maior · p menor
+  //   #rrggbb cor da letra · m#rrggbb cor de destaque (fundo).   Ex.: {b,i,#ff4fa3|texto}
+  // {#rrggbb|trecho} (só cor), de antes, continua valendo. Pode ter link dentro do trecho.
+  const FX_ATTR = '(?:[biusgp]|m?#[0-9a-fA-F]{6})';
+  const FX_RE = new RegExp('\\{(' + FX_ATTR + '(?:,' + FX_ATTR + ')*)\\|([^{}]+)\\}', 'g');
+  const RICH_SRC = FX_RE.source + '|' + LINK_RE.source; // 1=atributos 2=trecho | 3=nome 4=endereço
 
   function stripMarkup(s) {
-    const semCor = (s || '').replace(COLOR_RE, '$2');
-    return semCor.replace(LINK_RE, (m, name, url) => isSafeLink(url) ? name : m);
+    const semFx = (s || '').replace(FX_RE, '$2');
+    return semFx.replace(LINK_RE, (m, name, url) => isSafeLink(url) ? name : m);
+  }
+
+  // Quem usa destaque sem cor de letra ganha letra clara/escura (igual ao site), pra não sumir.
+  function inkFor(hex) {
+    const n = parseInt(hex.slice(1), 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255;
+    return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255 > 0.55 ? '#111111' : '#ffffff';
+  }
+
+  function styleFx(span, attrs) {
+    const cls = ['update-fx'];
+    let color = null, hl = null;
+    attrs.split(',').forEach(a => {
+      if (a.length === 1 && 'biusgp'.indexOf(a) >= 0) cls.push('fx-' + a);
+      else if (a.charAt(0) === '#') color = a;
+      else if (a.charAt(0) === 'm') hl = a.slice(1);
+    });
+    if (hl) { span.style.backgroundColor = hl; cls.push('update-hl'); if (!color) color = inkFor(hl); }
+    if (color) { span.style.color = color; cls.push('update-color'); }
+    span.className = cls.join(' ');
   }
 
   function renderRich(src, parent) {
@@ -353,8 +399,7 @@
       if (m.index > last) parent.appendChild(document.createTextNode(src.slice(last, m.index)));
       if (m[1]) {
         const span = document.createElement('span');
-        span.className = 'update-color';
-        span.style.color = m[1];
+        styleFx(span, m[1]);
         renderRich(m[2], span);
         parent.appendChild(span);
       } else if (isSafeLink(m[4])) {
@@ -469,16 +514,16 @@
     updateBodyCounter();
   }
 
-  // ── Cor do texto: {#rrggbb|trecho} ────────────────────────────────────
-  // Funciona como o link: a cor fica na própria mensagem (então volta sozinha
-  // ao editar) e no site/prévia aparece só o trecho colorido. Pode ter link
-  // dentro do trecho e cor dentro do nome de um link; cor dentro de cor o
-  // seletor desfaz sozinho.
+  // ── Formatação do texto ─────────────────────────────────────────────
+  // Funciona como o link: fica gravada na própria mensagem (então volta sozinha ao
+  // editar) e no site/prévia aparece só o trecho formatado. Um trecho é {atributos|texto};
+  // pode ter link dentro. Formatação dentro de formatação o editor junta sozinho, e a
+  // seleção nunca corta um link ou um trecho no meio (ela se abre até a borda).
   const CK_PAL = ['#ff4fa3','#ff6b6b','#e8743b','#ffb454','#ffd84d','#b6ff5c','#5fd68a','#3f8f7c',
                   '#9cb8b2','#35e0ff','#35c4e0','#5b8def','#7a3cff','#b79bff','#d68bff','#f4eaff',
                   '#ffffff','#cfcfcf','#8d9a96','#555555','#2a302e','#1a1d1c','#2e1a5e','#000000'];
   const CP = { h: 0, s: 1, v: 1 };
-  let ck = null; // enquanto o seletor está aberto: { base, plan }
+  let ck = null; // enquanto o seletor de cor está aberto: { base, s, e, mode }
   const ckEl = id => document.getElementById(id);
 
   function ckHex(r, g, b) { return '#' + [r, g, b].map(x => Math.round(x).toString(16).padStart(2, '0')).join(''); }
@@ -497,13 +542,31 @@
     return { h, s: mx ? d / mx : 0, v: mx };
   }
 
+  function fxParse(str) {
+    const a = { b: false, i: false, u: false, s: false, z: null, c: null, h: null };
+    for (const t of String(str || '').split(',')) {
+      if (t === 'b' || t === 'i' || t === 'u' || t === 's') a[t] = true;
+      else if (t === 'g' || t === 'p') a.z = t;
+      else if (t.charAt(0) === '#') a.c = t.toLowerCase();
+      else if (t.charAt(0) === 'm') a.h = t.slice(1).toLowerCase();
+    }
+    return a;
+  }
+  function fxSer(a) {
+    const o = [];
+    if (a.b) o.push('b'); if (a.i) o.push('i'); if (a.u) o.push('u'); if (a.s) o.push('s');
+    if (a.z) o.push(a.z); if (a.c) o.push(a.c); if (a.h) o.push('m' + a.h);
+    return o.join(',');
+  }
+
   function ckTokens(text) {
     const re = new RegExp(RICH_SRC, 'g'), out = [];
     let m;
     while ((m = re.exec(text)) !== null) {
+      const end = m.index + m[0].length;
       out.push(m[1]
-        ? { color: true, start: m.index, end: m.index + m[0].length, hex: m[1].toLowerCase(), inner: m[2] }
-        : { color: false, start: m.index, end: m.index + m[0].length });
+        ? { fx: true, start: m.index, end, head: m[1].length + 2, attrs: m[1], inner: m[2] }
+        : { fx: false, start: m.index, end });
     }
     return out;
   }
@@ -514,11 +577,11 @@
     return out;
   }
 
-  // Abre a seleção até as bordas de qualquer link/cor que ela corte. Seleção toda
-  // dentro do trecho colorido fica como está (o que entrar lá vai pra dentro dele).
+  // Abre a seleção até as bordas de qualquer link/trecho que ela corte. Seleção toda dentro
+  // de um trecho formatado fica como está (o que entrar lá vai pra dentro dele).
   function ckSafeRange(text, s, e) {
     const toks = ckTokens(text);
-    if (toks.find(t => t.color && s >= t.start + 9 && e <= t.end - 1)) return [s, e];
+    if (toks.find(t => t.fx && s >= t.start + t.head && e <= t.end - 1)) return [s, e];
     let a = s, b = e;
     for (const t of toks) {
       if (a > t.start && a < t.end) a = t.start;
@@ -527,60 +590,136 @@
     return [a, b];
   }
 
-  // Decide o que fazer com a seleção, sem nunca cortar um link ou uma cor no meio.
-  function ckPlan(text, s, e) {
+  // Quebra o texto da região em pedaços, cada um com seus atributos. Link vira texto opaco.
+  function fxSegments(markup) {
+    const re = new RegExp(RICH_SRC, 'g'), segs = [];
+    let last = 0, m;
+    const add = (t, a) => {
+      if (!t) return;
+      const p = segs[segs.length - 1];
+      if (!a && p && p.plain) p.text += t; else segs.push({ a: a || fxParse(''), text: t, plain: !a });
+    };
+    while ((m = re.exec(markup)) !== null) {
+      add(markup.slice(last, m.index));
+      if (m[1]) add(m[2], fxParse(m[1])); else add(m[0]);
+      last = m.index + m[0].length;
+    }
+    add(markup.slice(last));
+    // formatação que sobrou dentro do nome de um link vira texto simples (chaves não cabem em trecho)
+    for (const sg of segs) if (sg.plain) sg.text = sg.text.replace(FX_RE, '$2');
+    return segs;
+  }
+
+  function fxFinish(p) {
+    if (!p.segs.some(x => /\S/.test(x.text))) return { error: 'Selecione um trecho que tenha texto.' };
+    if (p.segs.some(x => /[{}]/.test(x.text))) return { error: 'O trecho não pode ter { ou }.' };
+    return p;
+  }
+
+  // Decide qual parte da mensagem a ação vai mexer. Devolve { pre, segs, post } ou { error }.
+  function fxPlan(text, s, e) {
     const toks = ckTokens(text);
-    if (s === e) { // só o cursor: se estiver dentro de um trecho colorido, troca a cor dele
-      const t = toks.find(t => t.color && s > t.start && s < t.end);
-      if (!t) return { error: 'Selecione o trecho da mensagem que quer colorir.' };
-      return { kind: 'recolor', t, hex: t.hex };
-    }
-    // seleção inteira dentro de um trecho colorido: divide (antes / selecionado / depois)
-    const host = toks.find(t => t.color && s >= t.start + 9 && e <= t.end - 1);
-    if (host) {
-      let a = s - host.start - 9, b = e - host.start - 9;
-      for (const lk of ckLinksIn(host.inner)) {
-        if (a > lk.start && a < lk.end) a = lk.start;
-        if (b > lk.start && b < lk.end) b = lk.end;
+    let a, b;
+    if (s === e) { // só o cursor: se estiver dentro de um trecho formatado, mexe nele inteiro
+      const t = toks.find(t => t.fx && s > t.start && s < t.end);
+      if (!t) return { error: 'Selecione o trecho da mensagem que quer formatar.' };
+      a = t.start; b = t.end;
+    } else {
+      // seleção toda dentro de um trecho formatado: divide em antes / selecionado / depois
+      const host = toks.find(t => t.fx && s >= t.start + t.head && e <= t.end - 1);
+      if (host) {
+        let x = s - host.start - host.head, y = e - host.start - host.head;
+        for (const lk of ckLinksIn(host.inner)) {
+          if (x > lk.start && x < lk.end) x = lk.start;
+          if (y > lk.start && y < lk.end) y = lk.end;
+        }
+        const w = t => t ? '{' + host.attrs + '|' + t + '}' : '';
+        return fxFinish({
+          pre: text.slice(0, host.start) + w(host.inner.slice(0, x)),
+          post: w(host.inner.slice(y)) + text.slice(host.end),
+          segs: [{ a: fxParse(host.attrs), text: host.inner.slice(x, y) }]
+        });
       }
-      if (a === 0 && b === host.inner.length) return { kind: 'recolor', t: host, hex: host.hex };
-      return { kind: 'split', t: host, a, b, hex: host.hex };
+      a = s; b = e;
+      for (const t of toks) {
+        if (a > t.start && a < t.end) a = t.start;
+        if (b > t.start && b < t.end) b = t.end;
+      }
     }
-    // caso geral: abre a seleção até as bordas de qualquer link/cor que ela corte
-    let a = s, b = e;
-    for (const t of toks) {
-      if (a > t.start && a < t.end) a = t.start;
-      if (b > t.start && b < t.end) b = t.end;
-    }
-    const inner = text.slice(a, b).replace(COLOR_RE, '$2'); // cores antigas dentro viram só texto
-    if (!inner.trim()) return { error: 'Selecione um trecho que tenha texto.' };
-    if (/[{}]/.test(inner)) return { error: 'O trecho não pode ter { ou }.' };
-    const first = toks.find(t => t.color && t.start >= a && t.end <= b);
-    return { kind: 'wrap', a, b, inner, hex: first ? first.hex : null };
+    return fxFinish({ pre: text.slice(0, a), post: text.slice(b), segs: fxSegments(text.slice(a, b)) });
   }
 
-  // Monta o novo texto a partir do original (hex = null tira a cor).
-  function ckBuild(base, plan, hex) {
-    const w = (c, t) => '{' + c + '|' + t + '}';
-    if (plan.kind === 'recolor') {
-      const t = plan.t;
-      return base.slice(0, t.start) + (hex ? w(hex, t.inner) : t.inner) + base.slice(t.end);
-    }
-    if (plan.kind === 'split') {
-      const t = plan.t, c = t.inner;
-      const before = c.slice(0, plan.a), mid = c.slice(plan.a, plan.b), after = c.slice(plan.b);
-      return base.slice(0, t.start) + (before ? w(t.hex, before) : '') + (hex ? w(hex, mid) : mid) +
-             (after ? w(t.hex, after) : '') + base.slice(t.end);
-    }
-    return base.slice(0, plan.a) + (hex ? w(hex, plan.inner) : plan.inner) + base.slice(plan.b);
+  // Aplica a ação em todos os pedaços. Negrito/itálico/sublinhado/riscado/tamanho alternam:
+  // se o trecho todo já tem, tira; senão põe em tudo.
+  function fxOp(segs, op) {
+    const vis = segs.filter(x => /\S/.test(x.text));
+    const all = op.t === 'tog' ? vis.every(v => v.a[op.k])
+              : op.t === 'size' ? vis.every(v => v.a.z === op.v) : false;
+    return segs.map(sg => {
+      const a = Object.assign({}, sg.a);
+      if (op.t === 'tog') a[op.k] = !all;
+      else if (op.t === 'size') a.z = all ? null : op.v;
+      else if (op.t === 'color') a.c = op.hex || null;
+      else if (op.t === 'hl') a.h = op.hex || null;
+      else if (op.t === 'clear') { a.b = a.i = a.u = a.s = false; a.z = a.c = a.h = null; }
+      return { a, text: sg.text };
+    });
   }
 
-  function ckApply(hex) {
-    if (!ck) return;
-    ckEl('body').value = ckBuild(ck.base, ck.plan, hex);
-    updateBodyCounter(); // atualiza contador e prévia
+  function fxSerialize(segs) {
+    let out = '', cur = null;
+    const flush = () => { if (cur) { out += cur.k ? '{' + cur.k + '|' + cur.text + '}' : cur.text; cur = null; } };
+    for (const sg of segs) {
+      const k = fxSer(sg.a);
+      if (cur && cur.k === k) cur.text += sg.text; else { flush(); cur = { k, text: sg.text }; }
+    }
+    flush();
+    return out;
   }
 
+  // Texto novo + onde fica a seleção depois (ou { error }).
+  function fxRun(text, s, e, op) {
+    const plan = fxPlan(text, s, e);
+    if (plan.error) return plan;
+    const mid = fxSerialize(fxOp(plan.segs, op));
+    return { text: plan.pre + mid + plan.post, selStart: plan.pre.length, selEnd: plan.pre.length + mid.length };
+  }
+
+  function fxRunOnTextarea(op) {
+    if (ck) ckDone();
+    closeLinkPanel();
+    const ta = ckEl('body'), err = ckEl('tool-err');
+    err.textContent = '';
+    const r = fxRun(ta.value, ta.selectionStart, ta.selectionEnd, op);
+    if (r.error) { err.textContent = r.error; return; }
+    ta.value = r.text;
+    ta.setSelectionRange(r.selStart, r.selEnd);
+    updateBodyCounter();
+    fxRefresh();
+  }
+  function fxTog(k) { fxRunOnTextarea({ t: 'tog', k }); }
+  function fxSize(v) { fxRunOnTextarea({ t: 'size', v }); }
+  function fxClear() { fxRunOnTextarea({ t: 'clear' }); }
+
+  // Acende os botões (B, I, U, S, A+, A−) que já valem pro trecho selecionado.
+  function fxRefresh() {
+    const bar = ckEl('fxbar');
+    if (!bar) return;
+    let has = null;
+    try {
+      const ta = ckEl('body');
+      const p = fxPlan(ta.value, ta.selectionStart, ta.selectionEnd);
+      if (!p.error) {
+        const vis = p.segs.filter(x => /\S/.test(x.text));
+        has = k => vis.length > 0 && vis.every(v => (k === 'g' || k === 'p') ? v.a.z === k : v.a[k]);
+      }
+    } catch (e) { has = null; }
+    bar.querySelectorAll('[data-fx]').forEach(btn => btn.classList.toggle('on', !!(has && has(btn.dataset.fx))));
+  }
+  ['select', 'keyup', 'click', 'input', 'focus', 'touchend'].forEach(ev => ckEl('body').addEventListener(ev, fxRefresh));
+  document.addEventListener('selectionchange', () => { if (document.activeElement === ckEl('body')) fxRefresh(); });
+
+  // ── Seletor de cor (cor da letra e cor de destaque) ──────────────────
   function ckDraw(c) {
     ckEl('csv').style.background = 'linear-gradient(to top,#000,rgba(0,0,0,0)),linear-gradient(to right,#fff,' + ckHsv2hex(CP.h, 1, 1) + ')';
     ckEl('csvt').style.left = CP.s * 100 + '%';
@@ -598,6 +737,18 @@
     CP.s = h.s; CP.v = h.v;
   }
 
+  // Aplica a cor (hex = null tira) a partir do texto de quando o seletor abriu: trocar
+  // de cor várias vezes não empilha nada.
+  function ckApply(hex) {
+    if (!ck) return;
+    const r = fxRun(ck.base, ck.s, ck.e, { t: ck.mode === 'h' ? 'hl' : 'color', hex });
+    if (r.error) return;
+    const ta = ckEl('body');
+    ta.value = r.text;
+    ta.setSelectionRange(r.selStart, r.selEnd);
+    updateBodyCounter(); // atualiza contador e prévia
+  }
+
   function ckFromHSV() {
     const c = ckHsv2hex(CP.h, CP.s, CP.v);
     ckApply(c);
@@ -605,31 +756,38 @@
   }
 
   function ckFillSws() {
-    const used = [], re = new RegExp(COLOR_RE.source, 'g');
+    const used = [], re = new RegExp(FX_RE.source, 'g');
     let m;
     while ((m = re.exec(ck.base)) !== null) {
-      const c = m[1].toLowerCase();
-      if (used.indexOf(c) < 0 && CK_PAL.indexOf(c) < 0) used.push(c);
+      const a = fxParse(m[1]);
+      [a.c, a.h].forEach(c => { if (c && used.indexOf(c) < 0 && CK_PAL.indexOf(c) < 0) used.push(c); });
     }
     const sw = c => '<i data-c="' + c + '" style="background:' + c + '"></i>';
     ckEl('csws').innerHTML = CK_PAL.map(sw).join('') +
       (used.length ? '<small>Cores desta mensagem</small>' + used.slice(0, 16).map(sw).join('') : '');
   }
 
-  function openColorSheet() {
+  // mode: 'c' = cor da letra · 'h' = cor de destaque (fundo da letra)
+  function openColorSheet(mode) {
     const err = ckEl('tool-err');
     err.textContent = '';
     if (ck) ckDone();
     closeLinkPanel();
     const ta = ckEl('body');
-    const plan = ckPlan(ta.value, ta.selectionStart, ta.selectionEnd);
+    const s = ta.selectionStart, e = ta.selectionEnd;
+    const plan = fxPlan(ta.value, s, e);
     if (plan.error) { err.textContent = plan.error; return; }
-    ck = { base: ta.value, plan };
-    const atual = plan.hex || '#ffffff'; // sem cor própria = o branco padrão do site
-    ckSetFrom(atual);
-    ckEl('c-old').style.background = atual;
+    const key = mode === 'h' ? 'h' : 'c';
+    const vis = plan.segs.filter(x => /\S/.test(x.text));
+    const first = vis.length ? vis[0].a[key] : null;
+    const same = !!first && vis.every(v => v.a[key] === first);
+    const inicial = same ? first : (key === 'h' ? '#ffd84d' : '#ffffff');
+    ck = { base: ta.value, s, e, mode: key };
+    ckEl('csheet-title').textContent = key === 'h' ? 'Cor de destaque (fundo)' : 'Cor da letra';
+    ckSetFrom(inicial);
+    ckEl('c-old').style.background = same ? first : (key === 'h' ? 'transparent' : '#ffffff');
     ckFillSws();
-    ckDraw(atual);
+    ckDraw(inicial);
     ckEl('csheet').hidden = false;
     document.body.classList.add('csp');
     const pv = document.querySelector('.pv'); // deixa a prévia visível acima da folha
@@ -640,14 +798,20 @@
     ckEl('csheet').hidden = true;
     document.body.classList.remove('csp');
     ck = null;
+    fxRefresh();
   }
   function ckDone() { ckClose(); }
   function ckCancel() {
-    if (ck) { ckEl('body').value = ck.base; updateBodyCounter(); }
+    if (ck) {
+      const ta = ckEl('body');
+      ta.value = ck.base;
+      ta.setSelectionRange(ck.s, ck.e);
+      updateBodyCounter();
+    }
     ckClose();
   }
-  function ckClear() {
-    if (ck) { ckEl('body').value = ckBuild(ck.base, ck.plan, null); updateBodyCounter(); }
+  function ckClear() { // "Tirar cor" (ou tirar o destaque)
+    ckApply(null);
     ckClose();
   }
 

@@ -374,3 +374,6 @@ html:not([data-page="index"]) .toast { background: #1c2227; border-color: rgba(2
 /* botão do modo foco: a raposa é escura, então o círculo precisa ser claro */
 html:not([data-page="index"]) .focus-toggle-btn, html:not([data-page="index"]) .focus-toggle-btn.focus-on { background: #c8d0d5; border: none; }
 html:not([data-page="index"]) .focus-toggle-btn:active { background: #e5565b; } 
+
+/* links das novidades no vermelho do sino ativo */
+html[data-theme="slavic"] { --update-link: #e5565b; }

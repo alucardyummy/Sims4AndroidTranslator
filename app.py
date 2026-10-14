@@ -394,16 +394,18 @@ def push_unsubscribe():
     return {"ok": True}
 
 
-# Marcações dentro do texto da novidade: o admin escreve [nome](endereço) pra
-# link e {#rrggbb|trecho} pra cor, e o site mostra só o nome/trecho (sublinhado
-# ou colorido). No banco o texto fica com a marcação; já o push (notificação do
-# sistema, que não aceita link nem cor no meio do texto) leva texto simples.
+# Marcações dentro do texto da novidade: o admin escreve [nome](endereço) pra link
+# e {atributos|trecho} pra formatação (b i u s g p #cor m#destaque, separados por
+# vírgula, ex. {b,#ff4fa3|texto}). O site mostra só o nome/trecho, formatado. No
+# banco o texto fica com a marcação; já o push (notificação do sistema, que não
+# aceita link nem formatação no meio do texto) leva texto simples.
 _UPDATE_LINK_RE = re.compile(r"\[([^\[\]\n]{1,120})\]\(([^()\s]{1,500})\)")
-_UPDATE_COLOR_RE = re.compile(r"\{#[0-9a-fA-F]{6}\|([^{}]+)\}")
+_UPDATE_FX_ATTR = r"(?:[biusgp]|m?#[0-9a-fA-F]{6})"
+_UPDATE_FX_RE = re.compile(r"\{" + _UPDATE_FX_ATTR + r"(?:," + _UPDATE_FX_ATTR + r")*\|([^{}]+)\}")
 
 
 def strip_update_markup(text):
-    text = _UPDATE_COLOR_RE.sub(r"\1", text or "")
+    text = _UPDATE_FX_RE.sub(r"\1", text or "")
 
     def _sub(m):
         url = m.group(2)
