@@ -29,55 +29,13 @@
   /* ── Tema pronto ── */
   function readTheme() { try { return localStorage.getItem(TKEY) || ''; } catch (e) { return ''; } }   // '', 'default' ou id
   function writeTheme(v) { try { if (v) localStorage.setItem(TKEY, v); else localStorage.removeItem(TKEY); } catch (e) {} }
-  /* Performance: o fundo "fixo" dos temas vive numa camada própria (#theme-bg, composta uma vez) em vez de
-     background-attachment: fixed no body (que repinta a cena inteira a cada quadro de rolagem). */
-  var PERF_CSS =
-    ':where(html[data-perf]) body { background: none; }\n' +
-    '#theme-bg { display: none; }\n' +
-    'html[data-perf] #theme-bg { display: block; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: -9; pointer-events: none; contain: strict; transform: translateZ(0); }\n' +
-    /* Janela entrando/saindo: só opacidade + transform (compositor). O blur() animado no filter re-rasterizava a janela inteira
-       (com a sombra grande dos temas) a cada quadro. */
-    '@keyframes tmModalIn { from { opacity: 0; transform: scale(0.97) translateY(16px); } to { opacity: 1; transform: none; } }\n' +
-    '@keyframes tmModalOut { from { opacity: 1; transform: none; } to { opacity: 0; transform: scale(0.97) translateY(10px); } }\n' +
-    'html[data-perf] .modal-box.animate-in, html[data-perf] .alert-box.animate-in { animation: tmModalIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards; }\n' +
-    'html[data-perf] .modal-box.animate-out, html[data-perf] .alert-box.animate-out { animation: tmModalOut 0.3s cubic-bezier(0.4, 0, 0.8, 0) forwards; }\n' +
-    /* Com um modal aberto a cena fica atrás de ~80% de preto: pausa as animações e tira o blur (invisíveis ali) */
-    'html[data-perf] .modal-overlay, html[data-perf] .alert-overlay { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; transition: opacity 0.32s ease, visibility 0.32s !important; }\n' +
-    'html.modal-settled[data-perf] .modal-overlay.active, html.modal-settled[data-perf] .alert-overlay.active { backdrop-filter: blur(4px) !important; -webkit-backdrop-filter: blur(4px) !important; }\n' +
-    'html.modal-open[data-perf] .save-item { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }\n' +
-    'html.modal-open[data-perf], html.modal-open[data-perf]::before, html.modal-open[data-perf]::after,\n' +
-    'html.modal-open[data-perf] *:not(.modal-overlay):not(.modal-overlay *):not(.alert-overlay):not(.alert-overlay *),\n' +
-    'html.modal-open[data-perf] *:not(.modal-overlay):not(.modal-overlay *):not(.alert-overlay):not(.alert-overlay *)::before,\n' +
-    'html.modal-open[data-perf] *:not(.modal-overlay):not(.modal-overlay *):not(.alert-overlay):not(.alert-overlay *)::after { animation-play-state: paused !important; }\n';
-  var PERF_THEMES = { vampiro: 1, slavic: 1, kamikakushi: 1 };   // cult e coquette seguem com o visual/CSS originais
-  var perfEl = null, bgEl = null, styles = {}, activeStyle = '';
-  function ensurePerf() {
-    if (!perfEl) {
-      perfEl = document.createElement('style'); perfEl.id = 'theme-perf-css'; perfEl.textContent = PERF_CSS;
-      var u = document.getElementById('user-css');
-      if (u && u.parentNode) u.parentNode.insertBefore(perfEl, u); else head().appendChild(perfEl);
-    }
-    if (!bgEl) {
-      bgEl = document.createElement('div'); bgEl.id = 'theme-bg'; bgEl.setAttribute('aria-hidden', 'true');
-      doc.appendChild(bgEl);
-    }
-  }
-  /* Uma <style> por tema, criada uma vez e só alternada (media) nas trocas seguintes: nada de reparsear 30-70 KB a cada clique */
-  function themeStyle(id) {
-    var el = styles[id];
-    if (!el) {
-      el = styles[id] = document.createElement('style'); el.id = 'theme-css-' + id; el.media = 'not all';
-      el.textContent = REG[id].css;
+  function themeStyle() {
+    if (!themeEl) {
+      themeEl = document.createElement('style'); themeEl.id = 'theme-css';
       var u = document.getElementById('user-css');            // o tema vem SEMPRE antes do CSS pessoal
-      if (u && u.parentNode) u.parentNode.insertBefore(el, u); else head().appendChild(el);
+      if (u && u.parentNode) u.parentNode.insertBefore(themeEl, u); else head().appendChild(themeEl);
     }
-    return el;
-  }
-  function warmThemes() {                                     // parseia os outros temas em momentos ociosos (1 por vez)
-    var ids = Object.keys(REG).filter(function (i) { return !styles[i]; });
-    if (!ids.length) return;
-    var idle = window.requestIdleCallback || function (f) { return setTimeout(f, 400); };
-    idle(function () { if (!styles[ids[0]]) themeStyle(ids[0]); warmThemes(); });
+    return themeEl;
   }
   function loadFonts(id) {
     var t = REG[id];
@@ -246,11 +204,8 @@
 
   function applyTheme(id) {
     var t = id && REG[id] ? REG[id] : null;
-    ensurePerf();
-    if (t) { loadFonts(id); themeStyle(id).media = ''; doc.setAttribute('data-theme', id); } else doc.removeAttribute('data-theme');
-    if (t && PERF_THEMES[id]) doc.setAttribute('data-perf', '1'); else doc.removeAttribute('data-perf');
-    if (activeStyle && activeStyle !== id && styles[activeStyle]) styles[activeStyle].media = 'not all';
-    activeStyle = t ? id : '';
+    if (t) { loadFonts(id); doc.setAttribute('data-theme', id); } else doc.removeAttribute('data-theme');
+    themeStyle().textContent = t ? t.css : '';
     syncExtras(t ? id : '');
   }
   function saveThemeOnServer(v) {
@@ -267,18 +222,12 @@
       });
     },
     current: function () { var c = readTheme(); return c && c !== 'default' && REG[c] ? c : ''; },
-    preload: function () {                                             // pra mostrar o nome na fonte do tema (1 por vez, no ocioso)
-      var idle = window.requestIdleCallback || function (f) { return setTimeout(f, 300); };
-      Object.keys(REG).forEach(function (id) { idle(function () { loadFonts(id); }); });
-    },
+    preload: function () { Object.keys(REG).forEach(loadFonts); },     // pra mostrar o nome na fonte do tema
     set: function (id) {
       if (id && !REG[id]) return;
       writeTheme(id || 'default');
-      // deixa o clique pintar primeiro (botão marcado), aplica no quadro seguinte e só então salva na conta
-      requestAnimationFrame(function () { setTimeout(function () {
-        applyTheme(id);
-        if (isLogged()) { var idle = window.requestIdleCallback || function (f) { return setTimeout(f, 200); }; idle(function () { saveThemeOnServer(id || 'default'); }); }
-      }, 0); });
+      applyTheme(id);
+      if (isLogged()) saveThemeOnServer(id || 'default');
     }
   };
 
@@ -310,27 +259,6 @@
   /* ── Boot (síncrono, antes de a página aparecer: sem piscar) ── */
   var cur = readTheme();
   if (cur && cur !== 'default' && !safe) applyTheme(cur);
-
-  /* html.modal-open: enquanto há modal aberto o CSS de performance pausa as animações da cena atrás dele */
-  var modalTimer = 0, settleTimer = 0;
-  function syncModalOpen() {
-    var open = !!document.querySelector('.modal-overlay.active, .alert-overlay.active');
-    clearTimeout(modalTimer); clearTimeout(settleTimer);
-    if (open) {
-      doc.classList.add('modal-open');
-      settleTimer = setTimeout(function () { doc.classList.add('modal-settled'); }, 520);   // blur do fundo volta quando a entrada terminou
-    } else {
-      doc.classList.remove('modal-settled');
-      modalTimer = setTimeout(function () { doc.classList.remove('modal-open'); }, 380);   // espera o fade do overlay
-    }
-  }
-  function watchModals() {
-    if (!window.MutationObserver) return;
-    var mo = new MutationObserver(syncModalOpen);
-    document.querySelectorAll('.modal-overlay, .alert-overlay').forEach(function (el) { mo.observe(el, { attributes: true, attributeFilter: ['class'] }); });
-  }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', watchModals); else watchModals();
-  if (!safe) window.addEventListener('load', function () { setTimeout(warmThemes, 1500); });
 
   if (!isLogged() || safe) return;
   api.booted = true;

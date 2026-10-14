@@ -2255,12 +2255,12 @@ function closeThemeModal() {
 }
 function pickTheme(id) {
   if (!window.UserTheme) return;
-  document.querySelectorAll('#theme-list .theme-card').forEach(c => {   // 1º marca o botão (pinta já)...
+  UserTheme.set(id);
+  document.querySelectorAll('#theme-list .theme-card').forEach(c => {
     const on = c.dataset.theme === id;
     c.classList.toggle('active', on);
     c.setAttribute('aria-pressed', on ? 'true' : 'false');
   });
-  UserTheme.set(id);                                                     // ...2º o tema entra no quadro seguinte
 }
 
 // ─── CSS PERSONALIZADO ──────────────────────────────────────────────────────

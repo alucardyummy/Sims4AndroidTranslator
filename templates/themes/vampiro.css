@@ -55,7 +55,7 @@ html[data-page="index"] {
   --border: rgba(163,38,74,0.34); --border2: rgba(217,199,204,0.22); --border3: rgba(163,38,74,0.5);
 }
 
-html[data-page="index"] #theme-bg {
+html[data-page="index"] body {
   background-image:
     var(--vp-bg-image),
     radial-gradient(ellipse 90% 38% at 50% -6%, rgba(163,38,74,0.30) 0%, transparent 70%),
@@ -67,6 +67,7 @@ html[data-page="index"] #theme-bg {
   background-size: cover, auto, auto, auto, 360px 360px, 160px 160px, auto;
   background-position: center, center, center, center, 0 0, 0 0, center;
   background-repeat: no-repeat, no-repeat, no-repeat, no-repeat, repeat, repeat, no-repeat;
+  background-attachment: fixed;
   background-color: #1a0f14;
 }
 /* luz do luar escorrendo no topo (substitui o brilho verde) */
@@ -266,7 +267,7 @@ html[data-page="index"] .error-msg { background: rgba(163,38,74,0.16); border-co
 .css-danger { background: #8f2038; border-color: #e8798c; color: #fff; }
 
 /* ═════════════ DEMAIS PÁGINAS (editor, mesclar, criar, info) ═════════════ */
-html:not([data-page="index"]) #theme-bg {
+html:not([data-page="index"]) body {
   background-image:
     radial-gradient(ellipse 90% 30% at 50% -4%, rgba(163,38,74,0.18) 0%, transparent 70%),
     var(--vp-velvet),
@@ -275,6 +276,7 @@ html:not([data-page="index"]) #theme-bg {
   background-size: auto, 360px 360px, 160px 160px, auto;
   background-position: center, 0 0, 0 0, center;
   background-repeat: no-repeat, repeat, repeat, no-repeat;
+  background-attachment: fixed;
   background-color: #150b10;
 }
 html:not([data-page="index"]) .loading-overlay { background: rgba(15,6,10,0.95) !important; }
