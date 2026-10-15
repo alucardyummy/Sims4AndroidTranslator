@@ -1520,9 +1520,6 @@ async function handleUpload(file) {
     const result = await confirmRes.json();
 
     if (result.success) {
-      // guarda o id do arquivo no navegador: se a sessão do servidor for limpa (ex.: voltar na home),
-      // o /save e os rascunhos ainda sabem qual é o .package original
-      try { sessionStorage.setItem('package_id', file_id); } catch (e) {}
       window.location.href = result.redirect;
     } else {
       throw new Error(result.error || 'Erro ao processar arquivo');
