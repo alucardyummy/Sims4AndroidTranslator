@@ -1520,6 +1520,9 @@ async function handleUpload(file) {
     const result = await confirmRes.json();
 
     if (result.success) {
+      // guarda o id do arquivo no navegador: o salvar progresso manda esse id pro servidor,
+      // que o grava no projeto (é o vínculo que permite reabrir o projeto e gerar o .package depois)
+      try { sessionStorage.setItem('package_id', file_id); } catch (e) {}
       window.location.href = result.redirect;
     } else {
       throw new Error(result.error || 'Erro ao processar arquivo');

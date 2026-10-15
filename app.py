@@ -1255,6 +1255,10 @@ def save_progress():
     target_lang = data.get("target_lang", "POR_BR")
     translation_data = json.dumps(data.get("strings", []))
     package_id = data.get("package_id", "")
+    if not package_id or package_id == "DATABASE_SAVE":
+        package_id = session.get("package_id") or ""      # o navegador não mandou: usa o arquivo aberto na sessão
+    if package_id == "DATABASE_SAVE":
+        package_id = ""                                   # "sem arquivo" nunca é gravado como se fosse um arquivo
     user_id = session.get('user_id')
     guest_id = session.get('guest_session_id')
 
@@ -1269,7 +1273,7 @@ def save_progress():
 
     if existing_save:
         c.execute(
-            "UPDATE saves SET translation_data = %s, package_id = %s, last_updated = CURRENT_TIMESTAMP WHERE id = %s",
+            "UPDATE saves SET translation_data = %s, package_id = COALESCE(NULLIF(%s, ''), package_id), last_updated = CURRENT_TIMESTAMP WHERE id = %s",
             (translation_data, package_id, existing_save['id'])
         )
     else:
