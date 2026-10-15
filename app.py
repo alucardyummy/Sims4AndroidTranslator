@@ -67,6 +67,37 @@ def ensure_guest_session():
         session.permanent = True
 
 
+@app.after_request
+def theme_cookie_for_new_device(response):
+    """Quem tem conta e abre o site num aparelho novo (sem o cookie "theme") recebe o tema da conta
+    já na 1ª página, pra o theme.js aplicá-lo antes de a tela aparecer (sem piscar o tema padrão).
+    Valores: id do tema, "default" ou "none" (conta sem tema escolhido). Só roda 1 consulta por aparelho."""
+    try:
+        if request.method != "GET" or response.mimetype != "text/html":
+            return response
+        if request.cookies.get("theme") is not None:
+            return response
+        user_id = session.get("user_id")
+        if not user_id:
+            return response
+        theme = None
+        conn = get_db()
+        try:
+            c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            c.execute("SELECT theme FROM users WHERE id = %s", (user_id,))
+            row = c.fetchone()
+            theme = (row["theme"] if row else None) or None
+        except Exception:
+            conn.rollback()
+        finally:
+            conn.close()
+        value = theme if theme and re.fullmatch(r"[a-z0-9_-]{1,32}", theme) else "none"
+        response.set_cookie("theme", value, max_age=31536000, samesite="Lax", secure=True, path="/")
+    except Exception as e:
+        print("Cookie de tema:", e)
+    return response
+
+
 def get_db():
     db_url = os.environ.get("DATABASE_URL")
     if db_url and "sslmode" not in db_url:
@@ -122,6 +153,7 @@ def init_db():
         # Tema pronto escolhido ('default' = padrão; NULL = nunca escolheu)
         try:
             c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS theme VARCHAR(32);")
+            c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS deletion_requested_at TIMESTAMP;")
         except Exception as e:
             print("Coluna theme já existe ou houve um aviso:", e)
 
@@ -876,6 +908,11 @@ def suporte_css():
     return send_file(os.path.join(TEMPLATE_DIR, "suporte-css.html"))
 
 
+@app.route("/privacidade")
+def privacidade():
+    return send_file(os.path.join(TEMPLATE_DIR, "privacidade.html"))
+
+
 @app.route("/montar-tema")
 def montar_tema():
     return send_file(os.path.join(TEMPLATE_DIR, "montar-tema.html"))
@@ -1350,6 +1387,12 @@ def cleanup_orphaned_files():
         return json.dumps({"error": "unauthorized"}), 401
 
     try:
+        accounts = purge_expired_accounts()
+    except Exception as e:
+        print("Aviso: falha na limpeza de contas:", e)
+        accounts = {"error": str(e)}
+
+    try:
         grace_hours = int(request.args.get("grace_hours", 48))
     except ValueError:
         grace_hours = 48
@@ -1391,6 +1434,7 @@ def cleanup_orphaned_files():
     conn.close()
 
     return json.dumps({
+        "accounts": accounts,
         "grace_hours": grace_hours,
         "removed": removed,
         "rescued": rescued,
@@ -1796,6 +1840,20 @@ def me():
             nickname = row["nickname"] if row else None
         except Exception:
             conn.rollback()
+        # à parte (como o apelido): conta com senha? exclusão agendada? Se a coluna não existir, o login não quebra.
+        has_password, deletion_days_left = True, None
+        try:
+            c.execute(
+                "SELECT (password_hash IS NOT NULL) AS has_pw, deletion_requested_at, "
+                "CEIL(EXTRACT(EPOCH FROM (deletion_requested_at + (%s || ' days')::interval - LOCALTIMESTAMP)) / 86400) AS days_left "
+                "FROM users WHERE id = %s", (ACCOUNT_DELETION_GRACE_DAYS, user_id))
+            r = c.fetchone()
+            if r:
+                has_password = bool(r["has_pw"])
+                if r["deletion_requested_at"]:
+                    deletion_days_left = max(1, int(r["days_left"] or 1))
+        except Exception:
+            conn.rollback()
     conn.close()
 
     if user:
@@ -1803,7 +1861,9 @@ def me():
             "logged_in": True,
             "username": user["username"],
             "profile_pic": user["profile_pic"] or user["avatar_url"] or None,
-            "nickname": nickname
+            "nickname": nickname,
+            "has_password": has_password,
+            "deletion_days_left": deletion_days_left
         })
     return json.dumps({"logged_in": False})
 
@@ -2040,6 +2100,121 @@ def import_translations():
     translation_map = {str(s["key"]): s["value"] for s in strings if s.get("value")}
 
     return json.dumps({"success": True, "translations": translation_map})
+
+
+# ─── EXCLUSÃO DE CONTA ────────────────────────────────────────
+ACCOUNT_DELETION_GRACE_DAYS = 7      # prazo pra recuperar; muda só aqui (o texto do site lê esse valor)
+DELETE_WORD_SCHEDULED = "BANANA"     # exclusão com recuperação
+DELETE_WORD_NOW = "EXCLUIR"          # exclusão permanente
+
+
+def purge_user(conn, user_id):
+    """Apaga TUDO de uma conta: projetos, inscrições de notificação, arquivos do Storage e o próprio usuário.
+    (As chaves estrangeiras não têm CASCADE, então a ordem importa.) Faz commit no fim; quem chama trata o erro."""
+    c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    c.execute(
+        "SELECT file_id AS fid FROM package_files WHERE user_id = %s "
+        "UNION SELECT package_id AS fid FROM saves WHERE user_id = %s "
+        "AND package_id IS NOT NULL AND package_id NOT IN ('', 'DATABASE_SAVE')", (user_id, user_id))
+    file_ids = [r["fid"] for r in c.fetchall()]
+
+    c.execute("DELETE FROM saves WHERE user_id = %s", (user_id,))
+    c.execute("DELETE FROM push_subscriptions WHERE user_id = %s", (user_id,))
+
+    for fid in file_ids:
+        c.execute("SELECT COUNT(*) AS n FROM saves WHERE package_id = %s", (fid,))
+        if c.fetchone()["n"] > 0:                      # outro save ainda usa o arquivo: só solta do usuário
+            c.execute("UPDATE package_files SET user_id = NULL WHERE file_id = %s", (fid,))
+            continue
+        try:
+            supabase.storage.from_(BUCKET_NAME).remove([fid])
+            c.execute("DELETE FROM package_files WHERE file_id = %s", (fid,))
+        except Exception as e:                         # falhou agora? vira órfão e o cron remove depois
+            print(f"Aviso: falha ao remover {fid} do Storage:", e)
+            c.execute("UPDATE package_files SET user_id = NULL, orphaned_at = CURRENT_TIMESTAMP WHERE file_id = %s", (fid,))
+
+    c.execute("DELETE FROM users WHERE id = %s", (user_id,))
+    conn.commit()
+    return len(file_ids)
+
+
+def purge_expired_accounts():
+    """Chamada pelo cron diário: apaga de vez as contas cujo prazo de recuperação acabou."""
+    conn = get_db()
+    c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    c.execute(
+        "SELECT id FROM users WHERE deletion_requested_at IS NOT NULL "
+        "AND deletion_requested_at < LOCALTIMESTAMP - (%s || ' days')::interval", (ACCOUNT_DELETION_GRACE_DAYS,))
+    ids = [r["id"] for r in c.fetchall()]
+    deleted, failed = 0, 0
+    for uid in ids:
+        try:
+            purge_user(conn, uid)
+            deleted += 1
+        except Exception as e:
+            conn.rollback()
+            failed += 1
+            print(f"Aviso: falha ao excluir a conta {uid}:", e)
+    conn.close()
+    return {"deleted": deleted, "failed": failed}
+
+
+@app.route("/api/account/delete", methods=["POST"])
+def account_delete():
+    user_id = session.get("user_id")
+    if not user_id:
+        return json.dumps({"success": False, "error": "Não logado"}), 401
+
+    data = request.get_json(silent=True) or {}
+    permanent = bool(data.get("permanent"))
+    expected = DELETE_WORD_NOW if permanent else DELETE_WORD_SCHEDULED
+    if str(data.get("word") or "").strip().upper() != expected:
+        return json.dumps({"success": False, "error": f"Digite {expected} pra confirmar."}), 400
+
+    conn = get_db()
+    c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    c.execute("SELECT username, password_hash FROM users WHERE id = %s", (user_id,))
+    row = c.fetchone()
+    if not row:
+        conn.close()
+        return json.dumps({"success": False, "error": "Não logado"}), 401
+
+    if row["password_hash"]:                            # conta com senha: palavra + senha
+        if not check_password_hash(row["password_hash"], str(data.get("password") or "")):
+            conn.close()
+            return json.dumps({"success": False, "error": "Senha incorreta."}), 400
+    elif str(data.get("username") or "").strip() != row["username"]:   # conta Google: palavra + nome de usuário
+        conn.close()
+        return json.dumps({"success": False, "error": "Digite seu nome de usuário exatamente como ele aparece."}), 400
+
+    try:
+        if permanent:
+            purge_user(conn, user_id)
+        else:
+            c.execute("UPDATE users SET deletion_requested_at = LOCALTIMESTAMP WHERE id = %s", (user_id,))
+            conn.commit()
+    except Exception as e:
+        conn.rollback()
+        conn.close()
+        print("Erro ao excluir conta:", e)
+        return json.dumps({"success": False, "error": "Não deu pra excluir agora. Tenta de novo daqui a pouco."}), 500
+    conn.close()
+
+    session.clear()
+    return json.dumps({"success": True, "permanent": permanent, "days": ACCOUNT_DELETION_GRACE_DAYS})
+
+
+@app.route("/api/account/restore", methods=["POST"])
+def account_restore():
+    user_id = session.get("user_id")
+    if not user_id:
+        return json.dumps({"success": False, "error": "Não logado"}), 401
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE users SET deletion_requested_at = NULL WHERE id = %s", (user_id,))
+    conn.commit()
+    conn.close()
+    return json.dumps({"success": True})
 
 
 @app.route("/api/logout", methods=["POST"])

@@ -418,6 +418,15 @@
   .updates-select-bar .select-count { font-size: 13px; }
   .modal-switch { text-align: center; font-size: 12px; color: #1b1047; margin-top: 1rem; cursor: pointer; font-weight: 500; }
   .modal-switch span { color: var(--accent); text-decoration: underline; font-weight: 500; }
+  .legal-note { font-size: 11px; line-height: 1.5; text-align: center; opacity: .75; margin: 10px 0 0; }
+  .legal-note a { color: inherit; text-decoration: underline; }
+  .legal-foot { display: block; text-align: center; font-size: 11px; opacity: .6; margin-top: 4px; color: inherit; }
+  .del-link { display: block; margin: 14px auto 0; background: none; border: none; color: #8a2a2a; font-size: 12px; text-decoration: underline; cursor: pointer; font-family: inherit; }
+  .del-text { font-size: 12px; line-height: 1.5; margin: 0 0 10px; }
+  .del-error { color: #b03030; font-size: 12px; min-height: 16px; margin: 4px 0 8px; }
+  .del-perm { text-align: center; margin-top: 12px; font-size: 12px; }
+  .del-perm span { color: #8a2a2a; text-decoration: underline; cursor: pointer; }
+  .modal-btn.del-danger { background: #8b2020; }
 
   /* Custom Alert (substitui o alert() nativo do navegador) */
   .alert-overlay { display: flex; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 2000; align-items: center; justify-content: center; padding: 1.5rem; opacity: 0; visibility: hidden; backdrop-filter: blur(0px); -webkit-backdrop-filter: blur(0px); transition: opacity 0.32s ease, visibility 0.32s, backdrop-filter 0.32s ease, -webkit-backdrop-filter 0.32s ease; }
@@ -921,6 +930,7 @@
   </div>
 
   <div class="version">v1.0 · MIT · Voky1 • Remake by AlucardYummy</div>
+  <a class="legal-foot" href="/privacidade">Privacidade e Termos</a>
 
   <a href="https://github.com/alucardyummy/Sims4AndroidTranslator" target="_blank" rel="noopener" class="github-badge" aria-label="Ver repositório no GitHub">
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -991,6 +1001,7 @@
       </div>
       <div class="form-group"><label>Resposta Secreta</label><input type="text" class="form-input" id="reg-answer" placeholder="Sua resposta secreta"></div>
       <button class="modal-btn fx-press" onclick="handleRegister()">CRIAR CONTA</button>
+      <p class="legal-note">Ao criar sua conta, você aceita os <a href="/privacidade#termos" target="_blank" rel="noopener">Termos de Uso</a> e a <a href="/privacidade" target="_blank" rel="noopener">Política de Privacidade</a>.</p>
       <p class="modal-switch" onclick="switchTab('login')">Já tem uma conta? <span>Entrar</span></p>
     </div>
 
@@ -1066,7 +1077,37 @@
     </details>
     <button class="modal-btn fx-press" onclick="saveProfile()">SALVAR ALTERAÇÕES</button>
     <button class="modal-btn fx-press" style="background:transparent;border:1px solid #b89cd9;color:#413d57;margin-top:10px" onclick="handleLogout()">SAIR DA CONTA</button>
-  </div></div><div class="modal-overlay" id="updates-modal" onclick="if(event.target===this)closeUpdatesModal()">
+    <button type="button" class="del-link" onclick="openDeleteModal()">Excluir minha conta</button>
+    <a class="legal-foot" href="/privacidade" target="_blank" rel="noopener">Privacidade e Termos</a>
+  </div></div><div class="modal-overlay" id="delete-modal" onclick="if(event.target===this)closeDeleteModal()">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeDeleteModal()">✕</button>
+    <h3 class="modal-title" id="del-title">Excluir conta</h3>
+    <div id="del-form">
+      <p class="del-text">Isso apaga sua conta, seus projetos, arquivos, notificações, tema e CSS (seus temas personalizados, se tiver).</p>
+      <p class="del-text" id="del-info"></p>
+      <div class="form-group" id="del-pass-group"><label for="del-password">Senha</label><input type="password" class="form-input" id="del-password" autocomplete="current-password"></div>
+      <div class="form-group" id="del-user-group" style="display:none"><label for="del-username">Nome de usuário</label><input type="text" class="form-input" id="del-username" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
+      <div class="form-group"><label for="del-word" id="del-word-label"></label><input type="text" class="form-input" id="del-word" autocomplete="off" autocapitalize="characters" spellcheck="false"></div>
+      <p class="del-error" id="del-error"></p>
+      <button class="modal-btn fx-press" id="del-go" onclick="submitDelete()"></button>
+      <p class="del-perm"><span id="del-switch" onclick="setDelMode(!delPermanent)"></span></p>
+    </div>
+    <div id="del-done" style="display:none">
+      <p class="del-text" id="del-done-text"></p>
+      <button class="modal-btn fx-press" onclick="window.location.reload()">OK</button>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay" id="restore-modal">
+  <div class="modal-box">
+    <h3 class="modal-title">Sua conta está marcada para exclusão</h3>
+    <p class="del-text" id="restore-text"></p>
+    <button class="modal-btn fx-press" onclick="restoreAccount()">RESTAURAR MINHA CONTA</button>
+    <button class="modal-btn fx-press" style="background:transparent;border:1px solid #b89cd9;color:#413d57;margin-top:10px" onclick="handleLogout()">CONTINUAR COM A EXCLUSÃO</button>
+  </div>
+</div>
+<div class="modal-overlay" id="updates-modal" onclick="if(event.target===this)closeUpdatesModal()">
   <div class="modal-box">
     <div id="updates-header-normal">
       <button class="modal-close" onclick="closeUpdatesModal()">✕</button>
@@ -1135,6 +1176,7 @@
     </div>
     <div class="nick-slot" id="nick-slot"><span class="nick-preview" id="nick-preview"></span><span class="nick-error" id="nick-error"></span></div>
     <button class="modal-btn fx-press" id="nick-save" onclick="submitNick()">CONFIRMAR</button>
+    <p class="legal-note" id="nick-legal">Ao continuar, você concorda com os <a href="/privacidade#termos" target="_blank" rel="noopener">Termos de Uso</a> e a <a href="/privacidade" target="_blank" rel="noopener">Política de Privacidade</a>.</p>
     <p class="modal-switch" id="nick-login" onclick="openAuthFromNick()"><span>Já tenho conta</span></p>
   </div>
 </div>
@@ -1228,6 +1270,7 @@ function openNickModal(required, prefill) {
   modal.dataset.required = required ? '1' : '';
   document.getElementById('nick-close').style.display = required ? 'none' : '';
   document.getElementById('nick-login').style.display = (required && !currentUser) ? '' : 'none';
+  document.getElementById('nick-legal').style.display = required ? '' : 'none';
   document.getElementById('nick-title').textContent = required ? 'Como a gente te chama?' : 'Trocar apelido';
   document.getElementById('nick-sub').textContent = required
     ? 'Escolhe um apelido curtinho. Ele aparece nas mensagens aqui da página, só pra você.'
@@ -1477,6 +1520,9 @@ async function handleUpload(file) {
     const result = await confirmRes.json();
 
     if (result.success) {
+      // guarda o id do arquivo no navegador: se a sessão do servidor for limpa (ex.: voltar na home),
+      // o /save e os rascunhos ainda sabem qual é o .package original
+      try { sessionStorage.setItem('package_id', file_id); } catch (e) {}
       window.location.href = result.redirect;
     } else {
       throw new Error(result.error || 'Erro ao processar arquivo');
@@ -2060,6 +2106,7 @@ async function checkLogin() {
         if (data.profile_pic) localStorage.setItem('cached_profile_pic', data.profile_pic);
         else localStorage.removeItem('cached_profile_pic');
       } catch (e) {}
+      if (data.deletion_days_left) openRestoreModal(data.deletion_days_left);   // conta com exclusão agendada
     } else {
       // Não logado (ex.: sessão expirou, ou trocou de conta no mesmo aparelho)
       // — não faz sentido continuar mostrando a foto cacheada de outro usuário.
@@ -2201,6 +2248,92 @@ function closeProfileModal() {
     box.classList.remove('animate-out');
   }, 380);
 }
+// ─── EXCLUIR CONTA ──────────────────────────────────────────────
+const DEL_DAYS = 7;   // mesmo valor de ACCOUNT_DELETION_GRACE_DAYS no app.py
+let delPermanent = false, delDone = false;
+function setDelMode(permanent) {
+  delPermanent = !!permanent;
+  document.getElementById('del-info').innerHTML = delPermanent
+    ? '<b>Exclusão permanente:</b> tudo é apagado agora e <b>não tem como recuperar</b>.'
+    : '<b>Exclusão com recuperação:</b> você pode recuperar sua conta em até ' + DEL_DAYS + ' dias, entrando de novo. Depois disso, ela é excluída permanentemente.';
+  document.getElementById('del-word-label').textContent = 'Digite ' + (delPermanent ? 'EXCLUIR' : 'BANANA') + ' para confirmar';
+  const go = document.getElementById('del-go');
+  go.textContent = delPermanent ? 'EXCLUIR PERMANENTEMENTE' : 'EXCLUIR COM RECUPERAÇÃO';
+  go.classList.toggle('del-danger', delPermanent);
+  document.getElementById('del-switch').textContent = delPermanent ? '← voltar para a exclusão com recuperação' : 'Excluir permanentemente (sem volta)';
+  document.getElementById('del-error').textContent = '';
+}
+function openDeleteModal() {
+  closeProfileModal();
+  delDone = false;
+  document.getElementById('del-form').style.display = '';
+  document.getElementById('del-done').style.display = 'none';
+  document.getElementById('del-title').textContent = 'Excluir conta';
+  const hasPw = !currentUser || currentUser.has_password !== false;
+  document.getElementById('del-pass-group').style.display = hasPw ? '' : 'none';
+  document.getElementById('del-user-group').style.display = hasPw ? 'none' : '';
+  ['del-password', 'del-username', 'del-word'].forEach(id => { document.getElementById(id).value = ''; });
+  document.getElementById('del-go').disabled = false;
+  setDelMode(false);
+  const modal = document.getElementById('delete-modal');
+  const box = modal.querySelector('.modal-box');
+  box.classList.remove('animate-out');
+  void box.offsetWidth;
+  box.classList.add('animate-in');
+  modal.classList.add('active');
+}
+function closeDeleteModal() {
+  if (delDone) { window.location.reload(); return; }
+  const box = document.querySelector('#delete-modal .modal-box');
+  box.classList.remove('animate-in');
+  box.classList.add('animate-out');
+  document.getElementById('delete-modal').classList.remove('active');
+  setTimeout(() => box.classList.remove('animate-out'), 380);
+}
+async function submitDelete() {
+  const err = document.getElementById('del-error'), btn = document.getElementById('del-go');
+  err.textContent = '';
+  btn.disabled = true;
+  try {
+    const res = await fetch('/api/account/delete', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        permanent: delPermanent,
+        word: document.getElementById('del-word').value,
+        password: document.getElementById('del-password').value,
+        username: document.getElementById('del-username').value
+      })
+    });
+    const r = await res.json();
+    if (!r.success) { err.textContent = r.error || 'Não deu certo. Tenta de novo.'; btn.disabled = false; return; }
+    try { ['cached_profile_pic', 'nickname', 'is_logged_in'].forEach(k => localStorage.removeItem(k)); } catch (e) {}
+    if (window.UserCss) UserCss.clear();
+    delDone = true;
+    document.getElementById('del-title').textContent = 'Pronto';
+    document.getElementById('del-done-text').textContent = r.permanent
+      ? 'Sua conta foi excluída. Obrigada por ter usado o site!'
+      : 'Sua conta foi marcada para exclusão. Se mudar de ideia, é só entrar de novo em até ' + r.days + ' dias e restaurar.';
+    document.getElementById('del-form').style.display = 'none';
+    document.getElementById('del-done').style.display = '';
+  } catch (e) {
+    err.textContent = 'Erro de conexão. Tenta de novo.';
+    btn.disabled = false;
+  }
+}
+function openRestoreModal(days) {
+  document.getElementById('restore-text').textContent = 'Ela será apagada de vez em ' + days + (days === 1 ? ' dia' : ' dias') + '. Quer manter sua conta?';
+  const modal = document.getElementById('restore-modal');
+  modal.querySelector('.modal-box').classList.add('animate-in');
+  modal.classList.add('active');
+}
+async function restoreAccount() {
+  try {
+    const res = await fetch('/api/account/restore', { method: 'POST' });
+    const r = await res.json();
+    if (r.success) window.location.reload();
+  } catch (e) {}
+}
+
 async function handleLogout() {
   await fetch('/api/logout', { method: 'POST' });
   try { localStorage.removeItem('cached_profile_pic'); localStorage.removeItem('nickname'); } catch (e) {}

@@ -27,8 +27,18 @@
   function apply(css) { box().textContent = css || ''; }
 
   /* ── Tema pronto ── */
-  function readTheme() { try { return localStorage.getItem(TKEY) || ''; } catch (e) { return ''; } }   // '', 'default' ou id
-  function writeTheme(v) { try { if (v) localStorage.setItem(TKEY, v); else localStorage.removeItem(TKEY); } catch (e) {} }
+  /* Cookie "theme": o servidor o coloca no 1º acesso de um aparelho novo (quem já tem conta), pra o tema certo
+     aparecer ANTES da primeira pintura. Valores: id do tema, 'default' ou 'none' (conta sem tema escolhido = ignora o cookie). */
+  function readCookie() { try { var m = document.cookie.match(/(?:^|;\s*)theme=([a-z0-9_-]{1,32})(?:;|$)/); return m ? m[1] : ''; } catch (e) { return ''; } }
+  function writeCookie(v) {
+    try { document.cookie = 'theme=' + (v || '') + '; path=/; max-age=' + (v ? 31536000 : 0) + '; samesite=lax' + (location.protocol === 'https:' ? '; secure' : ''); } catch (e) {}
+  }
+  function readTheme() {                                                                               // '', 'default' ou id
+    var c = readCookie();
+    if (c && c !== 'none') return c;
+    try { return localStorage.getItem(TKEY) || ''; } catch (e) { return ''; }
+  }
+  function writeTheme(v) { try { if (v) localStorage.setItem(TKEY, v); else localStorage.removeItem(TKEY); } catch (e) {} writeCookie(v); }
   function themeStyle() {
     if (!themeEl) {
       themeEl = document.createElement('style'); themeEl.id = 'theme-css';
