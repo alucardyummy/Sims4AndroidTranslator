@@ -188,3 +188,42 @@ html:not([data-page="index"]) .import-sheet.open-active,
 html:not([data-page="index"]) .tall-sheet.open-active,
 html:not([data-page="index"]) .modal-backdrop.open-active,
 html:not([data-page="index"]) .confirm-modal.open { background: rgba(120,74,86,0.42) !important; }
+
+/* ═════════════ VERDES FIXOS NO CÓDIGO (editor, mesclar, info) ═════════════
+   Esses pontos têm o verde-água #9cb8b2 escrito direto no HTML (não vem de --accent),
+   então precisam ser trocados aqui. Texto em #b5566a (rosa-ruge, bom contraste no claro). */
+html:not([data-page="index"]) .count-badge.filter-active { background: rgba(214,143,160,0.14); }
+html:not([data-page="index"]) .save-progress-btn.saved { border-color: #d68fa0; color: #b5566a; background: rgba(214,143,160,0.16); }
+html:not([data-page="index"]) .undo-btn:active,
+html:not([data-page="index"]) .undo-btn.has-history,
+html:not([data-page="index"]) .copy-btn.copied,
+html:not([data-page="index"]) .fav-btn.active,
+html:not([data-page="index"]) .kebab-btn:active,
+html:not([data-page="index"]) .kebab-btn.open,
+html:not([data-page="index"]) .kebab-item.clear-undo-item,
+html:not([data-page="index"]) .fav-star-float,
+html:not([data-page="index"]) .original-text .ph,
+html:not([data-page="index"]) .ta-backdrop .ph { color: #b5566a; }
+html:not([data-page="index"]) .copy-btn:active,
+html:not([data-page="index"]) .copy-btn.copied,
+html:not([data-page="index"]) .action-btn.clear-undo { border-color: #d68fa0; color: #b5566a; }
+html:not([data-page="index"]) .string-row.row-selected { background: rgba(214,143,160,0.18); }
+html:not([data-page="index"]) .editor-draft-banner-btn.recover { background: rgba(214,143,160,0.20); }
+html:not([data-page="index"]) .note-dot { background: #d68fa0; }
+html:not([data-page="index"]) .note-textarea:focus { border-color: #d68fa0; }
+html:not([data-page="index"]) .json-textarea { caret-color: #cf8d9d; }
+html:not([data-page="index"]) .import-source-btn.active { background: rgba(214,143,160,0.14); }
+html:not([data-page="index"]) .translate-all-btn:active,
+html:not([data-page="index"]) .json-mode-btn:active,
+html:not([data-page="index"]) .json-import-btn:active { background: rgba(214,143,160,0.16); }
+/* mesclar */
+html:not([data-page="index"]) .drop-zone::before { background: radial-gradient(ellipse at center, rgba(214,143,160,0.14) 0%, transparent 70%); }
+html:not([data-page="index"]) .drop-zone:active { background: rgba(214,143,160,0.08); }
+html:not([data-page="index"]) .mode-tab:active { background: rgba(214,143,160,0.08); }
+html:not([data-page="index"]) .mode-tab.selected { background: rgba(214,143,160,0.14); }
+html:not([data-page="index"]) .split-badge.exact { background: rgba(214,143,160,0.16); color: #b5566a; border-color: rgba(214,143,160,0.45); }
+/* info */
+html:not([data-page="index"]) .lang-btn { background: rgba(214,143,160,0.14); }
+html:not([data-page="index"]) .lang-btn:active { background: rgba(214,143,160,0.24); }
+html:not([data-page="index"]) .stbl-option.selected { background: rgba(214,143,160,0.12); }
+html:not([data-page="index"]) .stbl-lang-badge { color: #b5566a; background: rgba(214,143,160,0.18); }
