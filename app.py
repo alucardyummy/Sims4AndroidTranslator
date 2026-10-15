@@ -1051,6 +1051,20 @@ def save():
     if not pkg_id or pkg_id == "DATABASE_SAVE":
         pkg_id = data.get("package_id", "")
     if not pkg_id or pkg_id == "DATABASE_SAVE":
+        # DIAGNÓSTICO TEMPORÁRIO: só registra nos logs (sem valores sensíveis) o que a sessão tinha na hora do erro
+        try:
+            print("[DIAG /save sem package_id]", json.dumps({
+                "deploy": os.environ.get("VERCEL_DEPLOYMENT_ID") or (os.environ.get("VERCEL_GIT_COMMIT_SHA") or "")[:7],
+                "logged_in": bool(session.get("user_id")),
+                "session_keys": sorted(session.keys()),
+                "session_package_id": str(session.get("package_id"))[:12],
+                "body_package_id": str(data.get("package_id", ""))[:12],
+                "session_cookie_len": len(request.cookies.get("session", "")),
+                "cookie_names": sorted(request.cookies.keys()),
+                "user_agent": request.headers.get("User-Agent", "")[:70],
+            }, ensure_ascii=False))
+        except Exception:
+            pass
         return json.dumps({"success": False, "error": "Arquivo original não disponível. Reimporte o .package para gerar o arquivo traduzido."}), 400
 
     target_rid = None
