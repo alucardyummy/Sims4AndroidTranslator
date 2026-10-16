@@ -18,6 +18,8 @@ import requests
 from openai import OpenAI, RateLimitError, APIError
 from dotenv import load_dotenv
 
+from singletons.languages import LOCALE_ALIASES
+
 load_dotenv()
 log = logging.getLogger("translator_v2")
 
@@ -36,10 +38,49 @@ TERMOS_FORMAIS = [
 ]
 
 
-def build_system_prompt(target_lang_name: str, tone: str) -> str:
+# Estilo (vocabulário) por idioma de destino. Só o POR_BR tem um texto próprio, porque
+# é o único com uma lista de gírias escrita e validada à mão. Os demais idiomas usam o
+# estilo genérico abaixo (STYLE_DEFAULT). Para dar vocabulário próprio a outra língua,
+# basta adicionar uma entrada aqui, sem mexer na lógica de build_system_prompt.
+STYLE_BY_LOCALE = {
+    "POR_BR": {
+        "explicit": (
+            "Diálogo/interação de Sims adultos. Quando o original já for "
+            "explícito, use gírias BR equivalentes (ex.: " +
+            ", ".join(GIRIAS_EXPLICITAS) + "). Não adicione tom sexual a um "
+            "texto que não tinha."
+        ),
+        "formal": (
+            "Texto de config/menu/aviso. Use linguagem formal (ex.: " +
+            ", ".join(TERMOS_FORMAIS) + ") pra termos anatômicos/sexuais."
+        ),
+    },
+}
+
+# Estilo genérico: sem as listas em português (que só valem para PT-BR) e
+# exigindo que a resposta venha inteira no idioma de destino.
+STYLE_DEFAULT = {
+    "explicit": (
+        "Diálogo/interação de Sims adultos. Quando o original já for "
+        "explícito, use o vocabulário coloquial equivalente e natural em "
+        "{lang}. Não adicione tom sexual a um texto que não tinha."
+    ),
+    "formal": (
+        "Texto de config/menu/aviso. Use linguagem formal e neutra em "
+        "{lang} para termos anatômicos/sexuais."
+    ),
+}
+_ONLY_TARGET_LANG = (
+    " A resposta deve estar inteiramente em {lang}, sem palavras de outros idiomas."
+)
+
+
+def build_system_prompt(target_lang_name: str, tone: str, target_locale: str = "POR_BR") -> str:
     """
     tone: 'formal' (config/menu/aviso/descrição técnica) ou
           'explicit' (diálogo/interação/reação de Sim já explícita no original)
+    target_locale: locale oficial de destino (ex.: 'JPN_JP'). O padrão POR_BR
+          mantém o comportamento de quem chamava sem esse argumento.
     """
     base = (
         f"Você é um tradutor de textos de mods do jogo The Sims 4 para "
@@ -50,18 +91,12 @@ def build_system_prompt(target_lang_name: str, tone: str) -> str:
         "(<br>, %1, \\n) devem ser copiados exatamente como estão."
     )
 
-    if tone == "explicit":
-        style = (
-            "Diálogo/interação de Sims adultos. Quando o original já for "
-            "explícito, use gírias BR equivalentes (ex.: " +
-            ", ".join(GIRIAS_EXPLICITAS) + "). Não adicione tom sexual a um "
-            "texto que não tinha."
-        )
+    key = "explicit" if tone == "explicit" else "formal"
+    own = STYLE_BY_LOCALE.get(target_locale)
+    if own:
+        style = own[key]
     else:
-        style = (
-            "Texto de config/menu/aviso. Use linguagem formal (ex.: " +
-            ", ".join(TERMOS_FORMAIS) + ") pra termos anatômicos/sexuais."
-        )
+        style = (STYLE_DEFAULT[key] + _ONLY_TARGET_LANG).format(lang=target_lang_name)
 
     return base + "\n" + style
 
@@ -250,7 +285,63 @@ LANG_NAMES = {
     "POR_BR": "português brasileiro", "ENG_US": "inglês", "ENG_UK": "inglês britânico",
     "SPA_ES": "espanhol", "SPA_MX": "espanhol mexicano", "FRE_FR": "francês",
     "GER_DE": "alemão", "ITA_IT": "italiano",
+    # Demais locales que o jogo reconhece (as 18 línguas oficiais)
+    "CHS_CN": "chinês simplificado", "CHT_CN": "chinês tradicional",
+    "CZE_CZ": "tcheco", "DAN_DK": "dinamarquês", "DUT_NL": "holandês",
+    "FIN_FI": "finlandês", "JPN_JP": "japonês", "KOR_KR": "coreano",
+    "NOR_NO": "norueguês", "POL_PL": "polonês",
+    "RUS_RU": "russo", "SWE_SE": "sueco",
 }
+
+# Código usado pelo Google Translate para cada locale.
+GOOGLE_CODES = {
+    "POR_BR": "pt", "ENG_US": "en", "ENG_UK": "en",
+    "SPA_ES": "es", "SPA_MX": "es", "FRE_FR": "fr", "GER_DE": "de",
+    "ITA_IT": "it", "CHS_CN": "zh-CN", "CHT_CN": "zh-TW", "CZE_CZ": "cs",
+    "DAN_DK": "da", "DUT_NL": "nl", "FIN_FI": "fi", "JPN_JP": "ja",
+    "KOR_KR": "ko", "NOR_NO": "no", "POL_PL": "pl", "RUS_RU": "ru",
+    "SWE_SE": "sv",
+}
+
+# Nomes antigos/alternativos -> nome oficial. Fonte única: singletons/languages.py
+# (o mesmo mapa que o by_locale() usa), para não existirem duas listas divergentes.
+LANG_ALIASES = LOCALE_ALIASES
+
+
+def _check_language_tables() -> None:
+    """Avisa no log se as tabelas de idioma saírem de sincronia (o tipo de bug que
+    fazia idiomas caírem em português em silêncio). Nunca levanta exceção."""
+    try:
+        for loc in LANG_NAMES:
+            if loc not in GOOGLE_CODES:
+                log.warning("Idioma %s está em LANG_NAMES mas não em GOOGLE_CODES", loc)
+        for loc in GOOGLE_CODES:
+            if loc not in LANG_NAMES:
+                log.warning("Idioma %s está em GOOGLE_CODES mas não em LANG_NAMES", loc)
+        for alias, official in LANG_ALIASES.items():
+            if official not in LANG_NAMES:
+                log.warning("Alias %s aponta para %s, que não está em LANG_NAMES", alias, official)
+    except Exception as e:  # checagem é só informativa
+        log.warning("Falha ao checar tabelas de idioma: %s", e)
+
+
+_check_language_tables()
+
+
+def _normalize_locale(code) -> str:
+    """Normaliza o código vindo do front: maiúsculas, sem espaços e resolvendo aliases."""
+    c = str(code or "").upper().strip()
+    return LANG_ALIASES.get(c, c)
+
+
+def _resolve_lang(target_lang):
+    """Devolve (locale, nome_em_português). Código desconhecido/vazio cai em
+    POR_BR (comportamento antigo), mas agora registra um aviso no log."""
+    locale = _normalize_locale(target_lang)
+    if locale in LANG_NAMES:
+        return locale, LANG_NAMES[locale]
+    log.warning("Idioma de destino desconhecido %r; usando POR_BR", target_lang)
+    return "POR_BR", LANG_NAMES["POR_BR"]
 
 
 def list_available_engines() -> list[dict]:
@@ -357,11 +448,12 @@ def _extract_retry_after(rate_limit_error) -> float | None:
         return None
 
 
-def _translate_google(text: str, target_lang_name: str) -> str:
+def _translate_google(text: str, target_lang_name: str, google_code: str = None) -> str:
     # Mantém a implementação existente do projeto (googleapis.com/translate_a).
     # Reaproveite a função _translate_google já presente no translator.py atual.
     from translator import Translator  # import local pra evitar ciclo
-    result = Translator()._translate_google(text, "en", _lang_name_to_code(target_lang_name))
+    code = google_code or _lang_name_to_code(target_lang_name)
+    result = Translator()._translate_google(text, "en", code)
     if isinstance(result, dict):
         return result.get("text", "")
     return str(result)
@@ -369,8 +461,8 @@ def _translate_google(text: str, target_lang_name: str) -> str:
 
 def _lang_name_to_code(name: str) -> str:
     reverse = {v: k for k, v in LANG_NAMES.items()}
-    code = reverse.get(name, "POR_BR")
-    return {"POR_BR": "pt", "ENG_US": "en"}.get(code, "pt")
+    locale = reverse.get(name, "POR_BR")
+    return GOOGLE_CODES.get(locale, "pt")
 
 
 # =============================================================================
@@ -390,9 +482,10 @@ def translate_with_fallback(
     if not text or not text.strip():
         return {"text": "", "engine_used": None}
 
-    target_lang_name = LANG_NAMES.get(target_lang, "português brasileiro")
+    target_locale, target_lang_name = _resolve_lang(target_lang)
+    google_code = GOOGLE_CODES.get(target_locale, "pt")
     protected, mapping = _protect_placeholders(text)
-    system_prompt = build_system_prompt(target_lang_name, tone)
+    system_prompt = build_system_prompt(target_lang_name, tone, target_locale)
 
     chain = DEFAULT_FALLBACK_CHAIN[:]
     if preferred_engine and preferred_engine in ENGINES:
@@ -405,7 +498,7 @@ def translate_with_fallback(
             continue
         try:
             if cfg["kind"] == "google":
-                out = _translate_google(protected, target_lang_name)
+                out = _translate_google(protected, target_lang_name, google_code)
             else:
                 if not cfg.get("model") or not cfg.get("base_url"):
                     # engine sem modelo ou sem base_url configurado (ex.: as

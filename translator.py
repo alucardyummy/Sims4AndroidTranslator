@@ -38,7 +38,9 @@ class Translator:
             'KOR_KR': 'ko', 'NOR_NO': 'no',
             'POL_PL': 'pl', 'RUS_RU': 'ru',
             'SPA_MX': 'es', 'SWE_SE': 'sv',
-            'THA_TH': 'th'
+            'THA_TH': 'th',
+            # nomes oficiais do jogo (mesmos de prefs/languages.xml)
+            'CHS_CN': 'zh-CN', 'CHT_CN': 'zh-TW', 'DUT_NL': 'nl', 'SPA_EA': 'es'
         }
 
         s_lang_clean = str(source_lang).upper().strip()

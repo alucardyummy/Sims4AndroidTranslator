@@ -6,6 +6,11 @@ from singletons.config import config
 
 Language = namedtuple('Language', 'locale code google deepl')
 
+# Nomes antigos/alternativos -> nome oficial do jogo (iguais aos de packer/tuning.py)
+LOCALE_ALIASES = {
+    'CHI_CN': 'CHS_CN', 'CHI_TW': 'CHT_CN', 'NED_NL': 'DUT_NL', 'SPA_EA': 'SPA_ES',
+}
+
 class Languages:
     def __init__(self):
         self.__locales = {}
@@ -71,7 +76,13 @@ class Languages:
     def source(self): return self.by_locale(config.value('translation', 'source'))
     @property
     def destination(self): return self.by_locale(config.value('translation', 'destination'))
-    def by_locale(self, locale): return self.__locales.get(locale) if locale else None
+    def by_locale(self, locale):
+        if not locale:
+            return None
+        found = self.__locales.get(locale)
+        if found is None:
+            found = self.__locales.get(LOCALE_ALIASES.get(str(locale).upper().strip(), ''))
+        return found
     def by_code(self, code): return self.__codes.get(code) if code else None
 
 languages = Languages()

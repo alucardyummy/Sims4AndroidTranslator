@@ -1088,7 +1088,9 @@ def save():
                 locale_code = new_rid.hex_instance[2:4]  # ex: "11"
                 new_instance_int = int(locale_code + custom_instance_base, 16)
                 new_rid = new_rid._replace(instance=new_instance_int)
-        except Exception:
+        except Exception as e:
+            print(f"Aviso: não foi possível converter para o idioma {target_lang!r} ({e}); "
+                  "salvando no idioma original da STBL.")
             new_rid = target_rid
 
         with DbpfPackage.write(tmp_out_path) as outpkg:
