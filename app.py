@@ -1971,6 +1971,55 @@ def theme_js():
     return response.make_conditional(request)
 
 
+I18N_DIR = os.path.join(BASE_DIR, "i18n")
+I18N_DEFAULT = "pt-BR"
+
+
+def load_languages():
+    """Lê i18n/languages.json → lista de {code, name} dos idiomas da INTERFACE do site."""
+    try:
+        with open(os.path.join(I18N_DIR, "languages.json"), encoding="utf-8") as f:
+            return [l for l in json.load(f) if re.fullmatch(r"[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})?", str(l.get("code", "")))]
+    except Exception as e:
+        print("Idiomas da interface indisponíveis:", e)
+        return [{"code": I18N_DEFAULT, "name": "Português (Brasil)"}]
+
+
+def load_lang_dict(code):
+    """Dicionário de um idioma (i18n/<code>.json). Só aceita códigos que estão em languages.json."""
+    try:
+        with open(os.path.join(I18N_DIR, code + ".json"), encoding="utf-8") as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"Idioma {code} sem dicionário:", e)
+        return {}
+
+
+@app.route("/i18n.js")
+def i18n_js():
+    """Mesmo esquema do /theme.js: o servidor coloca o idioma escolhido (cookie "lang") em window.__I18N__
+    antes do código, pra página já nascer no idioma certo. Sem cookie (ou idioma inválido) = pt-BR."""
+    langs = load_languages()
+    valid = {l["code"] for l in langs}
+    code = request.cookies.get("lang", I18N_DEFAULT)
+    if code not in valid:
+        code = I18N_DEFAULT
+    data = {
+        "code": code,
+        "langs": langs,
+        "dict": load_lang_dict(code),
+        "fallback": {} if code == I18N_DEFAULT else load_lang_dict(I18N_DEFAULT),
+    }
+    with open(os.path.join(TEMPLATE_DIR, "i18n.js"), encoding="utf-8") as f:
+        base = f.read()
+    body = "window.__I18N__=" + json.dumps(data, ensure_ascii=False).replace("</", "<\\/") + ";\n" + base
+    response = app.response_class(body, mimetype="application/javascript")
+    response.set_etag(hashlib.md5(body.encode("utf-8")).hexdigest())
+    response.headers["Cache-Control"] = "no-cache"
+    response.headers["Vary"] = "Cookie"
+    return response.make_conditional(request)
+
+
 @app.route("/api/my_css")
 def my_css():
     user_id = session.get('user_id')

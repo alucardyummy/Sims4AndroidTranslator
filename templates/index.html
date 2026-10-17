@@ -811,6 +811,7 @@
   /* fontes: a pessoa pode trocar com --font-title, --font-body e --font-mono (ver /suporte-css) */
   button, input, select, textarea { font-family: var(--font-body, revert); }
 </style>
+<script src="/i18n.js"></script>
 <script src="/theme.js"></script>
 </head>
 <script>
@@ -831,7 +832,7 @@
   
   <div class="topbar" id="topbar-normal">
     <div class="profile-circle" id="profile-btn">
-      <img src="/img/icon-pf.webp" alt="Perfil" id="profile-img">
+      <img src="/img/icon-pf.webp" alt="Perfil" data-i18n-alt="aria.profile" id="profile-img">
       <script>
         // Aplica a foto de perfil guardada em cache local IMEDIATAMENTE, antes
         // mesmo do checkLogin() ir buscar no servidor. Sem isso, todo reload
@@ -844,11 +845,14 @@
         })();
       </script>
     </div>
-    <button class="greeting" id="greeting" type="button" onclick="openNickModal(false)" aria-live="polite" aria-label="Trocar apelido"></button>
-    <button class="theme-btn" id="theme-btn" type="button" onclick="openThemeModal()" aria-label="Mudar tema">
+    <button class="greeting" id="greeting" type="button" onclick="openNickModal(false)" aria-live="polite" aria-label="Trocar apelido" data-i18n-aria-label="aria.greeting"></button>
+    <button class="theme-btn" id="theme-btn" type="button" onclick="openThemeModal()" aria-label="Mudar tema" data-i18n-aria-label="aria.theme">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13.5" cy="6.5" r="1" fill="currentColor"/><circle cx="17.5" cy="10.5" r="1" fill="currentColor"/><circle cx="8.5" cy="7.5" r="1" fill="currentColor"/><circle cx="6.5" cy="12.5" r="1" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.93 0 1.65-.75 1.65-1.69 0-.44-.18-.83-.44-1.12-.29-.29-.44-.65-.44-1.13a1.64 1.64 0 0 1 1.67-1.67h2c3.05 0 5.55-2.5 5.55-5.55C21.97 6.01 17.46 2 12 2z"/></svg>
     </button>
-    <button class="bell-btn" id="bell-btn" onclick="openUpdatesModal()" aria-label="Ver novidades">
+    <button class="theme-btn" id="lang-btn" type="button" onclick="openLangModal()" aria-label="Mudar idioma" data-i18n-aria-label="aria.lang">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M2.5 12h19"/><path d="M12 2.5c2.6 2.7 4 6 4 9.5s-1.4 6.8-4 9.5c-2.6-2.7-4-6-4-9.5s1.4-6.8 4-9.5z"/></svg>
+    </button>
+    <button class="bell-btn" id="bell-btn" onclick="openUpdatesModal()" aria-label="Ver novidades" data-i18n-aria-label="aria.bell">
       <svg width="20" height="20" viewBox="0 0 60 60" fill="none">
         <path d="M30 14 Q20 14 19 26 Q18 34 14 39 Q13 40.5 15 40.5 L45 40.5 Q47 40.5 46 39 Q42 34 41 26 Q40 14 30 14 Z" fill="#6b5589" opacity="0.9"/>
         <path d="M22 26 Q23 18 30 17" stroke="#8a7fa6" stroke-width="1.3" fill="none" stroke-linecap="round"/>
@@ -860,29 +864,29 @@
   </div>
 
   <div class="select-topbar" id="topbar-select">
-    <button class="select-cancel" onclick="exitSelectMode()">Cancelar</button>
+    <button class="select-cancel" onclick="exitSelectMode()" data-i18n="common.cancel">Cancelar</button>
     <span class="select-count" id="select-count">0 selecionados</span>
     <div class="select-all-group">
-      <button class="select-all-btn" onclick="selectAll()">Tudo</button>
-      <button class="select-all-btn" onclick="deselectAll()">Desmarcar</button>
+      <button class="select-all-btn" onclick="selectAll()" data-i18n="common.all">Tudo</button>
+      <button class="select-all-btn" onclick="deselectAll()" data-i18n="common.deselect">Desmarcar</button>
     </div>
     <button class="select-delete" onclick="deleteSelected()">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
-      Apagar
+      <span data-i18n="common.delete">Apagar</span>
     </button>
   </div>
 
   <div class="draft-banner" id="draft-banner">
-    <div class="draft-banner-text">Você tem uma <strong>tradução recente não salva.</strong></div>
+    <div class="draft-banner-text" data-i18n-html="draft.text">Você tem uma <strong>tradução recente não salva.</strong></div>
     <div class="draft-banner-actions">
-      <button class="draft-banner-btn discard" onclick="discardLocalDraft()">Descartar</button>
-      <button class="draft-banner-btn recover" onclick="recoverLocalDraft()">Recuperar</button>
+      <button class="draft-banner-btn discard" onclick="discardLocalDraft()" data-i18n="draft.discard">Descartar</button>
+      <button class="draft-banner-btn recover" onclick="recoverLocalDraft()" data-i18n="draft.recover">Recuperar</button>
     </div>
   </div>
 
   <div class="logo-area">
     <div class="title">beta SIMS 4 TRANSLATOR</div>
-    <div class="subtitle">Tradução de mods .package</div>
+    <div class="subtitle" data-i18n="app.subtitle">Tradução de mods .package</div>
   </div>
 
   <div class="import-area" id="import-area">
@@ -894,18 +898,18 @@
           <polyline points="17 8 12 3 7 8"/>
           <line x1="12" y1="3" x2="12" y2="15"/>
         </svg>
-        IMPORTAR
+        <span data-i18n="home.import">IMPORTAR</span>
       </button>
-      <p class="hint">Selecione um arquivo .package do seu celular</p>
+      <p class="hint" data-i18n="home.import_hint">Selecione um arquivo .package do seu celular</p>
     </div>
     <div id="btn-new-wrap">
       <button class="btn-new fx-press" onclick="document.getElementById('file-input-new').click()">+</button>
       <input type="file" id="file-input-new" accept=".package" style="display:none">
     </div>
-    <button class="btn-merge fx-press" onclick="window.location.href='/merge'">◈ Mesclar vários .packages em um</button>
+    <button class="btn-merge fx-press" onclick="window.location.href='/merge'" data-i18n="home.merge">◈ Mesclar vários .packages em um</button>
     <button class="btn-create fx-press" onclick="window.location.href='/create'">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-      Criar mod do zero
+      <span data-i18n="home.create">Criar mod do zero</span>
     </button>
     <div class="error-msg" id="error-msg"></div>
   </div>
@@ -915,13 +919,13 @@
   </div>
 
   <div id="saves-area" style="display:none;width:100%;max-width:340px;position:relative;z-index:1;">
-    <div class="saves-label">Traduções salvas</div>
+    <div class="saves-label" data-i18n="saves.label">Traduções salvas</div>
     <div class="saves-list" id="saves-list"></div>
   </div>
 
   <!-- Skeleton placeholder (visível enquanto carrega) -->
   <div id="skeleton-area" style="width:100%;max-width:340px;position:relative;z-index:1;">
-    <div class="saves-label">Traduções salvas</div>
+    <div class="saves-label" data-i18n="saves.label">Traduções salvas</div>
     <div class="saves-list" style="display:flex;flex-direction:column;gap:8px;">
       <div class="skeleton-item"><div class="sk-circle"></div><div class="sk-lines"><div class="sk-line"></div><div class="sk-line short"></div></div></div>
       <div class="skeleton-item"><div class="sk-circle"></div><div class="sk-lines"><div class="sk-line" style="width:80%"></div><div class="sk-line short"></div></div></div>
@@ -930,9 +934,9 @@
   </div>
 
   <div class="version">v1.0 · MIT · Voky1 • Remake by AlucardYummy</div>
-  <a class="legal-foot" href="/privacidade">Privacidade e Termos</a>
+  <a class="legal-foot" href="/privacidade" data-i18n="common.privacy">Privacidade e Termos</a>
 
-  <a href="https://github.com/alucardyummy/Sims4AndroidTranslator" target="_blank" rel="noopener" class="github-badge" aria-label="Ver repositório no GitHub">
+  <a href="https://github.com/alucardyummy/Sims4AndroidTranslator" target="_blank" rel="noopener" class="github-badge" aria-label="Ver repositório no GitHub" data-i18n-aria-label="aria.github">
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path fill="currentColor" d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.009-.868-.013-1.703-2.782.604-3.369-1.342-3.369-1.342-.454-1.154-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0 1 12 6.836a9.59 9.59 0 0 1 2.504.337c1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"/>
     </svg>
@@ -952,11 +956,11 @@
 
     <div class="auth-tabs-wrap">
     <div class="auth-tab active tab-visible" id="tab-login">
-      <h3 class="modal-title">Entrar na Conta</h3>
-      <div class="form-group"><label>Nome de Usuário</label><input type="text" class="form-input" id="login-username" placeholder="Seu usuário"></div>
-      <div class="form-group"><label>Senha</label><div class="pw-wrap"><input type="password" class="form-input" id="login-password" placeholder="••••••••"><button type="button" class="pw-eye" onmousedown="event.preventDefault()" onclick="togglePw(this)" aria-label="Mostrar senha" aria-pressed="false"><svg class="eye-on" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 12S5.5 5 12 5s10.5 7 10.5 7-4 7-10.5 7S1.5 12 1.5 12z"/><circle cx="12" cy="12" r="3.2"/></svg><svg class="eye-off" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.6 5.1A10.6 10.6 0 0 1 12 5c6.5 0 10.5 7 10.5 7a17.6 17.6 0 0 1-3.2 3.9"/><path d="M6.4 6.5C3.4 8.3 1.5 12 1.5 12S5.5 19 12 19c1.7 0 3.2-.5 4.5-1.2"/><path d="M9.9 9.9a3.2 3.2 0 0 0 4.2 4.2"/><path d="M3 3l18 18"/></svg></button></div></div>
-      <button class="modal-btn fx-press" onclick="handleLogin()">ENTRAR</button>
-      <div class="auth-divider">ou</div>
+      <h3 class="modal-title" data-i18n="auth.login_title">Entrar na Conta</h3>
+      <div class="form-group"><label data-i18n="auth.username">Nome de Usuário</label><input type="text" class="form-input" id="login-username" placeholder="Seu usuário" data-i18n-placeholder="auth.user_ph"></div>
+      <div class="form-group"><label data-i18n="auth.password">Senha</label><div class="pw-wrap"><input type="password" class="form-input" id="login-password" placeholder="••••••••"><button type="button" class="pw-eye" onmousedown="event.preventDefault()" onclick="togglePw(this)" aria-label="Mostrar senha" data-i18n-aria-label="auth.show_pw" aria-pressed="false"><svg class="eye-on" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 12S5.5 5 12 5s10.5 7 10.5 7-4 7-10.5 7S1.5 12 1.5 12z"/><circle cx="12" cy="12" r="3.2"/></svg><svg class="eye-off" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.6 5.1A10.6 10.6 0 0 1 12 5c6.5 0 10.5 7 10.5 7a17.6 17.6 0 0 1-3.2 3.9"/><path d="M6.4 6.5C3.4 8.3 1.5 12 1.5 12S5.5 19 12 19c1.7 0 3.2-.5 4.5-1.2"/><path d="M9.9 9.9a3.2 3.2 0 0 0 4.2 4.2"/><path d="M3 3l18 18"/></svg></button></div></div>
+      <button class="modal-btn fx-press" onclick="handleLogin()" data-i18n="auth.login_btn">ENTRAR</button>
+      <div class="auth-divider" data-i18n="auth.or">ou</div>
       <button class="google-btn fx-press" onclick="handleGoogleLogin()">
         <svg width="22" height="22" viewBox="-4 -4 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
           <defs>
@@ -973,72 +977,72 @@
                 stroke="url(#gg)" stroke-width="3" fill="none"
                 stroke-linecap="butt" stroke-linejoin="miter"/>
         </svg>
-        ENTRAR COM GOOGLE
+        <span data-i18n="auth.google">ENTRAR COM GOOGLE</span>
       </button>
-      <p class="modal-switch" onclick="switchTab('forgot')"><span>Esqueceu a senha?</span></p>
-      <p class="modal-switch" onclick="switchTab('register')">Não tem conta? <span>Cadastre-se</span></p>
+      <p class="modal-switch" onclick="switchTab('forgot')"><span data-i18n="auth.forgot_link">Esqueceu a senha?</span></p>
+      <p class="modal-switch" onclick="switchTab('register')" data-i18n-html="auth.no_account">Não tem conta? <span>Cadastre-se</span></p>
     </div>
 
     <div class="auth-tab" id="tab-register">
-      <h3 class="modal-title">Criar Conta</h3>
-      <div class="form-group"><label>Nome de Usuário</label><input type="text" class="form-input" id="reg-username" placeholder="Ex: Alucard"></div>
-      <div class="form-group"><label>Senha</label><div class="pw-wrap"><input type="password" class="form-input" id="reg-password" placeholder="Mínimo 6 caracteres"><button type="button" class="pw-eye" onmousedown="event.preventDefault()" onclick="togglePw(this)" aria-label="Mostrar senha" aria-pressed="false"><svg class="eye-on" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 12S5.5 5 12 5s10.5 7 10.5 7-4 7-10.5 7S1.5 12 1.5 12z"/><circle cx="12" cy="12" r="3.2"/></svg><svg class="eye-off" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.6 5.1A10.6 10.6 0 0 1 12 5c6.5 0 10.5 7 10.5 7a17.6 17.6 0 0 1-3.2 3.9"/><path d="M6.4 6.5C3.4 8.3 1.5 12 1.5 12S5.5 19 12 19c1.7 0 3.2-.5 4.5-1.2"/><path d="M9.9 9.9a3.2 3.2 0 0 0 4.2 4.2"/><path d="M3 3l18 18"/></svg></button></div></div>
+      <h3 class="modal-title" data-i18n="auth.register_title">Criar Conta</h3>
+      <div class="form-group"><label data-i18n="auth.username">Nome de Usuário</label><input type="text" class="form-input" id="reg-username" placeholder="Ex: Alucard" data-i18n-placeholder="auth.reg_user_ph"></div>
+      <div class="form-group"><label data-i18n="auth.password">Senha</label><div class="pw-wrap"><input type="password" class="form-input" id="reg-password" placeholder="Mínimo 6 caracteres" data-i18n-placeholder="auth.reg_pw_ph"><button type="button" class="pw-eye" onmousedown="event.preventDefault()" onclick="togglePw(this)" aria-label="Mostrar senha" data-i18n-aria-label="auth.show_pw" aria-pressed="false"><svg class="eye-on" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 12S5.5 5 12 5s10.5 7 10.5 7-4 7-10.5 7S1.5 12 1.5 12z"/><circle cx="12" cy="12" r="3.2"/></svg><svg class="eye-off" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.6 5.1A10.6 10.6 0 0 1 12 5c6.5 0 10.5 7 10.5 7a17.6 17.6 0 0 1-3.2 3.9"/><path d="M6.4 6.5C3.4 8.3 1.5 12 1.5 12S5.5 19 12 19c1.7 0 3.2-.5 4.5-1.2"/><path d="M9.9 9.9a3.2 3.2 0 0 0 4.2 4.2"/><path d="M3 3l18 18"/></svg></button></div></div>
       <div class="form-group">
-        <label>Pergunta de Segurança</label>
+        <label data-i18n="auth.secq_label">Pergunta de Segurança</label>
         <input type="hidden" id="reg-question" value="Nome do primeiro animalzinho">
         <div class="custom-select" id="reg-q-wrap">
           <button type="button" class="custom-select-btn" onclick="toggleDropdown('reg-q-drop', this)">
-            <span id="reg-q-label">Nome do primeiro animalzinho</span>
+            <span id="reg-q-label" data-i18n="secq.1">Nome do primeiro animalzinho</span>
             <svg class="cs-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
           <div class="custom-select-drop" id="reg-q-drop">
-            <div class="cs-option selected" onclick="pickOption('reg-question','reg-q-label','reg-q-drop',this)"><svg class="cs-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><ellipse cx="12" cy="14" rx="7" ry="6" fill="#c4aee8" opacity="0.85"/><ellipse cx="12" cy="14" rx="5" ry="4" fill="#b89cd9" opacity="0.6"/><path d="M8 14 Q7 10 9 8 Q10 6 12 6 Q14 6 15 8 Q17 10 16 14" stroke="#d4bef0" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M9 16 Q7 19 5 20" stroke="#c4aee8" stroke-width="1.2" stroke-linecap="round"/><path d="M11 17 Q10 20 9 22" stroke="#b89cd9" stroke-width="1.2" stroke-linecap="round"/><path d="M13 17 Q14 20 15 22" stroke="#c4aee8" stroke-width="1.2" stroke-linecap="round"/><path d="M15 16 Q17 19 19 20" stroke="#b89cd9" stroke-width="1.2" stroke-linecap="round"/></svg>Nome do primeiro animalzinho</div>
-            <div class="cs-option" onclick="pickOption('reg-question','reg-q-label','reg-q-drop',this)"><svg class="cs-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="8" cy="14" r="7" fill="#c4aee8"/><circle cx="6" cy="12" r="1.8" fill="white" opacity="0.5"/><circle cx="17" cy="10" r="4.5" fill="#d4bef0"/><circle cx="15.5" cy="8.5" r="1.1" fill="white" opacity="0.5"/><circle cx="21" cy="17" r="2.5" fill="#b89cd9"/><circle cx="20.2" cy="16.2" r="0.6" fill="white" opacity="0.55"/></svg>Nome da cidade natal</div>
-            <div class="cs-option" onclick="pickOption('reg-question','reg-q-label','reg-q-drop',this)"><svg class="cs-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 8 Q7 5 12 5 Q17 5 18 8 L17 14 Q16 17 12 17 Q8 17 7 14 Z" fill="#c4aee8" opacity="0.85"/><path d="M9 17 Q9 19 10 20 L14 20 Q15 19 15 17" fill="#b89cd9" opacity="0.7"/><rect x="9" y="19.5" width="6" height="1.5" rx="0.75" fill="#b89cd9"/><path d="M8 8 Q9 6.5 12 6.5 Q15 6.5 16 8" stroke="#d4bef0" stroke-width="1" fill="none" stroke-linecap="round"/><path d="M7 5 Q7 3 9 2.5" stroke="#c4aee8" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M17 5 Q17 3 15 2.5" stroke="#c4aee8" stroke-width="1.2" fill="none" stroke-linecap="round"/></svg>Desenho favorito</div>
-            <div class="cs-option" onclick="pickOption('reg-question','reg-q-label','reg-q-drop',this)"><svg class="cs-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><polyline transform="translate(12,12)" stroke="#b89cd9" stroke-width="1.1" fill="none" stroke-linecap="round" stroke-linejoin="round" points="0.1,0.3 0.6,-0.3 0.4,-1.0 -0.2,-1.4 -0.9,-1.3 -1.5,-0.7 -1.6,0.1 -1.3,0.9 -0.6,1.6 0.3,2.0 1.3,2.1 2.3,1.7 3.0,0.8 3.3,-0.3 3.1,-1.5 2.4,-2.6 1.3,-3.4 -0.1,-3.9 -1.6,-4.0 -3.0,-3.6 -4.2,-2.7 -5.0,-1.4 -5.3,0.1 -5.1,1.8 -4.3,3.3 -3.0,4.5 -1.3,5.3 0.6,5.6 2.6,5.3 4.4,4.5 5.8,3.1 6.7,1.4 7.0,-0.6 6.7,-2.6 5.8,-4.4 4.4,-5.9 2.5,-6.9 0.3,-7.4 -2.0,-7.3 -4.2,-6.6 -6.0,-5.3 -7.3,-3.6 -8.1,-1.5 -8.2,0.7 -7.7,2.9 -6.6,4.8 -5.0,6.3 -3.0,7.3 -0.7,7.8 1.7,7.6"/></polyline></svg>Comidinha favorita</div>
+            <div class="cs-option selected" data-value="Nome do primeiro animalzinho" onclick="pickOption('reg-question','reg-q-label','reg-q-drop',this)"><svg class="cs-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><ellipse cx="12" cy="14" rx="7" ry="6" fill="#c4aee8" opacity="0.85"/><ellipse cx="12" cy="14" rx="5" ry="4" fill="#b89cd9" opacity="0.6"/><path d="M8 14 Q7 10 9 8 Q10 6 12 6 Q14 6 15 8 Q17 10 16 14" stroke="#d4bef0" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M9 16 Q7 19 5 20" stroke="#c4aee8" stroke-width="1.2" stroke-linecap="round"/><path d="M11 17 Q10 20 9 22" stroke="#b89cd9" stroke-width="1.2" stroke-linecap="round"/><path d="M13 17 Q14 20 15 22" stroke="#c4aee8" stroke-width="1.2" stroke-linecap="round"/><path d="M15 16 Q17 19 19 20" stroke="#b89cd9" stroke-width="1.2" stroke-linecap="round"/></svg><span data-i18n="secq.1">Nome do primeiro animalzinho</span></div>
+            <div class="cs-option" data-value="Nome da cidade natal" onclick="pickOption('reg-question','reg-q-label','reg-q-drop',this)"><svg class="cs-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="8" cy="14" r="7" fill="#c4aee8"/><circle cx="6" cy="12" r="1.8" fill="white" opacity="0.5"/><circle cx="17" cy="10" r="4.5" fill="#d4bef0"/><circle cx="15.5" cy="8.5" r="1.1" fill="white" opacity="0.5"/><circle cx="21" cy="17" r="2.5" fill="#b89cd9"/><circle cx="20.2" cy="16.2" r="0.6" fill="white" opacity="0.55"/></svg><span data-i18n="secq.2">Nome da cidade natal</span></div>
+            <div class="cs-option" data-value="Desenho favorito" onclick="pickOption('reg-question','reg-q-label','reg-q-drop',this)"><svg class="cs-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 8 Q7 5 12 5 Q17 5 18 8 L17 14 Q16 17 12 17 Q8 17 7 14 Z" fill="#c4aee8" opacity="0.85"/><path d="M9 17 Q9 19 10 20 L14 20 Q15 19 15 17" fill="#b89cd9" opacity="0.7"/><rect x="9" y="19.5" width="6" height="1.5" rx="0.75" fill="#b89cd9"/><path d="M8 8 Q9 6.5 12 6.5 Q15 6.5 16 8" stroke="#d4bef0" stroke-width="1" fill="none" stroke-linecap="round"/><path d="M7 5 Q7 3 9 2.5" stroke="#c4aee8" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M17 5 Q17 3 15 2.5" stroke="#c4aee8" stroke-width="1.2" fill="none" stroke-linecap="round"/></svg><span data-i18n="secq.3">Desenho favorito</span></div>
+            <div class="cs-option" data-value="Comidinha favorita" onclick="pickOption('reg-question','reg-q-label','reg-q-drop',this)"><svg class="cs-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><polyline transform="translate(12,12)" stroke="#b89cd9" stroke-width="1.1" fill="none" stroke-linecap="round" stroke-linejoin="round" points="0.1,0.3 0.6,-0.3 0.4,-1.0 -0.2,-1.4 -0.9,-1.3 -1.5,-0.7 -1.6,0.1 -1.3,0.9 -0.6,1.6 0.3,2.0 1.3,2.1 2.3,1.7 3.0,0.8 3.3,-0.3 3.1,-1.5 2.4,-2.6 1.3,-3.4 -0.1,-3.9 -1.6,-4.0 -3.0,-3.6 -4.2,-2.7 -5.0,-1.4 -5.3,0.1 -5.1,1.8 -4.3,3.3 -3.0,4.5 -1.3,5.3 0.6,5.6 2.6,5.3 4.4,4.5 5.8,3.1 6.7,1.4 7.0,-0.6 6.7,-2.6 5.8,-4.4 4.4,-5.9 2.5,-6.9 0.3,-7.4 -2.0,-7.3 -4.2,-6.6 -6.0,-5.3 -7.3,-3.6 -8.1,-1.5 -8.2,0.7 -7.7,2.9 -6.6,4.8 -5.0,6.3 -3.0,7.3 -0.7,7.8 1.7,7.6"/></polyline></svg><span data-i18n="secq.4">Comidinha favorita</span></div>
           </div>
         </div>
       </div>
-      <div class="form-group"><label>Resposta Secreta</label><input type="text" class="form-input" id="reg-answer" placeholder="Sua resposta secreta"></div>
-      <button class="modal-btn fx-press" onclick="handleRegister()">CRIAR CONTA</button>
-      <p class="legal-note">Ao criar sua conta, você aceita os <a href="/privacidade#termos" target="_blank" rel="noopener">Termos de Uso</a> e a <a href="/privacidade" target="_blank" rel="noopener">Política de Privacidade</a>.</p>
-      <p class="modal-switch" onclick="switchTab('login')">Já tem uma conta? <span>Entrar</span></p>
+      <div class="form-group"><label data-i18n="auth.answer">Resposta Secreta</label><input type="text" class="form-input" id="reg-answer" placeholder="Sua resposta secreta" data-i18n-placeholder="auth.answer_ph"></div>
+      <button class="modal-btn fx-press" onclick="handleRegister()" data-i18n="auth.register_btn">CRIAR CONTA</button>
+      <p class="legal-note" data-i18n-html="auth.register_legal">Ao criar sua conta, você aceita os <a href="/privacidade#termos" target="_blank" rel="noopener">Termos de Uso</a> e a <a href="/privacidade" target="_blank" rel="noopener">Política de Privacidade</a>.</p>
+      <p class="modal-switch" onclick="switchTab('login')" data-i18n-html="auth.has_account">Já tem uma conta? <span>Entrar</span></p>
     </div>
 
     <div class="auth-tab" id="tab-forgot">
-      <h3 class="modal-title">Recuperar Senha</h3>
-      <p style="font-size:12px;color:#1b1047;margin-bottom:1rem;line-height:1.4;font-weight:500;">Confirme seus dados e responda sua pergunta para redefinir a senha.</p>
-      <div class="form-group"><label>Usuário</label><input type="text" class="form-input" id="forgot-username" placeholder="Seu usuário"></div>
+      <h3 class="modal-title" data-i18n="auth.forgot_title">Recuperar Senha</h3>
+      <p style="font-size:12px;color:#1b1047;margin-bottom:1rem;line-height:1.4;font-weight:500;" data-i18n="auth.forgot_intro">Confirme seus dados e responda sua pergunta para redefinir a senha.</p>
+      <div class="form-group"><label data-i18n="auth.user_short">Usuário</label><input type="text" class="form-input" id="forgot-username" placeholder="Seu usuário" data-i18n-placeholder="auth.user_ph"></div>
       <div class="form-group">
-        <label>Selecione a sua Pergunta</label>
+        <label data-i18n="auth.secq_select">Selecione a sua Pergunta</label>
         <input type="hidden" id="forgot-question" value="Nome do primeiro animalzinho">
         <div class="custom-select" id="forgot-q-wrap">
           <button type="button" class="custom-select-btn" onclick="toggleDropdown('forgot-q-drop', this)">
-            <span id="forgot-q-label">Nome do primeiro animalzinho</span>
+            <span id="forgot-q-label" data-i18n="secq.1">Nome do primeiro animalzinho</span>
             <svg class="cs-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
           <div class="custom-select-drop" id="forgot-q-drop">
-            <div class="cs-option selected" onclick="pickOption('forgot-question','forgot-q-label','forgot-q-drop',this)"><svg class="cs-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><ellipse cx="12" cy="14" rx="7" ry="6" fill="#c4aee8" opacity="0.85"/><ellipse cx="12" cy="14" rx="5" ry="4" fill="#b89cd9" opacity="0.6"/><path d="M8 14 Q7 10 9 8 Q10 6 12 6 Q14 6 15 8 Q17 10 16 14" stroke="#d4bef0" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M9 16 Q7 19 5 20" stroke="#c4aee8" stroke-width="1.2" stroke-linecap="round"/><path d="M11 17 Q10 20 9 22" stroke="#b89cd9" stroke-width="1.2" stroke-linecap="round"/><path d="M13 17 Q14 20 15 22" stroke="#c4aee8" stroke-width="1.2" stroke-linecap="round"/><path d="M15 16 Q17 19 19 20" stroke="#b89cd9" stroke-width="1.2" stroke-linecap="round"/></svg>Nome do primeiro animalzinho</div>
-            <div class="cs-option" onclick="pickOption('forgot-question','forgot-q-label','forgot-q-drop',this)"><svg class="cs-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="8" cy="14" r="7" fill="#c4aee8"/><circle cx="6" cy="12" r="1.8" fill="white" opacity="0.5"/><circle cx="17" cy="10" r="4.5" fill="#d4bef0"/><circle cx="15.5" cy="8.5" r="1.1" fill="white" opacity="0.5"/><circle cx="21" cy="17" r="2.5" fill="#b89cd9"/><circle cx="20.2" cy="16.2" r="0.6" fill="white" opacity="0.55"/></svg>Nome da cidade natal</div>
-            <div class="cs-option" onclick="pickOption('forgot-question','forgot-q-label','forgot-q-drop',this)"><svg class="cs-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 8 Q7 5 12 5 Q17 5 18 8 L17 14 Q16 17 12 17 Q8 17 7 14 Z" fill="#c4aee8" opacity="0.85"/><path d="M9 17 Q9 19 10 20 L14 20 Q15 19 15 17" fill="#b89cd9" opacity="0.7"/><rect x="9" y="19.5" width="6" height="1.5" rx="0.75" fill="#b89cd9"/><path d="M8 8 Q9 6.5 12 6.5 Q15 6.5 16 8" stroke="#d4bef0" stroke-width="1" fill="none" stroke-linecap="round"/><path d="M7 5 Q7 3 9 2.5" stroke="#c4aee8" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M17 5 Q17 3 15 2.5" stroke="#c4aee8" stroke-width="1.2" fill="none" stroke-linecap="round"/></svg>Desenho favorito</div>
-            <div class="cs-option" onclick="pickOption('forgot-question','forgot-q-label','forgot-q-drop',this)"><svg class="cs-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><polyline transform="translate(12,12)" stroke="#b89cd9" stroke-width="1.1" fill="none" stroke-linecap="round" stroke-linejoin="round" points="0.1,0.3 0.6,-0.3 0.4,-1.0 -0.2,-1.4 -0.9,-1.3 -1.5,-0.7 -1.6,0.1 -1.3,0.9 -0.6,1.6 0.3,2.0 1.3,2.1 2.3,1.7 3.0,0.8 3.3,-0.3 3.1,-1.5 2.4,-2.6 1.3,-3.4 -0.1,-3.9 -1.6,-4.0 -3.0,-3.6 -4.2,-2.7 -5.0,-1.4 -5.3,0.1 -5.1,1.8 -4.3,3.3 -3.0,4.5 -1.3,5.3 0.6,5.6 2.6,5.3 4.4,4.5 5.8,3.1 6.7,1.4 7.0,-0.6 6.7,-2.6 5.8,-4.4 4.4,-5.9 2.5,-6.9 0.3,-7.4 -2.0,-7.3 -4.2,-6.6 -6.0,-5.3 -7.3,-3.6 -8.1,-1.5 -8.2,0.7 -7.7,2.9 -6.6,4.8 -5.0,6.3 -3.0,7.3 -0.7,7.8 1.7,7.6"/></polyline></svg>Comidinha favorita</div>
+            <div class="cs-option selected" data-value="Nome do primeiro animalzinho" onclick="pickOption('forgot-question','forgot-q-label','forgot-q-drop',this)"><svg class="cs-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><ellipse cx="12" cy="14" rx="7" ry="6" fill="#c4aee8" opacity="0.85"/><ellipse cx="12" cy="14" rx="5" ry="4" fill="#b89cd9" opacity="0.6"/><path d="M8 14 Q7 10 9 8 Q10 6 12 6 Q14 6 15 8 Q17 10 16 14" stroke="#d4bef0" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M9 16 Q7 19 5 20" stroke="#c4aee8" stroke-width="1.2" stroke-linecap="round"/><path d="M11 17 Q10 20 9 22" stroke="#b89cd9" stroke-width="1.2" stroke-linecap="round"/><path d="M13 17 Q14 20 15 22" stroke="#c4aee8" stroke-width="1.2" stroke-linecap="round"/><path d="M15 16 Q17 19 19 20" stroke="#b89cd9" stroke-width="1.2" stroke-linecap="round"/></svg><span data-i18n="secq.1">Nome do primeiro animalzinho</span></div>
+            <div class="cs-option" data-value="Nome da cidade natal" onclick="pickOption('forgot-question','forgot-q-label','forgot-q-drop',this)"><svg class="cs-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="8" cy="14" r="7" fill="#c4aee8"/><circle cx="6" cy="12" r="1.8" fill="white" opacity="0.5"/><circle cx="17" cy="10" r="4.5" fill="#d4bef0"/><circle cx="15.5" cy="8.5" r="1.1" fill="white" opacity="0.5"/><circle cx="21" cy="17" r="2.5" fill="#b89cd9"/><circle cx="20.2" cy="16.2" r="0.6" fill="white" opacity="0.55"/></svg><span data-i18n="secq.2">Nome da cidade natal</span></div>
+            <div class="cs-option" data-value="Desenho favorito" onclick="pickOption('forgot-question','forgot-q-label','forgot-q-drop',this)"><svg class="cs-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 8 Q7 5 12 5 Q17 5 18 8 L17 14 Q16 17 12 17 Q8 17 7 14 Z" fill="#c4aee8" opacity="0.85"/><path d="M9 17 Q9 19 10 20 L14 20 Q15 19 15 17" fill="#b89cd9" opacity="0.7"/><rect x="9" y="19.5" width="6" height="1.5" rx="0.75" fill="#b89cd9"/><path d="M8 8 Q9 6.5 12 6.5 Q15 6.5 16 8" stroke="#d4bef0" stroke-width="1" fill="none" stroke-linecap="round"/><path d="M7 5 Q7 3 9 2.5" stroke="#c4aee8" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M17 5 Q17 3 15 2.5" stroke="#c4aee8" stroke-width="1.2" fill="none" stroke-linecap="round"/></svg><span data-i18n="secq.3">Desenho favorito</span></div>
+            <div class="cs-option" data-value="Comidinha favorita" onclick="pickOption('forgot-question','forgot-q-label','forgot-q-drop',this)"><svg class="cs-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><polyline transform="translate(12,12)" stroke="#b89cd9" stroke-width="1.1" fill="none" stroke-linecap="round" stroke-linejoin="round" points="0.1,0.3 0.6,-0.3 0.4,-1.0 -0.2,-1.4 -0.9,-1.3 -1.5,-0.7 -1.6,0.1 -1.3,0.9 -0.6,1.6 0.3,2.0 1.3,2.1 2.3,1.7 3.0,0.8 3.3,-0.3 3.1,-1.5 2.4,-2.6 1.3,-3.4 -0.1,-3.9 -1.6,-4.0 -3.0,-3.6 -4.2,-2.7 -5.0,-1.4 -5.3,0.1 -5.1,1.8 -4.3,3.3 -3.0,4.5 -1.3,5.3 0.6,5.6 2.6,5.3 4.4,4.5 5.8,3.1 6.7,1.4 7.0,-0.6 6.7,-2.6 5.8,-4.4 4.4,-5.9 2.5,-6.9 0.3,-7.4 -2.0,-7.3 -4.2,-6.6 -6.0,-5.3 -7.3,-3.6 -8.1,-1.5 -8.2,0.7 -7.7,2.9 -6.6,4.8 -5.0,6.3 -3.0,7.3 -0.7,7.8 1.7,7.6"/></polyline></svg><span data-i18n="secq.4">Comidinha favorita</span></div>
           </div>
         </div>
       </div>
-      <div class="form-group"><label>Resposta Secreta</label><input type="text" class="form-input" id="forgot-answer" placeholder="Digite a resposta cadastrada"></div>
-      <div class="form-group"><label>Nova Senha</label><div class="pw-wrap"><input type="password" class="form-input" id="forgot-new-password" placeholder="Nova senha"><button type="button" class="pw-eye" onmousedown="event.preventDefault()" onclick="togglePw(this)" aria-label="Mostrar senha" aria-pressed="false"><svg class="eye-on" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 12S5.5 5 12 5s10.5 7 10.5 7-4 7-10.5 7S1.5 12 1.5 12z"/><circle cx="12" cy="12" r="3.2"/></svg><svg class="eye-off" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.6 5.1A10.6 10.6 0 0 1 12 5c6.5 0 10.5 7 10.5 7a17.6 17.6 0 0 1-3.2 3.9"/><path d="M6.4 6.5C3.4 8.3 1.5 12 1.5 12S5.5 19 12 19c1.7 0 3.2-.5 4.5-1.2"/><path d="M9.9 9.9a3.2 3.2 0 0 0 4.2 4.2"/><path d="M3 3l18 18"/></svg></button></div></div>
-      <button class="modal-btn fx-press" onclick="handleForgotPassword()">ALTERAR SENHA</button>
-      <p class="modal-switch" onclick="switchTab('login')">Voltar para o <span>Login</span></p>
+      <div class="form-group"><label data-i18n="auth.answer">Resposta Secreta</label><input type="text" class="form-input" id="forgot-answer" placeholder="Digite a resposta cadastrada" data-i18n-placeholder="auth.forgot_answer_ph"></div>
+      <div class="form-group"><label data-i18n="auth.new_pw">Nova Senha</label><div class="pw-wrap"><input type="password" class="form-input" id="forgot-new-password" placeholder="Nova senha" data-i18n-placeholder="auth.new_pw_ph"><button type="button" class="pw-eye" onmousedown="event.preventDefault()" onclick="togglePw(this)" aria-label="Mostrar senha" data-i18n-aria-label="auth.show_pw" aria-pressed="false"><svg class="eye-on" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 12S5.5 5 12 5s10.5 7 10.5 7-4 7-10.5 7S1.5 12 1.5 12z"/><circle cx="12" cy="12" r="3.2"/></svg><svg class="eye-off" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.6 5.1A10.6 10.6 0 0 1 12 5c6.5 0 10.5 7 10.5 7a17.6 17.6 0 0 1-3.2 3.9"/><path d="M6.4 6.5C3.4 8.3 1.5 12 1.5 12S5.5 19 12 19c1.7 0 3.2-.5 4.5-1.2"/><path d="M9.9 9.9a3.2 3.2 0 0 0 4.2 4.2"/><path d="M3 3l18 18"/></svg></button></div></div>
+      <button class="modal-btn fx-press" onclick="handleForgotPassword()" data-i18n="auth.forgot_btn">ALTERAR SENHA</button>
+      <p class="modal-switch" onclick="switchTab('login')" data-i18n-html="auth.back_login">Voltar para o <span>Login</span></p>
     </div>
     </div><!-- /auth-tabs-wrap -->
 
   </div></div><div class="modal-overlay" id="profile-modal" onclick="if(event.target===this)closeProfileModal()">
   <div class="modal-box">
     <button class="modal-close" onclick="closeProfileModal()">✕</button>
-    <h3 class="modal-title">Meu Perfil</h3>
+    <h3 class="modal-title" data-i18n="profile.title">Meu Perfil</h3>
     <div style="text-align:center;margin-bottom:1rem">
       
-      <label for="edit-profile-pic" style="position:relative; display:inline-block; margin:0 auto 10px; cursor:pointer;" title="Trocar foto">
+      <label for="edit-profile-pic" style="position:relative; display:inline-block; margin:0 auto 10px; cursor:pointer;" title="Trocar foto" data-i18n-title="title.change_photo">
         
         <div style="width:64px;height:64px;border-radius:50%;overflow:hidden;border:1px solid var(--border);">
           <img src="/img/icon-pf.webp" id="modal-profile-img" draggable="false" oncontextmenu="return false;" style="width:100%;height:100%;object-fit:cover; pointer-events:none; -webkit-touch-callout:none; user-select:none;">
@@ -1054,40 +1058,40 @@
       </label>
       
     </div>
-    <div class="form-group"><label>Nome de Usuário</label><input type="text" class="form-input" id="edit-username"></div>
-    <div class="form-group"><label>Apelido (máx. 8 caracteres)</label><input type="text" class="form-input" id="edit-nickname" maxlength="8" autocomplete="off" autocapitalize="words" spellcheck="false" placeholder="Como a gente te chama?"></div>
+    <div class="form-group"><label data-i18n="auth.username">Nome de Usuário</label><input type="text" class="form-input" id="edit-username"></div>
+    <div class="form-group"><label data-i18n="profile.nickname">Apelido (máx. 8 caracteres)</label><input type="text" class="form-input" id="edit-nickname" maxlength="8" autocomplete="off" autocapitalize="words" spellcheck="false" placeholder="Como a gente te chama?" data-i18n-placeholder="profile.nickname_ph"></div>
     <div class="form-group">
-      <label>Foto de Perfil</label>
+      <label data-i18n="profile.photo">Foto de Perfil</label>
       <input type="file" id="edit-profile-pic" accept="image/*" style="display:none">
-      <button type="button" class="form-input" style="cursor:pointer;text-align:center;" onclick="document.getElementById('edit-profile-pic').click()">Escolher imagem :3</button>
+      <button type="button" class="form-input" style="cursor:pointer;text-align:center;" onclick="document.getElementById('edit-profile-pic').click()" data-i18n="profile.photo_btn">Escolher imagem :3</button>
     </div>
     <details class="css-box" id="css-box">
-      <summary>CSS personalizado</summary>
+      <summary data-i18n="css.summary">CSS personalizado</summary>
       <div class="css-inner">
-        <p class="css-help">Muda a aparência do site todo, só pra você. Cole só CSS de quem você confia. Dica: <code>:root { --accent: #ff7eb6; }</code> troca a cor de destaque em todas as telas, e <code>[data-page="editor"] body { ... }</code> mira uma tela só. Se algo não mudar, tente <code>!important</code>. Se alguma coisa sumir, abra o site com <code>?safe=1</code> no final do link. Sem querer mexer em código? <a href="/montar-tema" target="_blank" style="color:inherit;text-decoration:underline;font-weight:600">Monte seu tema</a>. Precisa de ajuda? <a href="/suporte-css" target="_blank" style="color:inherit;text-decoration:underline;font-weight:600">Guia do CSS</a>.</p>
+        <p class="css-help" data-i18n-html="css.help">Muda a aparência do site todo, só pra você. Cole só CSS de quem você confia. Dica: <code>:root { --accent: #ff7eb6; }</code> troca a cor de destaque em todas as telas, e <code>[data-page="editor"] body { ... }</code> mira uma tela só. Se algo não mudar, tente <code>!important</code>. Se alguma coisa sumir, abra o site com <code>?safe=1</code> no final do link. Sem querer mexer em código? <a href="/montar-tema" target="_blank" style="color:inherit;text-decoration:underline;font-weight:600">Monte seu tema</a>. Precisa de ajuda? <a href="/suporte-css" target="_blank" style="color:inherit;text-decoration:underline;font-weight:600">Guia do CSS</a>.</p>
         <textarea id="edit-css" class="form-input css-area" rows="9" spellcheck="false" autocomplete="off" autocapitalize="off" autocorrect="off" placeholder=":root {&#10;  --accent: #ff7eb6;&#10;}"></textarea>
         <div class="css-meta"><span id="css-status"></span><span id="css-count">0/20000</span></div>
         <div class="css-actions">
-          <button type="button" class="css-btn" onclick="previewCss()">Aplicar</button>
-          <button type="button" class="css-btn css-btn-main" onclick="saveCss()">Salvar CSS</button>
-          <button type="button" class="css-btn" onclick="copyCss()">Copiar</button>
+          <button type="button" class="css-btn" onclick="previewCss()" data-i18n="css.apply">Aplicar</button>
+          <button type="button" class="css-btn css-btn-main" onclick="saveCss()" data-i18n="css.save">Salvar CSS</button>
+          <button type="button" class="css-btn" onclick="copyCss()" data-i18n="css.copy">Copiar</button>
         </div>
-        <button type="button" class="css-btn css-danger" onclick="askRestoreCss()">RESTAURAR PADRÃO</button>
+        <button type="button" class="css-btn css-danger" onclick="askRestoreCss()" data-i18n="css.restore">RESTAURAR PADRÃO</button>
       </div>
     </details>
-    <button class="modal-btn fx-press" onclick="saveProfile()">SALVAR ALTERAÇÕES</button>
-    <button class="modal-btn fx-press" style="background:transparent;border:1px solid #b89cd9;color:#413d57;margin-top:10px" onclick="handleLogout()">SAIR DA CONTA</button>
-    <button type="button" class="del-link" onclick="openDeleteModal()">Excluir minha conta</button>
-    <a class="legal-foot" href="/privacidade" target="_blank" rel="noopener">Privacidade e Termos</a>
+    <button class="modal-btn fx-press" onclick="saveProfile()" data-i18n="profile.save">SALVAR ALTERAÇÕES</button>
+    <button class="modal-btn fx-press" style="background:transparent;border:1px solid #b89cd9;color:#413d57;margin-top:10px" onclick="handleLogout()" data-i18n="profile.logout">SAIR DA CONTA</button>
+    <button type="button" class="del-link" onclick="openDeleteModal()" data-i18n="delete.link">Excluir minha conta</button>
+    <a class="legal-foot" href="/privacidade" target="_blank" rel="noopener" data-i18n="common.privacy">Privacidade e Termos</a>
   </div></div><div class="modal-overlay" id="delete-modal" onclick="if(event.target===this)closeDeleteModal()">
   <div class="modal-box">
     <button class="modal-close" onclick="closeDeleteModal()">✕</button>
-    <h3 class="modal-title" id="del-title">Excluir conta</h3>
+    <h3 class="modal-title" id="del-title" data-i18n="delete.title">Excluir conta</h3>
     <div id="del-form">
-      <p class="del-text">Isso apaga sua conta, seus projetos, arquivos, notificações, tema e CSS (seus temas personalizados, se tiver).</p>
+      <p class="del-text" data-i18n="delete.warn">Isso apaga sua conta, seus projetos, arquivos, notificações, tema e CSS (seus temas personalizados, se tiver).</p>
       <p class="del-text" id="del-info"></p>
-      <div class="form-group" id="del-pass-group"><label for="del-password">Senha</label><input type="password" class="form-input" id="del-password" autocomplete="current-password"></div>
-      <div class="form-group" id="del-user-group" style="display:none"><label for="del-username">Nome de usuário</label><input type="text" class="form-input" id="del-username" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
+      <div class="form-group" id="del-pass-group"><label for="del-password" data-i18n="auth.password">Senha</label><input type="password" class="form-input" id="del-password" autocomplete="current-password"></div>
+      <div class="form-group" id="del-user-group" style="display:none"><label for="del-username" data-i18n="auth.username">Nome de usuário</label><input type="text" class="form-input" id="del-username" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
       <div class="form-group"><label for="del-word" id="del-word-label"></label><input type="text" class="form-input" id="del-word" autocomplete="off" autocapitalize="characters" spellcheck="false"></div>
       <p class="del-error" id="del-error"></p>
       <button class="modal-btn fx-press" id="del-go" onclick="submitDelete()"></button>
@@ -1101,33 +1105,33 @@
 </div>
 <div class="modal-overlay" id="restore-modal">
   <div class="modal-box">
-    <h3 class="modal-title">Sua conta está marcada para exclusão</h3>
+    <h3 class="modal-title" data-i18n="restore.title">Sua conta está marcada para exclusão</h3>
     <p class="del-text" id="restore-text"></p>
-    <button class="modal-btn fx-press" onclick="restoreAccount()">RESTAURAR MINHA CONTA</button>
-    <button class="modal-btn fx-press" style="background:transparent;border:1px solid #b89cd9;color:#413d57;margin-top:10px" onclick="handleLogout()">CONTINUAR COM A EXCLUSÃO</button>
+    <button class="modal-btn fx-press" onclick="restoreAccount()" data-i18n="restore.btn">RESTAURAR MINHA CONTA</button>
+    <button class="modal-btn fx-press" style="background:transparent;border:1px solid #b89cd9;color:#413d57;margin-top:10px" onclick="handleLogout()" data-i18n="restore.continue">CONTINUAR COM A EXCLUSÃO</button>
   </div>
 </div>
 <div class="modal-overlay" id="updates-modal" onclick="if(event.target===this)closeUpdatesModal()">
   <div class="modal-box">
     <div id="updates-header-normal">
       <button class="modal-close" onclick="closeUpdatesModal()">✕</button>
-      <h3 class="modal-title">Novidades</h3>
+      <h3 class="modal-title" data-i18n="updates.title">Novidades</h3>
     </div>
     <div class="updates-select-bar" id="updates-select-bar" style="display:none">
-      <button class="select-cancel" onclick="exitUpdateSelectMode()">Cancelar</button>
+      <button class="select-cancel" onclick="exitUpdateSelectMode()" data-i18n="common.cancel">Cancelar</button>
       <span class="select-count" id="update-select-count">0 selecionados</span>
       <div class="select-all-group">
-        <button class="select-all-btn" onclick="selectAllUpdates()">Tudo</button>
-        <button class="select-all-btn" onclick="deselectAllUpdates()">Desmarcar</button>
+        <button class="select-all-btn" onclick="selectAllUpdates()" data-i18n="common.all">Tudo</button>
+        <button class="select-all-btn" onclick="deselectAllUpdates()" data-i18n="common.deselect">Desmarcar</button>
       </div>
       <button class="select-delete" onclick="deleteSelectedUpdates()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
-        Apagar
+        <span data-i18n="common.delete">Apagar</span>
       </button>
     </div>
 
     <div class="push-toggle-row">
-      <span class="push-toggle-label">Notificar no celular</span>
+      <span class="push-toggle-label" data-i18n="updates.push_label">Notificar no celular</span>
       <label class="switch">
         <input type="checkbox" id="push-toggle" onchange="onPushToggleChange()">
         <span class="switch-slider"></span>
@@ -1135,7 +1139,7 @@
     </div>
 
     <div class="updates-list" id="updates-list">
-      <div class="updates-empty">Carregando...</div>
+      <div class="updates-empty" data-i18n="updates.loading">Carregando...</div>
     </div>
   </div>
 </div><div class="alert-overlay" id="custom-alert" onclick="if(event.target===this)closeCustomAlert()">
@@ -1148,19 +1152,28 @@
 <div class="modal-overlay" id="theme-modal" onclick="if(event.target===this)closeThemeModal()">
   <div class="modal-box">
     <button class="modal-close" onclick="closeThemeModal()">✕</button>
-    <h3 class="modal-title">Temas</h3>
-    <p class="theme-sub">Escolha um visual pro site todo. Ele vale pra todas as telas.</p>
+    <h3 class="modal-title" data-i18n="theme.title">Temas</h3>
+    <p class="theme-sub" data-i18n="theme.sub">Escolha um visual pro site todo. Ele vale pra todas as telas.</p>
     <div class="theme-list" id="theme-list"></div>
-    <p class="theme-foot">Mais temas em breve.</p>
+    <p class="theme-foot" data-i18n="theme.foot">Mais temas em breve.</p>
+  </div>
+</div>
+<div class="modal-overlay" id="lang-modal" onclick="if(event.target===this)closeLangModal()">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeLangModal()">✕</button>
+    <h3 class="modal-title" data-i18n="lang.title">Idioma</h3>
+    <p class="theme-sub" data-i18n="lang.sub">Escolha o idioma da interface do site. Isso não muda os idiomas de tradução dos mods.</p>
+    <div class="theme-list" id="lang-list"></div>
+    <p class="theme-foot" data-i18n="lang.foot">Mais idiomas em breve.</p>
   </div>
 </div>
 <div class="alert-overlay" id="css-confirm" onclick="if(event.target===this)closeCssConfirm()">
   <div class="alert-box">
     <div class="alert-icon err">!</div>
-    <p class="alert-msg">Tem certeza que deseja restaurar ao padrão fedido? ^^</p>
+    <p class="alert-msg" data-i18n="css.confirm">Tem certeza que deseja restaurar ao padrão fedido? ^^</p>
     <div class="alert-actions">
-      <button class="alert-btn fx-press" onclick="confirmRestoreCss()">Sim</button>
-      <button class="alert-btn fx-press" onclick="closeCssConfirm()">Não</button>
+      <button class="alert-btn fx-press" onclick="confirmRestoreCss()" data-i18n="common.yes">Sim</button>
+      <button class="alert-btn fx-press" onclick="closeCssConfirm()" data-i18n="common.no">Não</button>
     </div>
   </div>
 </div>
@@ -1170,14 +1183,14 @@
     <h3 class="modal-title" id="nick-title">Como a gente te chama?</h3>
     <p class="nick-sub" id="nick-sub">Escolhe um apelido curtinho. Ele aparece nas mensagens aqui da página, só pra você.</p>
     <div class="form-group">
-      <label for="nick-input">Apelido</label>
-      <input type="text" class="form-input" id="nick-input" maxlength="8" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="done" placeholder="insira aqui (máx. 8 caracteres)">
+      <label for="nick-input" data-i18n="nick.label">Apelido</label>
+      <input type="text" class="form-input" id="nick-input" maxlength="8" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="done" placeholder="insira aqui (máx. 8 caracteres)" data-i18n-placeholder="nick.ph">
       <div class="nick-count" id="nick-count">0/8</div>
     </div>
     <div class="nick-slot" id="nick-slot"><span class="nick-preview" id="nick-preview"></span><span class="nick-error" id="nick-error"></span></div>
-    <button class="modal-btn fx-press" id="nick-save" onclick="submitNick()">CONFIRMAR</button>
-    <p class="legal-note" id="nick-legal">Ao continuar, você concorda com os <a href="/privacidade#termos" target="_blank" rel="noopener">Termos de Uso</a> e a <a href="/privacidade" target="_blank" rel="noopener">Política de Privacidade</a>.</p>
-    <p class="modal-switch" id="nick-login" onclick="openAuthFromNick()"><span>Já tenho conta</span></p>
+    <button class="modal-btn fx-press" id="nick-save" onclick="submitNick()" data-i18n="nick.confirm">CONFIRMAR</button>
+    <p class="legal-note" id="nick-legal" data-i18n-html="nick.legal">Ao continuar, você concorda com os <a href="/privacidade#termos" target="_blank" rel="noopener">Termos de Uso</a> e a <a href="/privacidade" target="_blank" rel="noopener">Política de Privacidade</a>.</p>
+    <p class="modal-switch" id="nick-login" onclick="openAuthFromNick()"><span data-i18n="nick.has_account">Já tenho conta</span></p>
   </div>
 </div>
 <script>
@@ -1192,28 +1205,14 @@ const PENDING_GOOGLE_LOGIN = new URLSearchParams(window.location.search).has('lo
 let shownGreetingNick = null;
 
 // {n} = apelido da pessoa. Pode ter frases sem {n} também.
-const GREETINGS = [
-  'Ah, mais uma tradução né {n}', 'Que ótimo, bora lá', 'Você não cansa é?', 'Hmmm', 'Pois é',
-  'Eu amo mesmo o frio', 'Quem disse isso?', 'É...', 'Isso mesmo!', 'Não', 'Ok', 'Tá',
-  'Se você insiste', 'Eu amo traduzir', 'Você também ama traduzir?', 'Me estresso',
-  'Penso enguauzinho', 'KKKKKKKKKK',
-  'Sul sul, {n}!', 'Oi, {n}!', 'Voltou, {n}? Que surpresa', '{n} de novo por aqui',
-  'Opa, {n}. Senta aí', 'Mais um mod, {n}?', 'Calma que eu tô pensando',
-  'Será que esse mod presta?', 'Tradução é terapia, {n}', 'Lá vem coisa', 'Aham, sei',
-  'Fala sério, {n}', 'Isso vai dar trabalho', '{n}, bebe uma água', 'Hoje vai!',
-  'Ninguém merece', 'Será que traduz tudo?', '{n}, confia no processo', 'Mais uma pra conta',
-  'Tô de olho, {n}', 'Deixa eu adivinhar: mod novo', 'Ixi', 'Ai ai ai', 'Respira, {n}',
-  'Revisa os placeholders, hein', 'Cadê o plumbob?', 'Hmm, mod suspeito', 'Café primeiro, {n}',
-  'KKKKKKKK de novo?', 'Eita', 'Que dia, hein', 'Vai um cafezinho?', 'Eu aguento se você aguentar',
-  'Chegou {n}, pode começar'
-];
+const GREETINGS = I18n.get('greetings') || [];
 
 function normalizeNick(s) { return String(s || '').normalize('NFC').replace(/\s+/g, ' ').trim(); }
 function nickError(s) {
   const len = Array.from(s).length;
-  if (len < NICK_MIN) return 'Pelo menos ' + NICK_MIN + ' caracteres, tá?';
-  if (len > NICK_MAX) return 'Máximo de ' + NICK_MAX + ' caracteres.';
-  if (!NICK_RE.test(s)) return 'Só letras, números, espaço e hífen.';
+  if (len < NICK_MIN) return t('nick.err_min', { n: NICK_MIN });
+  if (len > NICK_MAX) return t('nick.err_max', { n: NICK_MAX });
+  if (!NICK_RE.test(s)) return t('nick.err_chars');
   return '';
 }
 function getNick() { try { return localStorage.getItem('nickname') || ''; } catch (e) { return ''; } }
@@ -1271,10 +1270,10 @@ function openNickModal(required, prefill) {
   document.getElementById('nick-close').style.display = required ? 'none' : '';
   document.getElementById('nick-login').style.display = (required && !currentUser) ? '' : 'none';
   document.getElementById('nick-legal').style.display = required ? '' : 'none';
-  document.getElementById('nick-title').textContent = required ? 'Como a gente te chama?' : 'Trocar apelido';
+  document.getElementById('nick-title').textContent = t(required ? 'nick.title_required' : 'nick.title_change');
   document.getElementById('nick-sub').textContent = required
-    ? 'Escolhe um apelido curtinho. Ele aparece nas mensagens aqui da página, só pra você.'
-    : 'Ele aparece nas mensagens aqui da página, só pra você.';
+    ? t('nick.sub_required')
+    : t('nick.sub_change');
   if (alreadyOpen) {
     // já está aberto (ex.: /api/me respondeu depois): só ajusta, sem apagar o que a pessoa digitou
     if (!input.value && prefill) input.value = prefill;
@@ -1321,14 +1320,14 @@ async function submitNick() {
         body: JSON.stringify({ nickname: val })
       });
       const data = await res.json();
-      if (!data.success) { setNickError(data.error || 'Não deu pra salvar.'); return; }
+      if (!data.success) { setNickError(data.error || t('nick.err_save')); return; }
       currentUser.nickname = data.nickname || val;
     }
     setNick(val);
     closeNickModal(true);
     renderGreeting(true);
   } catch (e) {
-    setNickError('Erro de conexão. Tenta de novo.');
+    setNickError(t('common.conn_retry'));
   } finally {
     btn.disabled = false;
   }
@@ -1414,43 +1413,7 @@ function updateImportUI() {
 // fav-star-float: anima uma vez com 'forwards' e se remove no fim), então o
 // próximo elemento só nasce quando o anterior termina de sumir — nunca
 // dessincroniza mesmo que o navegador atrase um frame ou outro.
-const LOADING_PHRASES = [
-  'sorvete',
-  'Você sabia que as lontras-marinhas dão as mãos enquanto dormem?',
-  'gatinhos pãozinhos',
-  'isso não tem nada a ver com o carregamento',
-  'respira fundo',
-  'em algum lugar, uma capivara está tranquila',
-  'polvos têm três corações',
-  'pipoca',
-  '🦦🦦🦦',
-  'chinelo quentinho',
-  'os corvos lembram do seu rosto pra sempre',
-  'seu Sim provavelmente também tá esperando alguma coisa agora',
-  'coelhos pulam de lado quando estão felizes (se chama "binky")',
-  '🐌 devagar e sempre',
-  'estrelas-do-mar não têm cérebro e vivem numa boa assim mesmo',
-  'cheiro de livro novo',
-  '☁️ nuvem passando, nada a declarar',
-  'pinguins pedem casamento oferecendo uma pedrinha',
-  'isso é café pra sua paciência',
-  'um Sim em algum lugar tá fazendo xixi na calça agora',
-  'meia saindo quentinha da secadora',
-  'abelhas dançam pra dar as coordenadas do pólen',
-  '🍕🍕🍕',
-  'shh, deixa isso pensando em paz',
-  'flanela macia recém-lavada',
-  'em algum lugar um gato espirrou bem baixinho',
-  'isso é só o universo pigarreando',
-  '🌻 girassol seguindo o sol, devagarinho',
-  'capim balançando sem pressa nenhuma',
-  'o plumbob tá verde, relaxa',
-  'tem um Sim preso numa piscina sem escada em algum lugar',
-  'um Sim brigou com a torradeira agora mesmo e perdeu',
-  'um gnomo de jardim sumiu e ninguém sabe pra onde foi',
-  'um Sim tá cantando em Simlish no chuveiro',
-  'alguém esqueceu a panela no fogo lá na vizinhança',
-];
+const LOADING_PHRASES = I18n.get('loading') || [];
 let _lastPhraseIdx = -1;
 let _phrasesRunning = false;
 
@@ -1488,7 +1451,7 @@ function stopLoadingPhrases() {
 
 async function handleUpload(file) {
   if (!file.name.endsWith('.package')) {
-    document.getElementById('error-msg').textContent = 'Arquivo inválido. Selecione um arquivo .package';
+    document.getElementById('error-msg').textContent = t('home.err_invalid');
     document.getElementById('error-msg').classList.add('active');
     return;
   }
@@ -1500,7 +1463,7 @@ async function handleUpload(file) {
   try {
     // 1. Pede a signed URL ao Flask
     const urlRes = await fetch('/api/upload_url', { method: 'POST' });
-    if (!urlRes.ok) throw new Error('Erro ao obter URL de upload');
+    if (!urlRes.ok) throw new Error(t('home.err_upload_url'));
     const { file_id, signed_url } = await urlRes.json();
 
     // 2. Faz o upload DIRETO para o Supabase Storage (sem passar pelo Flask)
@@ -1509,7 +1472,7 @@ async function handleUpload(file) {
       headers: { 'Content-Type': 'application/octet-stream' },
       body: file,
     });
-    if (!uploadRes.ok) throw new Error('Erro no upload: ' + uploadRes.statusText);
+    if (!uploadRes.ok) throw new Error(t('home.err_upload', { status: uploadRes.statusText }));
 
     // 3. Avisa o Flask para processar o arquivo
     const confirmRes = await fetch('/upload/confirm', {
@@ -1525,12 +1488,12 @@ async function handleUpload(file) {
       try { sessionStorage.setItem('package_id', file_id); } catch (e) {}
       window.location.href = result.redirect;
     } else {
-      throw new Error(result.error || 'Erro ao processar arquivo');
+      throw new Error(result.error || t('home.err_process'));
     }
   } catch (e) {
     stopLoadingPhrases();
     document.getElementById('loading').classList.remove('active');
-    document.getElementById('error-msg').textContent = e.message || 'Erro desconhecido';
+    document.getElementById('error-msg').textContent = e.message || t('common.err_unknown');
     document.getElementById('error-msg').classList.add('active');
   }
 }
@@ -1745,7 +1708,7 @@ function deselectAll() {
 }
 
 function updateSelectCount() {
-  document.getElementById('select-count').textContent = selectedIds.size + ' selecionado' + (selectedIds.size !== 1 ? 's' : '');
+  document.getElementById('select-count').textContent = I18n.plural('select.count', selectedIds.size);
 }
 
 async function deleteSelected() {
@@ -1872,7 +1835,7 @@ function renderSaves(animate = false) {
     actions.className = 'save-actions';
     actions.style.display = selectMode ? 'none' : 'flex';
     actions.innerHTML =
-      '<button class="btn-icon" onclick="editSave(' + save.id + ');event.stopPropagation()">editar</button>' +
+      '<button class="btn-icon" onclick="editSave(' + save.id + ');event.stopPropagation()">' + t('save.edit') + '</button>' +
       '<button class="btn-icon delete" onclick="deleteSingleSave(' + save.id + ');event.stopPropagation()">' + TRASH_SVG + '</button>';
 
     item.appendChild(circle);
@@ -2001,7 +1964,7 @@ async function editSave(id) {
       sessionStorage.setItem('editing_save', '1');
       window.location.href = '/editor';
     }
-  } catch(e) { showAlert('Erro ao carregar save.'); }
+  } catch(e) { showAlert(t('home.err_load_save')); }
 }
 
 // ─── Animação de poeira/fumaça ───────────────────────────────────────────────
@@ -2203,7 +2166,7 @@ async function saveProfile() {
   const newPic = newProfilePicBase64 || (currentUser ? currentUser.profile_pic : '') || '';
   const newNick = normalizeNick(document.getElementById('edit-nickname').value);
   const nickErr = nickError(newNick);
-  if (nickErr) { showAlert('Apelido: ' + nickErr); return; }
+  if (nickErr) { showAlert(t('nick.alert', { err: nickErr })); return; }
   try {
     if (!currentUser || newNick !== currentUser.nickname) {
       const nres = await fetch('/api/update_nickname', {
@@ -2211,7 +2174,7 @@ async function saveProfile() {
         body: JSON.stringify({ nickname: newNick })
       });
       const ndata = await nres.json();
-      if (!ndata.success) { showAlert(ndata.error || 'Não deu pra salvar o apelido.'); return; }
+      if (!ndata.success) { showAlert(ndata.error || t('nick.err_save_nick')); return; }
       setNick(ndata.nickname || newNick);
     }
     const res = await fetch('/api/update_profile', {
@@ -2225,7 +2188,7 @@ async function saveProfile() {
       try { sessionStorage.setItem('profile_saved', '1'); } catch (e) {}
       window.location.reload();
     } else showAlert(data.error);
-  } catch(e) { showAlert('Erro ao salvar perfil.'); }
+  } catch(e) { showAlert(t('profile.err_save')); }
 }
 
 function closeAuthModal() {
@@ -2254,13 +2217,14 @@ let delPermanent = false, delDone = false;
 function setDelMode(permanent) {
   delPermanent = !!permanent;
   document.getElementById('del-info').innerHTML = delPermanent
-    ? '<b>Exclusão permanente:</b> tudo é apagado agora e <b>não tem como recuperar</b>.'
-    : '<b>Exclusão com recuperação:</b> você pode recuperar sua conta em até ' + DEL_DAYS + ' dias, entrando de novo. Depois disso, ela é excluída permanentemente.';
-  document.getElementById('del-word-label').textContent = 'Digite ' + (delPermanent ? 'EXCLUIR' : 'BANANA') + ' para confirmar';
+    ? t('delete.info_perm')
+    : I18n.plural('delete.info_sched', DEL_DAYS);
+  // as palavras de confirmação são validadas pelo servidor (DELETE_WORD_* no app.py): não traduzir
+  document.getElementById('del-word-label').textContent = t('delete.word', { word: delPermanent ? 'EXCLUIR' : 'BANANA' });
   const go = document.getElementById('del-go');
-  go.textContent = delPermanent ? 'EXCLUIR PERMANENTEMENTE' : 'EXCLUIR COM RECUPERAÇÃO';
+  go.textContent = t(delPermanent ? 'delete.go_perm' : 'delete.go_sched');
   go.classList.toggle('del-danger', delPermanent);
-  document.getElementById('del-switch').textContent = delPermanent ? '← voltar para a exclusão com recuperação' : 'Excluir permanentemente (sem volta)';
+  document.getElementById('del-switch').textContent = t(delPermanent ? 'delete.switch_back' : 'delete.switch_perm');
   document.getElementById('del-error').textContent = '';
 }
 function openDeleteModal() {
@@ -2268,7 +2232,7 @@ function openDeleteModal() {
   delDone = false;
   document.getElementById('del-form').style.display = '';
   document.getElementById('del-done').style.display = 'none';
-  document.getElementById('del-title').textContent = 'Excluir conta';
+  document.getElementById('del-title').textContent = t('delete.title');
   const hasPw = !currentUser || currentUser.has_password !== false;
   document.getElementById('del-pass-group').style.display = hasPw ? '' : 'none';
   document.getElementById('del-user-group').style.display = hasPw ? 'none' : '';
@@ -2305,23 +2269,23 @@ async function submitDelete() {
       })
     });
     const r = await res.json();
-    if (!r.success) { err.textContent = r.error || 'Não deu certo. Tenta de novo.'; btn.disabled = false; return; }
+    if (!r.success) { err.textContent = r.error || t('delete.err'); btn.disabled = false; return; }
     try { ['cached_profile_pic', 'nickname', 'is_logged_in'].forEach(k => localStorage.removeItem(k)); } catch (e) {}
     if (window.UserCss) UserCss.clear();
     delDone = true;
-    document.getElementById('del-title').textContent = 'Pronto';
+    document.getElementById('del-title').textContent = t('delete.done_title');
     document.getElementById('del-done-text').textContent = r.permanent
-      ? 'Sua conta foi excluída. Obrigado por ter usado o site!'
-      : 'Sua conta foi marcada para exclusão. Se mudar de ideia, é só entrar de novo em até ' + r.days + ' dias e restaurar.';
+      ? t('delete.done_perm')
+      : I18n.plural('delete.done_sched', r.days);
     document.getElementById('del-form').style.display = 'none';
     document.getElementById('del-done').style.display = '';
   } catch (e) {
-    err.textContent = 'Erro de conexão. Tenta de novo.';
+    err.textContent = t('common.conn_retry');
     btn.disabled = false;
   }
 }
 function openRestoreModal(days) {
-  document.getElementById('restore-text').textContent = 'Ela será apagada de vez em ' + days + (days === 1 ? ' dia' : ' dias') + '. Quer manter sua conta?';
+  document.getElementById('restore-text').textContent = I18n.plural('restore.text', days);
   const modal = document.getElementById('restore-modal');
   modal.querySelector('.modal-box').classList.add('animate-in');
   modal.classList.add('active');
@@ -2342,7 +2306,7 @@ async function handleLogout() {
 }
 
 // ─── TEMAS PRONTOS ──────────────────────────────────────────────────────────
-const DEFAULT_THEME = { id: '', name: 'Padrão', blurb: '🧃O visual verde-água de sempre.', swatch: ['#9cb8b2', '#b4cec9', '#3f524e', '#111111'], nameFont: '' };
+const DEFAULT_THEME = { id: '', name: t('theme.default_name'), blurb: t('theme.default_blurb'), swatch: ['#9cb8b2', '#b4cec9', '#3f524e', '#111111'], nameFont: '' };
 function renderThemeList() {
   const list = document.getElementById('theme-list');
   const cur = window.UserTheme ? UserTheme.current() : '';
@@ -2396,6 +2360,48 @@ function pickTheme(id) {
   });
 }
 
+// ─── IDIOMA DA INTERFACE ────────────────────────────────────────────────────
+// A pessoa escolhe; não detecta pelo celular. Trocar grava o cookie "lang" e recarrega (ver i18n.js).
+function renderLangList() {
+  const list = document.getElementById('lang-list');
+  list.textContent = '';
+  I18n.langs.forEach(l => {
+    const card = document.createElement('button');
+    card.type = 'button';
+    const on = l.code === I18n.code;
+    card.className = 'theme-card' + (on ? ' active' : '');
+    card.dataset.lang = l.code;
+    card.setAttribute('aria-pressed', on ? 'true' : 'false');
+    card.setAttribute('lang', l.code);
+    card.onclick = () => pickLang(l.code);
+    const tx = document.createElement('span'); tx.className = 'theme-text';
+    const nm = document.createElement('span'); nm.className = 'theme-name'; nm.textContent = l.name;
+    tx.appendChild(nm);
+    const ck = document.createElement('span'); ck.className = 'theme-check';
+    ck.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+    card.appendChild(tx); card.appendChild(ck);
+    list.appendChild(card);
+  });
+}
+function openLangModal() {
+  renderLangList();
+  const modal = document.getElementById('lang-modal');
+  const box = modal.querySelector('.modal-box');
+  box.classList.remove('animate-out'); void box.offsetWidth; box.classList.add('animate-in');
+  modal.classList.add('active');
+}
+function closeLangModal() {
+  const modal = document.getElementById('lang-modal');
+  const box = modal.querySelector('.modal-box');
+  box.classList.remove('animate-in'); box.classList.add('animate-out');
+  modal.classList.remove('active');
+  setTimeout(() => box.classList.remove('animate-out'), 380);
+}
+function pickLang(code) {
+  if (code === I18n.code) { closeLangModal(); return; }
+  I18n.set(code);
+}
+
 // ─── CSS PERSONALIZADO ──────────────────────────────────────────────────────
 const CSS_MAX = 20000;
 let cssPreviewing = false, cssStatusTimer = null;
@@ -2419,31 +2425,31 @@ function previewCss() {
   if (!window.UserCss) return;
   UserCss.apply(cssField().value);
   cssPreviewing = true;
-  setCssStatus('Prévia aplicada (ainda não salvou).');
+  setCssStatus(t('css.preview'));
 }
 async function saveCss() {
   const css = cssField().value;
-  if (css.length > CSS_MAX) { showAlert('CSS muito grande (máximo ' + CSS_MAX + ' caracteres).'); return; }
+  if (css.length > CSS_MAX) { showAlert(t('css.too_big', { n: CSS_MAX })); return; }
   try {
     const res = await fetch('/api/save_css', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ css: css })
     });
     const data = await res.json();
-    if (!data.success) { showAlert(data.error || 'Não deu pra salvar o CSS.'); return; }
+    if (!data.success) { showAlert(data.error || t('css.err_save')); return; }
     UserCss.apply(data.css); UserCss.remember(data.css);
     cssPreviewing = false;
-    setCssStatus('CSS salvo!');
+    setCssStatus(t('css.saved'));
   } catch (e) {
-    showAlert('Erro de conexão. Tenta de novo.');
+    showAlert(t('common.conn_retry'));
   }
 }
 async function copyCss() {
   const v = cssField().value;
-  if (!v) { setCssStatus('Não tem nada pra copiar.'); return; }
+  if (!v) { setCssStatus(t('css.nothing')); return; }
   try { await navigator.clipboard.writeText(v); }
   catch (e) { cssField().select(); try { document.execCommand('copy'); } catch (_) {} }
-  setCssStatus('CSS copiado!');
+  setCssStatus(t('css.copied'));
 }
 function askRestoreCss() {
   const overlay = document.getElementById('css-confirm');
@@ -2466,14 +2472,14 @@ async function confirmRestoreCss() {
       body: JSON.stringify({ css: '' })
     });
     const data = await res.json();
-    if (!data.success) { showAlert(data.error || 'Não deu pra restaurar.'); return; }
+    if (!data.success) { showAlert(data.error || t('css.err_restore')); return; }
     UserCss.clear();
     cssPreviewing = false;
     cssField().value = '';
     updateCssCount();
-    showAlert('Pronto, voltou ao padrão!', 'ok');
+    showAlert(t('css.restored'), 'ok');
   } catch (e) {
-    showAlert('Erro de conexão. Tenta de novo.');
+    showAlert(t('common.conn_retry'));
   }
 }
 document.getElementById('edit-css').addEventListener('input', updateCssCount);
@@ -2489,14 +2495,14 @@ function togglePw(btn) {
   try { if (s !== null) input.setSelectionRange(s, e); } catch (_) {}
   btn.classList.toggle('on', show);
   btn.setAttribute('aria-pressed', show ? 'true' : 'false');
-  btn.setAttribute('aria-label', show ? 'Ocultar senha' : 'Mostrar senha');
+  btn.setAttribute('aria-label', show ? t('auth.hide_pw') : t('auth.show_pw'));
 }
 // Por segurança, volta tudo a "escondido" ao trocar de aba ou fechar o login.
 function resetPwToggles() {
   document.querySelectorAll('.pw-wrap').forEach(w => {
     const input = w.querySelector('input'), btn = w.querySelector('.pw-eye');
     if (input && input.type !== 'password') input.type = 'password';
-    if (btn) { btn.classList.remove('on'); btn.setAttribute('aria-pressed', 'false'); btn.setAttribute('aria-label', 'Mostrar senha'); }
+    if (btn) { btn.classList.remove('on'); btn.setAttribute('aria-pressed', 'false'); btn.setAttribute('aria-label', t('auth.show_pw')); }
   });
 }
 
@@ -2528,7 +2534,7 @@ function switchTab(tab) {
 async function handleLogin() {
   const username = document.getElementById('login-username').value.trim();
   const password = document.getElementById('login-password').value.trim();
-  if (!username || !password) { showAlert('Preencha todos os campos.'); return; }
+  if (!username || !password) { showAlert(t('common.fill_all')); return; }
   try {
     const res = await fetch('/api/login', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -2536,8 +2542,8 @@ async function handleLogin() {
     });
     const data = await res.json();
     if (data.success) window.location.reload();
-    else showAlert(data.error || 'Erro ao entrar.');
-  } catch(e) { showAlert('Erro de conexão.'); }
+    else showAlert(data.error || t('auth.err_login'));
+  } catch(e) { showAlert(t('common.conn_error')); }
 }
 
 function handleGoogleLogin() {
@@ -2554,7 +2560,7 @@ async function handleRegister() {
   const question = document.getElementById('reg-question').value;
   const answer = document.getElementById('reg-answer').value.trim();
 
-  if (!username || !password || !answer) { showAlert('Preencha todos os campos.'); return; }
+  if (!username || !password || !answer) { showAlert(t('common.fill_all')); return; }
   
   try {
     const res = await fetch('/api/register', {
@@ -2563,8 +2569,8 @@ async function handleRegister() {
     });
     const data = await res.json();
     if (data.success) window.location.reload();
-    else showAlert(data.error || 'Erro ao criar conta.');
-  } catch(e) { showAlert('Erro de conexão.'); }
+    else showAlert(data.error || t('auth.err_register'));
+  } catch(e) { showAlert(t('common.conn_error')); }
 }
 
 async function handleForgotPassword() {
@@ -2573,7 +2579,7 @@ async function handleForgotPassword() {
   const answer = document.getElementById('forgot-answer').value.trim();
   const new_password = document.getElementById('forgot-new-password').value.trim();
 
-  if (!username || !answer || !new_password) { showAlert('Preencha todos os campos.'); return; }
+  if (!username || !answer || !new_password) { showAlert(t('common.fill_all')); return; }
   
   try {
     const res = await fetch('/api/forgot_password', {
@@ -2581,9 +2587,9 @@ async function handleForgotPassword() {
       body: JSON.stringify({ username, security_question: question, security_answer: answer, new_password })
     });
     const data = await res.json();
-    if (data.success) { showAlert('Senha alterada com sucesso!', 'ok'); switchTab('login'); }
-    else showAlert(data.error || 'Erro ao redefinir.');
-  } catch(e) { showAlert('Erro de conexão.'); }
+    if (data.success) { showAlert(t('auth.reset_ok'), 'ok'); switchTab('login'); }
+    else showAlert(data.error || t('auth.err_reset'));
+  } catch(e) { showAlert(t('common.conn_error')); }
 }
 
 // ── Custom Select helpers ──────────────────────────────────────────────────
@@ -2606,9 +2612,11 @@ function pickOption(hiddenId, labelId, dropId, el) {
   // pega só o texto, ignorando o SVG filho
   const clone = el.cloneNode(true);
   clone.querySelectorAll('svg').forEach(s => s.remove());
-  const value = clone.textContent.trim();
-  document.getElementById(hiddenId).value = value;
-  document.getElementById(labelId).textContent = value;
+  const label = clone.textContent.trim();
+  // o servidor compara a pergunta como texto exato: o valor enviado é sempre o texto em português (data-value),
+  // não o que aparece na tela (que muda com o idioma da interface)
+  document.getElementById(hiddenId).value = el.dataset.value || label;
+  document.getElementById(labelId).textContent = label;
   // marca selecionado
   el.closest('.custom-select-drop').querySelectorAll('.cs-option').forEach(o => o.classList.remove('selected'));
   el.classList.add('selected');
@@ -2631,7 +2639,7 @@ document.addEventListener('click', (e) => {
 try {
   if (sessionStorage.getItem('profile_saved') === '1') {
     sessionStorage.removeItem('profile_saved');
-    setTimeout(() => showAlert('Alterações salvas! <3', 'ok'), 450);
+    setTimeout(() => showAlert(t('profile.saved'), 'ok'), 450);
   }
 } catch (e) {}
 renderGreeting();   // usa o apelido guardado no aparelho, sem esperar a rede
@@ -2656,8 +2664,8 @@ checkLogin();
       });
       const data = await res.json();
       if (data.success) window.location.reload();
-      else showAlert('Erro ao finalizar login com Google.');
-    } catch(e) { showAlert('Erro de conexão.'); }
+      else showAlert(t('auth.err_google'));
+    } catch(e) { showAlert(t('common.conn_error')); }
   }
 })();
 
@@ -2809,7 +2817,7 @@ async function onPushToggleChange() {
   const toggle = document.getElementById('push-toggle');
   if (!swRegistration) {
     toggle.checked = false;
-    showAlert('Seu navegador não suporta notificações, ou a página ainda está carregando. Tenta de novo em alguns segundos.');
+    showAlert(t('push.unsupported'));
     return;
   }
 
@@ -2836,7 +2844,7 @@ async function onPushToggleChange() {
 
     if (Notification.permission === 'denied') {
       toggle.checked = false;
-      showAlert('As notificações estão bloqueadas nas configurações do navegador/app. Ative nas permissões de site pra receber os avisos.');
+      showAlert(t('push.blocked'));
       return;
     }
 
@@ -2850,7 +2858,7 @@ async function onPushToggleChange() {
     const { key } = await keyRes.json();
     if (!key) {
       toggle.checked = false;
-      showAlert('O servidor ainda não tem uma chave de notificação configurada (VAPID_PUBLIC_KEY). Avisa o desenvolvedor.');
+      showAlert(t('push.no_vapid'));
       return;
     }
 
@@ -2909,7 +2917,7 @@ async function onPushToggleChange() {
     const name = (e && e.name) || 'Unknown';
     const code = (e && e.code !== undefined) ? (' [code ' + e.code + ']') : '';
     console.log('Erro ao alternar notificações:', e);
-    showAlert('Não deu pra ativar as notificações. Erro: ' + name + code + ' - ' + msg);
+    showAlert(t('push.err', { detail: name + code + ' - ' + msg }));
   }
 }
 
@@ -2917,7 +2925,7 @@ function formatUpdateDate(iso) {
   if (!iso) return '';
   try {
     const d = new Date(iso);
-    return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
+    return I18n.date(iso);
   } catch (e) { return ''; }
 }
 
@@ -2962,12 +2970,12 @@ const updateDragConfig = {
 
 async function loadUpdatesList() {
   const list = document.getElementById('updates-list');
-  list.innerHTML = '<div class="updates-empty">Carregando...</div>';
+  list.innerHTML = '<div class="updates-empty">' + t('updates.loading') + '</div>';
   try {
     const qs = await getSubEndpointParam();
     if (!qs) {
       updatesData = [];
-      list.innerHTML = '<div class="updates-empty">Ative as notificações pra ver as novidades daqui.</div>';
+      list.innerHTML = '<div class="updates-empty">' + t('updates.need_push') + '</div>';
       return;
     }
 
@@ -2983,7 +2991,7 @@ async function loadUpdatesList() {
 
     renderUpdates();
   } catch (e) {
-    list.innerHTML = '<div class="updates-empty">Não deu pra carregar as novidades agora.</div>';
+    list.innerHTML = '<div class="updates-empty">' + t('updates.error') + '</div>';
   }
 }
 
@@ -2991,7 +2999,7 @@ function renderUpdates() {
   const list = document.getElementById('updates-list');
   list.innerHTML = '';
   if (!updatesData.length) {
-    list.innerHTML = '<div class="updates-empty">Nenhuma novidade ainda :3</div>';
+    list.innerHTML = '<div class="updates-empty">' + t('updates.empty') + '</div>';
     return;
   }
   updatesData.forEach(u => list.appendChild(buildUpdateItem(u)));
@@ -3174,7 +3182,7 @@ function deselectAllUpdates() {
 
 function updateUpdateSelectCount() {
   document.getElementById('update-select-count').textContent =
-    selectedUpdateIds.size + ' selecionado' + (selectedUpdateIds.size !== 1 ? 's' : '');
+    I18n.plural('select.count', selectedUpdateIds.size);
 }
 
 function deleteSelectedUpdates() {
@@ -3194,7 +3202,7 @@ function dismissUpdate(id, itemEl) {
     itemEl.remove();
     const list = document.getElementById('updates-list');
     if (list && !list.querySelector('.update-item')) {
-      list.innerHTML = '<div class="updates-empty">Nenhuma novidade ainda :3</div>';
+      list.innerHTML = '<div class="updates-empty">' + t('updates.empty') + '</div>';
     }
   });
 }
