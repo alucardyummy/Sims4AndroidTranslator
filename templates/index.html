@@ -1177,7 +1177,8 @@
     <div class="nick-slot" id="nick-slot"><span class="nick-preview" id="nick-preview"></span><span class="nick-error" id="nick-error"></span></div>
     <button class="modal-btn fx-press" id="nick-save" onclick="submitNick()">CONFIRMAR</button>
     <p class="legal-note" id="nick-legal">Ao continuar, você concorda com os <a href="/privacidade#termos" target="_blank" rel="noopener">Termos de Uso</a> e a <a href="/privacidade" target="_blank" rel="noopener">Política de Privacidade</a>.</p>
-    <p class="modal-switch" id="nick-login" onclick="openAuthFromNick()"><span>Já tenho conta</span></p>
+    <p class="modal-switch" id="nick-register" onclick="openAuthFromNick('register')"><span>Cadastre-se</span></p>
+    <p class="modal-switch" id="nick-login" style="margin-top:.4rem" onclick="openAuthFromNick('login')"><span>Já tenho conta</span></p>
   </div>
 </div>
 <script>
@@ -1270,6 +1271,7 @@ function openNickModal(required, prefill) {
   modal.dataset.required = required ? '1' : '';
   document.getElementById('nick-close').style.display = required ? 'none' : '';
   document.getElementById('nick-login').style.display = (required && !currentUser) ? '' : 'none';
+  document.getElementById('nick-register').style.display = (required && !currentUser) ? '' : 'none';
   document.getElementById('nick-legal').style.display = required ? '' : 'none';
   document.getElementById('nick-title').textContent = required ? 'Como a gente te chama?' : 'Trocar apelido';
   document.getElementById('nick-sub').textContent = required
@@ -1299,8 +1301,8 @@ function closeNickModal(force) {
   modal.classList.remove('active');
   setTimeout(() => box.classList.remove('animate-out'), 380);
 }
-function openAuthFromNick() {
-  try { switchTab('login'); } catch (e) {}   // garante a aba "Entrar na Conta"
+function openAuthFromNick(tab) {
+  try { switchTab(tab || 'login'); } catch (e) {}   // abre a aba pedida (padrão: "Entrar na Conta")
   const m = document.getElementById('auth-modal');
   const b = m.querySelector('.modal-box');
   m.classList.add('active');
@@ -2535,7 +2537,12 @@ async function handleLogin() {
       body: JSON.stringify({ username, password })
     });
     const data = await res.json();
-    if (data.success) window.location.reload();
+    if (data.success) {
+      // marca "logado" antes do reload: sem isso, o INIT abre o modal de apelido
+      // por 1 instante (localStorage vazio) até o /api/me responder e fechá-lo
+      try { localStorage.setItem('is_logged_in', '1'); } catch (e) {}
+      window.location.reload();
+    }
     else showAlert(data.error || 'Erro ao entrar.');
   } catch(e) { showAlert('Erro de conexão.'); }
 }
@@ -2655,7 +2662,10 @@ checkLogin();
         body: JSON.stringify({ token })
       });
       const data = await res.json();
-      if (data.success) window.location.reload();
+      if (data.success) {
+        try { localStorage.setItem('is_logged_in', '1'); } catch (e) {}   // evita o piscar do modal de apelido
+        window.location.reload();
+      }
       else showAlert('Erro ao finalizar login com Google.');
     } catch(e) { showAlert('Erro de conexão.'); }
   }
