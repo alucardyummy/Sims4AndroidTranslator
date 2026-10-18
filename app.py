@@ -8,6 +8,8 @@ import os
 import tempfile
 import uuid
 import hashlib
+import hmac
+import secrets
 import json
 import re
 import unicodedata
@@ -237,6 +239,32 @@ def init_db():
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         ''')
+
+        # ------------------------------------------------------------------
+        # E-mail de recuperação de senha (opcional, só contas com senha).
+        # Só vale como recuperação depois de confirmado por código.
+        # email_codes guarda os códigos de 6 dígitos (só o hash) enviados por
+        # e-mail: purpose 'verify' (confirmar e-mail) e 'reset' (trocar senha).
+        # ------------------------------------------------------------------
+        try:
+            c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS email VARCHAR(255);")
+            c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified_at TIMESTAMP;")
+            c.execute("CREATE UNIQUE INDEX IF NOT EXISTS users_email_verified_uniq ON users (LOWER(email)) WHERE email_verified_at IS NOT NULL;")
+            c.execute('''
+                CREATE TABLE IF NOT EXISTS email_codes (
+                    id SERIAL PRIMARY KEY,
+                    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                    purpose VARCHAR(16) NOT NULL,
+                    email VARCHAR(255) NOT NULL,
+                    code_hash VARCHAR(64) NOT NULL,
+                    attempts INTEGER NOT NULL DEFAULT 0,
+                    created_at TIMESTAMP NOT NULL DEFAULT LOCALTIMESTAMP,
+                    expires_at TIMESTAMP NOT NULL
+                );
+            ''')
+            c.execute("CREATE INDEX IF NOT EXISTS idx_email_codes_user ON email_codes (user_id, purpose);")
+        except Exception as e:
+            print("Colunas/tabela de e-mail já existem ou houve um aviso:", e)
 
         conn.commit()
         conn.close()
@@ -1796,6 +1824,261 @@ def forgot_password():
     return json.dumps({"success": False, "error": "Usuário não encontrado."}), 404
 
 
+# ─── E-MAIL DE RECUPERAÇÃO ──────────────────────────────────────────────────
+# Códigos de 6 dígitos enviados por e-mail (Brevo). Só o HASH do código fica no
+# banco; cada código vale 15 min, aceita 5 tentativas e só o mais novo conta.
+# Variáveis de ambiente: BREVO_API_KEY, BREVO_SENDER_EMAIL (remetente já
+# verificado no Brevo) e, opcional, BREVO_SENDER_NAME.
+EMAIL_CODE_TTL_MIN = 15
+EMAIL_CODE_MAX_ATTEMPTS = 5
+EMAIL_CODE_COOLDOWN_S = 60
+EMAIL_CODE_MAX_PER_HOUR = 5
+_EMAIL_RE = re.compile(r"^[^@\s]{1,64}@[^@\s]+\.[^@\s]{2,}$")
+
+
+def _normalize_email(raw):
+    e = unicodedata.normalize("NFKC", str(raw or "")).strip().lower()
+    if len(e) > 254 or not _EMAIL_RE.match(e):
+        return None
+    return e
+
+
+def _mask_email(e):
+    if not e or "@" not in e:
+        return None
+    local, domain = e.split("@", 1)
+    return (local[:1] + "***@" + domain)
+
+
+def _email_configured():
+    return bool(os.environ.get("BREVO_API_KEY") and os.environ.get("BREVO_SENDER_EMAIL"))
+
+
+def _send_email(to_email, subject, text, html):
+    """Envia pelo Brevo. Retorna True/False (nunca levanta)."""
+    if not _email_configured():
+        return False
+    try:
+        r = http_requests.post(
+            "https://api.brevo.com/v3/smtp/email",
+            headers={"api-key": os.environ["BREVO_API_KEY"], "accept": "application/json", "content-type": "application/json"},
+            json={
+                "sender": {"name": os.environ.get("BREVO_SENDER_NAME", "Sims 4 Translator"), "email": os.environ["BREVO_SENDER_EMAIL"]},
+                "to": [{"email": to_email}],
+                "subject": subject,
+                "textContent": text,
+                "htmlContent": html,
+            },
+            timeout=10,
+        )
+        if r.status_code not in (200, 201, 202):
+            print("Brevo recusou o envio:", r.status_code, r.text[:200])
+            return False
+        return True
+    except Exception as e:
+        print("Falha ao enviar e-mail:", e)
+        return False
+
+
+def _send_code_email(to_email, code, purpose):
+    what = "confirmar o e-mail da sua conta" if purpose == "verify" else "redefinir a sua senha"
+    subject = f"Seu código: {code}"
+    text = (f"Seu código para {what} no Sims 4 Translator é {code}.\n"
+            f"Ele vale por {EMAIL_CODE_TTL_MIN} minutos. Se não foi você, ignore este e-mail.")
+    html = (f"<p>Seu código para {what} no Sims 4 Translator:</p>"
+            f"<p style=\"font-size:28px;font-weight:bold;letter-spacing:4px\">{code}</p>"
+            f"<p>Ele vale por {EMAIL_CODE_TTL_MIN} minutos. Se não foi você, ignore este e-mail.</p>")
+    return _send_email(to_email, subject, text, html)
+
+
+def _hash_code(purpose, user_id, code):
+    msg = f"{purpose}:{user_id}:{code}".encode()
+    return hmac.new((app.secret_key or "").encode(), msg, hashlib.sha256).hexdigest()
+
+
+def _issue_code(c, user_id, purpose, email):
+    """Cria um código novo (SEM commit). Retorna (code, None) ou (None, mensagem) se passou do limite."""
+    c.execute("DELETE FROM email_codes WHERE created_at < LOCALTIMESTAMP - INTERVAL '1 day'")
+    c.execute(
+        "SELECT COUNT(*) AS n, EXTRACT(EPOCH FROM (LOCALTIMESTAMP - MAX(created_at))) AS since "
+        "FROM email_codes WHERE user_id = %s AND purpose = %s AND created_at > LOCALTIMESTAMP - INTERVAL '1 hour'",
+        (user_id, purpose))
+    r = c.fetchone()
+    if r["n"] >= EMAIL_CODE_MAX_PER_HOUR:
+        return None, "Muitos códigos pedidos. Tente de novo mais tarde."
+    if r["n"] and r["since"] is not None and float(r["since"]) < EMAIL_CODE_COOLDOWN_S:
+        return None, "Espere um minutinho antes de pedir outro código."
+    code = f"{secrets.randbelow(10**6):06d}"
+    c.execute(
+        "INSERT INTO email_codes (user_id, purpose, email, code_hash, expires_at) "
+        "VALUES (%s, %s, %s, %s, LOCALTIMESTAMP + (%s || ' minutes')::interval)",
+        (user_id, purpose, email, _hash_code(purpose, user_id, code), str(EMAIL_CODE_TTL_MIN)))
+    return code, None
+
+
+def _check_code(c, user_id, purpose, code):
+    """Confere o código mais novo. Retorna (linha, None) ou (None, mensagem). Quem chama dá commit (conta tentativas)."""
+    c.execute(
+        "SELECT id, email, code_hash, attempts FROM email_codes "
+        "WHERE user_id = %s AND purpose = %s AND expires_at > LOCALTIMESTAMP ORDER BY id DESC LIMIT 1",
+        (user_id, purpose))
+    row = c.fetchone()
+    if not row:
+        return None, "Código expirado ou inexistente. Peça um novo."
+    if row["attempts"] >= EMAIL_CODE_MAX_ATTEMPTS:
+        return None, "Muitas tentativas erradas. Peça um novo código."
+    if not hmac.compare_digest(row["code_hash"], _hash_code(purpose, user_id, code)):
+        c.execute("UPDATE email_codes SET attempts = attempts + 1 WHERE id = %s", (row["id"],))
+        return None, "Código incorreto."
+    return row, None
+
+
+def _only_digits(raw):
+    return re.sub(r"\D", "", str(raw or ""))
+
+
+@app.route("/api/email/request", methods=["POST"])
+def email_request():
+    """Logado: cadastra/troca o e-mail de recuperação. Exige a senha atual (senão quem roubar a sessão trocaria o e-mail)."""
+    user_id = session.get("user_id")
+    if not user_id:
+        return json.dumps({"success": False, "error": "Não logado"}), 401
+    data = request.get_json(silent=True) or {}
+    email = _normalize_email(data.get("email"))
+    password = str(data.get("password") or "")
+    if not email:
+        return json.dumps({"success": False, "error": "E-mail inválido."}), 400
+    if not _email_configured():
+        return json.dumps({"success": False, "error": "Envio de e-mail não está configurado no servidor."}), 503
+
+    conn = get_db()
+    try:
+        c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        c.execute("SELECT password_hash FROM users WHERE id = %s", (user_id,))
+        u = c.fetchone()
+        if not u or not u["password_hash"]:
+            return json.dumps({"success": False, "error": "Só contas com senha usam e-mail de recuperação."}), 400
+        if not check_password_hash(u["password_hash"], password):
+            return json.dumps({"success": False, "error": "Senha incorreta."}), 401
+        c.execute("SELECT id FROM users WHERE LOWER(email) = %s AND email_verified_at IS NOT NULL AND id <> %s", (email, user_id))
+        if c.fetchone():
+            return json.dumps({"success": False, "error": "Esse e-mail já está em uso em outra conta."}), 400
+        code, err = _issue_code(c, user_id, "verify", email)
+        if err:
+            return json.dumps({"success": False, "error": err}), 429
+        if not _send_code_email(email, code, "verify"):
+            conn.rollback()
+            return json.dumps({"success": False, "error": "Não consegui enviar o e-mail agora. Tenta de novo daqui a pouco."}), 502
+        conn.commit()
+        return json.dumps({"success": True})
+    finally:
+        conn.close()
+
+
+@app.route("/api/email/confirm", methods=["POST"])
+def email_confirm():
+    user_id = session.get("user_id")
+    if not user_id:
+        return json.dumps({"success": False, "error": "Não logado"}), 401
+    code = _only_digits((request.get_json(silent=True) or {}).get("code"))
+    if len(code) != 6:
+        return json.dumps({"success": False, "error": "O código tem 6 dígitos."}), 400
+
+    conn = get_db()
+    try:
+        c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        row, err = _check_code(c, user_id, "verify", code)
+        if err:
+            conn.commit()   # grava a tentativa errada
+            return json.dumps({"success": False, "error": err}), 400
+        try:
+            c.execute("UPDATE users SET email = %s, email_verified_at = LOCALTIMESTAMP WHERE id = %s", (row["email"], user_id))
+        except psycopg2.IntegrityError:
+            conn.rollback()
+            return json.dumps({"success": False, "error": "Esse e-mail já está em uso em outra conta."}), 400
+        c.execute("DELETE FROM email_codes WHERE user_id = %s AND purpose = 'verify'", (user_id,))
+        conn.commit()
+        return json.dumps({"success": True, "email": _mask_email(row["email"])})
+    finally:
+        conn.close()
+
+
+@app.route("/api/email/remove", methods=["POST"])
+def email_remove():
+    user_id = session.get("user_id")
+    if not user_id:
+        return json.dumps({"success": False, "error": "Não logado"}), 401
+    password = str((request.get_json(silent=True) or {}).get("password") or "")
+    conn = get_db()
+    try:
+        c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        c.execute("SELECT password_hash FROM users WHERE id = %s", (user_id,))
+        u = c.fetchone()
+        if not u or not u["password_hash"] or not check_password_hash(u["password_hash"], password):
+            return json.dumps({"success": False, "error": "Senha incorreta."}), 401
+        c.execute("UPDATE users SET email = NULL, email_verified_at = NULL WHERE id = %s", (user_id,))
+        c.execute("DELETE FROM email_codes WHERE user_id = %s", (user_id,))
+        conn.commit()
+        return json.dumps({"success": True})
+    finally:
+        conn.close()
+
+
+@app.route("/api/forgot_password/email_request", methods=["POST"])
+def forgot_email_request():
+    """Pede o código de redefinição. A resposta é SEMPRE a mesma (exista ou não a conta / o e-mail), pra não revelar quem tem conta."""
+    username = str((request.get_json(silent=True) or {}).get("username") or "").strip()
+    if not username:
+        return json.dumps({"success": False, "error": "Informe o usuário."}), 400
+    if not _email_configured():
+        return json.dumps({"success": False, "error": "Recuperação por e-mail não está disponível no momento."}), 503
+    generic = json.dumps({"success": True, "message": "Se esse usuário tiver um e-mail confirmado, enviamos um código."})
+
+    conn = get_db()
+    try:
+        c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        c.execute("SELECT id, email FROM users WHERE username = %s AND password_hash IS NOT NULL AND email_verified_at IS NOT NULL", (username,))
+        u = c.fetchone()
+        if u:
+            code, err = _issue_code(c, u["id"], "reset", u["email"])
+            if code and _send_code_email(u["email"], code, "reset"):
+                conn.commit()
+            else:
+                conn.rollback()
+        return generic
+    finally:
+        conn.close()
+
+
+@app.route("/api/forgot_password/email_confirm", methods=["POST"])
+def forgot_email_confirm():
+    data = request.get_json(silent=True) or {}
+    username = str(data.get("username") or "").strip()
+    code = _only_digits(data.get("code"))
+    new_password = str(data.get("new_password") or "").strip()
+    if not username or len(code) != 6 or len(new_password) < 6:
+        return json.dumps({"success": False, "error": "Preencha o usuário, o código de 6 dígitos e uma senha de pelo menos 6 caracteres."}), 400
+
+    bad = json.dumps({"success": False, "error": "Código incorreto ou expirado."}), 400
+    conn = get_db()
+    try:
+        c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        c.execute("SELECT id FROM users WHERE username = %s AND password_hash IS NOT NULL AND email_verified_at IS NOT NULL", (username,))
+        u = c.fetchone()
+        if not u:
+            return bad
+        row, err = _check_code(c, u["id"], "reset", code)
+        if err:
+            conn.commit()   # grava a tentativa errada
+            return json.dumps({"success": False, "error": err}), 400
+        c.execute("UPDATE users SET password_hash = %s WHERE id = %s", (generate_password_hash(new_password), u["id"]))
+        c.execute("DELETE FROM email_codes WHERE user_id = %s AND purpose = 'reset'", (u["id"],))
+        conn.commit()
+        return json.dumps({"success": True})
+    finally:
+        conn.close()
+
+
 NICK_MIN, NICK_MAX = 2, 8
 # letras/números (qualquer idioma), com espaço ou hífen SÓ entre palavras
 _NICK_RE = re.compile(r"[^\W_]+(?:[ \-][^\W_]+)*")
@@ -1836,6 +2119,7 @@ def me():
             conn.rollback()
         # à parte (como o apelido): conta com senha? exclusão agendada? Se a coluna não existir, o login não quebra.
         has_password, deletion_days_left = True, None
+        email_masked = None
         try:
             c.execute(
                 "SELECT (password_hash IS NOT NULL) AS has_pw, deletion_requested_at, "
@@ -1848,6 +2132,12 @@ def me():
                     deletion_days_left = max(1, int(r["days_left"] or 1))
         except Exception:
             conn.rollback()
+        try:
+            c.execute("SELECT email FROM users WHERE id = %s AND email_verified_at IS NOT NULL", (user_id,))
+            r = c.fetchone()
+            email_masked = _mask_email(r["email"]) if r else None
+        except Exception:
+            conn.rollback()
     conn.close()
 
     if user:
@@ -1857,6 +2147,7 @@ def me():
             "profile_pic": user["profile_pic"] or user["avatar_url"] or None,
             "nickname": nickname,
             "has_password": has_password,
+            "email": email_masked,
             "deletion_days_left": deletion_days_left
         })
     return json.dumps({"logged_in": False})

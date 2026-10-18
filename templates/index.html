@@ -1028,6 +1028,20 @@
       <div class="form-group"><label>Resposta Secreta</label><input type="text" class="form-input" id="forgot-answer" placeholder="Digite a resposta cadastrada"></div>
       <div class="form-group"><label>Nova Senha</label><div class="pw-wrap"><input type="password" class="form-input" id="forgot-new-password" placeholder="Nova senha"><button type="button" class="pw-eye" onmousedown="event.preventDefault()" onclick="togglePw(this)" aria-label="Mostrar senha" aria-pressed="false"><svg class="eye-on" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 12S5.5 5 12 5s10.5 7 10.5 7-4 7-10.5 7S1.5 12 1.5 12z"/><circle cx="12" cy="12" r="3.2"/></svg><svg class="eye-off" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.6 5.1A10.6 10.6 0 0 1 12 5c6.5 0 10.5 7 10.5 7a17.6 17.6 0 0 1-3.2 3.9"/><path d="M6.4 6.5C3.4 8.3 1.5 12 1.5 12S5.5 19 12 19c1.7 0 3.2-.5 4.5-1.2"/><path d="M9.9 9.9a3.2 3.2 0 0 0 4.2 4.2"/><path d="M3 3l18 18"/></svg></button></div></div>
       <button class="modal-btn fx-press" onclick="handleForgotPassword()">ALTERAR SENHA</button>
+      <p class="modal-switch" onclick="switchTab('forgot-email')">Tem e-mail cadastrado? <span>Recuperar por e-mail</span></p>
+      <p class="modal-switch" onclick="switchTab('login')">Voltar para o <span>Login</span></p>
+    </div>
+    <div class="auth-tab" id="tab-forgot-email">
+      <h3 class="modal-title">Recuperar por E-mail</h3>
+      <p style="font-size:12px;color:#1b1047;margin-bottom:1rem;line-height:1.4;font-weight:500;">Informe seu usuário. Se ele tiver um e-mail confirmado, enviamos um código de 6 dígitos (olhe também o spam).</p>
+      <div class="form-group"><label>Usuário</label><input type="text" class="form-input" id="fe-username" placeholder="Seu usuário" autocapitalize="off" spellcheck="false"></div>
+      <button class="modal-btn fx-press" id="fe-send" onclick="sendResetCode()">ENVIAR CÓDIGO</button>
+      <div id="fe-step2" style="display:none;margin-top:1rem">
+        <div class="form-group"><label>Código do e-mail</label><input type="text" class="form-input" id="fe-code" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="000000"></div>
+      <div class="form-group"><label>Nova Senha</label><div class="pw-wrap"><input type="password" class="form-input" id="fe-new-password" placeholder="Nova senha"><button type="button" class="pw-eye" onmousedown="event.preventDefault()" onclick="togglePw(this)" aria-label="Mostrar senha" aria-pressed="false"><svg class="eye-on" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 12S5.5 5 12 5s10.5 7 10.5 7-4 7-10.5 7S1.5 12 1.5 12z"/><circle cx="12" cy="12" r="3.2"/></svg><svg class="eye-off" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.6 5.1A10.6 10.6 0 0 1 12 5c6.5 0 10.5 7 10.5 7a17.6 17.6 0 0 1-3.2 3.9"/><path d="M6.4 6.5C3.4 8.3 1.5 12 1.5 12S5.5 19 12 19c1.7 0 3.2-.5 4.5-1.2"/><path d="M9.9 9.9a3.2 3.2 0 0 0 4.2 4.2"/><path d="M3 3l18 18"/></svg></button></div></div>
+        <button class="modal-btn fx-press" onclick="confirmResetCode()">ALTERAR SENHA</button>
+      </div>
+      <p class="modal-switch" onclick="switchTab('forgot')">Prefiro usar a <span>pergunta de segurança</span></p>
       <p class="modal-switch" onclick="switchTab('login')">Voltar para o <span>Login</span></p>
     </div>
     </div><!-- /auth-tabs-wrap -->
@@ -1060,6 +1074,20 @@
       <label>Foto de Perfil</label>
       <input type="file" id="edit-profile-pic" accept="image/*" style="display:none">
       <button type="button" class="form-input" style="cursor:pointer;text-align:center;" onclick="document.getElementById('edit-profile-pic').click()">Escolher imagem :3</button>
+    </div>
+    <div class="form-group" id="email-box" style="display:none">
+      <label>E-mail de recuperação</label>
+      <p class="css-help" id="email-status" style="margin:0 0 8px"></p>
+      <div id="email-form">
+        <input type="email" class="form-input" id="email-new" autocomplete="email" autocapitalize="off" spellcheck="false" placeholder="seu@email.com">
+        <input type="password" class="form-input" id="email-pass" autocomplete="current-password" placeholder="Sua senha atual" style="margin-top:8px">
+        <button type="button" class="form-input" id="email-send-btn" style="cursor:pointer;text-align:center;margin-top:8px" onclick="requestEmailCode()">Enviar código</button>
+      </div>
+      <div id="email-code-box" style="display:none;margin-top:8px">
+        <input type="text" class="form-input" id="email-code" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="Código de 6 dígitos">
+        <button type="button" class="form-input" style="cursor:pointer;text-align:center;margin-top:8px" onclick="confirmEmailCode()">Confirmar e-mail</button>
+      </div>
+      <button type="button" class="del-link" id="email-remove" style="display:none;margin-top:8px" onclick="removeEmail()">Remover e-mail (digite a senha acima)</button>
     </div>
     <details class="css-box" id="css-box">
       <summary>CSS personalizado</summary>
@@ -2136,6 +2164,7 @@ document.getElementById('profile-btn').addEventListener('click', () => {
     document.getElementById('edit-username').value = currentUser.username || '';
     document.getElementById('edit-nickname').value = currentUser.nickname || getNick();
     loadCssIntoField();
+    renderEmailBox();
     document.getElementById('modal-profile-img').src = currentUser.profile_pic || '/img/icon-pf.webp';
     newProfilePicBase64 = null;
     
@@ -2572,6 +2601,78 @@ async function handleRegister() {
     if (data.success) window.location.reload();
     else showAlert(data.error || 'Erro ao criar conta.');
   } catch(e) { showAlert('Erro de conexão.'); }
+}
+
+
+// ─── E-MAIL DE RECUPERAÇÃO ──────────────────────────────────────────────────
+async function emailPost(url, body) {
+  try {
+    const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    return await res.json();
+  } catch (e) { return { success: false, error: 'Erro de conexão.' }; }
+}
+function renderEmailBox() {
+  const box = document.getElementById('email-box');
+  if (!currentUser || !currentUser.has_password) { box.style.display = 'none'; return; }   // conta só-Google não usa
+  box.style.display = '';
+  const has = !!currentUser.email;
+  document.getElementById('email-status').textContent = has
+    ? 'Confirmado: ' + currentUser.email
+    : 'Nenhum e-mail cadastrado. Com ele você recupera a senha por e-mail, sem depender da pergunta de segurança.';
+  document.getElementById('email-send-btn').textContent = has ? 'Trocar e-mail (enviar código)' : 'Enviar código';
+  document.getElementById('email-remove').style.display = has ? '' : 'none';
+  document.getElementById('email-code-box').style.display = 'none';
+  ['email-new', 'email-pass', 'email-code'].forEach(id => { document.getElementById(id).value = ''; });
+}
+async function requestEmailCode() {
+  const email = document.getElementById('email-new').value.trim();
+  const password = document.getElementById('email-pass').value;
+  if (!email || !password) { showAlert('Preencha o e-mail e a sua senha atual.'); return; }
+  const btn = document.getElementById('email-send-btn'); btn.disabled = true;
+  const data = await emailPost('/api/email/request', { email, password });
+  btn.disabled = false;
+  if (data.success) {
+    document.getElementById('email-code-box').style.display = '';
+    document.getElementById('email-code').focus();
+    showAlert('Código enviado! Confira o e-mail (e o spam).', 'ok');
+  } else showAlert(data.error || 'Não deu pra enviar o código.');
+}
+async function confirmEmailCode() {
+  const code = document.getElementById('email-code').value.trim();
+  if (code.length !== 6) { showAlert('O código tem 6 dígitos.'); return; }
+  const data = await emailPost('/api/email/confirm', { code });
+  if (data.success) {
+    currentUser.email = data.email;
+    renderEmailBox();
+    showAlert('E-mail confirmado!', 'ok');
+  } else showAlert(data.error || 'Código inválido.');
+}
+async function removeEmail() {
+  const password = document.getElementById('email-pass').value;
+  if (!password) { showAlert('Digite sua senha no campo acima pra remover o e-mail.'); return; }
+  const data = await emailPost('/api/email/remove', { password });
+  if (data.success) { currentUser.email = null; renderEmailBox(); showAlert('E-mail removido.', 'ok'); }
+  else showAlert(data.error || 'Não deu pra remover.');
+}
+async function sendResetCode() {
+  const username = document.getElementById('fe-username').value.trim();
+  if (!username) { showAlert('Informe seu usuário.'); return; }
+  const btn = document.getElementById('fe-send'); btn.disabled = true;
+  const data = await emailPost('/api/forgot_password/email_request', { username });
+  btn.disabled = false;
+  if (data.success) {
+    document.getElementById('fe-step2').style.display = '';
+    showAlert(data.message || 'Se houver um e-mail confirmado, enviamos o código.', 'ok');
+  } else showAlert(data.error || 'Não deu pra enviar o código.');
+}
+async function confirmResetCode() {
+  const username = document.getElementById('fe-username').value.trim();
+  const code = document.getElementById('fe-code').value.trim();
+  const new_password = document.getElementById('fe-new-password').value.trim();
+  if (!username || code.length !== 6 || !new_password) { showAlert('Preencha o usuário, o código de 6 dígitos e a nova senha.'); return; }
+  const data = await emailPost('/api/forgot_password/email_confirm', { username, code, new_password });
+  if (data.success) { showAlert('Senha alterada com sucesso!', 'ok'); switchTab('login'); }
+  else showAlert(data.error || 'Erro ao redefinir.');
 }
 
 async function handleForgotPassword() {

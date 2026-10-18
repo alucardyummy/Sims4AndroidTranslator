@@ -66,7 +66,7 @@
   <h3>O que o site guarda</h3>
   <ul>
     <li><b>Visitante (sem conta):</b> um código aleatório num cookie, que liga seus projetos e arquivos ao seu navegador. Seu apelido fica no aparelho.</li>
-    <li><b>Conta:</b> nome de usuário, apelido, foto de perfil (se você escolher), senha e resposta da pergunta de segurança (as duas guardadas de forma embaralhada, o site não consegue ler), tema e CSS pessoal. No login com Google, o site recebe o identificador da conta, o nome de usuário gerado e a foto do Google.</li>
+    <li><b>Conta:</b> nome de usuário, apelido, foto de perfil (se você escolher), senha e resposta da pergunta de segurança (as duas guardadas de forma embaralhada, o site não consegue ler), tema e CSS pessoal. Se você quiser, também um <b>e-mail de recuperação</b> (opcional, só para contas com senha): ele é usado apenas para enviar o código que permite redefinir a senha, e você pode removê-lo quando quiser no seu perfil. No login com Google, o site recebe o identificador da conta, o nome de usuário gerado e a foto do Google.</li>
     <li><b>Seus projetos:</b> o texto que você traduziu, os nomes do projeto e do arquivo, e os idiomas escolhidos.</li>
     <li><b>Arquivos <code>.package</code> que você importa:</b> ficam guardados no servidor para o site conseguir editar e gerar a tradução.</li>
     <li><b>Notificações:</b> se você ativar, o site guarda o endereço técnico que o seu navegador gera pra receber avisos.</li>
@@ -85,6 +85,7 @@
   <h3>Serviços de terceiros</h3>
   <ul>
     <li><b>Hospedagem e banco de dados:</b> Vercel e Supabase (banco e armazenamento de arquivos).</li>
+    <li><b>Envio de e-mail:</b> Brevo, só se você cadastrar um e-mail de recuperação (para enviar os códigos).</li>
     <li><b>Tradução automática:</b> ao usar a tradução automática, os <b>textos das strings</b> do mod são enviados ao serviço do modelo escolhido (Google Tradutor, DeepL, MyMemory, Groq, OpenRouter ou Featherless). Não envie textos que você não quer que passem por esses serviços.</li>
     <li><b>Login com Google</b> e <b>Google Fonts</b> (as fontes carregam dos servidores do Google).</li>
     <li><b>Notificações:</b> passam pelo serviço de push do seu navegador (Google, Mozilla ou Apple).</li>
