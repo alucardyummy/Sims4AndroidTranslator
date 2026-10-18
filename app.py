@@ -264,6 +264,19 @@ def init_db():
                 );
             ''')
             c.execute("CREATE INDEX IF NOT EXISTS idx_email_codes_user ON email_codes (user_id, purpose);")
+            # Limite de tentativas (login, pergunta de segurança) e de pedidos de código.
+            # A chave é "tipo:nome digitado" (exista a conta ou não), então o bloqueio
+            # se comporta igual pra usuário real e inexistente.
+            c.execute('''
+                CREATE TABLE IF NOT EXISTS rate_limits (
+                    key VARCHAR(160) PRIMARY KEY,
+                    fails INTEGER NOT NULL DEFAULT 0,
+                    strikes INTEGER NOT NULL DEFAULT 0,
+                    locked_until TIMESTAMP,
+                    window_start TIMESTAMP NOT NULL DEFAULT LOCALTIMESTAMP,
+                    last_at TIMESTAMP NOT NULL DEFAULT LOCALTIMESTAMP
+                );
+            ''')
         except Exception as e:
             print("Colunas/tabela de e-mail já existem ou houve um aviso:", e)
 
@@ -1558,18 +1571,115 @@ def register():
     return json.dumps({"success": True})
 
 
+# ─── LIMITE DE TENTATIVAS ───────────────────────────────────────────────────
+# Login e pergunta de segurança: 5 erros bloqueiam por 30 min; se voltar e errar
+# 5 de novo, 35 min, depois 40... (+5 min a cada bloqueio). Acertar zera tudo, e
+# 24h sem nenhum erro também zera. Pedido de código por e-mail: 3 por janela de 2 dias.
+LOGIN_MAX_FAILS = 5
+LOCK_BASE_MIN = 30
+LOCK_STEP_MIN = 5
+LOCK_MEMORY_HOURS = 24
+RESET_REQ_MAX = 3
+RESET_REQ_WINDOW_S = 2 * 24 * 3600
+
+
+def _rl_key(kind, username):
+    name = unicodedata.normalize("NFKC", str(username or "")).strip().lower()[:64]
+    return f"{kind}:{name}"
+
+
+def _fmt_wait(seconds):
+    m = max(1, int((float(seconds) + 59) // 60))
+    d, rem = divmod(m, 1440)
+    h, mm = divmod(rem, 60)
+    parts = []
+    if d:
+        parts.append(f"{d} dia{'s' if d > 1 else ''}")
+    if h:
+        parts.append(f"{h} hora{'s' if h > 1 else ''}")
+    if mm and not d:
+        parts.append(f"{mm} minuto{'s' if mm > 1 else ''}")
+    return " e ".join(parts) or "1 minuto"
+
+
+def _rl_row(c, key):
+    """Garante a linha e a trava (FOR UPDATE) pra contar sem corrida. SEM commit."""
+    c.execute("INSERT INTO rate_limits (key) VALUES (%s) ON CONFLICT (key) DO NOTHING", (key,))
+    c.execute(
+        "SELECT fails, strikes, "
+        "EXTRACT(EPOCH FROM (LOCALTIMESTAMP - window_start)) AS window_age, "
+        "EXTRACT(EPOCH FROM (LOCALTIMESTAMP - last_at)) AS idle "
+        "FROM rate_limits WHERE key = %s FOR UPDATE", (key,))
+    return c.fetchone()
+
+
+def _lock_wait_seconds(c, key):
+    """Segundos que faltam pro bloqueio acabar (0 = livre)."""
+    c.execute("SELECT EXTRACT(EPOCH FROM (locked_until - LOCALTIMESTAMP)) AS left_s FROM rate_limits WHERE key = %s", (key,))
+    r = c.fetchone()
+    left = float(r["left_s"]) if r and r["left_s"] is not None else 0
+    return left if left > 0 else 0
+
+
+def _lock_register_fail(c, key):
+    """Conta 1 erro. Retorna (minutos_de_bloqueio, tentativas_restantes); minutos > 0 se ESTE erro bloqueou. SEM commit."""
+    c.execute("DELETE FROM rate_limits WHERE last_at < LOCALTIMESTAMP - INTERVAL '3 days' "
+              "AND (locked_until IS NULL OR locked_until < LOCALTIMESTAMP)")
+    row = _rl_row(c, key)
+    fails, strikes = row["fails"], row["strikes"]
+    if row["idle"] is not None and float(row["idle"]) > LOCK_MEMORY_HOURS * 3600:
+        fails, strikes = 0, 0           # ficou 24h sem errar: começa do zero
+    fails += 1
+    if fails >= LOGIN_MAX_FAILS:
+        strikes += 1
+        minutes = LOCK_BASE_MIN + LOCK_STEP_MIN * (strikes - 1)
+        c.execute("UPDATE rate_limits SET fails = 0, strikes = %s, last_at = LOCALTIMESTAMP, "
+                  "locked_until = LOCALTIMESTAMP + (%s || ' minutes')::interval WHERE key = %s",
+                  (strikes, str(minutes), key))
+        return minutes, 0
+    c.execute("UPDATE rate_limits SET fails = %s, strikes = %s, last_at = LOCALTIMESTAMP WHERE key = %s", (fails, strikes, key))
+    return 0, LOGIN_MAX_FAILS - fails
+
+
+def _lock_clear(c, key):
+    c.execute("DELETE FROM rate_limits WHERE key = %s", (key,))
+
+
+def _reset_req_take(c, key):
+    """Conta 1 pedido de código. Retorna 0 se liberado, senão os segundos até poder pedir de novo. SEM commit."""
+    row = _rl_row(c, key)
+    fails = row["fails"]
+    age = float(row["window_age"]) if row["window_age"] is not None else 0
+    if age >= RESET_REQ_WINDOW_S:        # passou a janela de 2 dias: recomeça
+        fails, age = 0, 0
+        c.execute("UPDATE rate_limits SET window_start = LOCALTIMESTAMP WHERE key = %s", (key,))
+    if fails >= RESET_REQ_MAX:
+        return RESET_REQ_WINDOW_S - age
+    c.execute("UPDATE rate_limits SET fails = %s, last_at = LOCALTIMESTAMP WHERE key = %s", (fails + 1, key))
+    return 0
+
+
 @app.route("/api/login", methods=["POST"])
 def login():
-    data = request.get_json()
-    username = data.get("username", "").strip()
-    password = data.get("password", "").strip()
+    data = request.get_json(silent=True) or {}
+    username = str(data.get("username") or "").strip()
+    password = str(data.get("password") or "").strip()
+    lock_key = _rl_key("login", username)
 
     conn = get_db()
     c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    wait = _lock_wait_seconds(c, lock_key)
+    if wait > 0:   # bloqueado: nem confere a senha (senão dava pra continuar chutando)
+        conn.close()
+        return json.dumps({"success": False, "error": f"Muitas tentativas erradas. Tente de novo em {_fmt_wait(wait)}."}), 429
+
     c.execute("SELECT id, password_hash FROM users WHERE username = %s", (username,))
     user = c.fetchone()
 
-    if user and check_password_hash(user['password_hash'], password):
+    # conta só-Google não tem password_hash (antes isso dava erro 500)
+    if user and user['password_hash'] and check_password_hash(user['password_hash'], password):
+        _lock_clear(c, lock_key)
         session['user_id'] = user['id']
         session.permanent = True
 
@@ -1581,8 +1691,15 @@ def login():
         conn.close()
         return json.dumps({"success": True})
 
+    minutes, left = _lock_register_fail(c, lock_key)   # conta o erro mesmo se o usuário não existir
+    conn.commit()
     conn.close()
-    return json.dumps({"success": False, "error": "Usuário ou senha incorretos."}), 401
+    if minutes:
+        return json.dumps({"success": False, "error": f"Usuário ou senha incorretos. Muitas tentativas: tente de novo em {_fmt_wait(minutes * 60)}."}), 429
+    msg = "Usuário ou senha incorretos."
+    if left <= 2:
+        msg += f" Restam {left} tentativa{'s' if left > 1 else ''} antes do bloqueio."
+    return json.dumps({"success": False, "error": msg}), 401
 
 
 @app.route("/api/google_login", methods=["POST"])
@@ -1796,33 +1913,48 @@ def google_token_login():
 
 @app.route("/api/forgot_password", methods=["POST"])
 def forgot_password():
-    data = request.get_json()
-    username = data.get("username", "").strip()
-    question = data.get("security_question", "").strip()
-    answer = data.get("security_answer", "").strip()
-    new_password = data.get("new_password", "").strip()
+    data = request.get_json(silent=True) or {}
+    username = str(data.get("username") or "").strip()
+    question = str(data.get("security_question") or "").strip()
+    answer = str(data.get("security_answer") or "").strip()
+    new_password = str(data.get("new_password") or "").strip()
 
     if not username or not question or not answer or len(new_password) < 6:
         return json.dumps({"success": False, "error": "Dados inválidos. Preencha todos os campos corretamente."}), 400
 
+    lock_key = _rl_key("qa", username)
     conn = get_db()
     c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    wait = _lock_wait_seconds(c, lock_key)
+    if wait > 0:
+        conn.close()
+        return json.dumps({"success": False, "error": f"Muitas tentativas erradas. Tente de novo em {_fmt_wait(wait)}."}), 429
+
     c.execute("SELECT id, security_question, security_answer_hash FROM users WHERE username = %s", (username,))
     user = c.fetchone()
 
-    if user:
-        if user['security_question'] == question and check_password_hash(user['security_answer_hash'], answer.lower()):
-            pass_hash = generate_password_hash(new_password)
-            c.execute("UPDATE users SET password_hash = %s WHERE id = %s", (pass_hash, user['id']))
-            conn.commit()
-            conn.close()
-            return json.dumps({"success": True})
-        else:
-            conn.close()
-            return json.dumps({"success": False, "error": "Pergunta ou resposta de segurança incorreta."}), 401
+    # conta só-Google não tem resposta de segurança (antes isso dava erro 500)
+    if user and user['security_answer_hash'] and user['security_question'] == question \
+            and check_password_hash(user['security_answer_hash'], answer.lower()):
+        pass_hash = generate_password_hash(new_password)
+        c.execute("UPDATE users SET password_hash = %s WHERE id = %s", (pass_hash, user['id']))
+        _lock_clear(c, lock_key)
+        _lock_clear(c, _rl_key("login", username))   # trocou a senha por aqui: libera o login também
+        conn.commit()
+        conn.close()
+        return json.dumps({"success": True})
 
+    # Mesma resposta pra usuário inexistente e pra resposta errada (antes dava 404 "não encontrado" e revelava quem tem conta)
+    minutes, left = _lock_register_fail(c, lock_key)
+    conn.commit()
     conn.close()
-    return json.dumps({"success": False, "error": "Usuário não encontrado."}), 404
+    if minutes:
+        return json.dumps({"success": False, "error": f"Pergunta ou resposta de segurança incorreta. Muitas tentativas: tente de novo em {_fmt_wait(minutes * 60)}."}), 429
+    msg = "Pergunta ou resposta de segurança incorreta."
+    if left <= 2:
+        msg += f" Restam {left} tentativa{'s' if left > 1 else ''} antes do bloqueio."
+    return json.dumps({"success": False, "error": msg}), 401
 
 
 # ─── E-MAIL DE RECUPERAÇÃO ──────────────────────────────────────────────────
@@ -1897,18 +2029,20 @@ def _hash_code(purpose, user_id, code):
     return hmac.new((app.secret_key or "").encode(), msg, hashlib.sha256).hexdigest()
 
 
-def _issue_code(c, user_id, purpose, email):
-    """Cria um código novo (SEM commit). Retorna (code, None) ou (None, mensagem) se passou do limite."""
+def _issue_code(c, user_id, purpose, email, check_limits=True):
+    """Cria um código novo (SEM commit). Retorna (code, None) ou (None, mensagem) se passou do limite.
+    check_limits=False no 'reset': lá o limite é o de 3 pedidos por 2 dias (_reset_req_take)."""
     c.execute("DELETE FROM email_codes WHERE created_at < LOCALTIMESTAMP - INTERVAL '1 day'")
-    c.execute(
-        "SELECT COUNT(*) AS n, EXTRACT(EPOCH FROM (LOCALTIMESTAMP - MAX(created_at))) AS since "
-        "FROM email_codes WHERE user_id = %s AND purpose = %s AND created_at > LOCALTIMESTAMP - INTERVAL '1 hour'",
-        (user_id, purpose))
-    r = c.fetchone()
-    if r["n"] >= EMAIL_CODE_MAX_PER_HOUR:
-        return None, "Muitos códigos pedidos. Tente de novo mais tarde."
-    if r["n"] and r["since"] is not None and float(r["since"]) < EMAIL_CODE_COOLDOWN_S:
-        return None, "Espere um minutinho antes de pedir outro código."
+    if check_limits:
+        c.execute(
+            "SELECT COUNT(*) AS n, EXTRACT(EPOCH FROM (LOCALTIMESTAMP - MAX(created_at))) AS since "
+            "FROM email_codes WHERE user_id = %s AND purpose = %s AND created_at > LOCALTIMESTAMP - INTERVAL '1 hour'",
+            (user_id, purpose))
+        r = c.fetchone()
+        if r["n"] >= EMAIL_CODE_MAX_PER_HOUR:
+            return None, "Muitos códigos pedidos. Tente de novo mais tarde."
+        if r["n"] and r["since"] is not None and float(r["since"]) < EMAIL_CODE_COOLDOWN_S:
+            return None, "Espere um minutinho antes de pedir outro código."
     code = f"{secrets.randbelow(10**6):06d}"
     c.execute(
         "INSERT INTO email_codes (user_id, purpose, email, code_hash, expires_at) "
@@ -2050,10 +2184,16 @@ def forgot_email_request():
     conn = get_db()
     try:
         c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        # Limite: 3 pedidos a cada 2 dias POR NOME DIGITADO (exista a conta ou não), então
+        # a mensagem de "limite atingido" é a mesma pra todo mundo e não revela nada.
+        wait = _reset_req_take(c, _rl_key("reset_req", username))
+        conn.commit()   # o pedido conta mesmo que o envio falhe
+        if wait > 0:
+            return json.dumps({"success": False, "error": f"Você já pediu {RESET_REQ_MAX} códigos. Tente de novo em {_fmt_wait(wait)}. (A pergunta de segurança continua disponível.)"}), 429
         c.execute("SELECT id, email FROM users WHERE username = %s AND password_hash IS NOT NULL AND email_verified_at IS NOT NULL", (username,))
         u = c.fetchone()
         if u:
-            code, err = _issue_code(c, u["id"], "reset", u["email"])
+            code, err = _issue_code(c, u["id"], "reset", u["email"], check_limits=False)
             if code and _send_code_email(u["email"], code, "reset"):
                 conn.commit()
             else:
@@ -2089,6 +2229,7 @@ def forgot_email_confirm():
             return bad
         c.execute("UPDATE users SET password_hash = %s WHERE id = %s", (generate_password_hash(new_password), u["id"]))
         c.execute("DELETE FROM email_codes WHERE user_id = %s AND purpose = 'reset'", (u["id"],))
+        _lock_clear(c, _rl_key("login", username))   # trocou a senha por aqui: libera o login também
         conn.commit()
         return json.dumps({"success": True})
     finally:
