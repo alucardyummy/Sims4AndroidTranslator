@@ -9,6 +9,7 @@ import tempfile
 import uuid
 import hashlib
 import hmac
+import time
 import secrets
 import json
 import re
@@ -1933,6 +1934,17 @@ def _check_code(c, user_id, purpose, code):
     return row, None
 
 
+RESET_REQUEST_MIN_SECONDS = 3.0   # tempo mínimo de resposta do pedido de código (mascara quem tem e-mail)
+
+
+def _pad_response_time(start, min_seconds=RESET_REQUEST_MIN_SECONDS):
+    """Espera até completar min_seconds desde `start`. Assim a resposta demora o mesmo
+    tempo exista ou não a conta/o e-mail (senão dava pra descobrir pelo tempo do envio)."""
+    left = min_seconds - (time.monotonic() - start)
+    if left > 0:
+        time.sleep(left)
+
+
 def _only_digits(raw):
     return re.sub(r"\D", "", str(raw or ""))
 
@@ -2027,6 +2039,7 @@ def email_remove():
 @app.route("/api/forgot_password/email_request", methods=["POST"])
 def forgot_email_request():
     """Pede o código de redefinição. A resposta é SEMPRE a mesma (exista ou não a conta / o e-mail), pra não revelar quem tem conta."""
+    start = time.monotonic()
     username = str((request.get_json(silent=True) or {}).get("username") or "").strip()
     if not username:
         return json.dumps({"success": False, "error": "Informe o usuário."}), 400
@@ -2045,9 +2058,10 @@ def forgot_email_request():
                 conn.commit()
             else:
                 conn.rollback()
-        return generic
     finally:
         conn.close()
+    _pad_response_time(start)   # mesma duração com ou sem e-mail cadastrado
+    return generic
 
 
 @app.route("/api/forgot_password/email_confirm", methods=["POST"])
@@ -2059,7 +2073,9 @@ def forgot_email_confirm():
     if not username or len(code) != 6 or len(new_password) < 6:
         return json.dumps({"success": False, "error": "Preencha o usuário, o código de 6 dígitos e uma senha de pelo menos 6 caracteres."}), 400
 
-    bad = json.dumps({"success": False, "error": "Código incorreto ou expirado."}), 400
+    # Mensagem ÚNICA pra qualquer falha: usuário inexistente, sem e-mail, sem código,
+    # código errado ou travado. Mensagens diferentes revelariam quem tem e-mail cadastrado.
+    bad = json.dumps({"success": False, "error": "Código incorreto ou expirado. Se errou várias vezes, peça um novo código."}), 400
     conn = get_db()
     try:
         c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -2070,7 +2086,7 @@ def forgot_email_confirm():
         row, err = _check_code(c, u["id"], "reset", code)
         if err:
             conn.commit()   # grava a tentativa errada
-            return json.dumps({"success": False, "error": err}), 400
+            return bad
         c.execute("UPDATE users SET password_hash = %s WHERE id = %s", (generate_password_hash(new_password), u["id"]))
         c.execute("DELETE FROM email_codes WHERE user_id = %s AND purpose = 'reset'", (u["id"],))
         conn.commit()

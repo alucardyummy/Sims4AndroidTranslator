@@ -2657,9 +2657,9 @@ async function removeEmail() {
 async function sendResetCode() {
   const username = document.getElementById('fe-username').value.trim();
   if (!username) { showAlert('Informe seu usuário.'); return; }
-  const btn = document.getElementById('fe-send'); btn.disabled = true;
-  const data = await emailPost('/api/forgot_password/email_request', { username });
-  btn.disabled = false;
+  const btn = document.getElementById('fe-send'); btn.disabled = true; btn.textContent = 'ENVIANDO...';
+  const data = await emailPost('/api/forgot_password/email_request', { username });   // demora ~3s de propósito
+  btn.disabled = false; btn.textContent = 'ENVIAR CÓDIGO';
   if (data.success) {
     document.getElementById('fe-step2').style.display = '';
     showAlert(data.message || 'Se houver um e-mail confirmado, enviamos o código.', 'ok');
