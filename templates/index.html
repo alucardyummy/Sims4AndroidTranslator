@@ -2620,6 +2620,11 @@ function attachPwHint(inputId) {
   const input = document.getElementById(inputId);
   if (!input) return;
   const group = input.closest('.form-group');
+  const allowed = document.createElement('div');   // aviso fixo: o que pode usar
+  allowed.className = 'pw-allowed';
+  allowed.style.cssText = 'font-size:11px;line-height:1.5;margin-top:6px;opacity:.75';
+  allowed.textContent = 'Você pode usar símbolos, números, minúsculas, maiúsculas e espaços.';
+  group.appendChild(allowed);
   const hint = document.createElement('div');
   hint.className = 'pw-hint';
   hint.style.cssText = 'font-size:11px;line-height:1.5;margin-top:6px;opacity:.85;display:none';
