@@ -1594,29 +1594,24 @@ def google_login():
         c.execute("UPDATE users SET avatar_url = %s WHERE id = %s", (avatar_url, user["id"]))
 
     if not user:
-        # 2) Tem conta com o mesmo username (email local)?
-        c.execute("SELECT id FROM users WHERE username = %s", (name,))
-        user = c.fetchone()
-        if user:
-            # Vincula o google_id à conta existente e atualiza avatar
-            c.execute("UPDATE users SET google_id = %s, avatar_url = %s WHERE id = %s", (google_id, avatar_url, user['id']))
-        else:
-            # 3) Usuário novo — cria conta sem senha local
-            # Garante username único se o nome já existir
-            base_name = name
-            suffix = 1
-            while True:
-                c.execute("SELECT id FROM users WHERE username = %s", (name,))
-                if not c.fetchone():
-                    break
-                name = f"{base_name}{suffix}"
-                suffix += 1
+        # Usuário novo — cria conta sem senha local.
+        # SEGURANÇA: NÃO vincula a contas existentes pelo nome de exibição do
+        # Google (qualquer um escolhe o próprio nome, isso permitia assumir
+        # contas alheias). Garante username único se o nome já existir.
+        base_name = name
+        suffix = 1
+        while True:
+            c.execute("SELECT id FROM users WHERE username = %s", (name,))
+            if not c.fetchone():
+                break
+            name = f"{base_name}{suffix}"
+            suffix += 1
 
-            c.execute(
-                "INSERT INTO users (username, password_hash, google_id, avatar_url) VALUES (%s, NULL, %s, %s) RETURNING id",
-                (name, google_id, avatar_url)
-            )
-            user = c.fetchone()
+        c.execute(
+            "INSERT INTO users (username, password_hash, google_id, avatar_url) VALUES (%s, NULL, %s, %s) RETURNING id",
+            (name, google_id, avatar_url)
+        )
+        user = c.fetchone()
 
     # Mesma lógica do /api/login: seta sessão e migra saves de convidado
     session['user_id'] = user['id']
@@ -1699,30 +1694,23 @@ def google_callback():
         c.execute("UPDATE users SET avatar_url = %s WHERE id = %s", (avatar_url, user["id"]))
 
     if not user:
-        # 2) Tem conta com o mesmo username?
-        c.execute("SELECT id FROM users WHERE username = %s", (name,))
-        user = c.fetchone()
-        if user:
-            c.execute(
-                "UPDATE users SET google_id = %s, avatar_url = %s WHERE id = %s",
-                (google_id, avatar_url, user["id"]),
-            )
-        else:
-            # 3) Cria conta nova sem senha local
-            base_name = name
-            suffix = 1
-            while True:
-                c.execute("SELECT id FROM users WHERE username = %s", (name,))
-                if not c.fetchone():
-                    break
-                name = f"{base_name}{suffix}"
-                suffix += 1
+        # Cria conta nova sem senha local.
+        # SEGURANÇA: NÃO vincula a contas existentes pelo nome de exibição do
+        # Google (ver /api/google_login).
+        base_name = name
+        suffix = 1
+        while True:
+            c.execute("SELECT id FROM users WHERE username = %s", (name,))
+            if not c.fetchone():
+                break
+            name = f"{base_name}{suffix}"
+            suffix += 1
 
-            c.execute(
-                "INSERT INTO users (username, password_hash, google_id, avatar_url) VALUES (%s, NULL, %s, %s) RETURNING id",
-                (name, google_id, avatar_url),
-            )
-            user = c.fetchone()
+        c.execute(
+            "INSERT INTO users (username, password_hash, google_id, avatar_url) VALUES (%s, NULL, %s, %s) RETURNING id",
+            (name, google_id, avatar_url),
+        )
+        user = c.fetchone()
 
     # Gera token temporário para contornar bloqueio de cookie SameSite=Lax
     # em redirect cross-site (Google → seu site).
