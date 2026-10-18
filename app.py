@@ -4,6 +4,7 @@ load_dotenv()
 from flask import Flask, request, redirect, send_file, session, send_from_directory
 from packer.dbpf import DbpfPackage
 from packer.stbl import Stbl
+from password_policy import validate_new_password
 import os
 import tempfile
 import uuid
@@ -1540,8 +1541,11 @@ def register():
     question = data.get("security_question", "").strip()
     answer = data.get("security_answer", "").strip()
 
-    if not username or len(password) < 6 or not question or not answer:
-        return json.dumps({"success": False, "error": "Preencha todos os campos. A senha deve ter no mínimo 6 caracteres."}), 400
+    if not username or not password or not question or not answer:
+        return json.dumps({"success": False, "error": "Preencha todos os campos."}), 400
+    pw_error = validate_new_password(password, username)
+    if pw_error:
+        return json.dumps({"success": False, "error": pw_error}), 400
 
     conn = get_db()
     c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -1919,8 +1923,11 @@ def forgot_password():
     answer = str(data.get("security_answer") or "").strip()
     new_password = str(data.get("new_password") or "").strip()
 
-    if not username or not question or not answer or len(new_password) < 6:
+    if not username or not question or not answer or not new_password:
         return json.dumps({"success": False, "error": "Dados inválidos. Preencha todos os campos corretamente."}), 400
+    pw_error = validate_new_password(new_password, username)   # antes de mexer em qualquer coisa: não gasta tentativa
+    if pw_error:
+        return json.dumps({"success": False, "error": pw_error}), 400
 
     lock_key = _rl_key("qa", username)
     conn = get_db()
@@ -2210,8 +2217,11 @@ def forgot_email_confirm():
     username = str(data.get("username") or "").strip()
     code = _only_digits(data.get("code"))
     new_password = str(data.get("new_password") or "").strip()
-    if not username or len(code) != 6 or len(new_password) < 6:
-        return json.dumps({"success": False, "error": "Preencha o usuário, o código de 6 dígitos e uma senha de pelo menos 6 caracteres."}), 400
+    if not username or len(code) != 6 or not new_password:
+        return json.dumps({"success": False, "error": "Preencha o usuário, o código de 6 dígitos e a nova senha."}), 400
+    pw_error = validate_new_password(new_password, username)
+    if pw_error:
+        return json.dumps({"success": False, "error": pw_error}), 400
 
     # Mensagem ÚNICA pra qualquer falha: usuário inexistente, sem e-mail, sem código,
     # código errado ou travado. Mensagens diferentes revelariam quem tem e-mail cadastrado.
