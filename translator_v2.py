@@ -14,6 +14,7 @@ import re
 import time
 import random
 import logging
+from collections import Counter
 import requests
 from openai import OpenAI, RateLimitError, APIError
 from dotenv import load_dotenv
@@ -128,11 +129,10 @@ def _restore_placeholders(text: str, mapping: dict) -> str:
 
 
 def _placeholders_intact(original: str, translated: str) -> bool:
-    """Confere se todo {placeholder} do original ainda aparece no resultado final."""
-    for tok in _PLACEHOLDER_RE.findall(original):
-        if tok not in translated:
-            return False
-    return True
+    """Confere se cada {placeholder} do original aparece o MESMO número de
+    vezes no resultado final (não só se aparece), e se o modelo não inventou
+    placeholders novos."""
+    return Counter(_PLACEHOLDER_RE.findall(original)) == Counter(_PLACEHOLDER_RE.findall(translated))
 
 
 def _looks_like_drift(original: str, translated: str) -> bool:
