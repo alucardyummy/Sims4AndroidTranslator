@@ -1957,7 +1957,7 @@ def login():
         conn.close()
         return json.dumps({"success": False, "error": f"Muitas tentativas erradas. Tente de novo em {_fmt_wait(wait)}."}), 429
 
-    c.execute("SELECT id, password_hash FROM users WHERE username = %s", (username,))
+    c.execute("SELECT id, password_hash, profile_pic, avatar_url FROM users WHERE username = %s", (username,))
     user = c.fetchone()
 
     # conta só-Google não tem password_hash (antes isso dava erro 500)
@@ -1974,7 +1974,8 @@ def login():
 
         conn.commit()
         conn.close()
-        return json.dumps({"success": True})
+        # a foto já vai junto: o front guarda e pré-carrega antes de recarregar a página (sem esperar o /api/me)
+        return json.dumps({"success": True, "profile_pic": user['profile_pic'] or user['avatar_url'] or None})
 
     minutes, left = _lock_register_fail(c, pair_key)   # conta o erro mesmo se o usuário não existir
     g_minutes, _ = _lock_register_fail(c, lock_key, LOGIN_GLOBAL_MAX_FAILS)
@@ -2230,7 +2231,7 @@ def google_token_login():
     # Confere e consome num passo só (uso único de verdade, sem brecha pra dois pedidos simultâneos).
     c.execute(
         "UPDATE users SET login_token = NULL, login_token_expires = NULL "
-        "WHERE login_token = %s AND login_token_expires > LOCALTIMESTAMP RETURNING id",
+        "WHERE login_token = %s AND login_token_expires > LOCALTIMESTAMP RETURNING id, profile_pic, avatar_url",
         (_hash_login_token(token),))
     user = c.fetchone()
     if user:
@@ -2243,7 +2244,7 @@ def google_token_login():
 
     session["user_id"] = user["id"]
     session.permanent = True
-    return json.dumps({"success": True})
+    return json.dumps({"success": True, "profile_pic": user["profile_pic"] or user["avatar_url"] or None})
 
 
 @app.route("/api/forgot_password", methods=["POST"])

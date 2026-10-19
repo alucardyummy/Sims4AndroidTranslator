@@ -2129,6 +2129,24 @@ function animateDeleteItem(el, callback) {
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Depois do login: guarda a foto no aparelho e deixa ela baixar ANTES de recarregar a página.
+// Assim o ícone já nasce com a foto certa (o cache local é aplicado no 1º frame), sem esperar o /api/me.
+function finishLogin(pic) {
+  try {
+    localStorage.setItem('is_logged_in', '1');   // evita o modal de apelido piscar durante o reload
+    if (pic) localStorage.setItem('cached_profile_pic', pic);
+    else localStorage.removeItem('cached_profile_pic');
+  } catch (e) {}
+  if (!pic) { window.location.reload(); return; }
+  let done = false;
+  const go = () => { if (!done) { done = true; window.location.reload(); } };
+  const img = new Image();
+  img.onload = go;
+  img.onerror = go;
+  img.src = pic;
+  setTimeout(go, 2500);   // rede lenta: não prende o login por causa da foto
+}
+
 async function checkLogin() {
   let authResult = null;
   try {
@@ -2576,12 +2594,7 @@ async function handleLogin() {
       body: JSON.stringify({ username, password })
     });
     const data = await res.json();
-    if (data.success) {
-      // marca "logado" antes do reload: sem isso, o INIT abre o modal de apelido
-      // por 1 instante (localStorage vazio) até o /api/me responder e fechá-lo
-      try { localStorage.setItem('is_logged_in', '1'); } catch (e) {}
-      window.location.reload();
-    }
+    if (data.success) finishLogin(data.profile_pic);   // marca "logado" + foto no cache e só então recarrega
     else showAlert(data.error || 'Erro ao entrar.');
   } catch(e) { showAlert('Erro de conexão.'); }
 }
@@ -2843,10 +2856,7 @@ checkLogin();
         body: JSON.stringify({ token })
       });
       const data = await res.json();
-      if (data.success) {
-        try { localStorage.setItem('is_logged_in', '1'); } catch (e) {}   // evita o piscar do modal de apelido
-        window.location.reload();
-      }
+      if (data.success) finishLogin(data.profile_pic);
       else showAlert('Erro ao finalizar login com Google.');
     } catch(e) { showAlert('Erro de conexão.'); }
   }
