@@ -184,8 +184,6 @@ def render_code_email(code, purpose, ttl_min, site_name, site_url=None, logo_src
             f"O código vale por {ttl_min} minutos.\n"
             f"Se você não pediu este código, ignore este e-mail: nada será alterado. "
             f"Nunca compartilhe o código com ninguém.\n")
-    if site_url:
-        text += f"\n{site_url}\n"
 
     logo = (f'<tr><td align="center" style="padding:30px 24px 6px">'
             f'<img src="{logo_src}" width="72" height="72" alt="" '
