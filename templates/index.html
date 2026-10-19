@@ -2229,10 +2229,22 @@ document.getElementById('edit-profile-pic').addEventListener('change', function(
   const file = e.target.files[0];
   if (!file) return;
 
+  // GIF e WebP (que podem ser animados) pequenos o bastante vão como estão: redesenhar no canvas
+  // viraria um JPEG parado. O servidor guarda até ~400 mil caracteres, então o arquivo precisa ter até 280 KB.
+  const KEEP_ANIMATED_MAX = 280 * 1024;
+  const maybeAnimated = file.type === 'image/gif' || file.type === 'image/webp';
+  const tooBigToKeep = maybeAnimated && file.size > KEEP_ANIMATED_MAX;
+
   const reader = new FileReader();
   reader.onload = ev => {
+    if (maybeAnimated && !tooBigToKeep) {
+      newProfilePicBase64 = ev.target.result;   // original, sem recompressão (mantém a animação e a transparência)
+      document.getElementById('modal-profile-img').src = newProfilePicBase64;
+      return;
+    }
     const img = new Image();
     img.onload = () => {
+      if (tooBigToKeep) showAlert('Esse arquivo é pesado demais pra ficar animado (máx. 280 KB). Usei só a imagem parada.');
       const canvas = document.createElement('canvas');
       const MAX_SIZE = 256;
       let width = img.width;
