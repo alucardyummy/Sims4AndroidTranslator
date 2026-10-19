@@ -78,6 +78,33 @@ def ensure_guest_session():
         session.permanent = True
 
 
+@app.before_request
+def drop_revoked_sessions():
+    """O cookie de sessão do Flask é assinado e vale 30 dias; sozinho ele não tem como ser revogado.
+    Por isso a sessão guarda a 'session_version' da conta no momento do login, e quando a senha muda a
+    versão sobe no banco: cookies antigos (de quem roubou, de aparelho perdido) deixam de valer.
+    Sessões criadas antes desta mudança não têm o campo e contam como versão 0."""
+    uid = session.get('user_id')
+    if not uid or request.endpoint in (None, 'static') or request.path.startswith('/img/'):
+        return
+    try:
+        conn = get_db()
+        try:
+            c = conn.cursor()
+            c.execute("SELECT session_version FROM users WHERE id = %s", (uid,))
+            row = c.fetchone()
+        finally:
+            conn.close()
+    except Exception as e:   # banco/coluna indisponível: não derruba todo mundo por causa disso
+        print("Aviso: não consegui checar a versão da sessão:", e)
+        return
+    if row is None or int(row[0] or 0) != int(session.get('sv', 0) or 0):
+        session.pop('user_id', None)
+        session.pop('sv', None)
+        session.setdefault('guest_session_id', str(uuid.uuid4()))
+        session.permanent = True
+
+
 @app.after_request
 def theme_cookie_for_new_device(response):
     """Quem tem conta e abre o site num aparelho novo (sem o cookie "theme") recebe o tema da conta
@@ -167,6 +194,12 @@ def init_db():
             c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS deletion_requested_at TIMESTAMP;")
         except Exception as e:
             print("Coluna theme já existe ou houve um aviso:", e)
+
+        # Versão da sessão: sobe a cada troca/redefinição de senha e derruba os logins antigos (cookies roubados)
+        try:
+            c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS session_version INTEGER NOT NULL DEFAULT 0;")
+        except Exception as e:
+            print("Coluna session_version já existe ou houve um aviso:", e)
 
         # Login com Google: token de uso único, curto (guardamos só o hash) pra "entregar" a sessão depois do redirect
         try:
@@ -299,6 +332,18 @@ def init_db():
         conn.close()
     except Exception as e:
         print("Aviso ao iniciar DB:", e)
+
+
+def _bind_session_version(c, user_id):
+    """Chamar logo depois de gravar session['user_id']: guarda a versão atual da conta na sessão."""
+    try:
+        c.execute("SELECT session_version FROM users WHERE id = %s", (user_id,))
+        row = c.fetchone()
+        v = row["session_version"] if isinstance(row, dict) else (row[0] if row else 0)
+        session['sv'] = int(v or 0)
+    except Exception as e:
+        print("Aviso: não consegui ler a versão da sessão:", e)
+        session['sv'] = 0
 
 
 def register_package_file(file_id, original_name, project_name=None):
@@ -1636,6 +1681,8 @@ def register():
     conn.close()
 
     session['user_id'] = new_user_id
+    session['sv'] = 0
+    session.permanent = True
     return json.dumps({"success": True})
 
 
@@ -1773,6 +1820,7 @@ def login():
         _lock_clear(c, lock_key)
         session['user_id'] = user['id']
         session.permanent = True
+        _bind_session_version(c, user['id'])
 
         guest_id = session.get('guest_session_id')
         if guest_id:
@@ -1853,6 +1901,7 @@ def google_login():
     # Mesma lógica do /api/login: seta sessão e migra saves de convidado
     session['user_id'] = user['id']
     session.permanent = True
+    _bind_session_version(c, user['id'])
 
     guest_id = session.get('guest_session_id')
     if guest_id:
@@ -2032,6 +2081,8 @@ def google_token_login():
         "WHERE login_token = %s AND login_token_expires > LOCALTIMESTAMP RETURNING id",
         (_hash_login_token(token),))
     user = c.fetchone()
+    if user:
+        _bind_session_version(c, user["id"])
     conn.commit()
     conn.close()
 
@@ -2073,7 +2124,7 @@ def forgot_password():
     if user and user['security_answer_hash'] and user['security_question'] == question \
             and check_password_hash(user['security_answer_hash'], answer.lower()):
         pass_hash = generate_password_hash(new_password)
-        c.execute("UPDATE users SET password_hash = %s WHERE id = %s", (pass_hash, user['id']))
+        c.execute("UPDATE users SET password_hash = %s, session_version = session_version + 1 WHERE id = %s", (pass_hash, user['id']))
         _lock_clear(c, lock_key)
         _lock_clear(c, _rl_key("login", username))   # trocou a senha por aqui: libera o login também
         conn.commit()
@@ -2430,7 +2481,7 @@ def forgot_email_confirm():
         if err:
             conn.commit()   # grava a tentativa errada
             return bad
-        c.execute("UPDATE users SET password_hash = %s WHERE id = %s", (generate_password_hash(new_password), u["id"]))
+        c.execute("UPDATE users SET password_hash = %s, session_version = session_version + 1 WHERE id = %s", (generate_password_hash(new_password), u["id"]))
         c.execute("DELETE FROM email_codes WHERE user_id = %s AND purpose = 'reset'", (u["id"],))
         _lock_clear(c, _rl_key("login", username))   # trocou a senha por aqui: libera o login também
         conn.commit()
