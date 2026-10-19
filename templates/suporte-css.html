@@ -293,6 +293,13 @@ html[data-page="index"] {
   border: 2px solid hotpink !important;
 }
 .modal-title { color: hotpink !important; }</code></pre>
+<p><b>A tela da volta do login com Google</b> (só na Home, por 1 ou 2 segundos). É <b>opcional</b>: se você não mexer, ela já usa o fundo e o texto de apoio do seu tema. Se quiser mudar, este pedaço funciona <b>sozinho</b>, é só colar:</p>
+<dl>
+<dt><code>#google-cover</code></dt><dd>a tela cheia que cobre tudo enquanto o login termina (o fundo). A bolinha girando é o <code>#google-cover::before</code>, e a cor dela é a <code>border-top-color</code>. Repare no <code>#</code> em vez do ponto: é um id, não uma classe</dd>
+</dl>
+<pre><code>#google-cover { background: #1f1433 !important; }
+#google-cover::before { border-top-color: hotpink !important; }</code></pre>
+<p>Enquanto ela aparece, o <code>html::before</code> e o <code>html::after</code> ficam escondidos, então enfeites do seu tema que usam esses dois não passam por cima dela. No <a href="/montar-tema" style="color:var(--ac)">Montador de tema</a> isso é o grupo “Carregamento (volta do Google)”, e ele tem prévia.</p>
 
 <h2 id="outras">10. Info, Editor, Mesclar e Criar <svg class="i" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="#cfe3dd" fill-opacity=".75" stroke="#5f877c" stroke-width="1.8"/><path d="M15.4 15.4l4.9 4.9" stroke="#7fa59b" stroke-width="3.2" stroke-linecap="round"/><path d="M7.4 9.2A3.4 3.4 0 0 1 10 7" stroke="#fff" stroke-width="1.4" stroke-linecap="round" fill="none" opacity=".85"/></svg></h2>
 <p>Agora o passeio guiado: vamos descendo cada tela de cima pra baixo, dizendo o nome de cada pedaço. Todas essas telas têm em comum: <code>.topbar</code> (barra de cima), <code>.back-btn</code> (a setinha ←), <code>.topbar-title</code> (o título ao lado dela), <code>.section-label</code> (os rótulos cinzinhas tipo “DETALHES”) e <code>.separator</code> (a linha que separa). Pra mudar só uma tela, comece com <code>[data-page="..."]</code>.</p>
