@@ -147,6 +147,17 @@ html[data-page="index"] .github-badge:hover { color: #cf8d9d; }
   text-shadow: 0 1px 2px rgba(140,70,88,0.35); box-shadow: 0 6px 16px rgba(212,160,171,0.35);
 }
 .modal-btn:active, .alert-btn:active { background: #cf8d9d !important; }
+/* botão "Entrar com Google": mesmo rosa do ENTRAR */
+.google-btn {
+  background: linear-gradient(180deg, #e6b0bc, #d395a5); border: 1px solid #d79aa7; color: #fff; backdrop-filter: none;
+  font-family: var(--cq-serif); font-style: italic; font-weight: 700; font-size: 17px; letter-spacing: 0.03em;
+  text-shadow: 0 1px 2px rgba(140,70,88,0.35); box-shadow: 0 6px 16px rgba(212,160,171,0.35);
+}
+.google-btn:hover { background: linear-gradient(180deg, #ebbac5, #d99dac); border-color: #d79aa7; color: #fff; }
+.google-btn:active { background: #cf8d9d; }
+.google-btn svg path:first-of-type { stroke: #a8586f; }   /* contorno do G */
+.google-btn svg stop { stop-color: #fff; }
+.google-btn svg stop:nth-child(2) { stop-color: #fbe3e8; }
 .modal-switch { color: #a07882; } .modal-switch span { color: #6b4a53; }
 .alert-msg { color: #5e4249; }
 .pw-eye { color: #cf8d9d; } .pw-eye.on { color: #b9788a; }

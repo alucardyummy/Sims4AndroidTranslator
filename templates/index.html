@@ -834,15 +834,21 @@
   .draft-banner-btn.discard:active { border-color: #e07070; color: #e07070; }
   .draft-banner-btn.recover { background: rgba(30,50,46,0.65); border-color: rgba(255,255,255,0.2); color: #fff; }
   .draft-banner-btn.recover:active { background: var(--accent); }
-  /* cobertura da volta do Google (a classe é posta no início do head): tela cheia na cor do fundo + bolinha girando */
-  html.google-returning::before {
-    content: ""; position: fixed; inset: 0; z-index: 2147483000;
+  /* cobertura da volta do Google (a classe é posta no início do head). É um elemento próprio, e não
+     html::before/::after, porque os temas prontos usam esses pseudo-elementos pra própria decoração
+     e acabavam reposicionando a cobertura (a bolinha ia parar no canto). */
+  html.google-returning { background: var(--bg, #9cb8b2) !important; }
+  /* decorações do tema que ficam FORA do body (ex.: renda do coquette em html::after) passariam por cima: some com elas */
+  html.google-returning::before, html.google-returning::after { display: none !important; }
+  #google-cover {
+    display: none; position: fixed; inset: 0; z-index: 2147483000;
+    align-items: center; justify-content: center;
     background: var(--bg, #9cb8b2);
   }
-  html.google-returning::after {
-    content: ""; position: fixed; z-index: 2147483001; top: 50%; left: 50%;
-    width: 30px; height: 30px; margin: -15px 0 0 -15px; border-radius: 50%;
-    border: 3px solid rgba(0,0,0,0.12); border-top-color: var(--text-muted, #555);
+  html.google-returning #google-cover { display: flex; }
+  #google-cover::before {
+    content: ""; width: 30px; height: 30px; border-radius: 50%;
+    border: 3px solid rgba(128,128,128,0.25); border-top-color: var(--text-muted, #666);
     animation: google-return-spin 0.8s linear infinite;
   }
   @keyframes google-return-spin { to { transform: rotate(360deg); } }
@@ -863,6 +869,7 @@
   }, 1200);
 </script>
 <body>
+<div id="google-cover" aria-hidden="true"></div>
 <link rel="manifest" href="/manifest.json">
 
 <div class="screen" id="screen">
