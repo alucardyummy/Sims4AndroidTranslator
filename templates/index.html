@@ -394,6 +394,8 @@
   .update-item-body .fx-u.fx-s { text-decoration: underline line-through; }
   .update-item-body .fx-g { font-size: 1.3em; line-height: 1.25; }
   .update-item-body .fx-p { font-size: 0.8em; }
+  .update-item-body .fx-c { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.92em; padding: 0.05em 0.35em; border-radius: 4px; background: rgba(127,127,127,0.25); }
+  .update-item-body hr.update-hr { border: 0; border-top: 1px solid currentColor; opacity: 0.35; margin: 0.5em 0; }
   .update-item-body .update-hl { padding: 0 0.2em; border-radius: 4px; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
   /* Cor da letra e cor de destaque, como a cor, só no tema padrão. */
   html[data-theme] .update-item-body .update-hl { background-color: transparent !important; padding: 0; }
@@ -3252,7 +3254,7 @@ function styleUpdateFx(span, attrs) {
   const cls = ['update-fx'];
   let color = null, hl = null;
   attrs.split(',').forEach(a => {
-    if ('biusgp'.indexOf(a) >= 0 && a.length === 1) cls.push('fx-' + a);
+    if ('biusgpc'.indexOf(a) >= 0 && a.length === 1) cls.push('fx-' + a);
     else if (a.charAt(0) === '#') color = a;
     else if (a.charAt(0) === 'm') hl = a.slice(1);
   });
@@ -3263,11 +3265,22 @@ function styleUpdateFx(span, attrs) {
 
 function fillUpdateRich(src, parent) {
   // grupos: 1=atributos 2=trecho formatado | 3=nome do link 4=endereço
-  const re = /\{((?:[biusgp]|m?#[0-9a-fA-F]{6})(?:,(?:[biusgp]|m?#[0-9a-fA-F]{6}))*)\|([^{}]+)\}|\[([^\[\]\n]{1,120})\]\(([^()\s]{1,500})\)/g;
-  let last = 0, m;
+  const re = /\{((?:[biusgpc]|m?#[0-9a-fA-F]{6})(?:,(?:[biusgpc]|m?#[0-9a-fA-F]{6}))*)\|([^{}]+)\}|\[([^\[\]\n]{1,120})\]\(([^()\s]{1,500})\)|(?:^|\n)\{hr\}(?=\n|$)/g;
+  let last = 0, m, afterHr = false;
   while ((m = re.exec(src)) !== null) {
-    if (m.index > last) parent.appendChild(document.createTextNode(src.slice(last, m.index)));
-    if (m[1]) {
+    if (m.index > last) {
+      let t = src.slice(last, m.index);
+      if (afterHr && t.charAt(0) === '\n') t = t.slice(1);
+      if (t) parent.appendChild(document.createTextNode(t));
+    }
+    afterHr = false;
+    if (m[3] === undefined && !m[1]) {
+      // linha horizontal ({hr} sozinho na linha)
+      const hr = document.createElement('hr');
+      hr.className = 'update-hr';
+      parent.appendChild(hr);
+      afterHr = true;
+    } else if (m[1]) {
       const span = document.createElement('span');
       styleUpdateFx(span, m[1]);
       fillUpdateRich(m[2], span);
@@ -3292,7 +3305,11 @@ function fillUpdateRich(src, parent) {
     }
     last = m.index + m[0].length;
   }
-  if (last < src.length) parent.appendChild(document.createTextNode(src.slice(last)));
+  if (last < src.length) {
+    let t = src.slice(last);
+    if (afterHr && t.charAt(0) === '\n') t = t.slice(1);
+    if (t) parent.appendChild(document.createTextNode(t));
+  }
 }
 
 function buildUpdateItem(u) {

@@ -596,12 +596,15 @@ def push_unsubscribe():
 # banco o texto fica com a marcação; já o push (notificação do sistema, que não
 # aceita link nem formatação no meio do texto) leva texto simples.
 _UPDATE_LINK_RE = re.compile(r"\[([^\[\]\n]{1,120})\]\(([^()\s]{1,500})\)")
-_UPDATE_FX_ATTR = r"(?:[biusgp]|m?#[0-9a-fA-F]{6})"
+_UPDATE_FX_ATTR = r"(?:[biusgpc]|m?#[0-9a-fA-F]{6})"
 _UPDATE_FX_RE = re.compile(r"\{" + _UPDATE_FX_ATTR + r"(?:," + _UPDATE_FX_ATTR + r")*\|([^{}]+)\}")
+# Linha horizontal: uma linha só com {hr}. No push (texto simples) ela some.
+_UPDATE_HR_RE = re.compile(r"(?:^|\n)\{hr\}(?=\n|$)")
 
 
 def strip_update_markup(text):
     text = _UPDATE_FX_RE.sub(r"\1", text or "")
+    text = _UPDATE_HR_RE.sub("", text).lstrip("\n")
 
     def _sub(m):
         url = m.group(2)
