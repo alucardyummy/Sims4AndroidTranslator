@@ -961,9 +961,12 @@ def admin_notify_update():
 def home():
     user_id = session.get('user_id')
     guest_id = session.get('guest_session_id')
+    sv = session.get('sv')   # versão da sessão da conta: sem ela, drop_revoked_sessions derruba o login
     session.clear()
     if user_id:
         session['user_id'] = user_id
+        if sv is not None:
+            session['sv'] = sv
     if guest_id:
         session['guest_session_id'] = guest_id
     # session.clear() também apaga a flag interna "_permanent" do Flask, que é
