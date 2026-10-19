@@ -1669,6 +1669,29 @@ def _reset_req_take(c, key):
     return 0
 
 
+def _guard_password(conn, c, user_id, pw_hash, password):
+    """Confere a SENHA ATUAL de quem já está logado (trocar/remover e-mail, excluir conta) com o mesmo
+    limite de tentativas do login. Sem isso, quem tivesse a sessão de outra pessoa poderia chutar a
+    senha à vontade por essas rotas, driblando o bloqueio do login.
+    Retorna (True, None, 200) ou (False, mensagem, status). Já faz commit do contador."""
+    key = f"pw:{user_id}"
+    wait = _lock_wait_seconds(c, key)
+    if wait > 0:   # bloqueado: nem confere a senha
+        return False, f"Muitas tentativas erradas. Tente de novo em {_fmt_wait(wait)}.", 429
+    if pw_hash and check_password_hash(pw_hash, password):
+        _lock_clear(c, key)
+        conn.commit()
+        return True, None, 200
+    minutes, left = _lock_register_fail(c, key)
+    conn.commit()
+    if minutes:
+        return False, f"Senha incorreta. Muitas tentativas: tente de novo em {_fmt_wait(minutes * 60)}.", 429
+    msg = "Senha incorreta."
+    if left <= 2:
+        msg += f" Restam {left} tentativa{'s' if left > 1 else ''} antes do bloqueio."
+    return False, msg, 401
+
+
 @app.route("/api/login", methods=["POST"])
 def login():
     data = request.get_json(silent=True) or {}
@@ -2178,8 +2201,9 @@ def email_request():
         u = c.fetchone()
         if not u or not u["password_hash"]:
             return json.dumps({"success": False, "error": "Só contas com senha usam e-mail de recuperação."}), 400
-        if not check_password_hash(u["password_hash"], password):
-            return json.dumps({"success": False, "error": "Senha incorreta."}), 401
+        ok, err, status = _guard_password(conn, c, user_id, u["password_hash"], password)
+        if not ok:
+            return json.dumps({"success": False, "error": err}), status
         c.execute("SELECT id FROM users WHERE LOWER(email) = %s AND email_verified_at IS NOT NULL AND id <> %s", (email, user_id))
         if c.fetchone():
             return json.dumps({"success": False, "error": "Esse e-mail já está em uso em outra conta."}), 400
@@ -2234,8 +2258,11 @@ def email_remove():
         c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         c.execute("SELECT password_hash FROM users WHERE id = %s", (user_id,))
         u = c.fetchone()
-        if not u or not u["password_hash"] or not check_password_hash(u["password_hash"], password):
+        if not u or not u["password_hash"]:
             return json.dumps({"success": False, "error": "Senha incorreta."}), 401
+        ok, err, status = _guard_password(conn, c, user_id, u["password_hash"], password)
+        if not ok:
+            return json.dumps({"success": False, "error": err}), status
         c.execute("UPDATE users SET email = NULL, email_verified_at = NULL WHERE id = %s", (user_id,))
         c.execute("DELETE FROM email_codes WHERE user_id = %s", (user_id,))
         conn.commit()
@@ -2699,9 +2726,10 @@ def account_delete():
         return json.dumps({"success": False, "error": "Não logado"}), 401
 
     if row["password_hash"]:                            # conta com senha: palavra + senha
-        if not check_password_hash(row["password_hash"], str(data.get("password") or "")):
+        ok, err, status = _guard_password(conn, c, user_id, row["password_hash"], str(data.get("password") or ""))
+        if not ok:
             conn.close()
-            return json.dumps({"success": False, "error": "Senha incorreta."}), 400
+            return json.dumps({"success": False, "error": err}), status
     elif str(data.get("username") or "").strip() != row["username"]:   # conta Google: palavra + nome de usuário
         conn.close()
         return json.dumps({"success": False, "error": "Digite seu nome de usuário exatamente como ele aparece."}), 400
