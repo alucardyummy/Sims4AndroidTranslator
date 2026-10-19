@@ -539,6 +539,9 @@ def push_subscribe():
 
     if not endpoint or not p256dh or not auth:
         return {"error": "Inscrição inválida"}, 400
+    if (not isinstance(endpoint, str) or not endpoint.startswith("https://") or len(endpoint) > 1000
+            or not isinstance(p256dh, str) or not isinstance(auth, str) or len(p256dh) > 255 or len(auth) > 255):
+        return {"error": "Inscrição inválida"}, 400
 
     user_id = session.get('user_id')
     guest_id = session.get('guest_session_id')
@@ -571,7 +574,7 @@ def push_subscribe():
 def push_unsubscribe():
     data = request.get_json(silent=True) or {}
     endpoint = data.get("endpoint")
-    if not endpoint:
+    if not endpoint or not isinstance(endpoint, str) or len(endpoint) > 1000:
         return {"error": "endpoint ausente"}, 400
 
     try:
