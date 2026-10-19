@@ -2274,11 +2274,8 @@ def forgot_password():
     # conta só-Google não tem resposta de segurança (antes isso dava erro 500)
     answer_ok = bool(user and user['security_answer_hash'] and user['security_question'] == question
                      and check_password_hash(user['security_answer_hash'], answer.lower()))
-    # Conta com e-mail de recuperação CONFIRMADO só redefine pelo e-mail: a resposta da pergunta é o elo fraco
-    # (palpite fácil). Falha igual a "resposta errada" (mesma mensagem, mesmo tempo) pra não revelar quem tem e-mail.
-    # ALLOW_QA_RESET_WITH_EMAIL=1 volta ao comportamento antigo.
-    qa_blocked = bool(user and user['has_email']) and os.environ.get("ALLOW_QA_RESET_WITH_EMAIL") != "1"
-    if answer_ok and not qa_blocked:
+    # A pergunta de segurança é a 2ª chance de quem perdeu o acesso ao e-mail confirmado: vale pra qualquer conta.
+    if answer_ok:
         pass_hash = generate_password_hash(new_password)
         c.execute("UPDATE users SET password_hash = %s, session_version = session_version + 1 WHERE id = %s", (pass_hash, user['id']))
         _lock_clear_family(c, lock_key)
