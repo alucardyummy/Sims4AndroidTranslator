@@ -48,6 +48,9 @@ app.secret_key = os.environ.get("FLASK_SECRET_KEY")
 app.permanent_session_lifetime = timedelta(days=30)
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 app.config["SESSION_COOKIE_SECURE"] = True
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+# Teto do corpo de qualquer requisição (uploads grandes vão direto pro Supabase, não passam por aqui)
+app.config["MAX_CONTENT_LENGTH"] = 64 * 1024 * 1024
 
 UPLOAD_FOLDER = tempfile.gettempdir()
 
@@ -953,6 +956,9 @@ def get_upload_url():
     Gera uma signed URL para o frontend fazer o upload do .package
     diretamente no Supabase Storage, sem passar pelo Flask.
     """
+    wait = _window_take(f"upl:{_client_ip()}", 60, 3600)   # sem isso qualquer um enche o Storage
+    if wait > 0:
+        return _too_many_json(wait, "Muitos envios deste aparelho/rede")
     file_id = f"{uuid.uuid4().hex}.package"
     res = supabase.storage.from_(BUCKET_NAME).create_signed_upload_url(file_id)
     # Já amarra o arquivo a quem pediu o upload: o /upload/confirm só aceita ids que sejam de quem confirma.
@@ -1318,18 +1324,28 @@ def api_engines():
     return json.dumps(list_available_engines())
 
 
+TRANSLATE_MAX_CHARS = 5000
+TRANSLATE_BULK_MAX_ITEMS = 100
+
+
 @app.route("/api/translate", methods=["POST"])
 def api_translate():
     from translator_v2 import translate_with_fallback
 
-    data = request.get_json()
-    text = data.get("text", "")
+    data = request.get_json(silent=True) or {}
+    text = str(data.get("text") or "")
     engine = _normalize_engine_id(data.get("engine", ""))
-    target_lang = data.get("target_lang", "POR_BR")
-    tone = data.get("tone", "formal")  # front ainda não manda isso - default formal
+    target_lang = str(data.get("target_lang") or "POR_BR")[:16]
+    tone = str(data.get("tone") or "formal")[:32]  # front ainda não manda isso - default formal
 
     if not text:
         return json.dumps({"error": "No text provided"}), 400
+    if len(text) > TRANSLATE_MAX_CHARS:
+        return json.dumps({"success": False, "translated": None, "error": "Texto grande demais pra traduzir de uma vez."}), 413
+    # as engines gastam chaves/cota de IA pagas: limite por IP (o "Traduzir tudo" faz uma chamada por string)
+    wait = _window_take(f"trn:{_client_ip()}", 300, 60)
+    if wait > 0:
+        return json.dumps({"success": False, "translated": None, "error": f"Muitas traduções seguidas. Tente de novo em {_fmt_wait(wait)}."}), 429
 
     try:
         result = translate_with_fallback(text, target_lang=target_lang, tone=tone, preferred_engine=engine)
@@ -1340,7 +1356,8 @@ def api_translate():
             "error": None,
         })
     except RuntimeError as e:
-        return json.dumps({"success": False, "translated": None, "error": str(e)}), 502
+        print("Falha na tradução:", str(e)[:500])   # o detalhe (respostas das APIs) fica só no log do servidor
+        return json.dumps({"success": False, "translated": None, "error": "Nenhum motor de tradução conseguiu traduzir agora. Tente de novo em instantes."}), 502
 
 
 @app.route("/api/translate_bulk", methods=["POST"])
@@ -1352,13 +1369,19 @@ def api_translate_bulk():
     from concurrent.futures import ThreadPoolExecutor, as_completed
     from translator_v2 import translate_with_fallback
 
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
     items = data.get("items", [])  # [{"idx": 12, "text": "...", "tone": "formal"}, ...]
-    target_lang = data.get("target_lang", "POR_BR")
+    target_lang = str(data.get("target_lang") or "POR_BR")[:16]
     engine = _normalize_engine_id(data.get("engine", ""))
 
-    if not items:
+    if not isinstance(items, list) or not items:
         return json.dumps({"results": []})
+    if len(items) > TRANSLATE_BULK_MAX_ITEMS or any(
+            not isinstance(it, dict) or "idx" not in it or len(str(it.get("text") or "")) > TRANSLATE_MAX_CHARS for it in items):
+        return json.dumps({"results": [], "error": f"Envie no máximo {TRANSLATE_BULK_MAX_ITEMS} textos (até {TRANSLATE_MAX_CHARS} caracteres cada) por vez."}), 413
+    wait = _window_take(f"trnb:{_client_ip()}", 6, 60)   # cada chamada traz até 100 textos
+    if wait > 0:
+        return json.dumps({"results": [], "error": f"Muitas traduções seguidas. Tente de novo em {_fmt_wait(wait)}."}), 429
 
     MAX_WORKERS = 4
     results = [None] * len(items)
@@ -1374,7 +1397,8 @@ def api_translate_bulk():
             return position, {"idx": item["idx"], "translated": r["text"], "engine_used": r["engine_used"], "error": None}
         except RuntimeError as e:
             # uma string falhando não derruba as outras - erro só nesse item
-            return position, {"idx": item["idx"], "translated": None, "error": str(e)}
+            print("Falha na tradução (bulk):", str(e)[:300])
+            return position, {"idx": item["idx"], "translated": None, "error": "Não deu pra traduzir este texto agora."}
 
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as pool:
         futures = [pool.submit(worker, i, item) for i, item in enumerate(items)]
@@ -1644,11 +1668,15 @@ def load_save(save_id):
 
 @app.route("/api/register", methods=["POST"])
 def register():
-    data = request.get_json()
-    username = data.get("username", "").strip()
-    password = data.get("password", "").strip()
-    question = data.get("security_question", "").strip()
-    answer = data.get("security_answer", "").strip()
+    data = request.get_json(silent=True) or {}
+    username = str(data.get("username") or "").strip()
+    password = str(data.get("password") or "").strip()
+    question = str(data.get("security_question") or "").strip()
+    answer = str(data.get("security_answer") or "").strip()
+
+    wait = _window_take(f"reg:{_client_ip()}", 8, 3600)   # criação de contas em massa
+    if wait > 0:
+        return _too_many_json(wait, "Muitas contas criadas deste aparelho/rede")
 
     if not username or not password or not question or not answer:
         return json.dumps({"success": False, "error": "Preencha todos os campos."}), 400
