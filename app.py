@@ -1736,7 +1736,7 @@ def _lock_wait_seconds(c, key):
     return left if left > 0 else 0
 
 
-def _lock_register_fail(c, key):
+def _lock_register_fail(c, key, max_fails=None):
     """Conta 1 erro. Retorna (minutos_de_bloqueio, tentativas_restantes); minutos > 0 se ESTE erro bloqueou. SEM commit."""
     c.execute("DELETE FROM rate_limits WHERE last_at < LOCALTIMESTAMP - INTERVAL '3 days' "
               "AND (locked_until IS NULL OR locked_until < LOCALTIMESTAMP)")
@@ -1745,7 +1745,8 @@ def _lock_register_fail(c, key):
     if row["idle"] is not None and float(row["idle"]) > LOCK_MEMORY_HOURS * 3600:
         fails, strikes = 0, 0           # ficou 24h sem errar: começa do zero
     fails += 1
-    if fails >= LOGIN_MAX_FAILS:
+    max_fails = max_fails or LOGIN_MAX_FAILS
+    if fails >= max_fails:
         strikes += 1
         minutes = LOCK_BASE_MIN + LOCK_STEP_MIN * (strikes - 1)
         c.execute("UPDATE rate_limits SET fails = 0, strikes = %s, last_at = LOCALTIMESTAMP, "
@@ -1753,11 +1754,59 @@ def _lock_register_fail(c, key):
                   (strikes, str(minutes), key))
         return minutes, 0
     c.execute("UPDATE rate_limits SET fails = %s, strikes = %s, last_at = LOCALTIMESTAMP WHERE key = %s", (fails, strikes, key))
-    return 0, LOGIN_MAX_FAILS - fails
+    return 0, max_fails - fails
 
 
 def _lock_clear(c, key):
     c.execute("DELETE FROM rate_limits WHERE key = %s", (key,))
+
+
+LOGIN_GLOBAL_MAX_FAILS = 25   # erros somando TODOS os IPs contra o mesmo usuário (limite por usuário+IP é LOGIN_MAX_FAILS)
+
+
+def _client_ip():
+    """IP de quem fez a requisição (na Vercel o primeiro do X-Forwarded-For é o do cliente)."""
+    fwd = request.headers.get("X-Forwarded-For", "")
+    ip = (fwd.split(",")[0].strip() if fwd else "") or request.headers.get("X-Real-IP", "") or (request.remote_addr or "")
+    return re.sub(r"[^0-9a-fA-F:.]", "", ip)[:45] or "?"
+
+
+def _lock_clear_family(c, key):
+    """Zera o bloqueio do usuário (key) e os bloqueios por usuário+IP (key|ip)."""
+    c.execute("DELETE FROM rate_limits WHERE key = %s OR left(key, %s) = %s", (key, len(key) + 1, key + "|"))
+
+
+def _window_take(key, max_hits, window_s):
+    """Contador de janela fixa (ex.: pedidos por IP). Retorna 0 se liberado, senão os segundos até liberar.
+    Usa conexão própria e, se o banco falhar, libera (não derruba o site por causa do limite)."""
+    try:
+        conn = get_db()
+        try:
+            c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            if secrets.randbelow(50) == 0:   # faxina de vez em quando
+                c.execute("DELETE FROM rate_limits WHERE last_at < LOCALTIMESTAMP - INTERVAL '3 days' "
+                          "AND (locked_until IS NULL OR locked_until < LOCALTIMESTAMP)")
+            row = _rl_row(c, key)
+            hits = row["fails"]
+            age = float(row["window_age"]) if row["window_age"] is not None else 0
+            if age >= window_s:
+                hits, age = 0, 0
+                c.execute("UPDATE rate_limits SET window_start = LOCALTIMESTAMP WHERE key = %s", (key,))
+            if hits >= max_hits:
+                conn.commit()
+                return max(1, window_s - age)
+            c.execute("UPDATE rate_limits SET fails = %s, last_at = LOCALTIMESTAMP WHERE key = %s", (hits + 1, key))
+            conn.commit()
+            return 0
+        finally:
+            conn.close()
+    except Exception as e:
+        print("Aviso: limite por IP indisponível:", e)
+        return 0
+
+
+def _too_many_json(wait, msg="Muitas tentativas"):
+    return json.dumps({"success": False, "error": f"{msg}. Tente de novo em {_fmt_wait(wait)}."}), 429
 
 
 def _reset_req_take(c, key):
@@ -1803,11 +1852,16 @@ def login():
     username = str(data.get("username") or "").strip()
     password = str(data.get("password") or "").strip()
     lock_key = _rl_key("login", username)
+    pair_key = f"{lock_key}|{_client_ip()}"   # bloqueio por usuário+IP: quem erra não trava o dono da conta em outro lugar
+
+    ip_wait = _window_take(f"ipl:{_client_ip()}", 120, 600)   # chutar vários usuários do mesmo IP
+    if ip_wait > 0:
+        return _too_many_json(ip_wait, "Muitas tentativas deste aparelho/rede")
 
     conn = get_db()
     c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-    wait = _lock_wait_seconds(c, lock_key)
+    wait = max(_lock_wait_seconds(c, lock_key), _lock_wait_seconds(c, pair_key))
     if wait > 0:   # bloqueado: nem confere a senha (senão dava pra continuar chutando)
         conn.close()
         return json.dumps({"success": False, "error": f"Muitas tentativas erradas. Tente de novo em {_fmt_wait(wait)}."}), 429
@@ -1818,6 +1872,7 @@ def login():
     # conta só-Google não tem password_hash (antes isso dava erro 500)
     if user and user['password_hash'] and check_password_hash(user['password_hash'], password):
         _lock_clear(c, lock_key)
+        _lock_clear(c, pair_key)
         session['user_id'] = user['id']
         session.permanent = True
         _bind_session_version(c, user['id'])
@@ -1830,7 +1885,9 @@ def login():
         conn.close()
         return json.dumps({"success": True})
 
-    minutes, left = _lock_register_fail(c, lock_key)   # conta o erro mesmo se o usuário não existir
+    minutes, left = _lock_register_fail(c, pair_key)   # conta o erro mesmo se o usuário não existir
+    g_minutes, _ = _lock_register_fail(c, lock_key, LOGIN_GLOBAL_MAX_FAILS)
+    minutes = max(minutes, g_minutes)
     conn.commit()
     conn.close()
     if minutes:
@@ -2109,10 +2166,11 @@ def forgot_password():
         return json.dumps({"success": False, "error": pw_error}), 400
 
     lock_key = _rl_key("qa", username)
+    pair_key = f"{lock_key}|{_client_ip()}"
     conn = get_db()
     c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-    wait = _lock_wait_seconds(c, lock_key)
+    wait = max(_lock_wait_seconds(c, lock_key), _lock_wait_seconds(c, pair_key))
     if wait > 0:
         conn.close()
         return json.dumps({"success": False, "error": f"Muitas tentativas erradas. Tente de novo em {_fmt_wait(wait)}."}), 429
@@ -2125,14 +2183,16 @@ def forgot_password():
             and check_password_hash(user['security_answer_hash'], answer.lower()):
         pass_hash = generate_password_hash(new_password)
         c.execute("UPDATE users SET password_hash = %s, session_version = session_version + 1 WHERE id = %s", (pass_hash, user['id']))
-        _lock_clear(c, lock_key)
-        _lock_clear(c, _rl_key("login", username))   # trocou a senha por aqui: libera o login também
+        _lock_clear_family(c, lock_key)
+        _lock_clear_family(c, _rl_key("login", username))   # trocou a senha por aqui: libera o login também
         conn.commit()
         conn.close()
         return json.dumps({"success": True})
 
     # Mesma resposta pra usuário inexistente e pra resposta errada (antes dava 404 "não encontrado" e revelava quem tem conta)
-    minutes, left = _lock_register_fail(c, lock_key)
+    minutes, left = _lock_register_fail(c, pair_key)
+    g_minutes, _ = _lock_register_fail(c, lock_key, 15)   # soma de todos os IPs contra o mesmo usuário
+    minutes = max(minutes, g_minutes)
     conn.commit()
     conn.close()
     if minutes:
@@ -2483,7 +2543,7 @@ def forgot_email_confirm():
             return bad
         c.execute("UPDATE users SET password_hash = %s, session_version = session_version + 1 WHERE id = %s", (generate_password_hash(new_password), u["id"]))
         c.execute("DELETE FROM email_codes WHERE user_id = %s AND purpose = 'reset'", (u["id"],))
-        _lock_clear(c, _rl_key("login", username))   # trocou a senha por aqui: libera o login também
+        _lock_clear_family(c, _rl_key("login", username))   # trocou a senha por aqui: libera o login também
         conn.commit()
         return json.dumps({"success": True})
     finally:
