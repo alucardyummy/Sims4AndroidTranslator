@@ -2067,6 +2067,9 @@ def google_login():
 GOOGLE_REDIRECT_URI = os.environ.get("GOOGLE_REDIRECT_URI") or "https://sims4androidtranslator.vercel.app/api/google_callback"
 
 
+GOOGLE_LOGIN_TOKEN_MINUTES = 15   # quanto tempo o token do retorno do Google vale (uso único, guardado só como hash)
+
+
 def _hash_login_token(token):
     return hashlib.sha256(str(token).encode()).hexdigest()
 
@@ -2188,7 +2191,7 @@ def google_callback():
         user = c.fetchone()
 
     # Gera token temporário para contornar bloqueio de cookie SameSite=Lax
-    # em redirect cross-site (Google → seu site). Aleatório forte, vale 60s, uso único,
+    # em redirect cross-site (Google → seu site). Aleatório forte, vale GOOGLE_LOGIN_TOKEN_MINUTES, uso único,
     # e no banco fica só o hash (se o banco vazar, não dá pra usar o token).
     login_token = secrets.token_urlsafe(32)
     user_id = user["id"]
@@ -2201,8 +2204,8 @@ def google_callback():
         )
 
     c.execute(
-        "UPDATE users SET login_token = %s, login_token_expires = LOCALTIMESTAMP + INTERVAL '60 seconds' WHERE id = %s",
-        (_hash_login_token(login_token), user_id))
+        "UPDATE users SET login_token = %s, login_token_expires = LOCALTIMESTAMP + (%s || ' minutes')::interval WHERE id = %s",
+        (_hash_login_token(login_token), str(GOOGLE_LOGIN_TOKEN_MINUTES), user_id))
 
     conn.commit()
     conn.close()
