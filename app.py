@@ -110,6 +110,21 @@ def drop_revoked_sessions():
 
 
 @app.after_request
+def security_headers(response):
+    """Cabeçalhos de proteção em todas as respostas. A CSP aqui é a parte que NÃO quebra o site (o app usa
+    scripts/estilos inline): trava embutir o site em iframe de terceiros (clickjacking), <base>/<object>
+    injetados e envio de formulário pra fora."""
+    h = response.headers
+    h.setdefault("X-Content-Type-Options", "nosniff")
+    h.setdefault("X-Frame-Options", "SAMEORIGIN")
+    h.setdefault("Referrer-Policy", "same-origin")
+    h.setdefault("Strict-Transport-Security", "max-age=31536000")
+    h.setdefault("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()")
+    h.setdefault("Content-Security-Policy", "base-uri 'self'; object-src 'none'; frame-ancestors 'self'; form-action 'self'")
+    return response
+
+
+@app.after_request
 def theme_cookie_for_new_device(response):
     """Quem tem conta e abre o site num aparelho novo (sem o cookie "theme") recebe o tema da conta
     já na 1ª página, pra o theme.js aplicá-lo antes de a tela aparecer (sem piscar o tema padrão).
