@@ -51,6 +51,13 @@
     font-family: inherit;
     resize: vertical;
   }
+  .ta-wrap { position: relative; }
+  .ta-wrap textarea { display: block; min-height: 84px; resize: none; padding-bottom: 30px; }
+  .ta-grip { position: absolute; right: 2px; bottom: 2px; width: 36px; height: 36px; display: flex;
+    align-items: flex-end; justify-content: flex-end; padding: 7px; cursor: ns-resize; touch-action: none;
+    color: #8a7fa6; -webkit-user-select: none; user-select: none; }
+  .ta-grip svg { width: 18px; height: 18px; display: block; }
+  .ta-grip:active { color: #a99fc4; }
   input:focus, textarea:focus {
     outline: none;
     border-color: #8a7fa6;
@@ -257,7 +264,12 @@
     <input type="text" id="title" placeholder="Ex: Tradução atualizada!" maxlength="80" oninput="updateBodyCounter()">
 
     <label for="body">Mensagem</label>
-    <textarea id="body" rows="3" placeholder="Ex: Já dá pra baixar a versão nova." oninput="updateBodyCounter()"></textarea>
+    <div class="ta-wrap">
+      <textarea id="body" rows="3" placeholder="Ex: Já dá pra baixar a versão nova." oninput="updateBodyCounter()"></textarea>
+      <div class="ta-grip" id="body-grip" role="separator" aria-label="Esticar caixa de mensagem" title="Arraste para esticar">
+        <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M16 5L5 16"/><path d="M16 11L11 16"/></svg>
+      </div>
+    </div>
     <div id="body-counter" class="counter">0 caracteres</div>
 
     <div class="fxbar" id="fxbar">
@@ -854,6 +866,31 @@
     return bytes + 10; // espaços extras do json.dumps
   }
 
+  // Caixa de mensagem: cresce sozinha enquanto escreve e a alça roxa estica na mão.
+  function growBody() {
+    const ta = document.getElementById('body');
+    if (ta.dataset.manual === '1') { if (ta.scrollHeight > ta.offsetHeight) ta.style.height = ta.scrollHeight + 2 + 'px'; return; }
+    ta.style.height = 'auto';
+    ta.style.height = Math.max(84, ta.scrollHeight + 2) + 'px';
+  }
+  (function () {
+    const ta = document.getElementById('body'), grip = document.getElementById('body-grip');
+    let startY = 0, startH = 0, drag = false;
+    grip.addEventListener('pointerdown', e => {
+      drag = true; startY = e.clientY; startH = ta.offsetHeight;
+      grip.setPointerCapture(e.pointerId); e.preventDefault();
+    });
+    grip.addEventListener('pointermove', e => {
+      if (!drag) return;
+      ta.dataset.manual = '1';
+      ta.style.height = Math.max(84, startH + (e.clientY - startY)) + 'px';
+    });
+    const end = e => { drag = false; try { grip.releasePointerCapture(e.pointerId); } catch (_) {} };
+    grip.addEventListener('pointerup', end);
+    grip.addEventListener('pointercancel', end);
+    ta.addEventListener('input', growBody);
+  })();
+
   function updateBodyCounter() {
     const counter = document.getElementById('body-counter');
     updatePreview();
@@ -876,6 +913,7 @@
     document.getElementById('body').value = u.body;
     document.getElementById('url').value = (u.url && u.url !== '/') ? u.url : '';
     updateBodyCounter();
+    growBody();
     editingBadge.style.display = 'inline';
     document.getElementById('send-btn').textContent = 'Salvar edição';
     document.getElementById('title').scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -887,6 +925,8 @@
     document.getElementById('body').value = '';
     document.getElementById('url').value = '';
     updateBodyCounter();
+    document.getElementById('body').dataset.manual = '';
+    growBody();
     editingBadge.style.display = 'none';
     document.getElementById('send-btn').textContent = 'Enviar notificação';
   }
