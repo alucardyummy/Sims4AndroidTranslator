@@ -648,6 +648,19 @@ def get_updates():
     return {"updates": updates, "subscribed": True}, 200, {"Cache-Control": "no-store"}
 
 
+def _admin_denied():
+    """None se o X-Admin-Secret está certo; senão a resposta de erro. Compara em tempo constante e limita
+    tentativas por IP (30 a cada 15 min), pra não dar pra descobrir a chave testando sem parar."""
+    wait = _window_take(f"adm:{_client_ip()}", 30, 900)
+    if wait > 0:
+        return {"error": f"Muitas tentativas. Tente de novo em {_fmt_wait(wait)}."}, 429
+    secret = request.headers.get("X-Admin-Secret", "")
+    expected = os.environ.get("ADMIN_NOTIFY_SECRET", "")
+    if not expected or not hmac.compare_digest(secret.encode(), expected.encode()):
+        return {"error": "Não autorizado"}, 401
+    return None
+
+
 @app.route("/admin")
 def admin_notify_page():
     response = send_file(os.path.join(TEMPLATE_DIR, "admin_notify.html"))
@@ -657,10 +670,9 @@ def admin_notify_page():
 
 @app.route("/api/admin/delete_update", methods=["POST"])
 def admin_delete_update():
-    secret = request.headers.get("X-Admin-Secret", "")
-    expected = os.environ.get("ADMIN_NOTIFY_SECRET", "")
-    if not expected or secret != expected:
-        return {"error": "Não autorizado"}, 401
+    denied = _admin_denied()
+    if denied:
+        return denied
 
     data = request.get_json(silent=True) or {}
     ids = data.get("ids")
@@ -677,7 +689,8 @@ def admin_delete_update():
         conn.commit()
         conn.close()
     except Exception as e:
-        return {"error": f"Falha ao apagar: {e}"}, 500
+        print("Falha ao apagar novidades:", e)
+        return {"error": "Falha ao apagar (veja o log do servidor)."}, 500
 
     # Manda um push "silencioso" (sem abrir notificação nova) pra todo
     # mundo inscrito, avisando pra fechar a(s) notificação(ões) específica(s)
@@ -737,10 +750,9 @@ def _push_dismiss_updates(ids=None):
 
 @app.route("/api/admin/edit_update", methods=["POST"])
 def admin_edit_update():
-    secret = request.headers.get("X-Admin-Secret", "")
-    expected = os.environ.get("ADMIN_NOTIFY_SECRET", "")
-    if not expected or secret != expected:
-        return {"error": "Não autorizado"}, 401
+    denied = _admin_denied()
+    if denied:
+        return denied
 
     data = request.get_json(silent=True) or {}
     update_id = data.get("id")
@@ -761,7 +773,8 @@ def admin_edit_update():
         conn.commit()
         conn.close()
     except Exception as e:
-        return {"error": f"Falha ao editar: {e}"}, 500
+        print("Falha ao editar novidade:", e)
+        return {"error": "Falha ao editar (veja o log do servidor)."}, 500
 
     # Push silencioso: só atualiza o texto de quem AINDA tiver a notificação
     # na barra (renotify/silent no service worker). Quem já dispensou não
@@ -827,10 +840,9 @@ def _push_edit_update(update_id, title, body, url):
 
 @app.route("/api/admin/updates")
 def admin_list_updates():
-    secret = request.headers.get("X-Admin-Secret", "")
-    expected = os.environ.get("ADMIN_NOTIFY_SECRET", "")
-    if not expected or secret != expected:
-        return {"error": "Não autorizado"}, 401
+    denied = _admin_denied()
+    if denied:
+        return denied
 
     try:
         conn = get_db()
@@ -857,10 +869,9 @@ def admin_list_updates():
 
 @app.route("/api/admin/notify_update", methods=["POST"])
 def admin_notify_update():
-    secret = request.headers.get("X-Admin-Secret", "")
-    expected = os.environ.get("ADMIN_NOTIFY_SECRET", "")
-    if not expected or secret != expected:
-        return {"error": "Não autorizado"}, 401
+    denied = _admin_denied()
+    if denied:
+        return denied
 
     data = request.get_json(silent=True) or {}
     title = data.get("title") or "Sims 4 Translator"
@@ -897,7 +908,8 @@ def admin_notify_update():
         subs = c.fetchall()
         conn.close()
     except Exception as e:
-        return {"error": f"Falha ao ler inscrições: {e}"}, 500
+        print("Falha ao ler inscrições:", e)
+        return {"error": "Falha ao ler inscrições (veja o log do servidor)."}, 500
 
     # Tag única por notificação (baseada no id do banco) — assim cada
     # novidade empilha separada na barra em vez de substituir a anterior,
@@ -1046,7 +1058,8 @@ def upload():
     try:
         supabase.storage.from_(BUCKET_NAME).upload(file_id, file_bytes)
     except Exception as e:
-        return f"Erro no upload: {e}", 500
+        print("Erro no upload:", e)
+        return "Erro no upload. Tente de novo.", 500
 
     all_instances, strings_cache = _process_package_bytes(file_bytes)
 
@@ -1563,9 +1576,9 @@ def _cleanup_authorized():
     if not secret:
         return False
     auth_header = request.headers.get("Authorization", "")
-    if auth_header == f"Bearer {secret}":
+    if hmac.compare_digest(auth_header.encode(), f"Bearer {secret}".encode()):
         return True
-    return request.args.get("key") == secret
+    return hmac.compare_digest(request.args.get("key", "").encode(), secret.encode())
 
 
 @app.route("/api/admin/cleanup_orphaned_files")
@@ -1581,6 +1594,9 @@ def cleanup_orphaned_files():
     poder ser disparada por qualquer um. Pensada para rodar via Vercel Cron
     (ver vercel.json) ou manualmente, acessando a URL com ?key=...
     """
+    wait = _window_take(f"adm:{_client_ip()}", 30, 900)
+    if wait > 0:
+        return json.dumps({"error": "too many attempts"}), 429
     if not _cleanup_authorized():
         return json.dumps({"error": "unauthorized"}), 401
 
@@ -1588,7 +1604,7 @@ def cleanup_orphaned_files():
         accounts = purge_expired_accounts()
     except Exception as e:
         print("Aviso: falha na limpeza de contas:", e)
-        accounts = {"error": str(e)}
+        accounts = {"error": "falhou (veja o log do servidor)"}
 
     try:
         grace_hours = int(request.args.get("grace_hours", 48))
@@ -1989,7 +2005,8 @@ def google_login():
             GOOGLE_CLIENT_ID
         )
     except ValueError as e:
-        return json.dumps({"success": False, "error": f"Token inválido: {e}"}), 401
+        print("Token do Google inválido:", e)
+        return json.dumps({"success": False, "error": "Token do Google inválido ou expirado."}), 401
 
     google_id = id_info["sub"]
     email     = id_info.get("email", "")
@@ -3239,7 +3256,8 @@ def api_merge():
             mimetype="application/octet-stream"
         )
     except Exception as e:
-        return json.dumps({"error": f"Erro ao mesclar: {e}"}), 500
+        print("Erro ao mesclar:", e)
+        return json.dumps({"error": "Não consegui mesclar esses arquivos. Confira se são .package válidos."}), 500
     finally:
         for p in tmp_inputs:
             try:
@@ -3354,7 +3372,8 @@ def api_unmerge():
             "parts": parts,
         })
     except Exception as e:
-        return json.dumps({"error": f"Erro ao separar: {e}"}), 500
+        print("Erro ao separar:", e)
+        return json.dumps({"error": "Não consegui separar esse arquivo. Confira se é um .package válido."}), 500
     finally:
         try:
             os.remove(tmp_in.name)
