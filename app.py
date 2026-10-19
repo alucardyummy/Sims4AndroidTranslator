@@ -1084,31 +1084,45 @@ def upload():
 
 # ---------------------------------------------------------------------------
 
+def send_page(name):
+    """Serve uma página HTML de templates/ sem cair em cache velho.
+    O send_file puro gera o ETag a partir de data de modificação + tamanho do arquivo. Na Vercel a data
+    dos arquivos não muda entre deploys, então editar o HTML sem mudar o nº de bytes (ex.: trocar uma data)
+    mantém o mesmo ETag e o navegador/CDN responde 304 e continua mostrando a página antiga.
+    Aqui o ETag vem do CONTEÚDO (md5): mudou 1 caractere, mudou o ETag."""
+    with open(os.path.join(TEMPLATE_DIR, name), "rb") as f:
+        body = f.read()
+    response = app.response_class(body, mimetype="text/html")
+    response.set_etag(hashlib.md5(body).hexdigest())
+    response.headers["Cache-Control"] = "no-cache"
+    return response.make_conditional(request)
+
+
 @app.route("/info")
 def info():
     if not session.get("all_instances"):
         return redirect("/")
-    return send_file(os.path.join(TEMPLATE_DIR, "info.html"))
+    return send_page("info.html")
 
 
 @app.route("/suporte-css")
 def suporte_css():
-    return send_file(os.path.join(TEMPLATE_DIR, "suporte-css.html"))
+    return send_page("suporte-css.html")
 
 
 @app.route("/privacidade")
 def privacidade():
-    return send_file(os.path.join(TEMPLATE_DIR, "privacidade.html"))
+    return send_page("privacidade.html")
 
 
 @app.route("/montar-tema")
 def montar_tema():
-    return send_file(os.path.join(TEMPLATE_DIR, "montar-tema.html"))
+    return send_page("montar-tema.html")
 
 
 @app.route("/desenhar-svg")
 def desenhar_svg():
-    return send_file(os.path.join(TEMPLATE_DIR, "desenhar-svg.html"))
+    return send_page("desenhar-svg.html")
 
 
 @app.route("/api/instances")
@@ -3186,7 +3200,7 @@ def import_from_package():
 
 @app.route("/merge")
 def merge_page():
-    return send_file(os.path.join(TEMPLATE_DIR, "merge.html"))
+    return send_page("merge.html")
 
 
 # Marca reservada exclusiva do app pra identificar merges "com memória":
@@ -3447,7 +3461,7 @@ def _parse_resource_key(value):
 @app.route("/create")
 def create_page():
     """Página de criação de mods (traços + interações sociais)."""
-    return send_file(os.path.join(TEMPLATE_DIR, "create.html"))
+    return send_page("create.html")
 
 
 @app.route("/api/mod/preview", methods=["POST"])
