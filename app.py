@@ -50,6 +50,10 @@ app.permanent_session_lifetime = timedelta(days=30)
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 app.config["SESSION_COOKIE_SECURE"] = True
 app.config["SESSION_COOKIE_HTTPONLY"] = True
+# A sessão fica inteira no cookie (last-write-wins). Com o padrão (True), TODA resposta reenviava o cookie, e uma
+# resposta lenta que começou antes do login podia sobrescrever o cookie novo (logado) pelo antigo (visitante).
+# Com False, só quem realmente altera a sessão grava o cookie.
+app.config["SESSION_REFRESH_EACH_REQUEST"] = False
 # Teto do corpo de qualquer requisição (uploads grandes vão direto pro Supabase, não passam por aqui)
 app.config["MAX_CONTENT_LENGTH"] = 64 * 1024 * 1024
 
@@ -103,6 +107,7 @@ def drop_revoked_sessions():
         print("Aviso: não consegui checar a versão da sessão:", e)
         return
     if row is None or int(row[0] or 0) != int(session.get('sv', 0) or 0):
+        print("DIAG sessão derrubada: user_id =", uid, "| linha no banco =", row, "| sv no cookie =", session.get('sv'))
         session.pop('user_id', None)
         session.pop('sv', None)
         session.setdefault('guest_session_id', str(uuid.uuid4()))
@@ -959,22 +964,12 @@ def admin_notify_update():
 
 @app.route("/")
 def home():
-    user_id = session.get('user_id')
-    guest_id = session.get('guest_session_id')
-    sv = session.get('sv')   # versão da sessão da conta: sem ela, drop_revoked_sessions derruba o login
-    session.clear()
-    if user_id:
-        session['user_id'] = user_id
-        if sv is not None:
-            session['sv'] = sv
-    if guest_id:
-        session['guest_session_id'] = guest_id
-    # session.clear() também apaga a flag interna "_permanent" do Flask, que é
-    # o que faz o cookie durar os 30 dias de app.permanent_session_lifetime.
-    # Sem isso, o cookie volta a ser um cookie de sessão comum (sem prazo
-    # fixo), que o Android Chrome descarta quando mata o processo do app em
-    # segundo plano — e o login parece "expirar" sem motivo.
-    session.permanent = True
+    # Só descarta o projeto aberto (arquivo/idioma da sessão anterior). Antes era session.clear() + restaurar
+    # user_id/guest_id, o que regravava o cookie a cada visita (e já perdeu o 'sv' uma vez).
+    for k in ("package_id", "original_name", "all_instances", "db_save_id"):
+        session.pop(k, None)
+    if not session.permanent:   # sem isso o cookie vira "de sessão" e o Android descarta ao matar o app
+        session.permanent = True
 
     response = send_file(os.path.join(TEMPLATE_DIR, "index.html"))
     response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
@@ -2896,6 +2891,8 @@ def my_css():
 def save_theme():
     user_id = session.get('user_id')
     if not user_id:
+        print("DIAG save_theme 401: cookie 'session' enviado =", 'session' in request.cookies,
+              "| chaves na sessão =", sorted(session.keys()))
         return json.dumps({"success": False, "error": "Não logado"}), 401
 
     data = request.get_json(silent=True) or {}
