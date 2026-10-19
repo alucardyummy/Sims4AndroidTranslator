@@ -1242,7 +1242,7 @@ let newProfilePicBase64 = null;
 const NICK_MIN = 2, NICK_MAX = 8;
 const NICK_RE = /^[\p{L}\p{N}]+(?:[ \-][\p{L}\p{N}]+)*$/u;
 // Se voltou do login do Google, a página vai recarregar em instantes: não mostra o pop-up antes disso.
-const PENDING_GOOGLE_LOGIN = new URLSearchParams(window.location.search).has('login_token');
+let PENDING_GOOGLE_LOGIN = new URLSearchParams(window.location.search).has('login_token');
 let shownGreetingNick = null;
 
 // {n} = apelido da pessoa. Pode ter frases sem {n} também.
@@ -2885,7 +2885,10 @@ try {
   // Visitante novo (sem apelido e sem sinal de conta): mostra o pop-up já, sem esperar o /api/me
   if (!getNick() && !PENDING_GOOGLE_LOGIN && localStorage.getItem('is_logged_in') !== '1') openNickModal(true, '');
 } catch (e) {}
-checkLogin();
+// Na volta do Google ainda não existe sessão: o /api/me diria "não logado" e o checkLogin apagaria a foto
+// guardada (e o is_logged_in) bem na hora em que o login a salva — por isso a foto demorava a aparecer.
+// Aqui o checkLogin só roda se o token falhar (ver abaixo); se der certo, a página recarrega e ele roda lá.
+if (!PENDING_GOOGLE_LOGIN) checkLogin();
 
 // Consome token temporário do Google OAuth redirect
 (async () => {
@@ -2901,9 +2904,12 @@ checkLogin();
         body: JSON.stringify({ token })
       });
       const data = await res.json();
-      if (data.success) finishLogin(data.profile_pic);
-      else showAlert('Erro ao finalizar login com Google.');
+      if (data.success) { finishLogin(data.profile_pic); return; }
+      showAlert('Erro ao finalizar login com Google.');
     } catch(e) { showAlert('Erro de conexão.'); }
+    // não logou: volta ao fluxo normal (confere a sessão e, se for visitante novo, abre o pop-up de apelido)
+    PENDING_GOOGLE_LOGIN = false;
+    checkLogin();
   }
 })();
 
