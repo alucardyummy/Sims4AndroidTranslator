@@ -5,6 +5,7 @@ from flask import Flask, request, redirect, send_file, session, send_from_direct
 from packer.dbpf import DbpfPackage
 from packer.stbl import Stbl
 from password_policy import validate_new_password
+from email_template import render_code_email, ICON_PNG
 import os
 import tempfile
 import uuid
@@ -14,6 +15,7 @@ import time
 import smtplib
 import ssl
 from email.message import EmailMessage
+from flask import has_request_context
 from email.utils import formataddr, formatdate, make_msgid
 import secrets
 import json
@@ -2013,7 +2015,7 @@ def _sender_name():
     return os.environ.get("EMAIL_SENDER_NAME") or os.environ.get("BREVO_SENDER_NAME") or "Sims 4 Translator"
 
 
-def _send_email_smtp(to_email, subject, text, html):
+def _send_email_smtp(to_email, subject, text, html, inline_logo=None):
     host = os.environ.get("SMTP_HOST", "smtp.gmail.com")
     try:
         port = int(os.environ.get("SMTP_PORT", "587"))
@@ -2031,6 +2033,8 @@ def _send_email_smtp(to_email, subject, text, html):
         msg["Auto-Submitted"] = "auto-generated"
         msg.set_content(text)
         msg.add_alternative(html, subtype="html")
+        if inline_logo:   # ícone embutido no próprio e-mail (cid:logo), não depende de hospedagem
+            msg.get_payload()[1].add_related(inline_logo, "image", "png", cid="<logo>")
 
         if security == "ssl":
             server = smtplib.SMTP_SSL(host, port, timeout=10, context=ssl.create_default_context())
@@ -2073,24 +2077,25 @@ def _send_email_brevo(to_email, subject, text, html):
         return False
 
 
-def _send_email(to_email, subject, text, html):
-    """Envia por SMTP (se configurado) ou pelo Brevo. Retorna True/False (nunca levanta)."""
+def _send_email(to_email, subject, text, html, inline_logo=None):
+    """Envia por SMTP (se configurado) ou pelo Brevo. Retorna True/False (nunca levanta).
+    inline_logo só vale no SMTP (no Brevo o HTML vai sem a imagem)."""
     if _smtp_configured():
-        return _send_email_smtp(to_email, subject, text, html)
+        return _send_email_smtp(to_email, subject, text, html, inline_logo)
     if _brevo_configured():
         return _send_email_brevo(to_email, subject, text, html)
     return False
 
 
+SITE_URL_DEFAULT = "https://sims4androidtranslator.vercel.app"
+
+
 def _send_code_email(to_email, code, purpose):
-    what = "confirmar o e-mail da sua conta" if purpose == "verify" else "redefinir a sua senha"
-    subject = f"Seu código: {code}"
-    text = (f"Seu código para {what} no Sims 4 Translator é {code}.\n"
-            f"Ele vale por {EMAIL_CODE_TTL_MIN} minutos. Se não foi você, ignore este e-mail.")
-    html = (f"<p>Seu código para {what} no Sims 4 Translator:</p>"
-            f"<p style=\"font-size:28px;font-weight:bold;letter-spacing:4px\">{code}</p>"
-            f"<p>Ele vale por {EMAIL_CODE_TTL_MIN} minutos. Se não foi você, ignore este e-mail.</p>")
-    return _send_email(to_email, subject, text, html)
+    site_url = (os.environ.get("SITE_URL") or (request.host_url if has_request_context() else SITE_URL_DEFAULT)).rstrip("/")
+    use_logo = _smtp_configured()   # o ícone vai embutido (cid) no SMTP; no Brevo o e-mail sai sem imagem
+    text, html = render_code_email(code, purpose, EMAIL_CODE_TTL_MIN, _sender_name(), site_url,
+                                   logo_src="cid:logo" if use_logo else None)
+    return _send_email(to_email, f"Seu código: {code}", text, html, inline_logo=ICON_PNG if use_logo else None)
 
 
 def _hash_code(purpose, user_id, code):

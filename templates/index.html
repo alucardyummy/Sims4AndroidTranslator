@@ -2663,7 +2663,7 @@ function renderEmailBox() {
   const has = !!currentUser.email;
   document.getElementById('email-status').textContent = has
     ? 'Confirmado: ' + currentUser.email
-    : 'Nenhum e-mail cadastrado. Com ele você recupera a senha por e-mail, sem depender da pergunta de segurança.';
+    : 'Nenhum e-mail cadastrado. Com ele você recupera a senha por e-mail, sem depender da pergunta de segurança. (Se não chegar, verifique o spam.)';
   document.getElementById('email-send-btn').textContent = has ? 'Trocar e-mail (enviar código)' : 'Enviar código';
   document.getElementById('email-remove').style.display = has ? '' : 'none';
   document.getElementById('email-code-box').style.display = 'none';
