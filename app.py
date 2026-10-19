@@ -22,6 +22,7 @@ import json
 import re
 import unicodedata
 import urllib.parse
+import html as _html
 import psycopg2
 import psycopg2.extras
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -2203,18 +2204,25 @@ def forgot_password():
         conn.close()
         return json.dumps({"success": False, "error": f"Muitas tentativas erradas. Tente de novo em {_fmt_wait(wait)}."}), 429
 
-    c.execute("SELECT id, security_question, security_answer_hash FROM users WHERE username = %s", (username,))
+    c.execute("SELECT id, security_question, security_answer_hash, email, (email_verified_at IS NOT NULL) AS has_email "
+              "FROM users WHERE username = %s", (username,))
     user = c.fetchone()
 
     # conta só-Google não tem resposta de segurança (antes isso dava erro 500)
-    if user and user['security_answer_hash'] and user['security_question'] == question \
-            and check_password_hash(user['security_answer_hash'], answer.lower()):
+    answer_ok = bool(user and user['security_answer_hash'] and user['security_question'] == question
+                     and check_password_hash(user['security_answer_hash'], answer.lower()))
+    # Conta com e-mail de recuperação CONFIRMADO só redefine pelo e-mail: a resposta da pergunta é o elo fraco
+    # (palpite fácil). Falha igual a "resposta errada" (mesma mensagem, mesmo tempo) pra não revelar quem tem e-mail.
+    # ALLOW_QA_RESET_WITH_EMAIL=1 volta ao comportamento antigo.
+    qa_blocked = bool(user and user['has_email']) and os.environ.get("ALLOW_QA_RESET_WITH_EMAIL") != "1"
+    if answer_ok and not qa_blocked:
         pass_hash = generate_password_hash(new_password)
         c.execute("UPDATE users SET password_hash = %s, session_version = session_version + 1 WHERE id = %s", (pass_hash, user['id']))
         _lock_clear_family(c, lock_key)
         _lock_clear_family(c, _rl_key("login", username))   # trocou a senha por aqui: libera o login também
         conn.commit()
         conn.close()
+        _notify_password_changed(user["email"] if user["has_email"] else None)
         return json.dumps({"success": True})
 
     # Mesma resposta pra usuário inexistente e pra resposta errada (antes dava 404 "não encontrado" e revelava quem tem conta)
@@ -2349,6 +2357,28 @@ def _send_email(to_email, subject, text, html, inline_logo=None):
 
 
 SITE_URL_DEFAULT = "https://sims4androidtranslator.vercel.app"
+
+
+def _notify_password_changed(to_email):
+    """Avisa por e-mail que a senha foi redefinida (se não foi a pessoa, ela percebe na hora). Nunca levanta."""
+    try:
+        if not to_email or not _email_configured():
+            return
+        name = _sender_name()
+        text = (f"{name}\n\nA senha da sua conta foi redefinida agora há pouco.\n"
+                "Se foi você, está tudo certo e não precisa fazer nada.\n"
+                "Se NÃO foi você, alguém pode ter acesso à sua conta: entre pelo e-mail de recuperação "
+                "para trocar a senha de novo e remova o acesso de outras pessoas.\n")
+        h = _html.escape
+        html = (f'<div style="font-family:Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:460px;margin:0 auto;padding:24px;color:#2a1f3d">'
+                f'<h2 style="margin:0 0 12px">{h(name)}</h2>'
+                f'<p style="font-size:15px;line-height:1.5">A senha da sua conta foi <b>redefinida</b> agora há pouco.</p>'
+                f'<p style="font-size:14px;line-height:1.5">Se foi você, está tudo certo e não precisa fazer nada.</p>'
+                f'<p style="font-size:14px;line-height:1.5">Se <b>não</b> foi você, alguém pode ter acesso à sua conta: '
+                f'use a recuperação por e-mail para trocar a senha de novo.</p></div>')
+        _send_email(to_email, "Sua senha foi redefinida", text, html)
+    except Exception as e:
+        print("Aviso: não consegui enviar o aviso de troca de senha:", type(e).__name__)
 
 
 def _send_code_email(to_email, code, purpose):
@@ -2561,7 +2591,7 @@ def forgot_email_confirm():
     conn = get_db()
     try:
         c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        c.execute("SELECT id FROM users WHERE username = %s AND password_hash IS NOT NULL AND email_verified_at IS NOT NULL", (username,))
+        c.execute("SELECT id, email FROM users WHERE username = %s AND password_hash IS NOT NULL AND email_verified_at IS NOT NULL", (username,))
         u = c.fetchone()
         if not u:
             return bad
@@ -2573,6 +2603,7 @@ def forgot_email_confirm():
         c.execute("DELETE FROM email_codes WHERE user_id = %s AND purpose = 'reset'", (u["id"],))
         _lock_clear_family(c, _rl_key("login", username))   # trocou a senha por aqui: libera o login também
         conn.commit()
+        _notify_password_changed(u["email"])
         return json.dumps({"success": True})
     finally:
         conn.close()
