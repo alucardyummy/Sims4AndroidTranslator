@@ -270,7 +270,7 @@ html[data-page="index"] {
 </dl>
 <p>Em <b>todas as telas</b> também existem:</p>
 <dl>
-<dt><code>.toast</code></dt><dd>o avisinho que aparece rapidinho embaixo (<code>.toast.success</code> verde, <code>.toast.error</code> vermelho)</dd>
+<dt><code>.toast</code></dt><dd>o avisinho que aparece rapidinho embaixo (existe no Info, Editor, Mesclar e Criar; a Home não tem). Na tela Criar ele muda de cor com <code>.toast.success</code> (verde) e <code>.toast.error</code> (vermelho); no Editor use <code>.toast-success</code>, <code>.toast-info</code> e <code>.toast-error</code></dd>
 <dt><code>.loading-overlay</code></dt><dd>a tela de carregamento; <code>.loading-phrase</code> são as frases que ficam trocando (<code>.loading-phrase-container</code> é a caixa delas) e <code>.loading-gif</code> é a animação. Em Mesclar, Criar e Info o texto fixo (“Mesclando…”, “Gerando mod…”) é o <code>.loading-text</code></dd>
 </dl>
 <p><b>Dentro das janelas da Home</b> (perfil, entrar, temas, novidades). Use <code>html[data-page="index"]</code> na frente se quiser só na Home:</p>
@@ -282,7 +282,7 @@ html[data-page="index"] {
 <dt><code>.push-toggle-row</code>, <code>.push-toggle-label</code></dt><dd>a linha “Notificar no celular” com o interruptor</dd>
 <dt><code>.theme-sub</code>, <code>.theme-list</code>, <code>.theme-name</code>, <code>.theme-blurb</code>, <code>.theme-swatch</code>, <code>.theme-foot</code></dt><dd>a janela da paleta de temas: a frase de cima, a lista, o nome e a frasezinha de cada tema, as bolinhas de cor dele e o “Mais temas em breve.”</dd>
 <dt><code>.updates-list</code>, <code>.updates-empty</code>, <code>.update-item-title</code>, <code>.update-item-body</code>, <code>.update-item-date</code></dt><dd>a lista de novidades e as partes de cada uma (título, texto e data)</dd>
-<dt><code>.css-inner</code>, <code>.css-help</code>, <code>.css-meta</code>, <code>.css-actions</code>, <code>.css-btn-main</code>, <code>.css-danger</code></dt><dd>por dentro da caixa do CSS personalizado: o miolo, o textinho de ajuda, o contador “0/20000”, a linha dos botões, o <b>Salvar CSS</b> e o <b>Restaurar padrão</b></dd>
+<dt><code>.css-inner</code>, <code>.css-help</code>, <code>.css-meta</code>, <code>.css-actions</code>, <code>.css-btn-main</code>, <code>.css-danger</code></dt><dd>por dentro das caixas do perfil: o miolo (<code>.css-inner</code>) e o textinho de ajuda (<code>.css-help</code>) valem para o CSS personalizado e para o E-mail de recuperação (e o aviso acima do “SALVAR ALTERAÇÕES” também usa o <code>.css-help</code>). Só no CSS personalizado: o contador “0/20000”, a linha dos botões, o <b>Salvar CSS</b> e o <b>Restaurar padrão</b></dd>
 <dt><code>.alert-overlay</code>, <code>.alert-icon</code>, <code>.alert-actions</code></dt><dd>os avisos de “OK / Tem certeza?”: o fundo escuro, o “!” e a linha dos botões</dd>
 <dt><code>.draft-banner-text</code>, <code>.draft-banner-actions</code>, <code>.draft-banner-btn</code></dt><dd>por dentro do aviso “Você tem uma tradução não salva”: o texto, a linha dos botões e cada botão (Recuperar e Descartar)</dd>
 <dt><code>.select-count</code>, <code>.select-all-btn</code>, <code>.select-cancel</code>, <code>.select-delete</code></dt><dd>a barra do modo seleção: “0 selecionados”, “Tudo”, “Cancelar” e a lixeira</dd>
