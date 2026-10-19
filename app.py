@@ -350,6 +350,46 @@ def update_package_project_name(file_id, project_name):
         print("Aviso: falha ao atualizar project_name do mapeamento:", e)
 
 
+_FILE_ID_RE = re.compile(r"(?:out_)?[0-9a-f]{32}\.package")
+
+
+def _owns_file(file_id):
+    """True se o arquivo do Storage (file_id) é de quem está fazendo a requisição: ou foi registrado em
+    package_files por esta conta/sessão de convidado, ou algum save desta conta/sessão aponta pra ele.
+    Sem essa checagem, qualquer um que soubesse (ou vazasse) o id baixava arquivo de outra pessoa."""
+    if not file_id or not _FILE_ID_RE.fullmatch(str(file_id)):
+        return False
+    uid = session.get('user_id')
+    gid = session.get('guest_session_id')
+    conds, params = [], []
+    if uid:
+        conds.append("user_id = %s"); params.append(uid)
+    if gid:
+        conds.append("guest_session_id = %s"); params.append(gid)
+    if not conds:
+        return False
+    where = "(" + " OR ".join(conds) + ")"
+    try:
+        conn = get_db()
+        try:
+            c = conn.cursor()
+            c.execute(
+                f"SELECT 1 FROM package_files WHERE file_id = %s AND {where} "
+                f"UNION ALL SELECT 1 FROM saves WHERE package_id = %s AND {where} LIMIT 1",
+                [file_id] + params + [file_id] + params)
+            return c.fetchone() is not None
+        finally:
+            conn.close()
+    except Exception as e:
+        print("Aviso: falha ao checar dono do arquivo:", e)
+        return False
+
+
+def _safe_download_name(raw, default="output.package"):
+    name = re.sub(r'[\x00-\x1f\x7f"\\/]', "_", str(raw or "")).strip()[:150]
+    return name or default
+
+
 def get_original_name_for_file(file_id):
     """Busca o nome original do .package a partir do file_id (UUID no Storage)."""
     if not file_id:
@@ -862,6 +902,8 @@ def get_upload_url():
     """
     file_id = f"{uuid.uuid4().hex}.package"
     res = supabase.storage.from_(BUCKET_NAME).create_signed_upload_url(file_id)
+    # Já amarra o arquivo a quem pediu o upload: o /upload/confirm só aceita ids que sejam de quem confirma.
+    register_package_file(file_id, None)
     return app.response_class(
         response=json.dumps({
             "file_id":    file_id,
@@ -878,17 +920,20 @@ def upload_confirm():
     Baixa o arquivo UMA vez, processa todas as STBLs e cacheia as strings
     na sessão para que /api/strings nunca precise baixar de novo.
     """
-    data          = request.get_json()
+    data          = request.get_json(silent=True) or {}
     file_id       = data.get("file_id")
-    original_name = data.get("original_name", "output.package")
+    original_name = str(data.get("original_name") or "output.package")[:255]
 
     if not file_id:
         return json.dumps({"error": "file_id ausente"}), 400
+    if not _owns_file(file_id) or str(file_id).startswith("out_"):
+        return json.dumps({"error": "Arquivo não encontrado. Envie o .package de novo."}), 403
 
     try:
         file_bytes = supabase.storage.from_(BUCKET_NAME).download(file_id)
     except Exception as e:
-        return json.dumps({"error": f"Erro ao baixar arquivo do storage: {e}"}), 500
+        print("Erro ao baixar arquivo do storage:", e)
+        return json.dumps({"error": "Não consegui ler o arquivo enviado. Tente enviar de novo."}), 500
 
     all_instances, strings_cache = _process_package_bytes(file_bytes)
 
@@ -1099,6 +1144,8 @@ def save():
     pkg_id = session.get("package_id")
     if not pkg_id or pkg_id == "DATABASE_SAVE":
         pkg_id = data.get("package_id", "")
+        if pkg_id and pkg_id != "DATABASE_SAVE" and not _owns_file(pkg_id):
+            pkg_id = ""   # id que não é seu: trata como "sem arquivo" (nunca baixa arquivo de outra pessoa)
     if not pkg_id or pkg_id == "DATABASE_SAVE":
         return json.dumps({"success": False, "error": "Arquivo original não disponível. Reimporte o .package para gerar o arquivo traduzido."}), 400
 
@@ -1157,6 +1204,7 @@ def save():
         output_id = f"out_{uuid.uuid4().hex}.package"
         with open(tmp_out_path, "rb") as f_out:
             supabase.storage.from_(BUCKET_NAME).upload(output_id, f_out.read())
+        register_package_file(output_id, output_name)   # o /download só entrega pra quem gerou
     finally:
         os.remove(tmp_in_path)
         os.remove(tmp_out_path)
@@ -1172,8 +1220,8 @@ def save():
 @app.route("/download")
 def download():
     output_id = request.args.get("file")
-    output_name = request.args.get("name", "output.package")
-    if not output_id or output_id == "null":
+    output_name = _safe_download_name(request.args.get("name", "output.package"))
+    if not output_id or output_id == "null" or not _owns_file(output_id):
         return "Arquivo não encontrado", 404
 
     url_res = supabase.storage.from_(BUCKET_NAME).create_signed_url(output_id, 60, {"download": output_name})
@@ -1292,6 +1340,8 @@ def save_progress():
     target_lang = data.get("target_lang", "POR_BR")
     translation_data = json.dumps(data.get("strings", []))
     package_id = data.get("package_id", "")
+    if package_id and package_id != "DATABASE_SAVE" and package_id != session.get("package_id") and not _owns_file(package_id):
+        package_id = ""                                   # id de arquivo que não é seu: ignora (não vincula arquivo alheio ao save)
     if not package_id or package_id == "DATABASE_SAVE":
         package_id = session.get("package_id") or ""      # o navegador não mandou: usa o arquivo aberto na sessão
     if package_id == "DATABASE_SAVE":
