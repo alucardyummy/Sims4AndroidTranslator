@@ -11,6 +11,10 @@ import uuid
 import hashlib
 import hmac
 import time
+import smtplib
+import ssl
+from email.message import EmailMessage
+from email.utils import formataddr, formatdate, make_msgid
 import secrets
 import json
 import re
@@ -1967,8 +1971,11 @@ def forgot_password():
 # ─── E-MAIL DE RECUPERAÇÃO ──────────────────────────────────────────────────
 # Códigos de 6 dígitos enviados por e-mail (Brevo). Só o HASH do código fica no
 # banco; cada código vale 15 min, aceita 5 tentativas e só o mais novo conta.
-# Variáveis de ambiente: BREVO_API_KEY, BREVO_SENDER_EMAIL (remetente já
-# verificado no Brevo) e, opcional, BREVO_SENDER_NAME.
+# Envio (escolhe sozinho): se SMTP_USER e SMTP_PASSWORD existirem, usa SMTP (ex.: Gmail
+# com "senha de app"); senão, usa o Brevo (BREVO_API_KEY + BREVO_SENDER_EMAIL).
+#   SMTP:  SMTP_USER, SMTP_PASSWORD  (+ opcionais SMTP_HOST=smtp.gmail.com, SMTP_PORT=587,
+#          SMTP_FROM, SMTP_SECURITY=starttls|ssl|none)
+#   Nome que aparece como remetente (opcional): EMAIL_SENDER_NAME
 EMAIL_CODE_TTL_MIN = 15
 EMAIL_CODE_MAX_ATTEMPTS = 5
 EMAIL_CODE_COOLDOWN_S = 60
@@ -1990,20 +1997,66 @@ def _mask_email(e):
     return (local[:1] + "***@" + domain)
 
 
-def _email_configured():
+def _smtp_configured():
+    return bool(os.environ.get("SMTP_USER") and os.environ.get("SMTP_PASSWORD"))
+
+
+def _brevo_configured():
     return bool(os.environ.get("BREVO_API_KEY") and os.environ.get("BREVO_SENDER_EMAIL"))
 
 
-def _send_email(to_email, subject, text, html):
-    """Envia pelo Brevo. Retorna True/False (nunca levanta)."""
-    if not _email_configured():
+def _email_configured():
+    return _smtp_configured() or _brevo_configured()
+
+
+def _sender_name():
+    return os.environ.get("EMAIL_SENDER_NAME") or os.environ.get("BREVO_SENDER_NAME") or "Sims 4 Translator"
+
+
+def _send_email_smtp(to_email, subject, text, html):
+    host = os.environ.get("SMTP_HOST", "smtp.gmail.com")
+    try:
+        port = int(os.environ.get("SMTP_PORT", "587"))
+        user = os.environ["SMTP_USER"]
+        password = os.environ["SMTP_PASSWORD"].replace(" ", "")   # o Google mostra a senha de app com espaços
+        sender = os.environ.get("SMTP_FROM") or user
+        security = (os.environ.get("SMTP_SECURITY") or ("ssl" if port == 465 else "starttls" if port == 587 else "none")).lower()
+
+        msg = EmailMessage()
+        msg["Subject"] = subject
+        msg["From"] = formataddr((_sender_name(), sender))
+        msg["To"] = to_email
+        msg["Date"] = formatdate(localtime=True)
+        msg["Message-ID"] = make_msgid(domain=sender.split("@")[-1])
+        msg["Auto-Submitted"] = "auto-generated"
+        msg.set_content(text)
+        msg.add_alternative(html, subtype="html")
+
+        if security == "ssl":
+            server = smtplib.SMTP_SSL(host, port, timeout=10, context=ssl.create_default_context())
+        else:
+            server = smtplib.SMTP(host, port, timeout=10)
+        with server:
+            server.ehlo()   # sem isso o smtplib não sabe o que o servidor oferece (inclusive o login)
+            if security == "starttls":
+                server.starttls(context=ssl.create_default_context())
+                server.ehlo()   # depois do STARTTLS é obrigatório se apresentar de novo
+            if server.has_extn("auth"):
+                server.login(user, password)
+            server.send_message(msg)
+        return True
+    except Exception as e:   # nunca loga a senha: só o tipo do erro e a resposta do servidor
+        print("Falha ao enviar e-mail (SMTP):", type(e).__name__, str(e)[:200])
         return False
+
+
+def _send_email_brevo(to_email, subject, text, html):
     try:
         r = http_requests.post(
             "https://api.brevo.com/v3/smtp/email",
             headers={"api-key": os.environ["BREVO_API_KEY"], "accept": "application/json", "content-type": "application/json"},
             json={
-                "sender": {"name": os.environ.get("BREVO_SENDER_NAME", "Sims 4 Translator"), "email": os.environ["BREVO_SENDER_EMAIL"]},
+                "sender": {"name": _sender_name(), "email": os.environ["BREVO_SENDER_EMAIL"]},
                 "to": [{"email": to_email}],
                 "subject": subject,
                 "textContent": text,
@@ -2016,8 +2069,17 @@ def _send_email(to_email, subject, text, html):
             return False
         return True
     except Exception as e:
-        print("Falha ao enviar e-mail:", e)
+        print("Falha ao enviar e-mail (Brevo):", e)
         return False
+
+
+def _send_email(to_email, subject, text, html):
+    """Envia por SMTP (se configurado) ou pelo Brevo. Retorna True/False (nunca levanta)."""
+    if _smtp_configured():
+        return _send_email_smtp(to_email, subject, text, html)
+    if _brevo_configured():
+        return _send_email_brevo(to_email, subject, text, html)
+    return False
 
 
 def _send_code_email(to_email, code, purpose):
@@ -2075,7 +2137,7 @@ def _check_code(c, user_id, purpose, code):
     return row, None
 
 
-RESET_REQUEST_MIN_SECONDS = 3.0   # tempo mínimo de resposta do pedido de código (mascara quem tem e-mail)
+RESET_REQUEST_MIN_SECONDS = 4.0   # tempo mínimo de resposta do pedido de código (mascara quem tem e-mail)
 
 
 def _pad_response_time(start, min_seconds=RESET_REQUEST_MIN_SECONDS):
