@@ -1082,8 +1082,9 @@
       <input type="file" id="edit-profile-pic" accept="image/*" style="display:none">
       <button type="button" class="form-input" style="cursor:pointer;text-align:center;" onclick="document.getElementById('edit-profile-pic').click()">Escolher imagem :3</button>
     </div>
-    <div class="form-group" id="email-box" style="display:none">
-      <label>E-mail de recuperação</label>
+    <details class="css-box" id="email-box" style="display:none">
+      <summary>E-mail de recuperação</summary>
+      <div class="css-inner">
       <p class="css-help" id="email-status" style="margin:0 0 8px"></p>
       <div class="email-col">
       <div id="email-form">
@@ -1097,7 +1098,8 @@
       </div>
       <button type="button" class="del-link" id="email-remove" style="display:none;margin-top:8px" onclick="openRemoveEmailModal()">Remover e-mail</button>
       </div>
-    </div>
+      </div>
+    </details>
     <details class="css-box" id="css-box">
       <summary>CSS personalizado</summary>
       <div class="css-inner">
