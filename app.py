@@ -1667,6 +1667,31 @@ def load_save(save_id):
     })
 
 
+USERNAME_MIN, USERNAME_MAX = 3, 32
+_PIC_RE = re.compile(r"data:image/(?:png|jpeg|webp|gif);base64,[A-Za-z0-9+/=]+")
+PROFILE_PIC_MAX = 400_000   # caracteres (o app já reduz a foto antes de enviar)
+
+
+def clean_username(raw):
+    """Normaliza e valida o nome de usuário. Retorna (nome, None) ou (None, erro)."""
+    name = unicodedata.normalize("NFC", str(raw or "")).strip()
+    if len(name) < USERNAME_MIN:
+        return None, f"O nome de usuário precisa ter pelo menos {USERNAME_MIN} caracteres."
+    if len(name) > USERNAME_MAX:
+        return None, f"O nome de usuário pode ter no máximo {USERNAME_MAX} caracteres."
+    if any(unicodedata.category(ch)[0] == "C" for ch in name):   # controle, invisíveis, quebra de linha...
+        return None, "O nome de usuário tem caracteres inválidos."
+    return name, None
+
+
+def _valid_profile_pic(pic):
+    if not pic:
+        return True
+    if len(pic) > PROFILE_PIC_MAX:
+        return False
+    return bool(_PIC_RE.fullmatch(pic)) or pic.startswith("https://") or pic.startswith("/img/")
+
+
 @app.route("/api/register", methods=["POST"])
 def register():
     data = request.get_json(silent=True) or {}
@@ -1681,6 +1706,9 @@ def register():
 
     if not username or not password or not question or not answer:
         return json.dumps({"success": False, "error": "Preencha todos os campos."}), 400
+    username, name_error = clean_username(username)
+    if name_error:
+        return json.dumps({"success": False, "error": name_error}), 400
     pw_error = validate_new_password(password, username)
     if pw_error:
         return json.dumps({"success": False, "error": pw_error}), 400
@@ -1688,7 +1716,7 @@ def register():
     conn = get_db()
     c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-    c.execute("SELECT id FROM users WHERE username = %s", (username,))
+    c.execute("SELECT id FROM users WHERE LOWER(username) = LOWER(%s)", (username,))   # "Ana" e "ana" são o mesmo nome
     if c.fetchone():
         conn.close()
         return json.dumps({"success": False, "error": "Nome de usuário já existe."}), 400
@@ -1704,7 +1732,7 @@ def register():
 
     guest_id = session.get('guest_session_id')
     if guest_id:
-        c.execute("UPDATE saves SET user_id = %s WHERE guest_session_id = %s", (new_user_id, guest_id))
+        c.execute("UPDATE saves SET user_id = %s WHERE guest_session_id = %s AND user_id IS NULL", (new_user_id, guest_id))
 
     conn.commit()
     conn.close()
@@ -1972,7 +2000,7 @@ def google_login():
         base_name = name
         suffix = 1
         while True:
-            c.execute("SELECT id FROM users WHERE username = %s", (name,))
+            c.execute("SELECT id FROM users WHERE LOWER(username) = LOWER(%s)", (name,))
             if not c.fetchone():
                 break
             name = f"{base_name}{suffix}"
@@ -2112,7 +2140,7 @@ def google_callback():
         base_name = name
         suffix = 1
         while True:
-            c.execute("SELECT id FROM users WHERE username = %s", (name,))
+            c.execute("SELECT id FROM users WHERE LOWER(username) = LOWER(%s)", (name,))
             if not c.fetchone():
                 break
             name = f"{base_name}{suffix}"
@@ -2871,22 +2899,39 @@ def update_profile():
     if not user_id:
         return json.dumps({"success": False, "error": "Não logado"}), 401
 
-    data = request.get_json()
-    new_username = data.get("username", "").strip()
-    new_pic = data.get("profile_pic", "").strip()
+    data = request.get_json(silent=True) or {}
+    new_username = str(data.get("username") or "").strip()
+    new_pic = str(data.get("profile_pic") or "").strip()
 
     conn = get_db()
-    c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    try:
+        c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        c.execute("SELECT username, profile_pic FROM users WHERE id = %s", (user_id,))
+        cur = c.fetchone()
+        if not cur:
+            return json.dumps({"success": False, "error": "Não logado"}), 401
 
-    if new_username:
-        c.execute("SELECT id FROM users WHERE username = %s AND id != %s", (new_username, user_id))
-        if c.fetchone():
-            conn.close()
+        if not new_username or new_username == cur["username"]:
+            new_username = cur["username"]          # vazio/igual: mantém (antes vazio gravava um nome em branco)
+        else:
+            new_username, name_error = clean_username(new_username)
+            if name_error:
+                return json.dumps({"success": False, "error": name_error}), 400
+            c.execute("SELECT id FROM users WHERE LOWER(username) = LOWER(%s) AND id != %s", (new_username, user_id))
+            if c.fetchone():
+                return json.dumps({"success": False, "error": "Nome de usuário já está em uso."}), 400
+
+        if new_pic != (cur["profile_pic"] or "") and not _valid_profile_pic(new_pic):
+            return json.dumps({"success": False, "error": "Imagem de perfil inválida ou grande demais."}), 400
+
+        try:
+            c.execute("UPDATE users SET username = %s, profile_pic = %s WHERE id = %s", (new_username, new_pic, user_id))
+            conn.commit()
+        except psycopg2.IntegrityError:
+            conn.rollback()
             return json.dumps({"success": False, "error": "Nome de usuário já está em uso."}), 400
-
-    c.execute("UPDATE users SET username = %s, profile_pic = %s WHERE id = %s", (new_username, new_pic, user_id))
-    conn.commit()
-    conn.close()
+    finally:
+        conn.close()
     return json.dumps({"success": True})
 
 
