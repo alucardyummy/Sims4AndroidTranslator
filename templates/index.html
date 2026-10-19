@@ -2277,9 +2277,14 @@ document.getElementById('edit-profile-pic').addEventListener('change', function(
       }
       document.getElementById('modal-profile-img').src = newProfilePicBase64;
     };
+    img.onerror = () => {
+      showAlert('Não consegui abrir essa imagem. Tente outro arquivo (JPG, PNG, GIF ou WebP funcionam em todos os aparelhos).');
+    };
     img.src = ev.target.result;
   };
+  reader.onerror = () => showAlert('Não consegui ler esse arquivo. Tente outro.');
   reader.readAsDataURL(file);
+  e.target.value = '';   // deixa escolher o mesmo arquivo de novo depois de um erro
 });
 
 async function saveProfile() {
