@@ -2587,11 +2587,8 @@ async function handleLogin() {
 }
 
 function handleGoogleLogin() {
-  const clientId = '1018018964497-05rn1eht44o6qn2jhq8b63mm640e7q7b.apps.googleusercontent.com';
-  const redirectUri = encodeURIComponent(window.location.origin + '/api/google_callback');
-  const scope = encodeURIComponent('openid email profile');
-  const url = 'https://accounts.google.com/o/oauth2/v2/auth?client_id=' + clientId + '&redirect_uri=' + redirectUri + '&response_type=code&scope=' + scope + '&prompt=select_account&access_type=offline';
-  window.location.href = url;
+  // O servidor monta o link do Google e guarda o "state" (proteção contra login forjado).
+  window.location.href = '/api/google_start';
 }
 
 async function handleRegister() {

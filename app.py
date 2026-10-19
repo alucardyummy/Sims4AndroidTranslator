@@ -21,6 +21,7 @@ import secrets
 import json
 import re
 import unicodedata
+import urllib.parse
 import psycopg2
 import psycopg2.extras
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -166,6 +167,13 @@ def init_db():
             c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS deletion_requested_at TIMESTAMP;")
         except Exception as e:
             print("Coluna theme já existe ou houve um aviso:", e)
+
+        # Login com Google: token de uso único, curto (guardamos só o hash) pra "entregar" a sessão depois do redirect
+        try:
+            c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS login_token VARCHAR(64);")
+            c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS login_token_expires TIMESTAMP;")
+        except Exception as e:
+            print("Colunas login_token já existem ou houve um aviso:", e)
 
         c.execute('''
             CREATE TABLE IF NOT EXISTS saves (
@@ -1858,6 +1866,33 @@ def google_login():
     return json.dumps({"success": True})
 
 
+GOOGLE_REDIRECT_URI = os.environ.get("GOOGLE_REDIRECT_URI") or "https://sims4androidtranslator.vercel.app/api/google_callback"
+
+
+def _hash_login_token(token):
+    return hashlib.sha256(str(token).encode()).hexdigest()
+
+
+@app.route("/api/google_start")
+def google_start():
+    """Começa o login com Google: gera o 'state', guarda num cookie só deste navegador e manda pro Google."""
+    if not GOOGLE_CLIENT_ID:
+        return redirect("/?google_error=config")
+    state = secrets.token_urlsafe(24)
+    params = urllib.parse.urlencode({
+        "client_id": GOOGLE_CLIENT_ID,
+        "redirect_uri": GOOGLE_REDIRECT_URI,
+        "response_type": "code",
+        "scope": "openid email profile",
+        "prompt": "select_account",
+        "state": state,
+    })
+    resp = redirect("https://accounts.google.com/o/oauth2/v2/auth?" + params)
+    resp.set_cookie("g_state", state, max_age=600, httponly=True, secure=True, samesite="Lax", path="/")
+    resp.headers["Cache-Control"] = "no-store"
+    return resp
+
+
 @app.route("/api/google_callback")
 def google_callback():
     """
@@ -1867,14 +1902,27 @@ def google_callback():
     code = request.args.get("code")
     error = request.args.get("error")
 
+    # Confere o "state" (anti login-CSRF): tem que ser o mesmo que o /api/google_start deixou no cookie deste
+    # navegador. Sem isso, alguém poderia mandar um link com o código da PRÓPRIA conta dele e fazer a vítima
+    # entrar na conta do atacante. Desligável só em emergência: GOOGLE_OAUTH_STATE=off.
+    if os.environ.get("GOOGLE_OAUTH_STATE", "on").lower() != "off":
+        state = request.args.get("state", "")
+        cookie_state = request.cookies.get("g_state", "")
+        if not state or not cookie_state or not hmac.compare_digest(state, cookie_state):
+            resp = redirect("/?google_error=state")
+            resp.delete_cookie("g_state", path="/")
+            return resp
+
     if error or not code:
-        return redirect("/?google_error=cancelled")
+        resp = redirect("/?google_error=cancelled")
+        resp.delete_cookie("g_state", path="/")
+        return resp
 
     if not GOOGLE_CLIENT_ID:
         return redirect("/?google_error=config")
 
     GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
-    redirect_uri = "https://sims4androidtranslator.vercel.app/api/google_callback"
+    redirect_uri = GOOGLE_REDIRECT_URI
 
     # Troca o authorization code por tokens
     try:
@@ -1942,8 +1990,9 @@ def google_callback():
         user = c.fetchone()
 
     # Gera token temporário para contornar bloqueio de cookie SameSite=Lax
-    # em redirect cross-site (Google → seu site).
-    login_token = str(uuid.uuid4())
+    # em redirect cross-site (Google → seu site). Aleatório forte, vale 60s, uso único,
+    # e no banco fica só o hash (se o banco vazar, não dá pra usar o token).
+    login_token = secrets.token_urlsafe(32)
     user_id = user["id"]
 
     guest_id = session.get("guest_session_id")
@@ -1953,15 +2002,15 @@ def google_callback():
             (user_id, guest_id),
         )
 
-    try:
-        c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS login_token VARCHAR(64);")
-    except Exception:
-        pass
-    c.execute("UPDATE users SET login_token = %s WHERE id = %s", (login_token, user_id))
+    c.execute(
+        "UPDATE users SET login_token = %s, login_token_expires = LOCALTIMESTAMP + INTERVAL '60 seconds' WHERE id = %s",
+        (_hash_login_token(login_token), user_id))
 
     conn.commit()
     conn.close()
-    return redirect(f"/?login_token={login_token}")
+    resp = redirect(f"/?login_token={login_token}")
+    resp.delete_cookie("g_state", path="/")
+    return resp
 
 
 @app.route("/api/google_token_login", methods=["POST"])
@@ -1970,24 +2019,24 @@ def google_token_login():
     Consome o token temporário gerado pelo google_callback e seta a session.
     Chamado pelo JS da home logo após o redirect do Google.
     """
-    data = request.get_json()
-    token = data.get("token", "").strip()
-    if not token:
+    data = request.get_json(silent=True) or {}
+    token = str(data.get("token") or "").strip()
+    if not token or len(token) > 200:
         return json.dumps({"success": False}), 400
 
     conn = get_db()
     c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    c.execute("SELECT id FROM users WHERE login_token = %s", (token,))
+    # Confere e consome num passo só (uso único de verdade, sem brecha pra dois pedidos simultâneos).
+    c.execute(
+        "UPDATE users SET login_token = NULL, login_token_expires = NULL "
+        "WHERE login_token = %s AND login_token_expires > LOCALTIMESTAMP RETURNING id",
+        (_hash_login_token(token),))
     user = c.fetchone()
-
-    if not user:
-        conn.close()
-        return json.dumps({"success": False, "error": "Token inválido ou expirado."}), 401
-
-    # Consome o token (uso único)
-    c.execute("UPDATE users SET login_token = NULL WHERE id = %s", (user["id"],))
     conn.commit()
     conn.close()
+
+    if not user:
+        return json.dumps({"success": False, "error": "Token inválido ou expirado."}), 401
 
     session["user_id"] = user["id"]
     session.permanent = True
