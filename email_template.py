@@ -191,9 +191,6 @@ def render_code_email(code, purpose, ttl_min, site_name, site_url=None, logo_src
             f'<img src="{logo_src}" width="72" height="72" alt="" '
             f'style="display:block;width:72px;height:72px;border-radius:36px;border:0"></td></tr>') if logo_src else \
            '<tr><td style="padding-top:26px;font-size:0;line-height:0">&nbsp;</td></tr>'
-    button = (f'<tr><td align="center" style="padding:22px 28px 0"><a href="{url}" '
-              f'style="display:inline-block;background:{PURPLE};color:{INK};font-family:\'Segoe UI\',Roboto,Helvetica,Arial,sans-serif;font-weight:700;font-size:15px;'
-              f'text-decoration:none;padding:14px 30px;border-radius:12px">Abrir o {name}</a></td></tr>') if site_url else ""
 
     font = "font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;"
     page = f"""<!DOCTYPE html>
@@ -223,8 +220,6 @@ def render_code_email(code, purpose, ttl_min, site_name, site_url=None, logo_src
   <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
   <td align="center" class="codebox ink" style="background:{PURPLE_SOFT};border:2px dashed {PURPLE};border-radius:14px;padding:16px 18px 16px 26px;font-family:'Courier New',Courier,monospace;font-size:36px;font-weight:700;letter-spacing:8px;color:{INK}"><span style="-webkit-user-select:all;user-select:all">{code_h}</span></td>
   </tr></table></td></tr>
-<tr><td align="center" class="muted" style="padding:10px 28px 0;{font}font-size:12px;color:#8a7ba0">Toque duas vezes no código para selecionar e copiar</td></tr>
-{button}
 <tr><td align="center" class="muted" style="padding:22px 32px 0;{font}font-size:13px;line-height:1.5;color:#5b4b73">O código vale por <b>{ttl_min} minutos</b>.</td></tr>
 <tr><td align="center" class="muted" style="padding:10px 32px 30px;{font}font-size:12px;line-height:1.5;color:#8a7ba0">Se você não pediu este código, ignore este e-mail: nada será alterado.<br>Nunca compartilhe o código com ninguém.</td></tr>
 </table>
