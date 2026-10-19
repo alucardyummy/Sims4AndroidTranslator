@@ -227,3 +227,4 @@ html:not([data-page="index"]) .lang-btn { background: rgba(214,143,160,0.14); }
 html:not([data-page="index"]) .lang-btn:active { background: rgba(214,143,160,0.24); }
 html:not([data-page="index"]) .stbl-option.selected { background: rgba(214,143,160,0.12); }
 html:not([data-page="index"]) .stbl-lang-badge { color: #b5566a; background: rgba(214,143,160,0.18); }
+.del-link, .del-perm span { color: #b0475f; text-shadow: none; } .modal-box .legal-foot { color: #6b4a53; text-shadow: none; }
