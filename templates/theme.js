@@ -224,6 +224,8 @@
   }
   function isLogged() { try { return localStorage.getItem('is_logged_in') === '1'; } catch (e) { return false; } }
 
+  var themeChanges = 0;   // quantas vezes a pessoa trocou de tema nesta página (o sync usa pra não desfazer a escolha dela)
+
   window.UserTheme = {
     list: function () {
       return Object.keys(REG).map(function (id) {
@@ -235,6 +237,7 @@
     preload: function () { Object.keys(REG).forEach(loadFonts); },     // pra mostrar o nome na fonte do tema
     set: function (id) {
       if (id && !REG[id]) return;
+      themeChanges++;
       writeTheme(id || 'default');
       applyTheme(id);
       if (isLogged()) saveThemeOnServer(id || 'default');
@@ -249,6 +252,7 @@
     clear: function () { apply(''); remember(''); },
     revert: function () { apply(safe ? '' : read()); },       // volta ao que está salvo (descarta a prévia)
     sync: function () {
+      var seenChanges = themeChanges;
       return fetch('/api/my_css', { credentials: 'same-origin', cache: 'no-store' })
         .then(function (r) { return r.json(); })
         .then(function (d) {
@@ -256,6 +260,9 @@
           var css = d.css || '';
           remember(css);
           if (!safe && box().textContent !== css) apply(css);
+          // Se a pessoa trocou de tema enquanto a conta ainda respondia, vale a escolha dela (já foi pro servidor):
+          // a resposta chegou com o tema ANTIGO e desfazia o clique (ex.: voltar pro Padrão não pegava).
+          if (seenChanges !== themeChanges) return;
           // tema: a conta manda; se a conta ainda não escolheu, o do aparelho sobe pra ela
           var local = readTheme();
           if (d.theme) {
