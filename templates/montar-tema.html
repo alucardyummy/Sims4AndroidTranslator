@@ -628,8 +628,11 @@ function ffFace(){var used=Object.keys(FR).map(function(id){return FSEL[id]}).fi
  var imp=FIMP.filter(function(i){return i.names.some(function(n){return used.indexOf(n)>=0})}).map(function(i){return i.line}).join('');   // @import tem que vir antes de qualquer regra
  return '/* Fontes de fora */\n'+imp+FBLK.filter(function(b){var m=/font-family\s*:\s*["']?([^;"']+)/i.exec(b);return m&&used.indexOf(ffName(m[1]))>=0}).join('')+'\n'}
 function ffPrev(p){$('ffp').textContent=FIMP.map(function(i){return i.line}).join('')+FBLK.join('');Object.keys(FR).forEach(function(id){var v=ffVal(id),k='--ft-'+FR[id][0];if(v)p.style.setProperty(k,v);else p.style.removeProperty(k)})}
-Object.keys(FR).forEach(function(id){$(id).onchange=function(){FSEL[id]=this.value;render()}});
-['fcg','fcn','fcl','fcc'].forEach(function(id){$(id).oninput=function(){ffScan();ffOpts();render()}});
+Object.keys(FR).forEach(function(id){$(id).onchange=function(){FSEL[id]=this.value;ffScan();render()}});
+['fcg','fcn','fcl','fcc'].forEach(function(id){$(id).oninput=function(){ffScan();
+ // link do Google colado: já usa a fonte em "Títulos e botões" (se ainda não tinha escolhido outra), pra prévia mudar na hora
+ if(id==='fcg'&&FIMP.length&&(!FSEL.ft||(FSEL.ft.indexOf('__c:')===0&&FC.indexOf(FSEL.ft.slice(4))<0))){FSEL.ft='__c:'+FIMP[0].names[0];var m=$('fmsg');if(m&&!m.className)m.textContent+=' Já apliquei em “Títulos e botões”; troque nas listas se quiser.'}
+ ffOpts();render()}});
 ffScan();ffOpts();
 load(PRE[0][1],PRE[0][2]);
 </script>
