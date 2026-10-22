@@ -90,6 +90,7 @@ h1 .i{width:1.1em;height:1.1em;margin-right:.15em}nav{columns:2;font-size:14px}
 <dt><code>font-size</code></dt><dd>tamanho da letra. Ex.: <code>18px</code></dd>
 <dt><code>font-family</code></dt><dd>o tipo de letra. Ex.: <code>Georgia, serif</code></dd>
 <dt><code>opacity</code></dt><dd>transparência: <code>1</code> normal, <code>0.5</code> meio apagado, <code>0</code> invisível</dd>
+<dt><code>backdrop-filter</code></dt><dd>efeito de vidro fosco: borra o que está <b>atrás</b> da coisa. Ex.: <code>blur(12px)</code>. Só aparece se o fundo da coisa for transparente (<code>rgba(…, 0.4)</code>). Escreva também a versão <code>-webkit-backdrop-filter</code></dd>
 <dt><code>display: none</code></dt><dd>esconde a coisa (como se ela nunca tivesse existido)</dd>
 <dt><code>padding</code> e <code>margin</code></dt><dd>espaço por dentro e por fora da coisa</dd>
 </dl>
@@ -441,6 +442,38 @@ html[data-page="index"] {
   --text: #fff;
   --text-muted: #aaa;
 }</code></pre>
+<h3>Cartões de vidro (fundo transparente + desfoque)</h3>
+<p>O vidro precisa de <b>algo atrás</b> pra borrar: um fundo com padrão do <a href="/montar-tema">Montador de tema</a>, um degradê ou uma imagem (veja a receita logo abaixo). O último número do <code>rgba</code> é a transparência: <code>0.45</code> deixa passar mais da metade do fundo.</p>
+<pre><code>/* Home: cartões das traduções salvas e botões */
+html[data-page="index"] .save-item,
+html[data-page="index"] .btn-merge,
+html[data-page="index"] .btn-create {
+  background: rgba(26, 29, 28, 0.45) !important;
+  backdrop-filter: blur(12px) saturate(1.2);
+  -webkit-backdrop-filter: blur(12px) saturate(1.2);
+}
+
+/* Mesclar, Criar e Info */
+[data-page="merge"] .mode-tab, [data-page="merge"] .file-item,
+[data-page="create"] .card, [data-page="create"] .namespace-block,
+[data-page="info"] .info-block {
+  background: rgba(26, 29, 28, 0.45) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Janelas (perfil, entrar, avisos) */
+.modal-box, .alert-box {
+  background: rgba(26, 29, 28, 0.55) !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+}</code></pre>
+<p><b>No Editor, cuidado:</b> deixe as linhas (<code>.string-row</code>) só transparentes, <b>sem</b> <code>backdrop-filter</code>. Tem centenas de linhas e o desfoque em todas deixa o celular lento. Desfoque só nas barras (<code>.topbar</code>, <code>.bottom-bar</code>).</p>
+<h3>Foto de fundo na Home</h3>
+<pre><code>html[data-page="index"] body {
+  background: #0f0f0f url("https://seusite.com/foto.jpg") center / cover no-repeat fixed !important;
+}</code></pre>
+<p>O link precisa começar com <code>https://</code>. Combine com os cartões de vidro acima pra foto aparecer através deles.</p>
 <h3>Botões em forma de pílula</h3>
 <pre><code>button { border-radius: 999px !important; }</code></pre>
 <h3>Editor com letra grande e fundo diferente</h3>

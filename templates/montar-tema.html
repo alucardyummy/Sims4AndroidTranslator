@@ -127,6 +127,14 @@ textarea{width:100%;height:210px;background:var(--cb);color:var(--ct);border:0;b
 #ptile{height:84px;border-radius:14px;border:1px solid var(--bd);margin:8px 0}
 .go2{display:block;text-align:center;text-decoration:none;border:1.5px solid var(--ac);background:none;color:var(--ac);border-radius:12px;font:inherit;font-weight:700;padding:10px;margin-top:8px;width:100%}
 #csz{font-size:12px;color:var(--mu);margin:6px 2px 0}
+/* vidro: prévia no celulzinho (cada tela tem a sua cor, opacidade e desfoque) */
+#ph.gl .si{background:var(--gH-card)}#ph.gl .b2{background:var(--gH-surf)}
+#ph.gl .sr{background:var(--gE-sr)}#ph.gl .rw{background:var(--gE-row)}#ph.gl .og,#ph.gl .tr{background:var(--gE-box)}#ph.gl .bb{background:var(--gE-bar)}
+#ph.gl .mt,#ph.gl .cd,#ph.gl .cd2,#ph.gl .ib{background:var(--gO-surf)}#ph.gl .mb{background:var(--gW-modal)}
+#ph.gl .si,#ph.gl .b2{backdrop-filter:blur(var(--gH-b)) saturate(var(--gH-s));-webkit-backdrop-filter:blur(var(--gH-b)) saturate(var(--gH-s))}
+#ph.gl .bb{backdrop-filter:blur(var(--gE-b)) saturate(var(--gE-s));-webkit-backdrop-filter:blur(var(--gE-b)) saturate(var(--gE-s))}
+#ph.gl .mt,#ph.gl .cd,#ph.gl .cd2,#ph.gl .ib{backdrop-filter:blur(var(--gO-b)) saturate(var(--gO-s));-webkit-backdrop-filter:blur(var(--gO-b)) saturate(var(--gO-s))}
+#ph.gl .mb{backdrop-filter:blur(var(--gW-b)) saturate(var(--gW-s));-webkit-backdrop-filter:blur(var(--gW-b)) saturate(var(--gW-s))}
 [hidden]{display:none!important}
 :root{--ig:#7a9e97}
 .ic{display:inline-block;width:1.25em;height:1.25em;vertical-align:-.28em;color:var(--ig);flex:none}
@@ -191,7 +199,19 @@ h1 .ic{width:1.1em;height:1.1em;vertical-align:-.15em}
 <button class="go2" id="ptdl" type="button">Baixar .svg do ladrilho</button>
 <a class="go2" href="/desenhar-svg"><svg class="ic" aria-hidden="true"><use href="#i-pencil"/></svg> Desenhar minha própria forma</a>
 </div>
-<h2>6. Copie e cole no site</h2>
+<h2>6. Vidro: cor de fundo transparente + desfoque <small style="color:var(--mu);font-weight:400">(opcional)</small></h2>
+<label class="ck"><input type="checkbox" id="gon"><span><b>Ligar o vidro</b> (cartões e caixas com fundo transparente e desfoque). Só aparece se tiver algo atrás deles: ligue o <b>fundo com padrão</b> (seção 5) ou use uma Home com degradê.</span></label>
+<div id="gbox" hidden>
+<div class="box">
+<label class="ck"><input type="checkbox" id="gone"><span><b>Usar uma cor só pro vidro</b> (desmarcado, cada lugar usa a própria cor do tema)</span></label>
+<div id="gcw"></div>
+<div id="gsl"></div>
+</div>
+<p style="color:var(--mu);font-size:12px;margin:8px 2px 2px"><b>Ajuste por tela</b> (opcional): cada tela segue o geral até você mexer nela. A setinha volta a seguir.</p>
+<div id="gar"></div>
+<p style="color:var(--mu);font-size:12px;margin:4px 2px"><b>Opacidade</b> = quanto o fundo ainda cobre: 100% sólido, 0% invisível. <b>Desfoque</b> = a força do blur: 0 desliga, 8 a 14 px é leve e bonito, acima de 30 px pesa em celular fraco.</p>
+</div>
+<h2>7. Copie e cole no site</h2>
 <label class="ck"><input type="checkbox" id="home" checked><span><b>Pintar a Home também</b> (a Home tem cores próprias; marcado, ela segue o seu tema)</span></label>
 <textarea id="out" readonly spellcheck="false"></textarea>
 <p id="csz"></p>
@@ -437,6 +457,65 @@ function buildShapes(){
    [['op','%'],['size','px']].forEach(function(it){var d=document.querySelector('#psl .sl[data-k='+it[0]+']');d.querySelector('input').value=PT[it[0]];d.querySelector('.vl').textContent=PT[it[0]]+it[1]})}
   setTimeout(function(){$('pbox').scrollIntoView({block:'start'})},60)}
 })();
+// ---- vidro: cor transparente (rgba) + desfoque (backdrop-filter), geral e por tela ----
+var GL={on:0,one:0,a:55,b:12,sat:120},GA={H:{on:1},E:{on:1},O:{on:1},W:{on:1}},GU=[],GN={H:'Home',E:'Editor',O:'Mesclar, Criar e Info',W:'Janelas'};
+A.gc=function(s){return s.surface};['H','E','O','W'].forEach(function(x){A['gc'+x]=function(s){return s.gc}});
+function ra(c,a){return'rgba('+rgb(c).join(', ')+', '+Math.round(a)/100+')'}
+function gv(x,k){var v=GA[x][k];return v==null?GL[k]:v}
+function gcl(x,own){if(T['gc'+x])return S['gc'+x];return GL.one?S.gc:S[own]}
+function gfil(b){return b>0?'blur('+b+'px)'+(GL.sat!==100?' saturate('+GL.sat/100+')':''):''}
+function gcss(){
+ if(!GL.on)return'';
+ var o='\n/* Vidro: cor transparente + desfoque (precisa de algo atrás: padrão, degradê ou imagem) */\n';
+ function g(x,sel,own,blur){
+  if(!GA[x].on)return;
+  var f=gfil(gv(x,'b')),bf=blur?(f?' backdrop-filter: '+f+' !important; -webkit-backdrop-filter: '+f+' !important;':' backdrop-filter: none !important; -webkit-backdrop-filter: none !important;'):'';
+  o+=sel+' { background: '+ra(gcl(x,own),gv(x,'a'))+' !important;'+bf+' }\n'}
+ function L(pg,q){return q.split(',').map(function(y){return'[data-page="'+pg+'"] '+y.trim()}).join(', ')}
+ var H='html[data-page="index"] ';
+ g('H',H+'.save-item','card',1);g('H',H+'.btn-merge, '+H+'.btn-create','surface',1);
+ g('E',L('editor','.topbar, .filter-bar, .col-headers'),'bg',1);g('E',L('editor','.bottom-bar'),'bar',1);
+ g('E',L('editor','.string-row'),'row',0);g('E',L('editor','.original-text, .edit-textarea'),'box',0);g('E',L('editor','.search-input, .filename-input'),'surface',0);
+ g('O',L('merge','.file-item, .mode-tab, .split-result-item'),'surface',1);g('O',L('merge','.search-input'),'surface',0);
+ g('O',L('create','.card, .namespace-block'),'surface',1);g('O',L('info','.info-block, .stbl-option, .lang-sheet'),'surface',1);
+ g('W','.modal-box, .alert-box','modal',1);
+ return o}
+function gprv(p){
+ p.classList.toggle('gl',!!GL.on);$('gbox').hidden=!GL.on;if(!GL.on)return;
+ function pv(n,x,own){p.style.setProperty('--g'+x+'-'+n,ra(GA[x].on?gcl(x,own):S[own],GA[x].on?gv(x,'a'):100))}
+ pv('card','H','card');pv('surf','H','surface');pv('sr','E','surface');pv('row','E','row');pv('box','E','box');pv('bar','E','bar');pv('surf','O','surface');pv('modal','W','modal');
+ Object.keys(GA).forEach(function(x){var b=GA[x].on?gv(x,'b'):0;p.style.setProperty('--g'+x+'-b',b+'px');p.style.setProperty('--g'+x+'-s',b>0?GL.sat/100:1)});
+ GU.forEach(function(f){f()})}
+(function(){
+ var RZ='<button type="button" class="rz" title="Voltar a seguir o geral" style="border:0;background:none;color:var(--ac);font-size:15px;padding:0 2px;visibility:hidden"><svg class="ic" aria-hidden="true"><use href="#i-reset"/></svg></button>';
+ function mkSl(par,lab,min,max,unit,get,set,rs){
+  var d=document.createElement('div');d.className='sl';
+  d.innerHTML='<label><span class="nm">'+lab+(rs?' '+RZ:'')+'</span><span class="vl"></span></label><input type="range" min="'+min+'" max="'+max+'" value="'+get()+'">';
+  var inp=d.querySelector('input'),vl=d.querySelector('.vl'),rz=d.querySelector('.rz');
+  function upd(){var v=get();inp.value=v;vl.textContent=v+unit;if(rz)rz.style.visibility=rs.has()?'visible':'hidden'}
+  inp.oninput=function(){set(+this.value);render()};
+  if(rz)rz.onclick=function(e){e.preventDefault();rs.clear();render()};
+  GU.push(upd);par.appendChild(d);upd()}
+ function mkPk(par,k,nome,dica){
+  var r=document.createElement('div');r.className='pk';r.dataset.k=k;
+  r.innerHTML='<button type="button" class="sw2" aria-label="Escolher cor"></button><div><b>'+nome+'</b><small>'+dica+'</small></div><code></code><button type="button" title="Voltar ao automático"><svg class="ic" aria-hidden="true"><use href="#i-reset"/></svg></button>';
+  r.onclick=function(){openPick(k,nome)};
+  r.querySelector('button:last-child').onclick=function(e){e.stopPropagation();delete T[k];auto();render();if(P.k===k)syncPick()};
+  par.appendChild(r)}
+ mkPk($('gcw'),'gc','Cor do vidro (geral)','Vale quando “cor só pro vidro” está marcado; cada tela segue esta cor até você mexer nela');
+ mkSl($('gsl'),'Opacidade do fundo (geral)',0,100,'%',function(){return GL.a},function(v){GL.a=v});
+ mkSl($('gsl'),'Desfoque (geral)',0,60,'px',function(){return GL.b},function(v){GL.b=v});
+ mkSl($('gsl'),'Saturação do que está atrás',50,200,'%',function(){return GL.sat},function(v){GL.sat=v});
+ Object.keys(GN).forEach(function(x){
+  var d=document.createElement('details');d.className='box';d.innerHTML='<summary>'+GN[x]+'</summary><label class="ck"><input type="checkbox" checked><span><b>Aplicar vidro aqui</b>'+(x==='E'?' (desfoque só nas barras; as linhas ficam transparentes pra lista não ficar pesada)':'')+'</span></label>';
+  d.querySelector('input').onchange=function(){GA[x].on=this.checked?1:0;render()};
+  mkPk(d,'gc'+x,'Cor do vidro','Até você mexer, usa a cor do tema (ou a cor única, se marcada)');
+  mkSl(d,'Opacidade',0,100,'%',function(){return gv(x,'a')},function(v){GA[x].a=v},{has:function(){return GA[x].a!=null},clear:function(){GA[x].a=null}});
+  mkSl(d,'Desfoque',0,60,'px',function(){return gv(x,'b')},function(v){GA[x].b=v},{has:function(){return GA[x].b!=null},clear:function(){GA[x].b=null}});
+  $('gar').appendChild(d)});
+ $('gon').onchange=function(){GL.on=this.checked?1:0;render()};
+ $('gone').onchange=function(){GL.one=this.checked?1:0;render()};
+})();
 function css(){
  var v=V(),o='/* Meu tema — feito no Montador de tema */\n'+ffFace()+':root {\n',k,H='html[data-page="index"] ';
  for(k in v)o+='  '+k+': '+v[k]+';\n';o+=ffVars()+'}\n';
@@ -475,6 +554,7 @@ function css(){
  if($('home').checked||T.gcv||T.gsp)o+='\n/* Tela de carregamento (volta do Google) */\n#google-cover { background: '+S.gcv+' !important; }\n#google-cover::before { border-top-color: '+S.gsp+' !important; }\n';
  if($('home').checked)o+=txcss(1);
  o+=pcss();
+ o+=gcss();
  return o;
 }
 
@@ -529,10 +609,11 @@ function render(){
  for(k in x)p.style.setProperty('--'+k,x[k]);
  for(k in S)p.style.setProperty('--x-'+k,S[k]);
  prv(p);
+ gprv(p);
  ffPrev(p);
  if(p.dataset.t!==tab){p.innerHTML=M[tab];p.dataset.t=tab}
  $('out').value=css();
- var L=$('out').value.length,z=$('csz');z.textContent='Tamanho: '+L.toLocaleString('pt-BR')+' de '+CSSMAX.toLocaleString('pt-BR')+' caracteres'+(L>CSSMAX?' — passou do limite do site! Diminua o tamanho do ladrilho, desmarque “Pintar a Home” ou escolha uma forma mais simples.':'');z.style.color=L>CSSMAX?'#e5565b':'';
+ var L=$('out').value.length,z=$('csz');z.textContent='Tamanho: '+L.toLocaleString('pt-BR')+' de '+CSSMAX.toLocaleString('pt-BR')+' caracteres'+(L>CSSMAX?' — passou do limite do site! Diminua o tamanho do ladrilho, desmarque “Pintar a Home”, desligue o Vidro em alguma tela ou escolha uma forma mais simples.':'');z.style.color=L>CSSMAX?'#e5565b':'';
  document.querySelectorAll('.pk').forEach(function(d){var k=d.dataset.k;d.querySelector('.sw2').style.background=S[k];d.querySelector('code').textContent=S[k];d.querySelector('button:last-child').style.visibility=T[k]?'visible':'hidden'});
  document.querySelectorAll('.sl input[data-k]').forEach(function(i){i.value=R[i.dataset.k];i.parentNode.querySelector('.vl').textContent=rl(i.dataset.k);i.parentNode.querySelector('.rz').style.visibility=TR[i.dataset.k]?'visible':'hidden'});
  document.querySelectorAll('.tabs button').forEach(function(b){b.className=b.dataset.t===tab?'on':''});
