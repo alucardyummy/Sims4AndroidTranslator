@@ -2763,13 +2763,22 @@ def me():
 
 
 # ─── CSS PERSONALIZADO ──────────────────────────────────────────────────────
-CSS_MAX = 20000
+CSS_MAX = 50000
+CSS_MAX_IMPORTS = 5
 _CSS_BLOCKED = re.compile(
     r"@import|javascript\s*:|vbscript\s*:|expression\s*\(|(?<![\w-])behavior\s*:|-moz-binding"
-    r"|image-set\s*\(|cross-fade\s*\(|</style|<script"
+    r"|cross-fade\s*\(|</style|<script"
     r"|(?<![\w-])(?:src|image|element|paint)\s*\("
 )
 _CSS_URL = re.compile(r"""url\(\s*(?:"([^"]*)"|'([^']*)'|([^)"'\s]*))\s*\)""")
+
+# @import: só do Google Fonts (CSS de lá só traz @font-face). Qualquer outro @import continua bloqueado,
+# porque o CSS importado NÃO passaria por esta validação.
+_GF_URL = r"https://fonts\.googleapis\.com/css2?\?[^\"'()\s\\<>]+"
+_CSS_IMPORT_OK = re.compile(
+    r"@import\s*(?:url\(\s*(?:\"" + _GF_URL + r"\"|'" + _GF_URL + r"'|" + _GF_URL + r")\s*\)"
+    r"|\"" + _GF_URL + r"\"|'" + _GF_URL + r"')\s*;"
+)
 
 
 def _css_for_check(css):
@@ -2787,6 +2796,25 @@ def _css_for_check(css):
     return text.lower()
 
 
+def _image_set_error(check):
+    """image-set() só com url(...). Texto solto entre aspas aceitaria qualquer endereço sem passar pela
+    checagem de url(), então fica de fora. Retorna uma mensagem de erro ou None."""
+    masked = _CSS_URL.sub("url(x)", check)
+    masked = re.sub(r"""type\(\s*(?:"[^"]*"|'[^']*')\s*\)""", "type(x)", masked)
+    for m in re.finditer(r"image-set\s*\(", masked):
+        depth, j = 1, m.end()
+        while j < len(masked) and depth:
+            if masked[j] == "(":
+                depth += 1
+            elif masked[j] == ")":
+                depth -= 1
+            j += 1
+        inner = masked[m.end():j]
+        if depth or '"' in inner or "'" in inner:
+            return "Dentro de image-set(...) use só url(...): endereço solto entre aspas não vale."
+    return None
+
+
 def sanitize_user_css(raw):
     """Valida o CSS pessoal. Retorna (css, None) ou (None, mensagem de erro)."""
     css = str(raw or "").strip()
@@ -2799,10 +2827,30 @@ def sanitize_user_css(raw):
 
     check = _css_for_check(css)
 
+    # @import do Google Fonts: tem que vir no começo (o navegador ignora @import depois de qualquer regra).
+    imports = list(_CSS_IMPORT_OK.finditer(check))
+    if len(imports) > CSS_MAX_IMPORTS:
+        return None, f"Muitos @import (máximo {CSS_MAX_IMPORTS})."
+    rest = check.lstrip()
+    while True:
+        m = _CSS_IMPORT_OK.match(rest)
+        if not m:
+            break
+        rest = rest[m.end():].lstrip()
+    if _CSS_IMPORT_OK.search(rest):
+        return None, "O @import precisa ficar no começo do CSS, antes de qualquer outra regra."
+    check = _CSS_IMPORT_OK.sub(" ", check)      # o que sobrar de @import (outro endereço) cai no bloqueio abaixo
+
     bad = _CSS_BLOCKED.search(check)
     if bad:
         token = bad.group(0).strip()[:30]
+        if token == "@import":
+            return None, "@import só vale pro Google Fonts (https://fonts.googleapis.com/css2?family=…;), com ponto e vírgula no fim."
         return None, f"Esse CSS usa algo que não é permitido: {token}"
+
+    err = _image_set_error(check)
+    if err:
+        return None, err
 
     urls = list(_CSS_URL.finditer(check))
     if len(urls) != check.count("url("):

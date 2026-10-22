@@ -68,7 +68,7 @@ h1 .i{width:1.1em;height:1.1em;margin-right:.15em}nav{columns:2;font-size:14px}
 <li><b>Copiar</b> copia o texto. <b>Restaurar padrão</b> apaga tudo e o site volta ao normal.</li>
 </ol>
 <div class="box warn"><b>Importante:</b> Aplicar não é Salvar! Gostou do resultado? Aperte <b>Salvar CSS</b>, senão ele some quando você recarregar.</div>
-<div class="box tip">Máximo de <b>20.000 caracteres</b> (a caixa mostra a contagem). E cole só CSS de gente em quem você confia.</div>
+<div class="box tip">Máximo de <b>50.000 caracteres</b> (a caixa mostra a contagem). E cole só CSS de gente em quem você confia.</div>
 
 <h2 id="receita">3. Como o CSS é escrito</h2>
 <p>Todo pedacinho de CSS é uma frase assim:</p>
@@ -147,21 +147,25 @@ h1 .i{width:1.1em;height:1.1em;margin-right:.15em}nav{columns:2;font-size:14px}
 <dt>Sempre termine com um tipo genérico</dt><dd><code>serif</code> (com perninhas), <code>sans-serif</code> (sem perninhas), <code>monospace</code> (máquina de escrever), <code>cursive</code> (de mão) ou <code>system-ui</code> (a do aparelho). Cada aparelho tem as suas fontes (no Android, por exemplo, nem toda fonte de computador existe): se a primeira não existir, o site usa o tipo genérico</dd>
 </dl>
 <h3>Usar uma fonte de fora (Google Fonts, etc.)</h3>
-<p>O site <b>não aceita <code>@import</code></b> (é por segurança), mas aceita <code>@font-face</code> com link <code>https://</code>. É como se você “instalasse” a fonte e desse um nome pra ela:</p>
+<p><b>Google Fonts</b> é o jeito mais fácil: o site aceita o <code>@import</code> dele. Fica assim:</p>
+<pre><code>@import url("https://fonts.googleapis.com/css2?family=Pinyon+Script&amp;display=swap");
+:root { --font-title: "Pinyon Script", cursive; }</code></pre>
+<ol>
+<li>Em <code>fonts.google.com</code>, escolha a fonte, abra <b>Get embed code</b> e vá na aba <b>@import</b>.</li>
+<li>Copie só a linha <code>@import url(...);</code> (sem as partes <code>&lt;style&gt;</code>).</li>
+<li>Cole bem no <b>começo</b> do CSS personalizado e use o nome que aparece depois de <code>family=</code> (espaço vira <code>+</code> no link) nas variáveis de fonte.</li>
+</ol>
+<div class="box warn"><b>Regras do @import:</b> só vale do <code>fonts.googleapis.com</code>, tem que terminar com <code>;</code>, tem que ficar <b>antes de qualquer outra regra</b> (comentários podem ficar antes) e cabem até 5. Se ele estiver no meio do CSS, o navegador ignora, e o site avisa na hora de salvar.</div>
+<p>De <b>outro site</b> o <code>@import</code> não vale (é por segurança), mas <code>@font-face</code> com link <code>https://</code> vale. É como se você “instalasse” a fonte e desse um nome pra ela:</p>
 <pre><code>@font-face {
   font-family: "Minha Fonte";
   src: url("https://exemplo.com/minha-fonte.woff2") format("woff2");
   font-display: swap;
 }
 :root { --font-title: "Minha Fonte", serif; }</code></pre>
-<p>O link tem que ser o <b>endereço direto do arquivo</b> da fonte (termina em <code>.woff2</code>, <code>.woff</code>, <code>.ttf</code> ou <code>.otf</code>). Pra pegar uma do <b>Google Fonts</b>:</p>
-<ol>
-<li>No navegador, abra <code>https://fonts.googleapis.com/css2?family=Nome+Da+Fonte</code> (troque pelo nome da fonte; espaço vira <code>+</code>).</li>
-<li>Vai aparecer um texto cheio de <code>@font-face</code>. Copie <b>tudo</b>.</li>
-<li>Cole no CSS personalizado, <b>antes</b> do resto, e use o nome que está em <code>font-family</code> nas variáveis acima.</li>
-</ol>
-<div class="box tip"><b>Dica pra caber nos 20.000 caracteres:</b> o Google manda um bloco pra cada alfabeto (<code>/* cyrillic */</code>, <code>/* latin-ext */</code>…). Apague todos e deixe só o <code>/* latin */</code>: ele já tem todos os acentos do português. No <a href="/montar-tema" style="color:var(--ac)">Montador de tema</a> dá pra colar esse texto, que ele confere e monta o CSS pra você.</div>
-<div class="box warn"><b>Não vale:</b> <code>@import</code>, links <code>http://</code> (sem o “s”) e fonte embutida no próprio CSS (<code>data:</code>). Se a fonte não aparecer, o site usa a de reserva, então nada quebra: confira se o link abre o arquivo, se o nome está igual nos dois lugares e se tem aspas.</div>
+<p>O link tem que ser o <b>endereço direto do arquivo</b> da fonte (termina em <code>.woff2</code>, <code>.woff</code>, <code>.ttf</code> ou <code>.otf</code>).</p>
+<div class="box tip"><b>Dica:</b> no <a href="/montar-tema" style="color:var(--ac)">Montador de tema</a> é só colar o link do Google Fonts (ou do arquivo da fonte) que ele monta o CSS pra você, já com o <code>@import</code> no lugar certo.</div>
+<div class="box warn"><b>Não vale:</b> <code>@import</code> de outros sites, links <code>http://</code> (sem o “s”) e fonte embutida no próprio CSS (<code>data:</code>). Se a fonte não aparecer, o site usa a de reserva, então nada quebra: confira se o link abre, se o nome está igual nos dois lugares e se tem aspas.</div>
 <h3>Mudar a fonte de um pedaço só</h3>
 <pre><code>/* só o título da Home */
 html[data-page="index"] .title { font-family: Georgia, serif !important; }
@@ -282,7 +286,7 @@ html[data-page="index"] {
 <dt><code>.push-toggle-row</code>, <code>.push-toggle-label</code></dt><dd>a linha “Notificar no celular” com o interruptor</dd>
 <dt><code>.theme-sub</code>, <code>.theme-list</code>, <code>.theme-name</code>, <code>.theme-blurb</code>, <code>.theme-swatch</code>, <code>.theme-foot</code></dt><dd>a janela da paleta de temas: a frase de cima, a lista, o nome e a frasezinha de cada tema, as bolinhas de cor dele e o “Mais temas em breve.”</dd>
 <dt><code>.updates-list</code>, <code>.updates-empty</code>, <code>.update-item-title</code>, <code>.update-item-body</code>, <code>.update-item-date</code></dt><dd>a lista de novidades e as partes de cada uma (título, texto e data)</dd>
-<dt><code>.css-inner</code>, <code>.css-help</code>, <code>.css-meta</code>, <code>.css-actions</code>, <code>.css-btn-main</code>, <code>.css-danger</code></dt><dd>por dentro das caixas do perfil: o miolo (<code>.css-inner</code>) e o textinho de ajuda (<code>.css-help</code>) valem para o CSS personalizado e para o E-mail de recuperação (e o aviso acima do “SALVAR ALTERAÇÕES” também usa o <code>.css-help</code>). Só no CSS personalizado: o contador “0/20000”, a linha dos botões, o <b>Salvar CSS</b> e o <b>Restaurar padrão</b></dd>
+<dt><code>.css-inner</code>, <code>.css-help</code>, <code>.css-meta</code>, <code>.css-actions</code>, <code>.css-btn-main</code>, <code>.css-danger</code></dt><dd>por dentro das caixas do perfil: o miolo (<code>.css-inner</code>) e o textinho de ajuda (<code>.css-help</code>) valem para o CSS personalizado e para o E-mail de recuperação (e o aviso acima do “SALVAR ALTERAÇÕES” também usa o <code>.css-help</code>). Só no CSS personalizado: o contador “0/50000”, a linha dos botões, o <b>Salvar CSS</b> e o <b>Restaurar padrão</b></dd>
 <dt><code>.alert-overlay</code>, <code>.alert-icon</code>, <code>.alert-actions</code></dt><dd>os avisos de “OK / Tem certeza?”: o fundo escuro, o “!” e a linha dos botões</dd>
 <dt><code>.draft-banner-text</code>, <code>.draft-banner-actions</code>, <code>.draft-banner-btn</code></dt><dd>por dentro do aviso “Você tem uma tradução não salva”: o texto, a linha dos botões e cada botão (Recuperar e Descartar)</dd>
 <dt><code>.select-count</code>, <code>.select-all-btn</code>, <code>.select-cancel</code>, <code>.select-delete</code></dt><dd>a barra do modo seleção: “0 selecionados”, “Tudo”, “Cancelar” e a lixeira</dd>
@@ -413,6 +417,13 @@ html[data-page="index"] {
   background: url("https://exemplo.com/foto.jpg") center / cover fixed !important;
 }</code></pre>
 <p>Só funcionam links que começam com <code>https://</code>, imagens do próprio site (<code>/img/...</code>) ou imagens embutidas (<code>data:image/...</code>).</p>
+<p>Quer uma imagem nítida em tela de celular e outra em tela pequena? O <code>image-set(...)</code> deixa o aparelho escolher a melhor, mas só aceita <code>url(...)</code> dentro:</p>
+<pre><code>html[data-page="index"] body {
+  background: image-set(
+    url("https://exemplo.com/foto.jpg") 1x,
+    url("https://exemplo.com/foto@2x.jpg") 2x
+  ) center / cover fixed !important;
+}</code></pre>
 <h3>Tirar as animações</h3>
 <pre><code>* { animation: none !important; transition: none !important; }</code></pre>
 
@@ -446,11 +457,13 @@ html[data-page="index"] {
 <dt>“Uma coisa sumiu / o site ficou impossível de usar!”</dt>
 <dd>Calma! Abra o site com <code>?safe=1</code> no final do endereço. Isso desliga tema e CSS pessoal só naquela visita, e dá pra ir no perfil corrigir ou apertar <b>Restaurar padrão</b>.</dd>
 <dt>“Disse que o CSS não é permitido”</dt>
-<dd>Por segurança, não vale: <code>@import</code>, <code>javascript:</code>, <code>expression(...)</code>, <code>image-set(...)</code> e afins. E em <code>url(...)</code> só <code>https://</code>, <code>/img/</code> e <code>data:image/</code> (fonte embutida não vale). Pra fonte de fora use <code>@font-face</code>, não <code>@import</code>: veja a seção “Trocar as fontes”.</dd>
+<dd>Por segurança, não vale: <code>@import</code> de outro site que não seja o Google Fonts, <code>javascript:</code>, <code>expression(...)</code>, <code>cross-fade(...)</code> e afins. O <code>image-set(...)</code> vale, mas só com <code>url(...)</code> dentro (endereço solto entre aspas não). E em <code>url(...)</code> só <code>https://</code>, <code>/img/</code> e <code>data:image/</code> (fonte embutida não vale). Pra fonte de fora, veja a seção “Trocar as fontes”.</dd>
+<dt>“O @import precisa ficar no começo do CSS”</dt>
+<dd>O <code>@import</code> só funciona antes de qualquer outra regra. Suba a linha dele pro topo (só comentários <code>/* ... */</code> podem ficar antes).</dd>
 <dt>“Minha fonte não aparece!”</dt>
 <dd>Confira: o link começa com <code>https://</code> e abre direto o arquivo da fonte? O nome em <code>font-family</code> do <code>@font-face</code> é <b>igualzinho</b> ao que você escreveu em <code>--font-title</code> (e nome com espaço está entre aspas)? Enquanto não carrega, o site usa a fonte de reserva (o tipo genérico no fim, tipo <code>serif</code>).</dd>
 <dt>“Deu erro de ‘muito grande’”</dt>
-<dd>Passou de 20.000 caracteres. Apague os comentários e as coisas que não usa. Se for fonte do Google, deixe só o bloco <code>/* latin */</code>.</dd>
+<dd>Passou de 50.000 caracteres. Apague os comentários e as coisas que não usa. Se você colou <code>@font-face</code> do Google, troque pelo <code>@import</code> do Google Fonts: ele quase não ocupa espaço.</dd>
 <dt>“Escrevi certinho e não funciona”</dt>
 <dd>Confira: tem <code>;</code> no fim de cada linha? Fechou todas as chaves <code>{ }</code>? Uma chave faltando estraga o resto do CSS.</dd>
 </dl>

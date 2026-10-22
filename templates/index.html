@@ -1143,7 +1143,7 @@
       <div class="css-inner">
         <p class="css-help">Muda a aparência do site todo, só pra você. Cole só CSS de quem você confia. Dica: <code>:root { --accent: #ff7eb6; }</code> troca a cor de destaque em todas as telas, e <code>[data-page="editor"] body { ... }</code> mira uma tela só. Se algo não mudar, tente <code>!important</code>. Se alguma coisa sumir, abra o site com <code>?safe=1</code> no final do link. Sem querer mexer em código? <a href="/montar-tema" target="_blank" style="color:inherit;text-decoration:underline;font-weight:600">Monte seu tema</a>. Precisa de ajuda? <a href="/suporte-css" target="_blank" style="color:inherit;text-decoration:underline;font-weight:600">Guia do CSS</a>.</p>
         <textarea id="edit-css" class="form-input css-area" rows="9" spellcheck="false" autocomplete="off" autocapitalize="off" autocorrect="off" placeholder=":root {&#10;  --accent: #ff7eb6;&#10;}"></textarea>
-        <div class="css-meta"><span id="css-status"></span><span id="css-count">0/20000</span></div>
+        <div class="css-meta"><span id="css-status"></span><span id="css-count">0/50000</span></div>
         <div class="css-actions">
           <button type="button" class="css-btn" onclick="previewCss()">Aplicar</button>
           <button type="button" class="css-btn css-btn-main" onclick="saveCss()">Salvar CSS</button>
@@ -2535,7 +2535,7 @@ function pickTheme(id) {
 }
 
 // ─── CSS PERSONALIZADO ──────────────────────────────────────────────────────
-const CSS_MAX = 20000;
+const CSS_MAX = 50000;
 let cssPreviewing = false, cssStatusTimer = null;
 function cssField() { return document.getElementById('edit-css'); }
 function updateCssCount() { document.getElementById('css-count').textContent = cssField().value.length + '/' + CSS_MAX; }

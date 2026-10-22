@@ -164,12 +164,14 @@ h1 .ic{width:1.1em;height:1.1em;vertical-align:-.15em}
 <label class="ff"><b>Texto</b><small>Frases, campos, avisos e tudo que não é título</small><select id="fb"></select></label>
 <label class="ff"><b>Números e códigos</b><small>Contador, código das linhas (0x…), nome do arquivo</small><select id="fm"></select></label>
 <details class="box" id="fcu"><summary>Usar uma fonte de fora (Google Fonts, etc.)</summary>
-<p style="color:var(--mu);font-size:12px;margin:6px 0">O site não deixa usar <code>@import</code>, mas deixa <code>@font-face</code> com link <b>https://</b>. Dê um nome e cole o link direto do arquivo (.woff2, .woff, .ttf ou .otf):</p>
+<p style="color:var(--mu);font-size:12px;margin:6px 0">Do <b>Google Fonts</b> (o jeito mais fácil): escolha a fonte em fonts.google.com, abra <i>Get embed code</i> → aba <b>@import</b> e cole aqui o link que começa com <code>https://fonts.googleapis.com/css2?family=…</code> (pode colar o <code>@import</code> inteiro):</p>
+<input id="fcg" placeholder="https://fonts.googleapis.com/css2?family=Nome+Da+Fonte&amp;display=swap" autocapitalize="off" spellcheck="false">
+<p style="color:var(--mu);font-size:12px;margin:10px 0 6px">De outro site: o site deixa usar <code>@font-face</code> com link <b>https://</b>. Dê um nome e cole o link direto do arquivo (.woff2, .woff, .ttf ou .otf):</p>
 <input id="fcn" placeholder="Nome da fonte (ex.: Minha Fonte)" autocapitalize="off" spellcheck="false">
 <input id="fcl" placeholder="https://…/minha-fonte.woff2" autocapitalize="off" spellcheck="false">
-<p style="color:var(--mu);font-size:12px;margin:10px 0 0">Ou, do Google Fonts: abra o link <code>fonts.googleapis.com/css2?family=Nome+Da+Fonte</code> no navegador, copie tudo que aparecer e cole aqui:</p>
+<p style="color:var(--mu);font-size:12px;margin:10px 0 0">Ou, se você já tem os blocos <code>@font-face</code> prontos, cole aqui:</p>
 <textarea id="fcc" placeholder="@font-face { font-family: 'Nome'; src: url(https://…) … }" spellcheck="false"></textarea>
-<p style="color:var(--mu);font-size:12px;margin:6px 0 0">Depois escolha a fonte nas listas acima (ela aparece no fim, em “Suas fontes”). Fonte de fora conta nos 20.000 caracteres.</p>
+<p style="color:var(--mu);font-size:12px;margin:6px 0 0">Depois escolha a fonte nas listas acima (ela aparece no fim, em “Suas fontes”). O <code>@import</code> do Google quase não ocupa espaço; fonte colada em <code>@font-face</code> conta nos 50.000 caracteres.</p>
 </details>
 <p id="fmsg"></p>
 </div>
@@ -336,7 +338,7 @@ function auto(){['btn','btnTx'].concat(Object.keys(A).filter(function(k){return 
 function tx(c){return lum(c)>.45?'#111111':'#ffffff'}
 function V(){var a=rgb(S.accent);return{'--bg':S.bg,'--surface':S.surface,'--surface2':mix(S.surface,S.text,.07),'--surface3':mix(S.bg,S.surface,.5),'--border':S.border,'--border2':mix(S.border,S.text,.15),'--border3':mix(S.border,S.text,.3),'--accent':S.accent,'--accent-dim':mix(S.accent,'#000000',.22),'--accent-faint':'rgba('+a.join(', ')+', 0.12)','--text':S.text,'--text-muted':S.muted,'--text-dim':S.dim,'--danger':S.danger,'--radius':px('radius'),'--radius-sm':px('rsm'),'--radius-xs':px('rxs')}}
 // ---- fundo com padrão: gera um SVG pequeno (ladrilho) e vira url(data:image/svg+xml) no CSS ----
-var PT={on:0,shape:'dots',size:48,scale:50,rot:0,op:35,alt:0,home:1,oth:1},CSSMAX=20000;
+var PT={on:0,shape:'dots',size:48,scale:50,rot:0,op:35,alt:0,home:1,oth:1},CSSMAX=50000;
 function r1(n){return Math.round(n*10)/10}
 function starPts(n,ri){var o=[];for(var i=0;i<n*2;i++){var a=-Math.PI/2+i*Math.PI/n,r=i%2?ri:50;o.push(r1(Math.cos(a)*r)+' '+r1(Math.sin(a)*r))}return o.join(' ')}
 // desenho feito em /desenhar-svg (fica guardado neste aparelho)
@@ -515,7 +517,7 @@ editor:'<div class="tb2"><span>←</span><div><b>Editor</b><small class="tsb">ME
 merge:'<div class="tb2"><span>←</span><b>MESCLAR .PACKAGES</b></div><div class="lb">COMO MESCLAR</div><div class="mt on"><b>Mesclar rapidinho</b><small>Junta tudo num arquivo só.</small></div><div class="mt"><b>Mesclar com memória</b><small>Dá pra separar depois.</small></div><div class="dz">SELECIONAR ARQUIVOS<small class="dzs">.package · vários de uma vez</small></div><div class="fn"><span>mod_a.package</span><i>2,4 MB</i></div><div class="fn"><span>mod_b.package</span><i>310 KB</i></div><div class="sv mg">MESCLAR E BAIXAR</div>',
 create:'<div class="tb2"><span>←</span><b>CRIAR MOD</b></div><div class="lb">IDENTIFICAÇÃO DO MOD</div><div class="cd"><small>NAMESPACE</small><div class="inp">ex: meu_mod</div><div class="inp v">meu_mod</div><div class="nh">Só letras minúsculas e _</div></div><div class="lb">TRAÇOS</div><div class="cd2"><i>1</i><b>Personalidade</b><u>⌄</u></div><div><span class="ch on">Personalidade</span><span class="ch">Bônus</span><span class="ch">Social</span></div><div class="tg">Mostrar avançado</div><div class="ad">+ Adicionar traço</div><div class="pt">PRÉVIA</div><div class="pv"><b>trait_a</b><small>0x12AB · 3 strings</small></div><div style="height:30px"></div><div class="ab"><div class="vf">Verificar</div><div class="sv bd">GERAR .PACKAGE →</div></div>',
 info:'<div class="fl"><div class="tb2"><span>←</span><b>MEUMOD.PACKAGE</b></div><div class="lb">DETALHES</div><div style="padding:8px 0"><div class="ib"><small>INSTANCE</small>0x0002D0</div><div class="ib"><small>LÍNGUA</small><span class="lg">POR_BR ▾</span></div><div class="ib"><small>GROUP</small>00000000</div></div><div class="lh">toque na língua pra trocar</div><div class="so"><b>0x220557DA</b><small>12 strings · POR_BR</small></div><div class="lt">IDIOMA</div><div class="lo">Português</div><div class="sv st" style="margin-top:auto">COMEÇAR →</div></div>',
-modal:'<div class="ov"><div class="mb"><h4>Meu perfil</h4><small class="mu">Texto de apoio da janela</small><small class="wl">Apelido</small><div class="fi">janu</div><div class="fi e">Como a gente te chama?</div><div class="gb">Entrar com Google</div><div class="ts"><span>Notificar no celular</span><i class="sw3"></i></div><div class="tc on"><b class="tn">Coquette</b><small class="td">Rosa e renda</small></div><div class="tc"><b class="un">Novidade da versão</b><span class="ub">Montador de tema novo</span><small class="ud">12/10</small></div><div class="cs">CSS personalizado +</div><div class="ob">Aplicar</div><div class="mi"><svg class="ie" aria-hidden="true"><use href="#i-eye"/></svg> senha · 0/20000</div><div class="sv mbn">SALVAR ALTERAÇÕES</div><div class="lk">Não tem conta? <u>Cadastre-se</u></div><div class="al">Salvo com sucesso!</div></div></div>',
+modal:'<div class="ov"><div class="mb"><h4>Meu perfil</h4><small class="mu">Texto de apoio da janela</small><small class="wl">Apelido</small><div class="fi">janu</div><div class="fi e">Como a gente te chama?</div><div class="gb">Entrar com Google</div><div class="ts"><span>Notificar no celular</span><i class="sw3"></i></div><div class="tc on"><b class="tn">Coquette</b><small class="td">Rosa e renda</small></div><div class="tc"><b class="un">Novidade da versão</b><span class="ub">Montador de tema novo</span><small class="ud">12/10</small></div><div class="cs">CSS personalizado +</div><div class="ob">Aplicar</div><div class="mi"><svg class="ie" aria-hidden="true"><use href="#i-eye"/></svg> senha · 0/50000</div><div class="sv mbn">SALVAR ALTERAÇÕES</div><div class="lk">Não tem conta? <u>Cadastre-se</u></div><div class="al">Salvo com sucesso!</div></div></div>',
 load:'<div class="ld"><i></i></div>'};
 var TN={home:'Home',editor:'Editor',merge:'Mesclar',create:'Criar',info:'Info',modal:'Janela',load:'Carregando'};
 function render(){
@@ -578,11 +580,21 @@ $('copy').onclick=function(){
 var FF=[['','Padrão do site'],["'Syne', sans-serif",'Syne (do site)'],["'DM Sans', sans-serif",'DM Sans (do site)'],["'DM Mono', monospace",'DM Mono (do site)'],
 ["Georgia, serif",'Georgia (serifada)'],["'Times New Roman', Times, serif",'Times (serifada clássica)'],["'Trebuchet MS', sans-serif",'Trebuchet (redondinha)'],["Verdana, sans-serif",'Verdana (larga)'],
 ["'Courier New', monospace",'Courier (máquina de escrever)'],["'Comic Sans MS', 'Comic Neue', cursive",'Comic (divertida)'],["system-ui, sans-serif",'Fonte do aparelho'],["ui-rounded, system-ui, sans-serif",'Arredondada do aparelho'],["cursive",'Cursiva do aparelho'],["serif",'Serifada do aparelho'],["monospace",'Monoespaçada do aparelho']];
-var FR={ft:['title','sans-serif'],fb:['body','sans-serif'],fm:['mono','monospace']},FC=[],FBLK=[],FSEL={ft:'',fb:'',fm:''};
+var FR={ft:['title','sans-serif'],fb:['body','sans-serif'],fm:['mono','monospace']},FC=[],FBLK=[],FIMP=[],FSEL={ft:'',fb:'',fm:''};
 function ffName(n){return String(n||'').replace(/[^\w\u00C0-\u024F \-]/g,'').trim().slice(0,40)}
 function ffFmt(u){var m=/\.(woff2|woff|ttf|otf)(?:[?#].*)?$/i.exec(u);return m?({woff2:'woff2',woff:'woff',ttf:'truetype',otf:'opentype'})[m[1].toLowerCase()]:''}
 function ffScan(){
- var msg='',bad=false;FC=[];FBLK=[];
+ var msg='',bad=false;FC=[];FBLK=[];FIMP=[];
+ var gt=$('fcg').value,gm=/https:\/\/fonts\.googleapis\.com\/css2?\?[^\s"'()<>\\]+/i.exec(gt);
+ if(gt.trim()){
+  if(!gm){msg='Esse link não é do Google Fonts. Ele começa com https://fonts.googleapis.com/css2?family=…';bad=true}
+  else{
+   var gu=gm[0].replace(/&amp;/g,'&'),gn=[],gre=/[?&]family=([^&:;@]+)/gi,gx;
+   while((gx=gre.exec(gu))){try{var gf=ffName(decodeURIComponent(gx[1].replace(/\+/g,' ')));if(gf&&gn.indexOf(gf)<0)gn.push(gf)}catch(e){}}
+   if(!gn.length){msg='Não achei o nome da fonte no link (ele precisa ter family=Nome).';bad=true}
+   else{gn.forEach(function(n){if(FC.indexOf(n)<0)FC.push(n)});FIMP.push({line:'@import url("'+gu+'");\n',names:gn})}
+  }
+ }
  var n=ffName($('fcn').value),l=$('fcl').value.trim();
  if(n||l){
   if(!n)msg='Falta dar um nome pra fonte do link.';
@@ -612,10 +624,12 @@ function ffOpts(){
 function ffVal(id){var v=FSEL[id];if(!v)return '';if(v.indexOf('__c:')===0)return '"'+v.slice(4)+'", '+FR[id][1];return v}
 function ffVars(){var o='';Object.keys(FR).forEach(function(id){var v=ffVal(id);if(v)o+='  --font-'+FR[id][0]+': '+v+';\n'});return o}
 function ffFace(){var used=Object.keys(FR).map(function(id){return FSEL[id]}).filter(function(v){return v.indexOf('__c:')===0}).map(function(v){return v.slice(4)});
- if(!used.length)return '';return '/* Fontes de fora */\n'+FBLK.filter(function(b){var m=/font-family\s*:\s*["']?([^;"']+)/i.exec(b);return m&&used.indexOf(ffName(m[1]))>=0}).join('')+'\n'}
-function ffPrev(p){$('ffp').textContent=FBLK.join('');Object.keys(FR).forEach(function(id){var v=ffVal(id),k='--ft-'+FR[id][0];if(v)p.style.setProperty(k,v);else p.style.removeProperty(k)})}
+ if(!used.length)return '';
+ var imp=FIMP.filter(function(i){return i.names.some(function(n){return used.indexOf(n)>=0})}).map(function(i){return i.line}).join('');   // @import tem que vir antes de qualquer regra
+ return '/* Fontes de fora */\n'+imp+FBLK.filter(function(b){var m=/font-family\s*:\s*["']?([^;"']+)/i.exec(b);return m&&used.indexOf(ffName(m[1]))>=0}).join('')+'\n'}
+function ffPrev(p){$('ffp').textContent=FIMP.map(function(i){return i.line}).join('')+FBLK.join('');Object.keys(FR).forEach(function(id){var v=ffVal(id),k='--ft-'+FR[id][0];if(v)p.style.setProperty(k,v);else p.style.removeProperty(k)})}
 Object.keys(FR).forEach(function(id){$(id).onchange=function(){FSEL[id]=this.value;render()}});
-['fcn','fcl','fcc'].forEach(function(id){$(id).oninput=function(){ffScan();ffOpts();render()}});
+['fcg','fcn','fcl','fcc'].forEach(function(id){$(id).oninput=function(){ffScan();ffOpts();render()}});
 ffScan();ffOpts();
 load(PRE[0][1],PRE[0][2]);
 </script>
