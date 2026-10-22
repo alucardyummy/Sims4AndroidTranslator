@@ -430,7 +430,7 @@
   <div class="bottom-bar">
     <div class="filename-row">
       <span class="filename-label">Nome:</span>
-      <input type="text" class="filename-input" id="filename-input" placeholder="output" maxlength="100" autocomplete="off" autocorrect="off" spellcheck="false">
+      <input type="text" class="filename-input" id="filename-input" placeholder="nome" maxlength="100" autocomplete="off" autocorrect="off" spellcheck="false">
       <span class="ext-label">.package</span>
     </div>
     <div class="instance-toggle-row" onclick="toggleInstance()">
@@ -476,7 +476,7 @@
     <div class="json-bottom">
       <div class="filename-row">
         <span class="filename-label">Nome:</span>
-        <input type="text" class="filename-input" id="json-filename-input" placeholder="output" maxlength="100">
+        <input type="text" class="filename-input" id="json-filename-input" placeholder="nome" maxlength="100">
         <span class="ext-label">.json</span>
       </div>
       <div class="json-bottom-actions">
@@ -3495,7 +3495,7 @@ function saveJson() {
     return;
   }
 
-  const outputName = (document.getElementById('json-filename-input').value.trim() || 'output') + '.json';
+  const outputName = (document.getElementById('json-filename-input').value.trim() || 'nome') + '.json';
   const blob = new Blob([JSON.stringify(parsed, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');

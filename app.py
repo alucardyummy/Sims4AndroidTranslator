@@ -462,7 +462,7 @@ def _owns_file(file_id):
         return False
 
 
-def _safe_download_name(raw, default="output.package"):
+def _safe_download_name(raw, default="nome.package"):
     name = re.sub(r'[\x00-\x1f\x7f"\\/]', "_", str(raw or "")).strip()[:150]
     return name or default
 
@@ -1013,7 +1013,7 @@ def upload_confirm():
     """
     data          = request.get_json(silent=True) or {}
     file_id       = data.get("file_id")
-    original_name = str(data.get("original_name") or "output.package")[:255]
+    original_name = str(data.get("original_name") or "nome.package")[:255]
 
     if not file_id:
         return json.dumps({"error": "file_id ausente"}), 400
@@ -1126,7 +1126,7 @@ def desenhar_svg():
 @app.route("/api/instances")
 def api_instances():
     all_instances = session.get("all_instances", [])
-    original_name = session.get("original_name", "output.package")
+    original_name = session.get("original_name", "nome.package")
 
     seen_bases = {}
     for inst in all_instances:
@@ -1240,10 +1240,10 @@ def save():
     instance_int = int(instance_str)
     strings_edited = data["strings"]
     target_lang = data.get("target_language", "POR_BR")
-    output_name = data.get("output_name", "output").strip()
+    output_name = data.get("output_name", "nome").strip()
     custom_instance_base = data.get("custom_instance_base", None)  # 14 dígitos hex opcionais
     if not output_name:
-        output_name = "output"
+        output_name = "nome"
     if not output_name.endswith(".package"):
         output_name += ".package"
 
@@ -1326,7 +1326,7 @@ def save():
 @app.route("/download")
 def download():
     output_id = request.args.get("file")
-    output_name = _safe_download_name(request.args.get("name", "output.package"))
+    output_name = _safe_download_name(request.args.get("name", "nome.package"))
     if not output_id or output_id == "null" or not _owns_file(output_id):
         return "Arquivo não encontrado", 404
 
