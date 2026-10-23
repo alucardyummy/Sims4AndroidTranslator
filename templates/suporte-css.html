@@ -435,7 +435,7 @@ html[data-page="index"] {
 <li><b>Ícones</b> (sininho, símbolo do Google, paleta, GitHub, lixeira): são desenhos de linhas e formas. Você pinta com <code>fill</code> (por dentro), <code>stroke</code> (a linha) ou <code>color</code> (quando o ícone usa a cor do texto).</li>
 <li><b>Imagens</b> (mascote, foto de perfil, bolinha de carregando, raposa do Editor): são figurinhas prontas. Não dá pra “pintar por dentro”, então você usa <code>filter</code>, que mexe nas cores da imagem inteira.</li>
 </ul>
-<p>No <a href="/montar-tema" style="color:var(--ac)">Montador de tema</a>: os ícones ficam em <b>2. Cores → Ícones</b> e as imagens na seção <b>6. Imagens</b>.</p>
+<p>No <a href="/montar-tema" style="color:var(--ac)">Montador de tema</a>: abra a tela que quer mexer (Home, Editor, Janelas…) e procure <b>Ícones</b> e <b>Imagens</b> dentro dela. O sininho, a paleta, o GitHub, a lixeira e o selo ficam na <b>Home</b>; o símbolo do Google fica em <b>Janelas</b>.</p>
 <h3>Ícones: quem é quem</h3>
 <dl>
 <dt><code>.bell-btn .bell-body</code></dt><dd>o corpo do sininho (use <code>fill</code>)</dd>
@@ -488,7 +488,7 @@ html[data-page="index"] .github-badge { color: #ff4fa3 !important; }</code></pre
 .profile-circle img, #modal-profile-img { filter: grayscale(100%) !important; }</code></pre>
 <p>O mascote já tem um brilho em volta (<code>drop-shadow</code>). Se você escrever <code>filter</code> sem repetir o brilho, ele some: por isso o <code>drop-shadow</code> no final do exemplo.</p>
 <h3>Imagens: pintar de uma cor só</h3>
-<p>Dá pra transformar a imagem numa <b>silhueta</b> de uma cor exata (perde os detalhes, fica só o contorno). O jeito é começar com <code>brightness(0) saturate(100%)</code> (tudo vira preto) e depois uma sequência de filtros que leva o preto até a cor. Esses números são difíceis de chutar, então peça pro <b>Montador de tema</b> (seção 6, “Pintar de uma cor só”) calcular. Exemplo pronto pra rosa <code>#ff4fa3</code>:</p>
+<p>Dá pra transformar a imagem numa <b>silhueta</b> de uma cor exata (perde os detalhes, fica só o contorno). O jeito é começar com <code>brightness(0) saturate(100%)</code> (tudo vira preto) e depois uma sequência de filtros que leva o preto até a cor. Esses números são difíceis de chutar, então peça pro <b>Montador de tema</b> (em <b>Imagens</b>, marque “Pintar de uma cor só”) calcular. Exemplo pronto pra rosa <code>#ff4fa3</code>:</p>
 <pre><code>.focus-eye {
   filter: brightness(0) saturate(100%) invert(49%) sepia(74%)
           saturate(2535%) hue-rotate(303deg) brightness(100%)
@@ -509,7 +509,7 @@ html[data-page="index"] .github-badge { color: #ff4fa3 !important; }</code></pre
   --text-muted: #aaa;
 }</code></pre>
 <h3>Cartões de vidro (fundo transparente + desfoque)</h3>
-<p>O vidro precisa de <b>algo atrás</b> pra borrar: um fundo com padrão do <a href="/montar-tema">Montador de tema</a>, um degradê ou uma imagem (veja a receita logo abaixo). O último número do <code>rgba</code> é a transparência: <code>0.45</code> deixa passar mais da metade do fundo.</p>
+<p>O vidro precisa de <b>algo atrás</b> pra borrar: um fundo com padrão do <a href="/montar-tema">Montador de tema</a> (em <b>Geral → Fundo com padrão</b>), um degradê ou uma imagem (veja a receita logo abaixo). O último número do <code>rgba</code> é a transparência: <code>0.45</code> deixa passar mais da metade do fundo.</p>
 <pre><code>/* Home: cartões das traduções salvas e botões */
 html[data-page="index"] .save-item,
 html[data-page="index"] .btn-merge,

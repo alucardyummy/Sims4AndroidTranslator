@@ -21,6 +21,7 @@ p{margin:.4em 0}.sub{color:var(--mu);margin-top:0}a{color:var(--ac)}
 #ph{position:relative;width:100%;max-width:340px;margin:0 auto;height:min(46vh,430px);overflow:hidden;border-radius:22px;border:3px solid var(--bd);background:var(--cd)}
 #pf{position:absolute;left:0;top:0;border:0;transform-origin:0 0;background:transparent;color-scheme:normal}
 #subt{margin:-2px 0 8px}#subt:empty{display:none}#subt button{font-size:12px;padding:3px 10px}
+details.scr>summary{font-size:16px}details.sub{border:1px solid var(--bd);border-radius:12px;padding:2px 10px;margin:8px 0;background:var(--pg)}details.sub>summary{font-weight:600;font-size:14px}details.sub>.box,details.sub>.pk,details.sub>.sl{margin-left:0;margin-right:0}.hn{color:var(--mu);font-size:12px;margin:2px 2px 8px}
 .box{background:var(--cd);border:1px solid var(--bd);border-radius:14px;padding:6px 12px;margin:8px 0}
 details{margin:8px 0}summary{cursor:pointer;font-weight:700;padding:6px 0}
 .row{display:flex;flex-wrap:wrap;gap:8px}
@@ -79,11 +80,11 @@ h1 .ic{width:1.1em;height:1.1em;vertical-align:-.15em}
 
 <h2>1. Comece por um modelo</h2>
 <div class="row" id="presets"></div>
-<h2>2. Cores</h2>
-<div id="groups"></div>
-<h2>3. Cantos arredondados</h2>
-<div class="box" id="radii"></div>
-<h2>4. Fontes <small style="color:var(--mu);font-weight:400">(opcional)</small></h2>
+<h2>2. Ajustes por tela</h2>
+<p style="color:var(--mu);font-size:13px;margin:0 2px 6px">Abra a tela que quer mexer: dentro dela ficam <b>só</b> as cores, os textos, os cantos, os ícones, as imagens e o vidro dela. O que vale pro site todo (cores gerais, fontes, fundo com padrão) fica em <b>Geral</b>. As abas lá em cima e estes toggles andam juntos.</p>
+<div id="scr"></div>
+<div id="stash" hidden>
+<div id="blk-fontes">
 <div class="box" id="fonts">
 <p style="margin:0;color:var(--mu)">Cada tipo de texto do site tem a sua fonte. Deixe em <b>Padrão do site</b> pra não mudar nada.</p>
 <label class="ff"><b>Títulos e botões</b><small>Nome das telas, botões grandes, rótulos</small><select id="ft"></select></label>
@@ -101,7 +102,8 @@ h1 .ic{width:1.1em;height:1.1em;vertical-align:-.15em}
 </details>
 <p id="fmsg"></p>
 </div>
-<h2>5. Fundo com padrão <small style="color:var(--mu);font-weight:400">(opcional)</small></h2>
+</div>
+<div id="blk-padrao">
 <label class="ck"><input type="checkbox" id="pon"><span><b>Usar fundo com padrão</b> (bolinhas, estrelas, corações, rendinha…). Ele entra no CSS junto com o tema.</span></label>
 <div id="pbox" hidden>
 <div class="box"><div class="row" id="shapes"></div></div>
@@ -117,23 +119,21 @@ h1 .ic{width:1.1em;height:1.1em;vertical-align:-.15em}
 <button class="go2" id="ptdl" type="button">Baixar .svg do ladrilho</button>
 <a class="go2" href="/desenhar-svg"><svg class="ic" aria-hidden="true"><use href="#i-pencil"/></svg> Desenhar minha própria forma</a>
 </div>
-<h2>6. Imagens: mascote, foto, carregando… <small style="color:var(--mu);font-weight:400">(opcional)</small></h2>
-<p style="color:var(--mu);font-size:12px;margin:0 2px 8px">Gire as cores, deixe em preto e branco ou pinte tudo de uma cor só (vira uma silhueta). Vale pros desenhos e fotos do site. As cores do <b>sininho</b>, do <b>Google</b> e dos outros ícones ficam em <b>2. Cores → Ícones</b>.</p>
-<div id="imar"></div>
-<h2>7. Vidro: cor de fundo transparente + desfoque <small style="color:var(--mu);font-weight:400">(opcional)</small></h2>
-<label class="ck"><input type="checkbox" id="gon"><span><b>Ligar o vidro</b> (cartões e caixas com fundo transparente e desfoque). Só aparece se tiver algo atrás deles: ligue o <b>fundo com padrão</b> (seção 5) ou use uma Home com degradê.</span></label>
+</div>
+<div id="blk-vidro">
+<label class="ck"><input type="checkbox" id="gon"><span><b>Ligar o vidro</b> (cartões e caixas com fundo transparente e desfoque). Só aparece se tiver algo atrás deles: ligue o <b>fundo com padrão</b> (em <b>Geral → Fundo com padrão</b>) ou use uma Home com degradê.</span></label>
 <div id="gbox" hidden>
 <div class="box">
 <label class="ck"><input type="checkbox" id="gone"><span><b>Usar uma cor só pro vidro</b> (desmarcado, cada lugar usa a própria cor do tema)</span></label>
 <div id="gcw"></div>
 <div id="gsl"></div>
 </div>
-<p style="color:var(--mu);font-size:12px;margin:8px 2px 2px"><b>Ajuste por tela</b> (opcional): cada tela segue o geral até você mexer nela. A setinha volta a seguir.</p>
-<div id="gar"></div>
 <p style="color:var(--mu);font-size:12px;margin:4px 2px"><b>Opacidade</b> = quanto o fundo ainda cobre: 100% sólido, 0% invisível. <b>Desfoque</b> = a força do blur: 0 desliga, 8 a 14 px é leve e bonito, acima de 30 px pesa em celular fraco.</p>
 </div>
-<h2>8. Copie e cole no site</h2>
-<label class="ck"><input type="checkbox" id="home" checked><span><b>Pintar a Home também</b> (a Home tem cores próprias; marcado, ela segue o seu tema)</span></label>
+</div>
+<label class="ck" id="lbl-home"><input type="checkbox" id="home" checked><span><b>Pintar a Home também</b> (a Home tem cores próprias; marcado, ela segue o seu tema)</span></label>
+</div>
+<h2>3. Copie e cole no site</h2>
 <textarea id="out" readonly spellcheck="false"></textarea>
 <p id="csz"></p>
 <button class="go" id="copy" type="button">Copiar CSS</button>
@@ -153,6 +153,35 @@ h1 .ic{width:1.1em;height:1.1em;vertical-align:-.15em}
 </div>
 <script>
 var $=function(i){return document.getElementById(i)};
+// ---- organização por tela: cada tela tem o seu toggle com Cores, Textos, Cantos, Ícones, Imagens e Vidro ----
+var SCR=[['geral','Geral · vale pro site todo','home'],['home','Home','home'],['editor','Editor','editor'],['comum','Mesclar, Criar e Info · partes em comum','merge'],['merge','Mesclar','merge'],['create','Criar','create'],['info','Info','info'],['modal','Janelas (perfil, entrar, avisos)','modal'],['load','Carregamento (volta do Google)','load']],
+ CAT=['Cores','Textos','Cantos','Ícones','Imagens','Fontes','Fundo com padrão','Vidro'],SCB={},SCD={};
+SCR.forEach(function(sc){
+ var d=document.createElement('details');d.className='box scr';d.dataset.s=sc[0];d.innerHTML='<summary>'+sc[1]+'</summary>';SCB[sc[0]]={};SCD[sc[0]]=d;
+ CAT.forEach(function(c){var e=document.createElement('details');e.className='sub';e.innerHTML='<summary>'+c+'</summary>';SCB[sc[0]][c]=e;d.appendChild(e)});
+ $('scr').appendChild(d)});
+function box(sc,c){return SCB[sc][c]}
+box('geral','Fontes').appendChild($('blk-fontes'));box('geral','Fundo com padrão').appendChild($('blk-padrao'));box('geral','Vidro').appendChild($('blk-vidro'));
+// a qual tela/categoria cada item pertence
+var BK={bst:'info',bsa:'editor',bmg:'merge',bbd:'create',bvf:'create',bmb:'modal',bstT:'info',bsaT:'editor',bmgT:'merge',bbdT:'create',bvfT:'create',bmbT:'modal',bnT:'home',btn2T:'home'},
+ RS={radius:'geral',rsm:'geral',rxs:'geral',rbtn:'geral',hb:'home',hc:'home',hv:'home',eb:'editor',es:'editor',rsa:'editor',mt:'merge',mz:'merge',rmg:'merge',cc:'create',cp:'create',rbd:'create',rvf:'create',ib:'info',rst:'info',rw:'modal',rwf:'modal',rmb:'modal'},
+ GSC={H:'home',E:'editor',O:'comum',W:'modal'},IMS={mas:'home',avt:'home',lod:'load',fox:'editor'};
+function place(t,k){
+ if(t.indexOf('Textos · Botões')===0)return[BK[k]||'geral','Textos'];
+ if(t.indexOf('Botões')===0)return[BK[k]||'geral','Cores'];
+ if(t.indexOf('Textos · Home')===0)return['home','Textos'];
+ if(t.indexOf('Textos · Editor')===0)return['editor','Textos'];
+ if(t.indexOf('Textos · Mesclar, Criar e Info')===0)return['comum','Textos'];
+ if(t.indexOf('Textos · Mesclar')===0)return['merge','Textos'];
+ if(t.indexOf('Textos · Criar')===0)return['create','Textos'];
+ if(t.indexOf('Textos · Info')===0)return['info','Textos'];
+ if(t.indexOf('Textos · Janelas')===0)return['modal','Textos'];
+ if(t.indexOf('Ícones')===0)return[(k==='igO'||k==='igI')?'modal':'home','Ícones'];
+ if(t.indexOf('Home')===0)return['home','Cores'];
+ if(t.indexOf('Carregamento')===0)return['load','Cores'];
+ if(t.indexOf('Editor')===0)return['editor','Cores'];
+ if(t.indexOf('Janelas')===0)return['modal','Cores'];
+ return['geral','Cores']}
 var G=[
 ['Geral · todas as telas',0,[['bg','Fundo das telas','Editor, Mesclar, Criar e Info'],['surface','Cartões e caixas',''],['accent','Destaque','Títulos, ícones, números'],['text','Texto principal','Muda todos os textos principais de uma vez. Em “Textos · …” você ajusta um por um'],['muted','Texto de apoio','Muda todos os textos de apoio de uma vez'],['dim','Texto discreto','Números, rótulos pequenos e ícones apagados'],['border','Bordas',''],['danger','Perigo','Apagar e erros'],['btn','Botão principal','Salvar, Mesclar, Gerar, Começar'],['btnTx','Texto do botão principal','Muda o texto de todos os botões de uma vez. Em “Textos · Botões” você ajusta cada um']]],
 ['Botões (um por tela)',0,[['bst','Começar (Info)','Seguem o Botão principal até você mexer'],['bsa','Salvar package (Editor)',''],['bmg','Mesclar e baixar (Mesclar)',''],['bbd','Gerar .package (Criar)',''],['bvf','Verificar (Criar)','Borda (o texto segue, mas dá pra mudar em Textos · Botões)'],['bmb','Botão das janelas','Salvar alterações, Entrar…']]],
@@ -444,12 +473,12 @@ var RZ='<button type="button" class="rz" title="Voltar a seguir o geral" style="
  mkSl($('gsl'),'Desfoque (geral)',0,60,'px',function(){return GL.b},function(v){GL.b=v});
  mkSl($('gsl'),'Saturação do que está atrás',50,200,'%',function(){return GL.sat},function(v){GL.sat=v});
  Object.keys(GN).forEach(function(x){
-  var d=document.createElement('details');d.className='box';d.innerHTML='<summary>'+GN[x]+'</summary><label class="ck"><input type="checkbox" checked><span><b>Aplicar vidro aqui</b>'+(x==='E'?' (desfoque só nas barras; as linhas ficam transparentes pra lista não ficar pesada)':'')+'</span></label>';
+  var d=document.createElement('div');d.innerHTML='<label class="ck"><input type="checkbox" checked><span><b>Aplicar vidro aqui</b>'+(x==='E'?' (desfoque só nas barras; as linhas ficam transparentes pra lista não ficar pesada)':'')+'</span></label>';
   d.querySelector('input').onchange=function(){GA[x].on=this.checked?1:0;render()};
   mkPk(d,'gc'+x,'Cor do vidro','Até você mexer, usa a cor do tema (ou a cor única, se marcada)');
   mkSl(d,'Opacidade',0,100,'%',function(){return gv(x,'a')},function(v){GA[x].a=v},{has:function(){return GA[x].a!=null},clear:function(){GA[x].a=null}});
   mkSl(d,'Desfoque',0,60,'px',function(){return gv(x,'b')},function(v){GA[x].b=v},{has:function(){return GA[x].b!=null},clear:function(){GA[x].b=null}});
-  $('gar').appendChild(d)});
+  box(GSC[x],'Vidro').appendChild(d)});
  $('gon').onchange=function(){GL.on=this.checked?1:0;render()};
  $('gone').onchange=function(){GL.one=this.checked?1:0;render()};
 
@@ -471,7 +500,7 @@ IMN.forEach(function(m){
  if(m[0]==='mas')mkPk(d,'mgl','Brilho em volta','A luzinha atrás do mascote');
  var b=document.createElement('button');b.type='button';b.textContent='Voltar ao original';b.style.cssText='margin-top:8px;border:1px solid var(--bd);background:var(--cd);color:var(--tx);border-radius:99px;padding:6px 14px;font:inherit;font-size:13px';
  b.onclick=function(){q.h=0;q.s=100;q.b=100;q.g=0;q.o=m[3];q.p=0;delete T['ip_'+m[0]];if(m[0]==='mas')delete T.mgl;d.querySelector('input').checked=false;auto();render()};
- d.appendChild(b);$('imar').appendChild(d)});
+ d.appendChild(b);box(IMS[m[0]],'Imagens').appendChild(d)});
 function imcss(){
  var o='';
  IMN.forEach(function(m){
@@ -656,29 +685,23 @@ function render(){
 }
 function load(c,r){S={};T={};for(var k in c)S[k]=c[k];auto();var q=Math.min(100,Math.round(r/40*100));R=RM(q);TR={};autoR();$('all').textContent=ml(q);$('allr').value=q;render()}
 G.forEach(function(g){
- var d=document.createElement('details');d.className='box';if(g[1])d.open=true;
- if(g[3])d.addEventListener('toggle',function(){if(d.open&&tab!==g[3]){tab=g[3];render()}});
- d.innerHTML='<summary>'+g[0]+'</summary>';
  g[2].forEach(function(it){
   var r=document.createElement('div');r.className='pk';r.dataset.k=it[0];
   r.innerHTML='<button type="button" class="sw2" aria-label="Escolher cor"></button><div><b>'+it[1]+'</b>'+(it[2]?'<small>'+it[2]+'</small>':'')+'</div><code></code><button type="button" title="Voltar ao automático"><svg class="ic" aria-hidden="true"><use href="#i-reset"/></svg></button>';
   r.onclick=function(){openPick(it[0],it[1])};
   r.querySelector('button:last-child').onclick=function(e){e.stopPropagation();delete T[it[0]];auto();render();if(P.k===it[0])syncPick()};
-  d.appendChild(r);
+  var pl=place(g[0],it[0]);box(pl[0],pl[1]).appendChild(r);
  });
- $('groups').appendChild(d);
 });
-var rb=$('radii');
-rb.innerHTML='<div class="box"><div class="sl"><label><b>Tudo junto</b><span id="all"></span></label><input type="range" id="allr" min="0" max="100"><small style="color:var(--mu)">Mexe em todos de uma vez; os de baixo ajustam cada lugar.</small></div></div>';
+var rb=box('geral','Cantos');
+rb.insertAdjacentHTML('beforeend','<div class="box"><div class="sl"><label><b>Tudo junto</b><span id="all"></span></label><input type="range" id="allr" min="0" max="100"><small style="color:var(--mu)">Mexe em todos de uma vez; os de baixo ajustam cada lugar.</small></div></div>');
 $('allr').oninput=function(){var r=+this.value;R=RM(r);TR={};autoR();$('all').textContent=ml(r);render()};
 RG.forEach(function(g){
- var d=document.createElement('details');d.className='box';if(g[1])d.open=true;d.innerHTML='<summary>'+g[0]+'</summary>';
  g[2].forEach(function(it){
   var e=document.createElement('div');e.className='sl';e.innerHTML='<label><span class="nm">'+it[1]+' <button type="button" class="rz" title="Voltar a seguir o Geral" style="border:0;background:none;color:var(--ac);font-size:15px;padding:0 2px;visibility:hidden"><svg class="ic" aria-hidden="true"><use href="#i-reset"/></svg></button></span><span class="vl"></span></label><input type="range" min="0" max="100" data-k="'+it[0]+'">'+(it[2]?'<small style="color:var(--mu)">'+it[2]+'</small>':'');
   e.querySelector('input').oninput=function(){R[it[0]]=+this.value;if(DR[it[0]])TR[it[0]]=1;else autoR();render()};
-  e.querySelector('.rz').onclick=function(){delete TR[it[0]];autoR();render()};d.appendChild(e);
+  e.querySelector('.rz').onclick=function(){delete TR[it[0]];autoR();render()};box(RS[it[0]]||'geral','Cantos').appendChild(e);
  });
- rb.appendChild(d);
 });
 rb.insertAdjacentHTML('beforeend','<p style="color:var(--mu);font-size:12px;margin:4px 2px">Cada barra vai de <b>quadrado</b> até o <b>máximo que aquele lugar consegue arredondar</b> (um canto não passa de metade da altura do elemento), então não existe trecho “morto”. Em botões, campos e selos o fim da barra é <b>pílula</b>.</p>');
 PRE.forEach(function(p){
@@ -686,7 +709,7 @@ PRE.forEach(function(p){
  b.innerHTML='<span class="sw"><i style="background:'+p[1].bg+'"></i><i style="background:'+p[1].surface+'"></i><i style="background:'+p[1].accent+'"></i></span>'+p[0];
  b.onclick=function(){load(p[1],p[2])};$('presets').appendChild(b);
 });
-Object.keys(TN).forEach(function(k){var b=document.createElement('button');b.type='button';b.dataset.t=k;b.textContent=TN[k];b.onclick=function(){tab=k;render()};$('tabs').appendChild(b)});
+Object.keys(TN).forEach(function(k){var b=document.createElement('button');b.type='button';b.dataset.t=k;b.textContent=TN[k];b.onclick=function(){tab=k;render();openScr(k)};$('tabs').appendChild(b)});
 $('home').onchange=render;
 $('copy').onclick=function(){
  var t=$('out').value,b=this,ok=function(){b.innerHTML='Copiado! <svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>';setTimeout(function(){b.textContent='Copiar CSS'},1800)};
@@ -751,6 +774,25 @@ Object.keys(FR).forEach(function(id){$(id).onchange=function(){FSEL[id]=this.val
  if(id==='fcg'&&FIMP.length&&(!FSEL.ft||(FSEL.ft.indexOf('__c:')===0&&FC.indexOf(FSEL.ft.slice(4))<0))){FSEL.ft='__c:'+FIMP[0].names[0];var m=$('fmsg');if(m&&!m.className)m.textContent+=' Já apliquei em “Títulos e botões”; troque nas listas se quiser.'}
  ffOpts();render()}});
 ffScan();ffOpts();
+// ---- acabamento da organização por tela ----
+function openScr(k){var d=SCD[k];if(d&&!d.open)d.open=true}
+(function(){
+ var hn={Imagens:'Gire as cores, deixe em preto e branco ou pinte tudo de uma cor só (vira uma silhueta).',Vidro:'Segue o Geral até você mexer. Precisa ligar o vidro em <b>Geral → Vidro</b>.',Ícones:'Pinta partes dos desenhos (SVG). O padrão é a cor que o site já usa.'};
+ box('home','Cores').children[0].insertAdjacentElement('afterend',$('lbl-home'));
+ SCR.forEach(function(sc){
+  var d=SCD[sc[0]],n=0;
+  CAT.forEach(function(c){var e=SCB[sc[0]][c];
+   if(e.children.length<2){e.remove();return}
+   n++;if(hn[c]&&sc[0]!=='geral')e.children[0].insertAdjacentHTML('afterend','<p class="hn">'+hn[c]+'</p>');
+   if(c==='Cantos'&&sc[0]!=='geral')e.children[0].insertAdjacentHTML('afterend','<p class="hn">Segue o Geral até você mexer; a setinha volta a seguir.</p>')});
+  if(!n){d.remove();return}
+  d.addEventListener('toggle',function(){
+   if(!d.open)return;
+   SCR.forEach(function(o){if(o[0]!==sc[0]&&SCD[o[0]].open)SCD[o[0]].open=false});
+   if(!d._o){d._o=1;var f=d.querySelector('details.sub');if(f)f.open=true}
+   if(tab!==sc[2]){tab=sc[2];render()}})});
+ SCD.geral.open=true;
+})();
 load(PRE[0][1],PRE[0][2]);
 BASE=baseMap(cssItems(cssFull()));render();
 </script>
