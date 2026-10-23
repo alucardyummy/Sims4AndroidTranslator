@@ -117,7 +117,10 @@ h1 .ic{width:1.1em;height:1.1em;vertical-align:-.15em}
 <button class="go2" id="ptdl" type="button">Baixar .svg do ladrilho</button>
 <a class="go2" href="/desenhar-svg"><svg class="ic" aria-hidden="true"><use href="#i-pencil"/></svg> Desenhar minha própria forma</a>
 </div>
-<h2>6. Vidro: cor de fundo transparente + desfoque <small style="color:var(--mu);font-weight:400">(opcional)</small></h2>
+<h2>6. Imagens: mascote, foto, carregando… <small style="color:var(--mu);font-weight:400">(opcional)</small></h2>
+<p style="color:var(--mu);font-size:12px;margin:0 2px 8px">Gire as cores, deixe em preto e branco ou pinte tudo de uma cor só (vira uma silhueta). Vale pros desenhos e fotos do site. As cores do <b>sininho</b>, do <b>Google</b> e dos outros ícones ficam em <b>2. Cores → Ícones</b>.</p>
+<div id="imar"></div>
+<h2>7. Vidro: cor de fundo transparente + desfoque <small style="color:var(--mu);font-weight:400">(opcional)</small></h2>
 <label class="ck"><input type="checkbox" id="gon"><span><b>Ligar o vidro</b> (cartões e caixas com fundo transparente e desfoque). Só aparece se tiver algo atrás deles: ligue o <b>fundo com padrão</b> (seção 5) ou use uma Home com degradê.</span></label>
 <div id="gbox" hidden>
 <div class="box">
@@ -129,7 +132,7 @@ h1 .ic{width:1.1em;height:1.1em;vertical-align:-.15em}
 <div id="gar"></div>
 <p style="color:var(--mu);font-size:12px;margin:4px 2px"><b>Opacidade</b> = quanto o fundo ainda cobre: 100% sólido, 0% invisível. <b>Desfoque</b> = a força do blur: 0 desliga, 8 a 14 px é leve e bonito, acima de 30 px pesa em celular fraco.</p>
 </div>
-<h2>7. Copie e cole no site</h2>
+<h2>8. Copie e cole no site</h2>
 <label class="ck"><input type="checkbox" id="home" checked><span><b>Pintar a Home também</b> (a Home tem cores próprias; marcado, ela segue o seu tema)</span></label>
 <textarea id="out" readonly spellcheck="false"></textarea>
 <p id="csz"></p>
@@ -244,6 +247,26 @@ var TX=[
  ['wal','Texto dos avisos','As caixinhas “Salvo!”, “Tem certeza?”',wT,'.alert-msg']]}
 ];
 TX.forEach(function(g){g.items.forEach(function(it){A[it[0]]=it[3]});G.push([g.t,0,g.items.map(function(it){return[it[0],it[1],it[2]]}),g.tab])});
+// ---- ícones: cor de partes dos SVGs (sininho, Google, paleta…). Padrão = cor que o site já usa ----
+var IC=[
+ ['ibB','Sininho · corpo','O sino em si',function(){return'#6b5589'},function(c){return'.bell-btn .bell-body { fill: '+c+' !important; }'}],
+ ['ibH','Sininho · traço de luz','O risquinho brilhante do lado',function(){return'#8a7fa6'},function(c){return'.bell-btn .bell-hl { stroke: '+c+' !important; }'}],
+ ['ibC','Sininho · topo e badalo','',function(){return'#5a4d80'},function(c){return'.bell-btn .bell-top { stroke: '+c+' !important; }\n.bell-btn .bell-clap { fill: '+c+' !important; }'}],
+ ['ibD','Sininho · bolinha de novidade','Aparece quando tem novidade',function(){return'#d4bef0'},function(c){return'.bell-btn .bell-dot { fill: '+c+' !important; }'}],
+ ['igO','Google · contorno','O símbolo do “Entrar com Google”',function(){return'#1b1047'},function(c){return'.google-btn .g-out { stroke: '+c+' !important; }'}],
+ ['igI','Google · miolo','Troca o degradê por uma cor só',function(){return'#1b1047'},function(c){return'.google-btn .g-in { stroke: '+c+' !important; }'}],
+ ['ipl','Paleta (botão de temas)','',function(){return'#6b5589'},function(c){return hp('.theme-btn')+' { color: '+c+' !important; }'}],
+ ['igh','GitHub (rodapé da Home)','',function(){return'#6b5589'},function(c){return hp('.github-badge')+' { color: '+c+' !important; }'}],
+ ['itr','Lixeira dos cartões (Home)','',function(s){return s.danger},function(c){return hp('.btn-icon.delete')+' { color: '+c+' !important; }'}]];
+IC.forEach(function(it){A[it[0]]=it[3]});
+G.push(['Ícones (sininho, Google, paleta…)',0,IC.map(function(it){return[it[0],it[1],it[2]]}),'home']);
+// selo da versão (fundo e borda): ficam no grupo "Home"
+var HX=[
+ ['hvbg','Selo da versão · fundo','Onde fica escrito “v1.0 · MIT…”',function(s){return s.surface},function(c){return hp('.version')+' { background: '+c+' !important; }'}],
+ ['hvbd','Selo da versão · borda','',function(s){return mix(s.border,s.text,.15)},function(c){return hp('.version')+' { border-color: '+c+' !important; }'}]];
+HX.forEach(function(it){A[it[0]]=it[3]});
+G.forEach(function(g){if(g[0]==='Home')HX.forEach(function(it){g[2].push([it[0],it[1],it[2]])})});
+function iccss(){var o='';IC.forEach(function(it){o+=it[4](S[it[0]])+'\n'});o+='\n/* Selo da versão */\n';HX.forEach(function(it){o+=it[4](S[it[0]])+'\n'});return'\n/* Ícones */\n'+o}
 function txcss(h){var o='';TX.forEach(function(g){if(!g.home!==!h)return;g.items.forEach(function(it){if(!it[4])return;o+=it[4]+' { color: '+S[it[0]]+' !important;'+(g.sh?' text-shadow: none !important;':'')+' }\n';if(it[5])o+=it[5](S[it[0]])})});return o?'\n/* Textos'+(h?' da Home':'')+' */\n'+o:''}
 var RG=[
 ['Geral · todas as telas',0,[['radius','Cartões e caixas','Os outros lugares seguem este, até você mexer neles (Home, Mesclar, Criar, Info e janelas)'],['rsm','Botões e campos de texto','Seguem: botões grandes da Home, caixas de texto, busca e campos da janela'],['rxs','Selos e miudezas','Segue: selo da versão'],['rbtn','Botão principal','Salvar, Mesclar, Gerar, Começar']]],
@@ -261,7 +284,7 @@ function px(k){return(PILL[k]&&R[k]>=100?999:Math.round(R[k]/100*MX[k]))+'px'}
 function rl(k){return PILL[k]&&R[k]>=100?'pílula':Math.round(R[k]/100*MX[k])+'px'}
 function ml(r){return r>=100?'máximo':r+'%'}
 var PRE=[
-['Verdinho (padrão)',{bg:'#0f0f0f',surface:'#1a1d1c',accent:'#9cb8b2',text:'#e9efed',muted:'#8d9a96',border:'#2a302e',danger:'#e5565b'},16],
+['Padrão do site',{bg:'#0f0f0f',surface:'#1a1d1c',accent:'#9cb8b2',text:'#e9efed',muted:'#8d9a96',border:'#2a302e',danger:'#e5565b'},16],
 ['Rosa neon',{bg:'#120b1f',surface:'#1f1433',accent:'#ff4fa3',text:'#f4eaff',muted:'#b79fd6',border:'#3a2660',danger:'#ff6b6b'},22],
 ['Roxo noturno',{bg:'#141020',surface:'#1d1730',accent:'#b79bff',text:'#efe9fb',muted:'#a99ec4',border:'#322950',danger:'#ff7b7b'},18],
 ['Oceano',{bg:'#0b1822',surface:'#12273a',accent:'#35c4e0',text:'#e6f4fa',muted:'#8fb3c4',border:'#1f4057',danger:'#ff7a7a'},14],
@@ -399,10 +422,9 @@ function gcss(){
  g('W','.modal-box, .alert-box','modal',1);
  return o}
 function gprv(p){
- p.classList.toggle('gl',!!GL.on);$('gbox').hidden=!GL.on;if(!GL.on)return;
+ p.classList.toggle('gl',!!GL.on);$('gbox').hidden=!GL.on;
  GU.forEach(function(f){f()})}
-(function(){
- var RZ='<button type="button" class="rz" title="Voltar a seguir o geral" style="border:0;background:none;color:var(--ac);font-size:15px;padding:0 2px;visibility:hidden"><svg class="ic" aria-hidden="true"><use href="#i-reset"/></svg></button>';
+var RZ='<button type="button" class="rz" title="Voltar a seguir o geral" style="border:0;background:none;color:var(--ac);font-size:15px;padding:0 2px;visibility:hidden"><svg class="ic" aria-hidden="true"><use href="#i-reset"/></svg></button>';
  function mkSl(par,lab,min,max,unit,get,set,rs){
   var d=document.createElement('div');d.className='sl';
   d.innerHTML='<label><span class="nm">'+lab+(rs?' '+RZ:'')+'</span><span class="vl"></span></label><input type="range" min="'+min+'" max="'+max+'" value="'+get()+'">';
@@ -430,8 +452,67 @@ function gprv(p){
   $('gar').appendChild(d)});
  $('gon').onchange=function(){GL.on=this.checked?1:0;render()};
  $('gone').onchange=function(){GL.one=this.checked?1:0;render()};
-})();
-function css(){
+
+// ---- imagens: filtros de cor (matiz, saturação, brilho, preto e branco) ou silhueta de uma cor só ----
+var IMN=[['mas','Mascote (a pedra verde da Home)','.mascot-divider img',85,1],['avt','Foto de perfil','.profile-circle img, #modal-profile-img',100,1],['lod','Carregando (bolinha animada)','.loading-gif',100,1],['fox','Olhinhos da raposa (botão de foco do Editor)','.focus-eye',100,0]];
+// [id, nome, seletor, opacidade original, mexe na opacidade?]
+var IM={};IMN.forEach(function(m){IM[m[0]]={h:0,s:100,b:100,g:0,o:m[3],p:0};A['ip_'+m[0]]=function(){return'#ffffff'}});
+A.mgl=function(){return'#b89cd9'};
+IMN.forEach(function(m){
+ var q=IM[m[0]],d=document.createElement('details');d.className='box';
+ d.innerHTML='<summary>'+m[1]+'</summary><label class="ck"><input type="checkbox"><span><b>Pintar de uma cor só</b> (vira uma silhueta da cor escolhida)</span></label>';
+ d.querySelector('input').onchange=function(){q.p=this.checked?1:0;render()};
+ mkPk(d,'ip_'+m[0],'Cor da silhueta','Só vale com “Pintar de uma cor só” marcado');
+ mkSl(d,'Matiz (gira as cores)',-180,180,'°',function(){return q.h},function(v){q.h=v});
+ mkSl(d,'Saturação',0,300,'%',function(){return q.s},function(v){q.s=v});
+ mkSl(d,'Brilho',0,200,'%',function(){return q.b},function(v){q.b=v});
+ mkSl(d,'Preto e branco',0,100,'%',function(){return q.g},function(v){q.g=v});
+ if(m[4])mkSl(d,'Opacidade',0,100,'%',function(){return q.o},function(v){q.o=v});
+ if(m[0]==='mas')mkPk(d,'mgl','Brilho em volta','A luzinha atrás do mascote');
+ var b=document.createElement('button');b.type='button';b.textContent='Voltar ao original';b.style.cssText='margin-top:8px;border:1px solid var(--bd);background:var(--cd);color:var(--tx);border-radius:99px;padding:6px 14px;font:inherit;font-size:13px';
+ b.onclick=function(){q.h=0;q.s=100;q.b=100;q.g=0;q.o=m[3];q.p=0;delete T['ip_'+m[0]];if(m[0]==='mas')delete T.mgl;d.querySelector('input').checked=false;auto();render()};
+ d.appendChild(b);$('imar').appendChild(d)});
+function imcss(){
+ var o='';
+ IMN.forEach(function(m){
+  var q=IM[m[0]],ch=q.h||q.s!==100||q.b!==100||q.g||q.p||(m[4]&&q.o!==m[3])||(m[0]==='mas'&&T.mgl);
+  if(!ch)return;
+  var f=q.p?'brightness(0) saturate(100%) '+paintFilter(S['ip_'+m[0]])+(q.b!==100?' brightness('+q.b+'%)':''):'hue-rotate('+q.h+'deg) saturate('+q.s+'%) brightness('+q.b+'%)'+(q.g?' grayscale('+q.g+'%)':'');
+  if(m[0]==='mas')f+=' drop-shadow(0 0 8px '+ra(S.mgl,40)+')';
+  o+=m[2]+' { filter: '+f+' !important;'+(m[4]&&q.o!==m[3]?' opacity: '+q.o/100+' !important;':'')+' }\n'});
+ return o?'\n/* Imagens */\n'+o:''}
+// pintar uma imagem de uma cor exata só com CSS: acha uma combinação de filtros que leva o preto até a cor (SPSA, com sorteio fixo)
+var PFC={};
+function Cx(){this.r=this.g=this.b=0}
+Cx.prototype={
+ cl:function(v){return v>255?255:v<0?0:v},
+ mul:function(m){var r=this.r,g=this.g,b=this.b;this.r=this.cl(r*m[0]+g*m[1]+b*m[2]);this.g=this.cl(r*m[3]+g*m[4]+b*m[5]);this.b=this.cl(r*m[6]+g*m[7]+b*m[8])},
+ hue:function(a){a=a/180*Math.PI;var s=Math.sin(a),c=Math.cos(a);this.mul([.213+c*.787-s*.213,.715-c*.715-s*.715,.072-c*.072+s*.928,.213-c*.213+s*.143,.715+c*.285+s*.140,.072-c*.072-s*.283,.213-c*.213-s*.787,.715-c*.715+s*.715,.072+c*.928+s*.072])},
+ sep:function(v){this.mul([.393+.607*(1-v),.769-.769*(1-v),.189-.189*(1-v),.349-.349*(1-v),.686+.314*(1-v),.168-.168*(1-v),.272-.272*(1-v),.534-.534*(1-v),.131+.869*(1-v)])},
+ sat:function(v){this.mul([.213+.787*v,.715-.715*v,.072-.072*v,.213-.213*v,.715+.285*v,.072-.072*v,.213-.213*v,.715-.715*v,.072+.928*v])},
+ lin:function(sl,ic){this.r=this.cl(this.r*sl+ic*255);this.g=this.cl(this.g*sl+ic*255);this.b=this.cl(this.b*sl+ic*255)},
+ inv:function(v){this.r=this.cl((v+this.r/255*(1-2*v))*255);this.g=this.cl((v+this.g/255*(1-2*v))*255);this.b=this.cl((v+this.b/255*(1-2*v))*255)},
+ hsl:function(){var r=this.r/255,g=this.g/255,b=this.b/255,mx=Math.max(r,g,b),mn=Math.min(r,g,b),h,s,l=(mx+mn)/2;
+  if(mx===mn)h=s=0;else{var d=mx-mn;s=l>.5?d/(2-mx-mn):d/(mx+mn);h=mx===r?(g-b)/d+(g<b?6:0):mx===g?(b-r)/d+2:(r-g)/d+4;h/=6}
+  return{h:h*100,s:s*100,l:l*100}}};
+function paintFilter(hexc){
+ if(PFC[hexc])return PFC[hexc];
+ var t=rgb(hexc),th=(function(){var c=new Cx();c.r=t[0];c.g=t[1];c.b=t[2];return c.hsl()})(),w=new Cx(),seed=7;
+ function rnd(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296}
+ function loss(f){w.r=w.g=w.b=0;w.inv(f[0]/100);w.sep(f[1]/100);w.sat(f[2]/100);w.hue(f[3]*3.6);w.lin(f[4]/100,0);w.lin(f[5]/100,-(.5*f[5]/100)+.5);var h=w.hsl();
+  return Math.abs(w.r-t[0])+Math.abs(w.g-t[1])+Math.abs(w.b-t[2])+Math.abs(h.h-th.h)+Math.abs(h.s-th.s)+Math.abs(h.l-th.l)}
+ function fix(v,i){var mx=i===2?7500:(i===4||i===5)?200:100;if(i===3){if(v>mx)v%=mx;else if(v<0)v=mx+v%mx}else if(v<0)v=0;else if(v>mx)v=mx;return v}
+ function spsa(A,a,c,vals,n){var best=null,bl=Infinity,hi=[],lo=[],dl=[],k,i;
+  for(k=0;k<n;k++){var ck=c/Math.pow(k+1,.16667);for(i=0;i<6;i++){dl[i]=rnd()>.5?1:-1;hi[i]=vals[i]+ck*dl[i];lo[i]=vals[i]-ck*dl[i]}
+   var df=loss(hi)-loss(lo);for(i=0;i<6;i++){vals[i]=fix(vals[i]-a[i]/Math.pow(A+k+1,1)*(df/(2*ck)*dl[i]),i)}
+   var l=loss(vals);if(l<bl){best=vals.slice();bl=l}}
+  return{v:best,l:bl}}
+ var wide={l:Infinity},i;
+ for(i=0;wide.l>25&&i<3;i++){var r=spsa(5,[60,180,18000,600,1.2,1.2],15,[50,20,3750,50,100,100],1000);if(r.l<wide.l)wide=r}
+ var A1=wide.l+1,n=spsa(wide.l,[.25*A1,.25*A1,A1,.25*A1,.2*A1,.2*A1],2,wide.v,500),f=n.v,R=function(x){return Math.round(x)};
+ return PFC[hexc]='invert('+R(f[0])+'%) sepia('+R(f[1])+'%) saturate('+R(f[2])+'%) hue-rotate('+R(f[3]*3.6)+'deg) brightness('+R(f[4])+'%) contrast('+R(f[5])+'%)'}
+
+function cssFull(){
  var v=V(),o='/* Meu tema — feito no Montador de tema */\n'+ffFace()+':root {\n',k,H='html[data-page="index"] ';
  for(k in v)o+='  '+k+': '+v[k]+';\n';o+=ffVars()+'}\n';
  o+='\n/* Todas as telas */\n'+[['.start-btn','bst','rst'],['.save-btn','bsa','rsa'],['.merge-btn','bmg','rmg'],['.btn-build','bbd','rbd']].map(function(b){return b[0]+' { background: '+S[b[1]]+'; color: '+S[b[1]+'T']+'; border-radius: '+px(b[2])+'; }\n'}).join('')+'[data-page="create"] .btn-preview { border-color: '+S.bvf+'; color: '+S.bvfT+'; border-radius: '+px('rvf')+'; }\n'
@@ -468,10 +549,41 @@ function css(){
  }
  if($('home').checked||T.gcv||T.gsp)o+='\n/* Tela de carregamento (volta do Google) */\n#google-cover { background: '+S.gcv+' !important; }\n#google-cover::before { border-top-color: '+S.gsp+' !important; }\n';
  if($('home').checked)o+=txcss(1);
+ o+=iccss();
+ o+=imcss();
  o+=pcss();
  o+=gcss();
  return o;
 }
+
+// ---- "Padrão do site": só entra no CSS o que muda. Sem mexer em nada o CSS fica vazio e o site continua como está ----
+var BASE=null;
+function cscan(t,i,stops){var q='',pd=0,c;for(;i<t.length;i++){c=t[i];if(q){if(c===q)q='';continue}if(c==='"'||c==="'"){q=c;continue}if(c==='(')pd++;else if(c===')')pd--;else if(!pd&&stops.indexOf(c)>=0)return i}return -1}
+function cssItems(t){
+ var a=[],i=0,n=t.length,j,k,sel,body,ds,p,e,seg,x;
+ while(i<n){
+  while(i<n&&/\s/.test(t[i]))i++;if(i>=n)break;
+  if(t.substr(i,2)==='/*'){j=t.indexOf('*/',i+2);if(j<0)j=n-2;a.push({c:t.slice(i,j+2)});i=j+2;continue}
+  j=cscan(t,i,';{');if(j<0)break;
+  if(t[j]===';'){a.push({at:t.slice(i,j+1).trim()});i=j+1;continue}
+  sel=t.slice(i,j).trim();k=cscan(t,j+1,'}');if(k<0)k=n;body=t.slice(j+1,k);ds=[];p=0;
+  while(p<body.length){e=cscan(body,p,';');seg=(e<0?body.slice(p):body.slice(p,e)).trim();p=e<0?body.length:e+1;if(!seg)continue;x=seg.indexOf(':');if(x>0)ds.push([seg.slice(0,x).trim(),seg.slice(x+1).trim()])}
+  a.push({sel:sel,ds:ds});i=k+1}
+ return a}
+function baseMap(a){var m={},u={};a.forEach(function(x){if(x.at)u[x.at]=1;else if(x.sel)x.ds.forEach(function(d){m[x.sel+'\u0001'+d[0]+'\u0001'+d[1]]=1})});return{m:m,u:u}}
+function css(){
+ var full=cssFull();if(!BASE)return full;
+ var o='/* Meu tema — feito no Montador de tema */\n',pend='',any=0;
+ cssItems(full).forEach(function(x){
+  if(x.c){if(!/Meu tema/.test(x.c))pend=x.c;return}
+  if(x.at){if(!BASE.u[x.at]){o+=pend?'\n'+pend+'\n':'';o+=x.at+'\n';pend='';any=1}return}
+  var ds=x.ds.filter(function(d){return !BASE.m[x.sel+'\u0001'+d[0]+'\u0001'+d[1]]});
+  if(!ds.length)return;
+  any=1;if(pend){o+='\n'+pend+'\n';pend=''}
+  o+=x.sel===':root'?':root {\n'+ds.map(function(d){return'  '+d[0]+': '+d[1]+';\n'}).join('')+'}\n':x.sel+' { '+ds.map(function(d){return d[0]+': '+d[1]+';'}).join(' ')+' }\n'});
+ if(!any)o+='\n/* Sem mudanças: este é o tema padrão do site. Mexa nas cores, imagens ou no vidro e só o que mudar aparece aqui. */\n';
+ return o}
+
 
 // ---- seletor de cor próprio: quadrado (saturação/brilho) + matiz + código + cores prontas ----
 var P={k:null,h:0,s:1,v:1,old:'#000000'},PAL=['#ff4fa3','#ff6b6b','#e8743b','#ffb454','#ffd84d','#b6ff5c','#5fd68a','#3f8f7c','#9cb8b2','#35e0ff','#35c4e0','#5b8def','#7a3cff','#b79bff','#d68bff','#f4eaff','#ffffff','#cfcfcf','#8d9a96','#555555','#2a302e','#1a1d1c','#0f0f0f','#000000'];
@@ -508,7 +620,7 @@ $('sws').onclick=function(e){var c=e.target.dataset&&e.target.dataset.c;if(c&&P.
 function openPick(k,name){P.k=k;P.old=S[k];$('stt').textContent=name;$('old').style.background=S[k];fillSws();syncPick();$('sheet').hidden=false;document.body.classList.add('sp')}
 // ---- prévia: as telas DE VERDADE num iframe (/montar-tema/previa/<tela>), com o CSS gerado injetado ao vivo ----
 var PM={home:['index',''],editor:['editor',''],merge:['merge',''],create:['create',''],info:['info',''],modal:['index','profile-modal'],load:['index','carregando']};
-var SUB={modal:[['profile-modal','Perfil'],['auth-modal','Entrar'],['updates-modal','Novidades'],['custom-alert','Aviso']],info:[['','Detalhes'],['lang','Idiomas']]},SS={modal:'profile-modal',info:''};
+var SUB={home:[['','Tela'],['loading','Importando…']],modal:[['profile-modal','Perfil'],['auth-modal','Entrar'],['updates-modal','Novidades'],['custom-alert','Aviso']],info:[['','Detalhes'],['lang','Idiomas']]},SS={home:'',modal:'profile-modal',info:''};
 var PF=$('pf'),pfKey='',PW=360;
 function pfSrc(){var a=PM[tab],m=SUB[tab]?SS[tab]:a[1];return'/montar-tema/previa/'+a[0]+'?safe=1'+(m?'&m='+m:'')}
 function pfLoad(){var u=pfSrc();if(pfKey!==u){pfKey=u;PF.src=u}}
@@ -640,6 +752,7 @@ Object.keys(FR).forEach(function(id){$(id).onchange=function(){FSEL[id]=this.val
  ffOpts();render()}});
 ffScan();ffOpts();
 load(PRE[0][1],PRE[0][2]);
+BASE=baseMap(cssItems(cssFull()));render();
 </script>
 <script>
 (function(){ // botão de copiar a cor (fica antes do #)

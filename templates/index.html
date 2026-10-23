@@ -895,10 +895,10 @@
     </button>
     <button class="bell-btn" id="bell-btn" onclick="openUpdatesModal()" aria-label="Ver novidades">
       <svg width="20" height="20" viewBox="0 0 60 60" fill="none">
-        <path d="M30 14 Q20 14 19 26 Q18 34 14 39 Q13 40.5 15 40.5 L45 40.5 Q47 40.5 46 39 Q42 34 41 26 Q40 14 30 14 Z" fill="#6b5589" opacity="0.9"/>
-        <path d="M22 26 Q23 18 30 17" stroke="#8a7fa6" stroke-width="1.3" fill="none" stroke-linecap="round"/>
-        <path d="M26 12 Q30 9 34 12" stroke="#5a4d80" stroke-width="1.6" fill="none" stroke-linecap="round"/>
-        <path d="M25 41 Q25 45.5 30 45.5 Q35 45.5 35 41" fill="#5a4d80" opacity="0.85"/>
+        <path class="bell-body" d="M30 14 Q20 14 19 26 Q18 34 14 39 Q13 40.5 15 40.5 L45 40.5 Q47 40.5 46 39 Q42 34 41 26 Q40 14 30 14 Z" fill="#6b5589" opacity="0.9"/>
+        <path class="bell-hl" d="M22 26 Q23 18 30 17" stroke="#8a7fa6" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+        <path class="bell-top" d="M26 12 Q30 9 34 12" stroke="#5a4d80" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+        <path class="bell-clap" d="M25 41 Q25 45.5 30 45.5 Q35 45.5 35 41" fill="#5a4d80" opacity="0.85"/>
         <circle class="bell-dot" id="bell-dot" cx="44" cy="16" r="7" fill="#d4bef0" stroke="#0f0f0f" stroke-width="1.2" style="display:none"/>
       </svg>
     </button>
@@ -1011,10 +1011,10 @@
               <stop offset="100%" stop-color="#1b1047"/>
             </linearGradient>
           </defs>
-          <path d="M 17.5 3.5 A 10 10 0 1 0 20 10 L 12 10 M 20 10 L 20 16"
+          <path class="g-out" d="M 17.5 3.5 A 10 10 0 1 0 20 10 L 12 10 M 20 10 L 20 16"
                 stroke="#1b1047" stroke-width="5.5" fill="none"
                 stroke-linecap="butt" stroke-linejoin="miter"/>
-          <path d="M 17.5 3.5 A 10 10 0 1 0 20 10 L 12 10 M 20 10 L 20 16"
+          <path class="g-in" d="M 17.5 3.5 A 10 10 0 1 0 20 10 L 12 10 M 20 10 L 20 16"
                 stroke="url(#gg)" stroke-width="3" fill="none"
                 stroke-linecap="butt" stroke-linejoin="miter"/>
         </svg>

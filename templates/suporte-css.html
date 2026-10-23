@@ -48,8 +48,9 @@ h1 .i{width:1.1em;height:1.1em;margin-right:.15em}nav{columns:2;font-size:14px}
 <a href="#janelas">9. Janelas e avisos</a><br>
 <a href="#outras">10. Info, Editor, Mesclar, Criar</a><br>
 <a href="#truques">11. Truques</a><br>
-<a href="#prontos">12. Receitas prontas</a><br>
-<a href="#ruim">13. Deu ruim?</a>
+<a href="#icones">12. Cores de ícones e imagens</a><br>
+<a href="#prontos">13. Receitas prontas</a><br>
+<a href="#ruim">14. Deu ruim?</a>
 </nav>
 
 <div class="box tip"><b>Não quer mexer com código?</b> Use o <a href="/montar-tema" style="color:var(--ac)">Montador de tema</a>: escolha as cores tocando na tela e copie o CSS pronto.</div>
@@ -428,7 +429,72 @@ html[data-page="index"] {
 <h3>Tirar as animações</h3>
 <pre><code>* { animation: none !important; transition: none !important; }</code></pre>
 
-<h2 id="prontos">12. Receitas prontas (copiar e colar) <svg class="i" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 20.5v-7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v7z" fill="#9cb8b2"/><path d="M4 13.5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2V15c-1 0-1.3 1.3-2.6 1.3S15.3 15 14 15s-1.3 1.3-2.6 1.3S9.1 15 8 15s-1.3 1.3-2.6 1.3C4.7 16.3 4.5 15 4 15z" fill="#cfe3dd"/><rect x="11" y="7" width="2" height="4.5" rx="1" fill="#7fa59b"/><path d="M12 2.8c1.3 1.1 1.3 2.6 0 3.6-1.3-1-1.3-2.5 0-3.6z" fill="#cfe3dd"/><path d="M12 4.2c.5.5.5 1.1 0 1.6-.5-.5-.5-1.1 0-1.6z" fill="#fff"/><path d="M6.5 18.5h11" stroke="#fff" opacity=".35" stroke-width="1.1" stroke-linecap="round"/></svg></h2>
+<h2 id="icones">12. Cores de ícones e imagens</h2>
+<p>Os desenhos do site são de dois tipos, e cada um muda de cor de um jeito:</p>
+<ul>
+<li><b>Ícones</b> (sininho, símbolo do Google, paleta, GitHub, lixeira): são desenhos de linhas e formas. Você pinta com <code>fill</code> (por dentro), <code>stroke</code> (a linha) ou <code>color</code> (quando o ícone usa a cor do texto).</li>
+<li><b>Imagens</b> (mascote, foto de perfil, bolinha de carregando, raposa do Editor): são figurinhas prontas. Não dá pra “pintar por dentro”, então você usa <code>filter</code>, que mexe nas cores da imagem inteira.</li>
+</ul>
+<p>No <a href="/montar-tema" style="color:var(--ac)">Montador de tema</a>: os ícones ficam em <b>2. Cores → Ícones</b> e as imagens na seção <b>6. Imagens</b>.</p>
+<h3>Ícones: quem é quem</h3>
+<dl>
+<dt><code>.bell-btn .bell-body</code></dt><dd>o corpo do sininho (use <code>fill</code>)</dd>
+<dt><code>.bell-btn .bell-hl</code></dt><dd>o risquinho de luz do lado (use <code>stroke</code>)</dd>
+<dt><code>.bell-btn .bell-top</code></dt><dd>o topo do sino (use <code>stroke</code>)</dd>
+<dt><code>.bell-btn .bell-clap</code></dt><dd>o badalo, a bolinha de baixo (use <code>fill</code>)</dd>
+<dt><code>.bell-btn .bell-dot</code></dt><dd>a bolinha que avisa que tem novidade (use <code>fill</code>)</dd>
+<dt><code>.google-btn .g-out</code></dt><dd>o contorno do símbolo do Google, no “Entrar com Google” (use <code>stroke</code>)</dd>
+<dt><code>.google-btn .g-in</code></dt><dd>o miolo do símbolo do Google. Normalmente é um degradê; com <code>stroke</code> ele vira uma cor só</dd>
+<dt><code>.version</code></dt><dd>o selo onde fica escrito a versão do site. Fundo com <code>background</code>, borda com <code>border-color</code>, letra com <code>color</code></dd>
+<dt><code>.theme-btn</code>, <code>.github-badge</code>, <code>.btn-icon.delete</code></dt><dd>o botão de paleta, o GitHub do rodapé e a lixeira dos cartões. Esses usam a cor do texto, então é só <code>color</code></dd>
+</dl>
+<pre><code>/* sininho rosa, com bolinha de aviso azul */
+.bell-btn .bell-body { fill: #ff4fa3 !important; }
+.bell-btn .bell-top  { stroke: #ffd84d !important; }
+.bell-btn .bell-clap { fill: #ffd84d !important; }
+.bell-btn .bell-dot  { fill: #00e5ff !important; }
+
+/* símbolo do Google rosa e azul */
+.google-btn .g-out { stroke: #ff4fa3 !important; }
+.google-btn .g-in  { stroke: #35c4e0 !important; }
+
+/* selo da versão */
+html[data-page="index"] .version {
+  background: #1a1d1c !important;
+  border-color: #ff4fa3 !important;
+}
+
+/* paleta e GitHub */
+html[data-page="index"] .theme-btn    { color: #ff4fa3 !important; }
+html[data-page="index"] .github-badge { color: #ff4fa3 !important; }</code></pre>
+<h3>Imagens: girar as cores</h3>
+<dl>
+<dt><code>.mascot-divider img</code></dt><dd>o mascote da Home (a pedra verde)</dd>
+<dt><code>.profile-circle img</code>, <code>#modal-profile-img</code></dt><dd>a foto de perfil</dd>
+<dt><code>.loading-gif</code></dt><dd>a bolinha animada de carregando</dd>
+<dt><code>.focus-eye</code></dt><dd>os olhinhos da raposa, no botão de foco do Editor (não mexa na <code>opacity</code> deles: o Editor troca sozinho)</dd>
+</dl>
+<p>Dentro do <code>filter</code> você pode juntar vários efeitos:</p>
+<dl>
+<dt><code>hue-rotate(120deg)</code></dt><dd>gira as cores (de 0 a 360). O verde do mascote vira azul com <code>120deg</code></dd>
+<dt><code>saturate(160%)</code></dt><dd>mais cor (acima de 100%) ou menos cor (abaixo de 100%)</dd>
+<dt><code>brightness(120%)</code></dt><dd>mais claro (acima de 100%) ou mais escuro (abaixo)</dd>
+<dt><code>grayscale(100%)</code></dt><dd>preto e branco</dd>
+</dl>
+<pre><code>.mascot-divider img {
+  filter: hue-rotate(120deg) saturate(160%)
+          drop-shadow(0 0 8px rgba(184, 156, 217, 0.4)) !important;
+}
+.profile-circle img, #modal-profile-img { filter: grayscale(100%) !important; }</code></pre>
+<p>O mascote já tem um brilho em volta (<code>drop-shadow</code>). Se você escrever <code>filter</code> sem repetir o brilho, ele some: por isso o <code>drop-shadow</code> no final do exemplo.</p>
+<h3>Imagens: pintar de uma cor só</h3>
+<p>Dá pra transformar a imagem numa <b>silhueta</b> de uma cor exata (perde os detalhes, fica só o contorno). O jeito é começar com <code>brightness(0) saturate(100%)</code> (tudo vira preto) e depois uma sequência de filtros que leva o preto até a cor. Esses números são difíceis de chutar, então peça pro <b>Montador de tema</b> (seção 6, “Pintar de uma cor só”) calcular. Exemplo pronto pra rosa <code>#ff4fa3</code>:</p>
+<pre><code>.focus-eye {
+  filter: brightness(0) saturate(100%) invert(49%) sepia(74%)
+          saturate(2535%) hue-rotate(303deg) brightness(100%)
+          contrast(105%) !important;
+}</code></pre>
+<h2 id="prontos">13. Receitas prontas (copiar e colar) <svg class="i" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 20.5v-7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v7z" fill="#9cb8b2"/><path d="M4 13.5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2V15c-1 0-1.3 1.3-2.6 1.3S15.3 15 14 15s-1.3 1.3-2.6 1.3S9.1 15 8 15s-1.3 1.3-2.6 1.3C4.7 16.3 4.5 15 4 15z" fill="#cfe3dd"/><rect x="11" y="7" width="2" height="4.5" rx="1" fill="#7fa59b"/><path d="M12 2.8c1.3 1.1 1.3 2.6 0 3.6-1.3-1-1.3-2.5 0-3.6z" fill="#cfe3dd"/><path d="M12 4.2c.5.5.5 1.1 0 1.6-.5-.5-.5-1.1 0-1.6z" fill="#fff"/><path d="M6.5 18.5h11" stroke="#fff" opacity=".35" stroke-width="1.1" stroke-linecap="round"/></svg></h2>
 <h3>Tudo rosa</h3>
 <pre><code>:root {
   --accent: #ff4fa3;
@@ -481,7 +547,7 @@ html[data-page="index"] .btn-create {
 [data-page="editor"] .edit-textarea,
 [data-page="editor"] .ta-backdrop { font-size: 17px; }</code></pre>
 
-<h2 id="ruim">13. Deu ruim? <svg class="i" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill-rule="evenodd" d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zm0 5.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7z" fill="#9cb8b2"/><path d="M15.25 15.25l2.6 2.6M8.75 15.25l-2.6 2.6M15.25 8.75l2.6-2.6M8.75 8.75l-2.6-2.6" stroke="#cfe3dd" stroke-width="3.2"/><path d="M6.5 8.5A6.5 6.5 0 0 1 9 6" stroke="#fff" opacity=".5" stroke-width="1.2" stroke-linecap="round" fill="none"/></svg></h2>
+<h2 id="ruim">14. Deu ruim? <svg class="i" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill-rule="evenodd" d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zm0 5.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7z" fill="#9cb8b2"/><path d="M15.25 15.25l2.6 2.6M8.75 15.25l-2.6 2.6M15.25 8.75l2.6-2.6M8.75 8.75l-2.6-2.6" stroke="#cfe3dd" stroke-width="3.2"/><path d="M6.5 8.5A6.5 6.5 0 0 1 9 6" stroke="#fff" opacity=".5" stroke-width="1.2" stroke-linecap="round" fill="none"/></svg></h2>
 <dl>
 <dt>“Não mudou nada!”</dt>
 <dd>O site tem várias regras com <code>!important</code> (principalmente a Home e as janelas). Coloque <code>!important</code> antes do ponto e vírgula: <code>color: red !important;</code>. Se tiver um <b>tema pronto</b> ligado, ele também pode ganhar: use <code>!important</code> ou teste com o tema padrão.</dd>

@@ -22,7 +22,7 @@ TELAS = {
 
 # janelas que dá pra abrir por cima de cada tela (?m=...)
 JANELAS = {
-    "index": {"auth-modal", "profile-modal", "updates-modal", "custom-alert"},
+    "index": {"auth-modal", "profile-modal", "updates-modal", "custom-alert", "loading"},
     "info": {"lang"},
 }
 
@@ -75,7 +75,11 @@ def _home(corpo, trash, modal):
                   '<button class="update-item-delete">%s</button></div>' % (tit, txt, data, trash))
     corpo = corpo.replace('<div class="updates-empty">Carregando...</div>', itens, 1)
     corpo = corpo.replace('<p class="alert-msg" id="custom-alert-msg"></p>', '<p class="alert-msg" id="custom-alert-msg">Salvo com sucesso!</p>', 1)
-    if modal in JANELAS["index"]:
+    if modal == "loading":
+        corpo = corpo.replace('<div class="loading-overlay" id="loading">', '<div class="loading-overlay active" id="loading">', 1)
+        corpo = corpo.replace('<div class="loading-phrase-container" id="loading-phrase-container"></div>',
+                              '<div class="loading-phrase-container" id="loading-phrase-container"><div class="loading-phrase" style="animation:none;opacity:1">sorvete</div></div>', 1)
+    elif modal in JANELAS["index"]:
         corpo = _classe_ativa(corpo, modal)
     return corpo
 
