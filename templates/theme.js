@@ -12,7 +12,7 @@
   var userEl = null, themeEl = null, fontsDone = {};
   var pages = { '': 'index', info: 'info', editor: 'editor', merge: 'merge', create: 'create' };
   var seg = location.pathname.replace(/^\/+|\/+$/g, '').split('/')[0];
-  doc.setAttribute('data-page', Object.prototype.hasOwnProperty.call(pages, seg) ? pages[seg] : (seg || 'index'));
+  doc.setAttribute('data-page', window.__PAGE__ || (Object.prototype.hasOwnProperty.call(pages, seg) ? pages[seg] : (seg || 'index')));   // __PAGE__: prévias do Montador de tema (a URL delas não é a da tela)
 
   var safe = /[?&]safe=1(?:&|$)/.test(location.search);
   var head = function () { return document.head || doc; };

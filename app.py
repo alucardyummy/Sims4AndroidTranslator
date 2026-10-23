@@ -1118,6 +1118,18 @@ def montar_tema():
     return send_page("montar-tema.html")
 
 
+@app.route("/montar-tema/previa/<tela>")
+def montar_tema_previa(tela):
+    """Telas de verdade (CSS real + dados de exemplo, sem scripts) pro iframe do Montador de tema."""
+    from previa_tema import montar_previa
+    html = montar_previa(tela, request.args.get("m", ""), TEMPLATE_DIR)
+    if html is None:
+        return "Tela não encontrada", 404
+    response = app.response_class(html, mimetype="text/html")
+    response.headers["Cache-Control"] = "no-cache"
+    return response
+
+
 @app.route("/desenhar-svg")
 def desenhar_svg():
     return send_page("desenhar-svg.html")
