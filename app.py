@@ -1192,6 +1192,26 @@ def editor():
     return response
 
 
+def _read_package_strings(pkg_id, instance_int):
+    """Baixa o .package do Storage e devolve as strings da STBL (instance) como lista de dicts."""
+    file_bytes = supabase.storage.from_(BUCKET_NAME).download(pkg_id)
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".package") as tmp:
+        tmp.write(file_bytes)
+        tmp_path = tmp.name
+    strings = []
+    try:
+        with DbpfPackage.read(tmp_path) as pkg:
+            for rid in pkg.search_stbl():
+                if rid.instance == instance_int:
+                    stbl = load_stbl(pkg, rid)
+                    for key, value in stbl._strings.items():
+                        strings.append({"key": key, "key_hex": hex(key), "value": value})
+                    break
+    finally:
+        os.remove(tmp_path)
+    return strings
+
+
 @app.route("/api/strings")
 def api_strings():
     instance_str = request.args.get("instance")
@@ -1200,20 +1220,54 @@ def api_strings():
 
     pkg_id = session.get("package_id")
 
-    # --- Caso especial: save do banco sem .package associado ---
-    if pkg_id == "DATABASE_SAVE":
-        db_save_id = session.get("db_save_id")
-        if not db_save_id:
-            return app.response_class(response=json.dumps({"strings": []}), mimetype="application/json")
-
+    # --- Reabertura de um save do banco ---
+    # Dois lados, duas fontes:
+    #   - TRADUÇÃO ("value"): vem do progresso salvo (translation_data);
+    #   - ORIGINAL ("original"): vem do .package original, que é a fonte da
+    #     verdade. Se o .package não puder ser lido, usa o "original" que
+    #     foi salvo junto com o progresso.
+    # Antes, saves COM .package caíam no fallback abaixo, que devolvia só o
+    # texto original e descartava toda a tradução salva.
+    db_save_id = session.get("db_save_id")
+    if db_save_id:
+        user_id = session.get("user_id")
+        guest_id = session.get("guest_session_id")
         conn = get_db()
         c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        c.execute("SELECT translation_data FROM saves WHERE id = %s", (db_save_id,))
+        if user_id:
+            c.execute("SELECT project_name, translation_data FROM saves WHERE id = %s AND user_id = %s", (db_save_id, user_id))
+        else:
+            c.execute("SELECT project_name, translation_data FROM saves WHERE id = %s AND guest_session_id = %s", (db_save_id, guest_id))
         row = c.fetchone()
         conn.close()
 
-        db_strings = json.loads(row["translation_data"]) if row else []
-        return app.response_class(response=json.dumps({"strings": db_strings}), mimetype="application/json")
+        if row:
+            m = re.search(r"\(([^)]+)\)\s*$", row["project_name"] or "")
+            same_instance = bool(m) and m.group(1).strip() == str(instance_str).strip()
+            try:
+                db_strings = json.loads(row["translation_data"]) if row["translation_data"] else []
+            except Exception:
+                db_strings = []
+            if same_instance and db_strings:
+                if pkg_id and pkg_id != "DATABASE_SAVE":
+                    try:
+                        pkg_strings = _read_package_strings(pkg_id, int(instance_str))
+                        originals = {item["key"]: item["value"] for item in pkg_strings}
+                        seen = set()
+                        for item in db_strings:
+                            seen.add(item.get("key"))
+                            if item.get("key") in originals:
+                                item["original"] = originals[item["key"]]   # lado original = .package
+                        for item in pkg_strings:                            # strings que existem no .package mas não no save
+                            if item["key"] not in seen:
+                                db_strings.append({**item, "original": item["value"]})
+                    except Exception as e:
+                        print("Aviso: não consegui ler o original do .package, usando o salvo:", e)
+                return app.response_class(response=json.dumps({"strings": db_strings}), mimetype="application/json")
+
+    # --- Caso especial: save do banco sem .package associado ---
+    if pkg_id == "DATABASE_SAVE":
+        return app.response_class(response=json.dumps({"strings": []}), mimetype="application/json")
 
     # --- Fallback: baixa do Supabase (cache de sessão removido por exceder o limite do cookie) ---
     instance_int = int(instance_str)
@@ -1495,15 +1549,20 @@ def save_progress():
     existing_save = c.fetchone()
 
     if existing_save:
+        saved_id = existing_save['id']
         c.execute(
             "UPDATE saves SET translation_data = %s, package_id = COALESCE(NULLIF(%s, ''), package_id), last_updated = CURRENT_TIMESTAMP WHERE id = %s",
-            (translation_data, package_id, existing_save['id'])
+            (translation_data, package_id, saved_id)
         )
     else:
         c.execute(
-            "INSERT INTO saves (user_id, guest_session_id, project_name, source_lang, target_lang, translation_data, package_id) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+            "INSERT INTO saves (user_id, guest_session_id, project_name, source_lang, target_lang, translation_data, package_id) VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id",
             (user_id, guest_id, project_name, source_lang, target_lang, translation_data, package_id)
         )
+        saved_id = c.fetchone()['id']
+    # Aponta a sessão pro save atual: ao dar F5 / reabrir o editor, o
+    # /api/strings devolve o progresso salvo em vez do arquivo original.
+    session["db_save_id"] = saved_id
 
     conn.commit()
     conn.close()
