@@ -1586,14 +1586,7 @@ def delete_save():
             # de um período de carência, em /api/admin/cleanup_orphaned_files,
             # e se o arquivo voltar a ser salvo como projeto antes disso, a
             # marca de órfão é removida automaticamente.
-            # Pedido do dono do site: apagar o arquivo na hora. Se o Storage falhar, cai no caminho antigo
-            # (marca como órfão e o cron tenta de novo depois).
-            try:
-                supabase.storage.from_(BUCKET_NAME).remove([package_id])
-                c.execute("DELETE FROM package_files WHERE file_id = %s", (package_id,))
-            except Exception as e:
-                print(f"Aviso: falha ao remover {package_id} do Storage ao apagar o save:", e)
-                c.execute("UPDATE package_files SET orphaned_at = CURRENT_TIMESTAMP WHERE file_id = %s", (package_id,))
+            c.execute("UPDATE package_files SET orphaned_at = CURRENT_TIMESTAMP WHERE file_id = %s", (package_id,))
 
     conn.commit()
     conn.close()
